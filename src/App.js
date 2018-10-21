@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import './App.css';
 import TreeList from './components/treeList/index.js'
+import InfoList from './components/infoList/index.js'
 
 import 'whatwg-fetch'
 
@@ -14,7 +15,7 @@ class App extends Component {
     }
 
     componentDidMount() {
-        fetch('http://localhost:7002/api/ft/queryTree')
+        fetch('http://localhost:7001/api/ft/queryTree')
             .then((response)=> {
                 return response.json()
             }).then((json)=> {
@@ -31,7 +32,7 @@ class App extends Component {
                 <p>family tree header</p>
 
                 <div className="App-container">
-                    <TreeList result={this.state.result}/>
+                    <InfoList result={this.state.result}/>
                 </div>
             </div>
         );
