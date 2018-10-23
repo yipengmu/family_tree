@@ -15,7 +15,7 @@ class App extends Component {
     }
 
     componentDidMount() {
-        fetch('http://localhost:7001/api/ft/queryTree')
+        fetch('http://172.19.235.213:7001/api/ft/queryTree')
             .then((response)=> {
                 return response.json()
             }).then((json)=> {
