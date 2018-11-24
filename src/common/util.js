@@ -144,23 +144,47 @@ util.getJsonFromDBResult = function (nodeId, buildResult, rawData) {
     console.log('function');
     //return buildJson(nodeId, buildResult, rawData);
 
-    return carryArrayToJson(dbJson, buildResult);
+    return carryArrayToJson('', buildResult);
 
 };
 
+
+util.getFatherTrees = function (rawData) {
+    let fatherTrees = [];
+
+    for (let i = 0; i < rawData.length; i++) {
+        if(i == 617){
+            debugger;
+        }
+        let tree = this.getFatherTree(rawData[i].id, rawData, []);
+        if(tree){
+            fatherTrees.push(tree);
+        }
+    }
+
+    return fatherTrees;
+}
+
 // 从第startId数组索引处，找到指定id,的依次所有的父id列表，以数组方式提供，数字索引越大，代表father辈分越高
 util.getFatherTree = function (id, rawData, fatherTree) {
-    debugger;
-    for (let i = id; i < rawData.length && i > 0; i--) {
-        let item = this.getItem(i, rawData);
-        if (item.g_father_id == 0) {
-            fatherTree.push('[' + item.id + '] ' + item.name + ' ' + item.g_rank + '代 祖上' + item.g_father_id);
-            break;
-        } else {
-            fatherTree.push('[' + item.id + '] ' + item.name + ' ' + item.g_rank + '代 祖上' + item.g_father_id);
-            this.getFatherTree(item.g_father_id, rawData, fatherTree);
-            break;
-        }
+
+    if(!rawData){
+        return;
+    }
+
+    let item = this.getItem(id, rawData);
+
+    if(!item || !item.id ){
+        return;
+    }
+
+    fatherTree.push('[' + item.id + '] ' + item.name + ' ' + item.g_rank + '代 祖上' + item.g_father_id);
+
+    if (item.g_father_id == 0) {
+        // 递归已经找到一代祖先，结束递归
+        return fatherTree;
+    } else {
+        this.getFatherTree(item.g_father_id, rawData, fatherTree);
     }
     return fatherTree;
 };
@@ -174,7 +198,6 @@ util.getItem = function (id, rawData) {
         }
     }
 };
-
 
 
 export default util;

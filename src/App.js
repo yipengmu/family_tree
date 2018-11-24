@@ -23,8 +23,8 @@ class App extends Component {
                 //console.log('原始数据 parsed json', JSON.stringify(json.result));
                 //let fatherTree = util.getFatherTree(545,json.result,[]);
 
-                let fatherTree = util.getFatherTree(547,json.result,[]);
-                console.log('fatherTree 输出 ', JSON.stringify(fatherTree));
+                let fatherTree = util.getFatherTrees(json.result);
+                console.log('fatherTrees 输出 ', JSON.stringify(fatherTree));
                 //console.log('json build = '+ JSON.stringify(util.getJsonFromDBResult(0,{},json.result)));
             }).catch((ex)=> {
                 console.log('parsing failed', ex);
