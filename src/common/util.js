@@ -102,62 +102,92 @@ function findChildren(nodeId, buildResult, rawData) {
 
 };
 
-function carryArrayToJson(rawData, buildResult:{}) {
+/**
+ * 将二维的各id的父节点数组组合 转为为 1维的 各id的父节点json对象组合
+ * **/
+util.transferFatherTrees = function (fatherTrees) {
+    let transferTrees = [];
+    let resultJson ={};
+    for (let i = 0; i < fatherTrees.length; i++) {
 
-    console.log(' in ' + JSON.stringify(rawData));
+        // itemFathers 是array类型，id为fatherTrees[0]的，所有父节点的链条数组
+        let itemFathersArray = fatherTrees[i];
+        let gapLength = itemFathersArray.length;
 
-    rawData.forEach(function (value, index, array) {
-
-        if (value.g_father_id === 0) {
-            buildResult = value;
-            buildResult.children = [];
-
-            array.shift();
-        } else {
-            findMountChildren(value, buildResult);
+        for (let j = 0; j < gapLength -1; j++) {
+            if(!itemFathersArray[j+1].childrens){
+                itemFathersArray[j+1].childrens = [];
+            }
+            itemFathersArray[j+1].childrens.push(itemFathersArray[j]);
         }
-    });
 
-    console.log(' out ' + JSON.stringify(buildResult));
+        let transferJson = itemFathersArray[gapLength - 1];
+        transferTrees.push(transferJson);
 
+        resultJson = transferJson;
+    }
+
+    debugger;
+    console.log('outout' + resultJson);
+    return transferTrees;
 }
 
+function insertNode(object ,insertingNode){
+    if(object.children){
+        object.children = [];
+    }
 
-function findMountChildren(value, buildResult) {
+    object.children.push(insertingNode);
 
-    for (let filed in buildResult) {
+    return object;
+}
 
-        if (value.g_father_id === filed.id) {
-            buildResult.children.push(value);
-            return buildResult;
-        } else {
-            buildResult.children.forEach((childrenValue, index, children) => {
-                findMountChildren(value, buildResult.children)
-            });
+/**
+ * 构造一个大json树，来表达该家族的树状关系
+ * **/
+util.getFatherTreesJson = function (fatherTrees) {
+    let treeJson = {};
+
+
+    for (let i = 0; i < fatherTrees.length; i++) {
+
+        // id为fatherTrees[0]的，所有父节点的链条数组
+        let itemFathers = fatherTrees[i];
+        // itemFathers[0]为链路的叶子节点
+        let itemSelf = itemFathers[0];
+
+        console.log('当前为' + itemSelf.id + ' ' + itemSelf.g_rank + '代')
+        for (let j = itemFathers.length - 1; j > 0; j--) {
+            // 逆序从itemSelf最上层的父节点，开始尝试往treeJson中去 insert item
+            let father = itemFathers[j];
+            if (father.id == 1) {
+                // 顶级根root节点
+                treeJson = itemSelf;
+                treeJson.children = [];
+                continue;
+            }
+
+
+            //if(insertFather(father.g_father_id,treeJson)){
+            //
+            //}
+            //// 普通节点
+            //treeJson.children.push(father);
         }
     }
 
+    return treeJson;
 }
 
-
-util.getJsonFromDBResult = function (nodeId, buildResult, rawData) {
-    console.log('function');
-    //return buildJson(nodeId, buildResult, rawData);
-
-    return carryArrayToJson('', buildResult);
-
-};
-
-
+/**
+ * 获得每个人的链式父亲树，返回一个联系父亲数的数字
+ * **/
 util.getFatherTrees = function (rawData) {
     let fatherTrees = [];
 
     for (let i = 0; i < rawData.length; i++) {
-        if(i == 617){
-            debugger;
-        }
         let tree = this.getFatherTree(rawData[i].id, rawData, []);
-        if(tree){
+        if (tree) {
             fatherTrees.push(tree);
         }
     }
@@ -165,21 +195,24 @@ util.getFatherTrees = function (rawData) {
     return fatherTrees;
 }
 
-// 从第startId数组索引处，找到指定id,的依次所有的父id列表，以数组方式提供，数字索引越大，代表father辈分越高
+/**
+ * 从第startId数组索引处，找到指定id,的依次所有的父id列表，以数组方式提供，数字索引越大，代表father辈分越高
+ * **/
 util.getFatherTree = function (id, rawData, fatherTree) {
 
-    if(!rawData){
+    if (!rawData) {
         return;
     }
 
     let item = this.getItem(id, rawData);
 
-    if(!item || !item.id ){
+    if (!item || !item.id) {
         return;
     }
 
-    fatherTree.push('[' + item.id + '] ' + item.name + ' ' + item.g_rank + '代 祖上' + item.g_father_id);
+    //fatherTree.push('[' + item.id + '] ' + item.name + ' ' + item.g_rank + '代 祖上' + item.g_father_id);
 
+    fatherTree.push(item);
     if (item.g_father_id == 0) {
         // 递归已经找到一代祖先，结束递归
         return fatherTree;
@@ -189,7 +222,9 @@ util.getFatherTree = function (id, rawData, fatherTree) {
     return fatherTree;
 };
 
-// 从第startId数组索引处，找到指定id,的依次所有的父id列表，以数组方式提供，数字索引越大，代表father辈分越高
+/**
+ * 从第startId数组索引处，找到指定id,的依次所有的父id列表，以数组方式提供，数字索引越大，代表father辈分越高
+ * **/
 util.getItem = function (id, rawData) {
     for (let i = 0; i < rawData.length; i++) {
         let item = rawData[i];
