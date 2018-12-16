@@ -24,13 +24,14 @@ class App extends Component {
                 //let fatherTree = util.getFatherTree(545,json.result,[]);
 
                 let fatherTrees = util.getFatherTrees(json.result);
-                console.log('fatherTrees 输出： ', fatherTrees);
+                //console.log('fatherTrees 输出： ', fatherTrees);
 
                 let transferFatherTrees = util.transferFatherTrees(fatherTrees);
                 console.log('transferFatherTrees 输出： ', transferFatherTrees);
+                console.log('transferFatherTrees 输出： ', JSON.stringify(transferFatherTrees));
 
                 //let fatherTreesJson = util.getFatherTreesJson(fatherTrees);
-                console.log('fatherTrees 数组长度为： ', fatherTrees.length);
+                //console.log('fatherTrees 数组长度为： ', fatherTrees.length);
                 //console.log('fatherTrees 输出 ', JSON.stringify(fatherTrees));
                 //console.log('fatherTreesJson 输出 ', fatherTreesJson);
 

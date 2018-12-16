@@ -9,7 +9,6 @@ class InfoList extends Component {
 
         let result = this.props.result;
 
-        console.log('## render json', JSON.stringify(result));
         return (
             <div >
 
@@ -17,7 +16,6 @@ class InfoList extends Component {
                     itemLayout="horizontal"
                     locale='加载中'
                     dataSource={result}
-                    footer={<div>Footer</div>}
                     bordered={true}
                     split={true}
                     renderItem={item => (
