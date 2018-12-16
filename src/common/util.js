@@ -106,40 +106,127 @@ function findChildren(nodeId, buildResult, rawData) {
  * 将二维的各id的父节点数组组合 转为为 1维的 各id的父节点json对象组合
  * **/
 util.transferFatherTrees = function (fatherTrees) {
-    let transferTrees = [];
-    let resultJson ={};
+    let resultJsonObj ={};
     for (let i = 0; i < fatherTrees.length; i++) {
 
-        // itemFathers 是array类型，id为fatherTrees[0]的，所有父节点的链条数组
+        // itemFathersArray 是array类型，id为fatherTrees[0]的，所有父节点的链条数组
         let itemFathersArray = fatherTrees[i];
         let gapLength = itemFathersArray.length;
 
-        for (let j = 0; j < gapLength -1; j++) {
-            if(!itemFathersArray[j+1].childrens){
-                itemFathersArray[j+1].childrens = [];
+        if(i == 13){
+            debugger;
+        }
+        for (let j = 0; j < gapLength; j++) {
+
+            let current = deepClone(itemFathersArray[j]);
+            let result = insertNode(resultJsonObj, current);
+
+            resultJsonObj = result.root?result.root: result;
+            
+            if(result.inserted){
+                break;
             }
-            itemFathersArray[j+1].childrens.push(itemFathersArray[j]);
         }
 
-        let transferJson = itemFathersArray[gapLength - 1];
-        transferTrees.push(transferJson);
-
-        resultJson = transferJson;
     }
 
-    debugger;
-    console.log('outout' + resultJson);
-    return transferTrees;
+    return resultJsonObj;
 }
 
-function insertNode(object ,insertingNode){
-    if(object.children){
-        object.children = [];
+function insertNode(root ,insertingNode){
+    let inserted = false;
+    if(Array.isArray(root)){
+        // children内的数组insert递归
+        for(let arrayChild in root){
+            let subRootChild = deepClone(root[arrayChild]);
+            if(subRootChild.id === insertingNode.g_father_id){
+                let result = insertNode(subRootChild, insertingNode);
+                root[arrayChild] = result.root;
+                if(result.inserted){
+                    inserted = true;
+                    break;
+                }
+            }else{
+                if(subRootChild.children && subRootChild.children.length > 0){
+                    // 有孩子节点的话
+                    subRootChild.children = insertNode(subRootChild.children, insertingNode);
+
+                    let result = insertNode(subRootChild.children, insertingNode);
+                    subRootChild.children = result.root;
+                    if(result.inserted){
+                        inserted = true;
+                        break;
+                    }
+                }
+            }
+        }
+    }else{
+        // children内的对象insert递归
+        if(root && !root.id){
+            // 空对象，根节点，直接插入
+            root = insertingNode;
+            root.children = [];
+        }else{
+
+            if(!insertingNode || !root){
+                debugger;
+            }
+
+            if(root.g_father_id === insertingNode.g_father_id){
+                return root;
+            }
+
+            if(root.id === insertingNode.g_father_id){
+                // insertingNode 是 当前root的直接孩子
+                if(!root.children){
+                    root.children = [];
+                }
+
+                if(!checkInsertNodeExist(root.children,insertingNode)){
+                    root.children.push(insertingNode);
+                    inserted = true;
+                }
+            } else{
+                if(root.children && root.children.length > 0){
+                    // 有孩子节点的话
+                    let result = insertNode(root.children, insertingNode);
+                    if(!result.inserted){
+                        root.children = result.root;
+                    }
+                }
+            }
+        }
     }
 
-    object.children.push(insertingNode);
+    return {root,inserted};
+}
 
-    return object;
+
+function getJsonDepth(object){
+
+    if(!object.children){
+        return 1;
+    }
+
+    return getChildren(object.children) + 1;
+}
+
+function deepClone(obj) {
+    return JSON.parse(JSON.stringify(obj));
+}
+
+
+/**
+ * 从children数组中找是否包含当前insertNode
+ * */
+
+function checkInsertNodeExist(childrenArr , insertingNode){
+    for(let i =0;childrenArr && i<childrenArr.length;i++){
+        if(childrenArr[i].id === insertingNode.id){
+            return true;
+        }
+    }
+    return false;
 }
 
 /**
@@ -147,7 +234,6 @@ function insertNode(object ,insertingNode){
  * **/
 util.getFatherTreesJson = function (fatherTrees) {
     let treeJson = {};
-
 
     for (let i = 0; i < fatherTrees.length; i++) {
 
@@ -166,13 +252,6 @@ util.getFatherTreesJson = function (fatherTrees) {
                 treeJson.children = [];
                 continue;
             }
-
-
-            //if(insertFather(father.g_father_id,treeJson)){
-            //
-            //}
-            //// 普通节点
-            //treeJson.children.push(father);
         }
     }
 
