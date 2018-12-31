@@ -6,8 +6,165 @@ import React,{Component} from 'react'
 class Tree extends Component{
     constructor(props) {
         super(props);
+        var data = [{
+            "name": "总经理",
+            "children": [{
+                "name": "运营总监",
+                "children": [{
+                    "name": "职能总监",
+                    "children": [{
+                        "name": "人事部"
+                    },{
+                        "name": "行政部"
+                    },{
+                        "name": "财务部"
+                    }]
+                },{
+                    "name": "服务总监",
+                    "children": [{
+                        "name": "技术部"
+                    },{
+                        "name": "客服部"
+                    },{
+                        "name": "售后部"
+                    }]
+                },{
+                    "name": "市场总监",
+                    "children": [{
+                        "name": "企划部"
+                    },{
+                        "name": "推广部"
+                    },{
+                        "name": "广告部"
+                    },{
+                        "name": "公关部"
+                    }]
+                }]
+            }]
+        }];
+
+        let ftData = [{
+            "id": 1,
+            "name": "穆茂",
+            "g_rank": 1,
+            "g_father_id": 0,
+            "children": [{
+                "id": 3,
+                "name": "穆叢(cong)",
+                "g_rank": 2,
+                "g_father_id": 1,
+                "children": [{
+                    "id": 7,
+                    "name": "穆宣",
+                    "g_rank": 3,
+                    "g_father_id": 3,
+                    "children": [{
+                        "id": 14,
+                        "name": "穆永吉",
+                        "g_rank": 4,
+                        "g_father_id": 7,
+                        "children": [{
+                            "id": 35,
+                            "name": "穆以弟",
+                            "g_rank": 5,
+                            "g_father_id": 14,
+                            "children": [{
+                                "id": 58,
+                                "name": "穆际春",
+                                "g_rank": 6,
+                                "g_father_id": 35,
+                                "children": [{
+                                    "id": 63,
+                                    "name": "穆文粲（can）",
+                                    "g_rank": 7,
+                                    "g_father_id": 58,
+                                    "children": [{
+                                        "id": 65,
+                                        "name": "穆之栋",
+                                        "g_rank": 8,
+                                        "g_father_id": 63,
+                                        "children": [{
+                                            "id": 77,
+                                            "name": "穆正宸",
+                                            "g_rank": 9,
+                                            "g_father_id": 65,
+                                            "children": [{
+                                                "id": 90,
+                                                "name": "穆大成",
+                                                "g_rank": 10,
+                                                "g_father_id": 77,
+                                                "children": [{
+                                                    "id": 107,
+                                                    "name": "穆兆（zhao）林",
+                                                    "g_rank": 11,
+                                                    "g_father_id": 90,
+                                                    "children": [{
+                                                        "id": 121,
+                                                        "name": "穆祥",
+                                                        "g_rank": 12,
+                                                        "g_father_id": 107,
+                                                        "children": [{
+                                                            "id": 150,
+                                                            "name": "穆汝成",
+                                                            "g_rank": 13,
+                                                            "g_father_id": 121,
+                                                            "children": [{
+                                                                "id": 180,
+                                                                "name": "穆思道",
+                                                                "g_rank": 14,
+                                                                "g_father_id": 150,
+                                                                "children": [{
+                                                                    "id": 233,
+                                                                    "name": "穆廷义",
+                                                                    "g_rank": 15,
+                                                                    "g_father_id": 180,
+                                                                    "children": [{
+                                                                        "id": 367,
+                                                                        "name": "穆文渊",
+                                                                        "g_rank": 16,
+                                                                        "g_father_id": 233,
+                                                                        "children": [{
+                                                                            "id": 459,
+                                                                            "name": "穆金声",
+                                                                            "g_rank": 17,
+                                                                            "g_father_id": 367,
+                                                                            "children": [{
+                                                                                "id": 576,
+                                                                                "name": "穆清才",
+                                                                                "g_rank": 18,
+                                                                                "g_father_id": 459,
+                                                                                "children": [{
+                                                                                    "id": 680,
+                                                                                    "name": "穆荣震",
+                                                                                    "g_rank": 19,
+                                                                                    "g_father_id": 576,
+                                                                                    "children": [{
+                                                                                        "id": 685,
+                                                                                        "name": "穆毅鹏",
+                                                                                        "g_rank": 20,
+                                                                                        "g_father_id": 680
+                                                                                    }]
+                                                                                }]
+                                                                            }]
+                                                                        }]
+                                                                    }]
+                                                                }]
+                                                            }]
+                                                        }]
+                                                    }]
+                                                }]
+                                            }]
+                                        }]
+                                    }]
+                                }]
+                            }]
+                        }]
+                    }]
+                }]
+            }]
+        }];
         this.state = {
-            data: [{"name":"总经理","childrens":[{"name":"运营总监","childrens":[{"name":"职能总监","childrens":[{"name":"人事部"},{"name":"行政部"},{"name":"财务部"}]},{"name":"服务总监","childrens":[{"name":"技术部"},{"name":"客服部"},{"name":"售后部"}]},{"name":"市场总监","childrens":[{"name":"企划部"},{"name":"推广部"},{"name":"广告部"},{"name":"公关部"}]}]}]}],
+            data: ftData,
             forceFit: true,
             width: 500,
             height: 450,
