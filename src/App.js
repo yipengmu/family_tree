@@ -29,13 +29,15 @@ class App extends Component {
 
                 // 将二维数组（第二维是数组) 转化成二维的数组（第二维是一个直系父深度对象，实际已经是一个一维数组了)
                 let reductiveTrees = util.reductFatherTrees(fatherTrees);
-                console.log('reductiveTrees 输出： ', reductiveTrees);
-                console.log('myp 输出： ', JSON.stringify(reductiveTrees[617]));
+                //console.log('reductiveTrees 输出： ', reductiveTrees);
+                //console.log('myp 输出： ', JSON.stringify(reductiveTrees[617]));
                 //console.log('600 输出： ', JSON.stringify(reductiveTrees[600]));
 
                 // 将622条深度直系父关系，借助g_rank进行合并
                 let oneTree = util.getOneTree(reductiveTrees);
                 console.log('oneTree 输出： ', oneTree);
+                console.log('oneTree 输出： ', JSON.stringify(oneTree));
+
 
                 //  将二维的各id的父节点数组组合 转为为 1维的 各id的父节点json对象组合
                 //let transferFatherTrees = util.transferFatherTrees(fatherTrees);
