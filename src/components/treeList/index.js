@@ -6,11 +6,9 @@ import Tree from './tree/index.js'
 class TreeList extends Component {
     render() {
 
-        let result = this.props.result;
-
         return (
             <div >
-                <Tree result={result}/>
+                <Tree data={this.props.data}/>
             </div>
         );
     }
