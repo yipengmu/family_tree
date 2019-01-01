@@ -216,7 +216,11 @@ var findFatherByRankAndId = function (oneTree, rank ,findingFatherId) {
                 return oneTree[i];
             }else{
                 if (oneTree[i].children && oneTree[i].g_rank < rank) {
-                    return findFatherByRankAndId(oneTree[i].children, rank,findingFatherId);
+                    let find = findFatherByRankAndId(oneTree[i].children, rank,findingFatherId);
+                    if(find && find.id === findingFatherId){
+                        //找到了
+                        return find;
+                    }
                 }
             }
         }
@@ -225,7 +229,11 @@ var findFatherByRankAndId = function (oneTree, rank ,findingFatherId) {
             return oneTree;
         }else{
             if(oneTree.children && oneTree.g_rank < rank){
-                return findFatherByRankAndId(oneTree.children,rank,findingFatherId);
+                let find =  findFatherByRankAndId(oneTree.children,rank,findingFatherId);
+                if(find && find.id === findingFatherId){
+                    //找到了
+                    return find;
+                }
             }
         }
     }
