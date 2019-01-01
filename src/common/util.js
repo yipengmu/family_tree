@@ -27,7 +27,6 @@ function mountChildren(obj, children) {
  *  ***/
 function buildJson(nodeId, buildResult, rawData) {
 
-    debugger;
 
     let founded = false;
     let currentRoot = buildResult;
@@ -133,9 +132,6 @@ util.getOneTree = function (reductiveTrees) {
             let linkObjByRank = getLinkObjByRank(linkObj, rank);
 
             if (linkObjByRank) {
-                if(linkObjByRank.id  === 14){
-                    debugger;
-                }
                 // 获取指定层架下，组装树的所有father节点，已数组形式存在,找到目标father
                 let dFather = findFatherByRankAndId(oneTree, rank - 1, linkObjByRank.g_father_id);
                 if (dFather && linkObjByRank.g_father_id === dFather.id) {
@@ -205,10 +201,6 @@ var getLinkObjByRank = function (linkObj, rank) {
 // linkObj 是一棵json树
 var findFatherByRankAndId = function (oneTree, rank ,findingFatherId) {
 
-    if(rank === 3){
-        debugger;
-    }
-
     // oneTree是数组，代表递归到children里了
     if (oneTree instanceof  Array) {
         for (let i = 0; i < oneTree.length; i++) {
@@ -273,9 +265,6 @@ util.transferFatherTrees = function (fatherTrees) {
         let itemFathersArray = fatherTrees[i];
         let gapLength = itemFathersArray.length;
 
-        if (i == 13) {
-            debugger;
-        }
         for (let j = 0; j < gapLength; j++) {
 
             let current = deepClone(itemFathersArray[j]);
@@ -327,10 +316,6 @@ function insertNode(root, insertingNode) {
             root = insertingNode;
             root.children = [];
         } else {
-
-            if (!insertingNode || !root) {
-                debugger;
-            }
 
             if (root.g_father_id === insertingNode.g_father_id) {
                 return root;

@@ -6,8 +6,7 @@ import 'whatwg-fetch'
 class InfoList extends Component {
     render() {
 
-
-        let result = this.props.result;
+        let result = this.props.data;
 
         return (
             <div >

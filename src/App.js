@@ -10,7 +10,8 @@ class App extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            result: {},
+            resultArray: [],
+            resultOneTree:{},
         };
     }
 
@@ -19,7 +20,7 @@ class App extends Component {
             .then((response)=> {
                 return response.json()
             }).then((json)=> {
-                this.setState({result:json.result});
+                this.setState({resultArray:json.result});
                 //console.log('原始数据 parsed json', JSON.stringify(json.result));
                 //let fatherTree = util.getFatherTree(545,json.result,[]);
 
@@ -36,7 +37,9 @@ class App extends Component {
                 // 将622条深度直系父关系，借助g_rank进行合并
                 let oneTree = util.getOneTree(reductiveTrees);
                 console.log('oneTree 输出： ', oneTree);
-                console.log('oneTree 输出： ', JSON.stringify(oneTree));
+
+                this.setState({resultOneTree: oneTree});
+                //console.log('oneTree 输出： ', JSON.stringify(oneTree));
 
 
                 //  将二维的各id的父节点数组组合 转为为 1维的 各id的父节点json对象组合
@@ -60,9 +63,9 @@ class App extends Component {
                 <p>family tree header</p>
 
                 <div className="App-container">
-                    <TreeList result={this.state.result}/>
+                    <TreeList data={this.state.resultOneTree}/>
 
-                    <InfoList result={this.state.result}/>
+                    <InfoList data={this.state.resultArray}/>
                 </div>
             </div>
         );
