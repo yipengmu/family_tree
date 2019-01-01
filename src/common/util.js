@@ -204,7 +204,6 @@ var getLinkObjByRank = function (linkObj, rank) {
 // 返回指定rank下的数据，一定是obj
 // linkObj 是一棵json树
 var findFatherByRankAndId = function (oneTree, rank ,findingFatherId) {
-    let father = oneTree;
 
     if(rank === 3){
         debugger;
@@ -214,26 +213,24 @@ var findFatherByRankAndId = function (oneTree, rank ,findingFatherId) {
     if (oneTree instanceof  Array) {
         for (let i = 0; i < oneTree.length; i++) {
             if (oneTree[i].g_rank === rank && oneTree[i].id === findingFatherId) {
-                father = oneTree[i];
-                break;
+                return oneTree[i];
             }else{
                 if (oneTree[i].children && oneTree[i].g_rank < rank) {
-                    father = findFatherByRankAndId(oneTree[i].children, rank,findingFatherId);
+                    return findFatherByRankAndId(oneTree[i].children, rank,findingFatherId);
                 }
             }
         }
     }else{
         if (rank === 1 && oneTree.id == findingFatherId) {
-            father = oneTree;
+            return oneTree;
         }else{
             if(oneTree.children && oneTree.g_rank < rank){
-                father =findFatherByRankAndId(oneTree.children,rank,findingFatherId);
+                return findFatherByRankAndId(oneTree.children,rank,findingFatherId);
             }
         }
     }
 
-    return father;
-
+    return oneTree;
 }
 
 
