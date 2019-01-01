@@ -9,10 +9,10 @@ class Tree extends Component{
 
         this.state = {
             forceFit: true,
-            width: 500,
-            height: 450,
+            width: 2500,
+            height: 3450,
             plotCfg: {
-                margin: [20, 50]
+                margin: [20, 20]
             },
         };
     }
@@ -91,7 +91,6 @@ class Tree extends Component{
                 })
                 .tooltip('name');
 
-            chart.forceFit();
             chart.render();
         });
 
