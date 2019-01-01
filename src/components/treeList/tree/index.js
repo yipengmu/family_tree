@@ -9,8 +9,8 @@ class Tree extends Component{
 
         this.state = {
             forceFit: true,
-            width: 2500,
-            height: 3450,
+            width: 1200,
+            height: 3000,
             plotCfg: {
                 margin: [20, 20]
             },
@@ -27,7 +27,7 @@ class Tree extends Component{
                 drawShape: function(cfg, group) {
                     var x = cfg.x;
                     var y = cfg.y;
-                    var width = 44;
+                    var width = 40;
                     var height = 20;
                     var shape = group.addShape('rect', {
                         attrs: {
@@ -66,8 +66,8 @@ class Tree extends Component{
             var edgeView = chart.createView();
             edgeView.source(edges);
             edgeView.coord().reflect(); //
-            edgeView.axis(false);
-            edgeView.tooltip(false);
+            edgeView.axis(true);
+            edgeView.tooltip(true);
             // Stat.link 方法会生成 ..x, ..y的字段类型，数值范围是 0-1
             edgeView.edge()
                 .position(Stat.link('source*target',nodes))
@@ -87,7 +87,10 @@ class Tree extends Component{
             nodeView.point().position('x*y').color('steelblue')
                 .shape('depart')
                 .label('name', {
-                    offset: 0
+                    offset: 0,
+                    label: {
+                        fontSize:10, // 文本大小
+                    }
                 })
                 .tooltip('name');
 
