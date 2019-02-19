@@ -40,7 +40,9 @@ class App extends Component {
                 //console.log('oneTree 输出： ', JSON.stringify(oneTree));
             }).catch((ex)=> {
                 console.log('parsing failed', ex);
-            })
+            });
+
+
     }
 
     render() {
