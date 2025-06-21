@@ -1,0 +1,260 @@
+.family-tree-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #f5f5f5;
+}
+
+.family-tree-container.fullscreen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  background: #fff;
+}
+
+.control-panel {
+  margin: 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.control-row {
+  margin-bottom: 12px;
+}
+
+.control-row:last-child {
+  margin-bottom: 0;
+}
+
+.generation-filter {
+  display: flex;
+  align-items: center;
+  background: #fafafa;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #d9d9d9;
+}
+
+.statistics-row {
+  padding-top: 12px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.flow-container {
+  flex: 1;
+  margin: 0 16px 16px 16px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: #fff;
+}
+
+.family-tree-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+}
+
+.selected-node-info p {
+  margin-bottom: 8px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.selected-node-info p:last-child {
+  margin-bottom: 0;
+}
+
+/* React Flow 自定义样式 */
+.react-flow__node-familyMember {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+.react-flow__edge-default {
+  stroke: #b1b1b7;
+  stroke-width: 2;
+}
+
+.react-flow__edge-selected {
+  stroke: #1890ff;
+  stroke-width: 3;
+}
+
+.react-flow__controls {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.react-flow__controls-button {
+  border: none;
+  background: transparent;
+  color: #595959;
+  font-size: 16px;
+}
+
+.react-flow__controls-button:hover {
+  background: #f5f5f5;
+  color: #262626;
+}
+
+.react-flow__minimap {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.react-flow__background {
+  background: #fafafa;
+}
+
+.react-flow__panel {
+  background: transparent;
+}
+
+/* 响应式设计 */
+@media (max-width: 1200px) {
+  .control-panel {
+    margin: 12px;
+  }
+  
+  .flow-container {
+    margin: 0 12px 12px 12px;
+  }
+  
+  .generation-filter {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .generation-filter .ant-slider {
+    width: 200px;
+  }
+}
+
+@media (max-width: 768px) {
+  .family-tree-container {
+    height: 100vh;
+  }
+  
+  .control-panel {
+    margin: 8px;
+  }
+  
+  .flow-container {
+    margin: 0 8px 8px 8px;
+  }
+  
+  .control-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .control-row .ant-space {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .statistics-row .ant-space {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .react-flow__panel {
+    position: relative !important;
+    transform: none !important;
+    margin: 8px;
+  }
+  
+  .react-flow__panel .ant-card {
+    width: calc(100vw - 32px) !important;
+    max-width: none !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .control-panel .ant-card-body {
+    padding: 12px;
+  }
+  
+  .generation-filter {
+    padding: 6px 8px;
+  }
+  
+  .generation-filter .ant-slider {
+    width: 150px;
+  }
+  
+  .react-flow__controls {
+    bottom: 60px;
+  }
+  
+  .react-flow__minimap {
+    width: 120px;
+    height: 80px;
+  }
+}
+
+/* 暗色主题支持 */
+@media (prefers-color-scheme: dark) {
+  .family-tree-container {
+    background: #141414;
+  }
+  
+  .control-panel {
+    background: #1f1f1f;
+    border-color: #434343;
+  }
+  
+  .generation-filter {
+    background: #262626;
+    border-color: #434343;
+  }
+  
+  .flow-container {
+    background: #1f1f1f;
+  }
+  
+  .react-flow__background {
+    background: #1f1f1f;
+  }
+  
+  .react-flow__controls {
+    background: rgba(31, 31, 31, 0.9);
+  }
+  
+  .react-flow__minimap {
+    background: rgba(31, 31, 31, 0.9);
+  }
+}
+
+/* 打印样式 */
+@media print {
+  .control-panel {
+    display: none;
+  }
+  
+  .family-tree-container {
+    height: auto;
+  }
+  
+  .flow-container {
+    height: 100vh;
+    margin: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  
+  .react-flow__controls,
+  .react-flow__minimap {
+    display: none;
+  }
+}
