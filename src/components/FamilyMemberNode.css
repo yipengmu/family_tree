@@ -1,0 +1,150 @@
+.family-member-node {
+  min-width: 180px;
+  max-width: 220px;
+  font-size: 12px;
+}
+
+.family-member-node.selected .member-card {
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
+  transform: scale(1.02);
+  transition: all 0.2s ease;
+}
+
+.member-card {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.member-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+}
+
+.member-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.member-name {
+  flex: 1;
+  min-width: 0;
+}
+
+.name-text {
+  font-weight: 600;
+  font-size: 13px;
+  color: #262626;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.generation-info {
+  margin-top: 2px;
+}
+
+.member-position {
+  display: flex;
+  align-items: center;
+  margin: 4px 0;
+  padding: 2px 0;
+  border-top: 1px solid #f0f0f0;
+}
+
+.position-text {
+  font-size: 11px;
+  color: #595959;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.member-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.member-meta .ant-tag {
+  margin: 0;
+  font-size: 10px;
+  line-height: 16px;
+  padding: 0 4px;
+}
+
+/* 工具提示样式 */
+.family-member-tooltip {
+  max-width: 300px;
+}
+
+.family-member-tooltip > div {
+  margin-bottom: 4px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.family-member-tooltip > div:last-child {
+  margin-bottom: 0;
+}
+
+/* React Flow 句柄样式 */
+.react-flow__handle {
+  width: 8px;
+  height: 8px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+}
+
+.react-flow__handle-top {
+  top: -4px;
+}
+
+.react-flow__handle-bottom {
+  bottom: -4px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .family-member-node {
+    min-width: 150px;
+    max-width: 180px;
+  }
+  
+  .name-text {
+    font-size: 12px;
+  }
+  
+  .position-text {
+    font-size: 10px;
+  }
+}
+
+/* 暗色主题支持 */
+@media (prefers-color-scheme: dark) {
+  .member-card {
+    background: #1f1f1f;
+    border-color: #434343;
+  }
+  
+  .name-text {
+    color: #fff;
+  }
+  
+  .position-text {
+    color: #bfbfbf;
+  }
+  
+  .member-position,
+  .member-meta {
+    border-color: #434343;
+  }
+}
