@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import { memo } from 'react';
 import { Handle, Position } from 'reactflow';
 import { Card, Tag, Avatar, Tooltip } from 'antd';
 import { UserOutlined, ManOutlined, WomanOutlined, CrownOutlined } from '@ant-design/icons';
@@ -27,13 +27,29 @@ const FamilyMemberNode = ({ data, selected }) => {
     return <UserOutlined />;
   };
 
-  // 根据代数生成颜色
+  // 根据代数生成颜色 - 使用现代化配色
   const getGenerationColor = (generation) => {
     const colors = [
-      '#f50', '#2db7f5', '#87d068', '#108ee9', '#f56a00',
-      '#722ed1', '#13c2c2', '#52c41a', '#1890ff', '#fa541c',
-      '#eb2f96', '#faad14', '#a0d911', '#fa8c16', '#d4b106',
-      '#096dd9', '#36cfc9', '#73d13d', '#40a9ff', '#ffc53d'
+      'hsl(221.2 83.2% 53.3%)', // blue
+      'hsl(142.1 76.2% 36.3%)', // green
+      'hsl(262.1 83.3% 57.8%)', // purple
+      'hsl(346.8 77.2% 49.8%)', // red
+      'hsl(24.6 95% 53.1%)', // orange
+      'hsl(47.9 95.8% 53.1%)', // yellow
+      'hsl(173.4 58.9% 39.1%)', // teal
+      'hsl(270.7 91% 65.1%)', // violet
+      'hsl(0 84.2% 60.2%)', // rose
+      'hsl(20.5 90.2% 48.2%)', // amber
+      'hsl(142.1 70.6% 45.3%)', // emerald
+      'hsl(217.2 91.2% 59.8%)', // sky
+      'hsl(316.7 77.4% 59.8%)', // pink
+      'hsl(12.2 84.7% 60.8%)', // red-orange
+      'hsl(159.6 84.1% 39.4%)', // cyan
+      'hsl(280.4 89.1% 67.1%)', // fuchsia
+      'hsl(43.3 96.4% 56.3%)', // lime
+      'hsl(198.4 93.2% 59.6%)', // light-blue
+      'hsl(339.6 82.2% 51.6%)', // crimson
+      'hsl(35.5 91.7% 32.9%)'  // brown
     ];
     return colors[(generation - 1) % colors.length];
   };
@@ -86,7 +102,7 @@ const FamilyMemberNode = ({ data, selected }) => {
             borderColor: getGenerationColor(rank),
             borderWidth: selected ? 3 : 1,
           }}
-          bodyStyle={{ padding: '8px 12px' }}
+          styles={{ body: { padding: '12px 16px' } }}
         >
           <div className="member-header">
             <Avatar

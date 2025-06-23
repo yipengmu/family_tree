@@ -1,12 +1,13 @@
 .app-layout {
   min-height: 100vh;
-  background: #f5f5f5;
+  background: hsl(0 0% 100%);
 }
 
 .app-header {
-  background: linear-gradient(135deg, #1890ff 0%, #722ed1 100%);
+  background: hsl(0 0% 100%);
+  border-bottom: 1px solid hsl(214.3 31.8% 91.4%);
   padding: 0 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   position: relative;
   z-index: 10;
 }
@@ -18,17 +19,29 @@
   height: 100%;
   max-width: 1200px;
   margin: 0 auto;
+  padding: 16px 0;
 }
 
 .header-content h2 {
-  font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  font-weight: 600;
-  letter-spacing: 1px;
+  font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-weight: 700;
+  font-size: 24px;
+  letter-spacing: -0.025em;
+  color: hsl(222.2 84% 4.9%) !important;
+  margin: 0 !important;
+  line-height: 1.2;
+}
+
+.header-content span {
+  color: hsl(215.4 16.3% 46.9%) !important;
+  font-size: 14px;
+  font-weight: 400;
+  margin: 0;
 }
 
 .app-content {
   padding: 0;
-  background: #f5f5f5;
+  background: hsl(0 0% 100%);
   min-height: calc(100vh - 64px);
 }
 
@@ -42,15 +55,17 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 4px;
-    padding: 8px 0;
+    padding: 12px 0;
   }
 
   .header-content h2 {
-    font-size: 20px;
+    font-size: 20px !important;
+    color: hsl(222.2 84% 4.9%) !important;
   }
 
   .header-content span {
-    font-size: 12px;
+    font-size: 12px !important;
+    color: hsl(215.4 16.3% 46.9%) !important;
   }
 }
 
@@ -59,20 +74,100 @@
     padding: 0 12px;
   }
 
+  .header-content {
+    padding: 8px 0;
+  }
+
   .header-content h2 {
-    font-size: 18px;
+    font-size: 18px !important;
+    color: hsl(222.2 84% 4.9%) !important;
   }
 }
 
-/* 暗色主题支持 */
-@media (prefers-color-scheme: dark) {
-  .app-layout {
-    background: #141414;
-  }
+/* 确保统一的白色主题 */
+.app-layout,
+.app-content {
+  background: hsl(0 0% 100%) !important;
+}
 
-  .app-content {
-    background: #141414;
-  }
+/* 全局Ant Design组件主题统一 */
+.ant-layout {
+  background: hsl(0 0% 100%) !important;
+}
+
+.ant-layout-header {
+  background: hsl(0 0% 100%) !important;
+  border-bottom: 1px solid hsl(214.3 31.8% 91.4%) !important;
+}
+
+.ant-layout-content {
+  background: hsl(0 0% 100%) !important;
+}
+
+.ant-typography {
+  color: hsl(222.2 84% 4.9%) !important;
+}
+
+.ant-typography.ant-typography-secondary {
+  color: hsl(215.4 16.3% 46.9%) !important;
+}
+
+/* 全局 Tooltip 白色主题样式 */
+.ant-tooltip {
+  z-index: 9999 !important;
+}
+
+.ant-tooltip-inner {
+  background: hsl(0 0% 100%) !important;
+  color: hsl(222.2 84% 4.9%) !important;
+  border: 1px solid hsl(214.3 31.8% 91.4%) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
+  font-size: 13px !important;
+  line-height: 1.5 !important;
+  padding: 12px 16px !important;
+  max-width: 320px !important;
+  font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif !important;
+}
+
+.ant-tooltip-arrow {
+  display: none !important;
+}
+
+.ant-tooltip-arrow::before {
+  background: hsl(0 0% 100%) !important;
+  border: 1px solid hsl(214.3 31.8% 91.4%) !important;
+}
+
+/* 确保 Tooltip 内容样式 */
+.ant-tooltip-inner strong {
+  color: hsl(222.2 84% 4.9%) !important;
+  font-weight: 600 !important;
+}
+
+.ant-tooltip-inner div {
+  margin-bottom: 6px !important;
+  color: hsl(222.2 84% 4.9%) !important;
+}
+
+.ant-tooltip-inner div:last-child {
+  margin-bottom: 0 !important;
+}
+
+/* Slider Tooltip 特殊样式 */
+.ant-slider-tooltip .ant-tooltip-inner {
+  background: hsl(0 0% 100%) !important;
+  color: hsl(222.2 84% 4.9%) !important;
+  border: 1px solid hsl(214.3 31.8% 91.4%) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 2px 4px -1px rgb(0 0 0 / 0.1) !important;
+  font-size: 12px !important;
+  padding: 4px 8px !important;
+  min-height: auto !important;
+}
+
+.ant-slider-tooltip .ant-tooltip-arrow {
+  display: none !important;
 }
 
 /* 打印样式 */

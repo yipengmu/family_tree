@@ -235,6 +235,114 @@ export const getFamilyStatistics = (familyData) => {
 };
 
 /**
+ * 获取从指定节点到根节点（穆茂）的完整路径
+ * @param {Array} familyData - 家谱数据
+ * @param {Number} targetPersonId - 目标人员ID
+ * @returns {Array} - 路径上的所有人员数据
+ */
+export const getPathToRoot = (familyData, targetPersonId) => {
+  const personMap = new Map(familyData.map(p => [p.id, p]));
+  const pathPersons = [];
+
+  let currentPerson = personMap.get(targetPersonId);
+
+  // 从目标人员开始，一直向上追溯到根节点
+  while (currentPerson) {
+    pathPersons.push(currentPerson);
+
+    // 如果到达根节点（穆茂，通常g_father_id为0或不存在）
+    if (!currentPerson.g_father_id || currentPerson.g_father_id === 0) {
+      break;
+    }
+
+    // 继续向上查找父节点
+    currentPerson = personMap.get(currentPerson.g_father_id);
+  }
+
+  return pathPersons;
+};
+
+/**
+ * 获取路径树数据（包含路径上所有节点及其直接子节点）
+ * @param {Array} familyData - 家谱数据
+ * @param {Number} targetPersonId - 目标人员ID
+ * @returns {Array} - 路径树数据
+ */
+export const getPathTreeData = (familyData, targetPersonId) => {
+  const pathPersons = getPathToRoot(familyData, targetPersonId);
+  const resultPersons = new Set();
+
+  // 添加路径上的所有人员
+  pathPersons.forEach(person => {
+    resultPersons.add(person);
+  });
+
+  // 为路径上的每个人员添加其直接子节点（显示兄弟姐妹关系）
+  pathPersons.forEach(pathPerson => {
+    const siblings = familyData.filter(person =>
+      person.g_father_id === pathPerson.g_father_id &&
+      person.g_father_id !== 0
+    );
+    siblings.forEach(sibling => {
+      resultPersons.add(sibling);
+    });
+
+    // 添加该路径节点的所有直接子节点
+    const children = familyData.filter(person =>
+      person.g_father_id === pathPerson.id
+    );
+    children.forEach(child => {
+      resultPersons.add(child);
+    });
+  });
+
+  return Array.from(resultPersons);
+};
+
+/**
+ * 搜索家族成员并返回路径树数据
+ * @param {Array} familyData - 家谱数据
+ * @param {String} searchTerm - 搜索关键词
+ * @returns {Object} - 搜索结果和路径树数据
+ */
+export const searchWithPathTree = (familyData, searchTerm) => {
+  if (!searchTerm.trim()) {
+    return {
+      searchResults: [],
+      pathTreeData: familyData,
+      targetPerson: null
+    };
+  }
+
+  const term = searchTerm.toLowerCase();
+  const searchResults = familyData.filter(person =>
+    person.name.toLowerCase().includes(term) ||
+    (person.official_position && person.official_position.toLowerCase().includes(term)) ||
+    (person.summary && person.summary.toLowerCase().includes(term)) ||
+    (person.location && person.location.toLowerCase().includes(term))
+  );
+
+  // 如果只有一个搜索结果，返回其路径树
+  if (searchResults.length === 1) {
+    const targetPerson = searchResults[0];
+    const pathTreeData = getPathTreeData(familyData, targetPerson.id);
+
+    return {
+      searchResults,
+      pathTreeData,
+      targetPerson
+    };
+  }
+
+  // 如果有多个结果，返回所有匹配的人员
+  return {
+    searchResults,
+    pathTreeData: searchResults,
+    targetPerson: null
+  };
+};
+
+/**
  * 验证数据完整性
  * @param {Array} familyData - 家谱数据
  * @returns {Object} - 验证结果
@@ -242,23 +350,23 @@ export const getFamilyStatistics = (familyData) => {
 export const validateFamilyData = (familyData) => {
   const issues = [];
   const personIds = new Set(familyData.map(p => p.id));
-  
+
   familyData.forEach(person => {
     // 检查父亲ID是否存在
     if (person.g_father_id && person.g_father_id !== 0 && !personIds.has(person.g_father_id)) {
       issues.push(`${person.name} (ID: ${person.id}) 的父亲ID ${person.g_father_id} 不存在`);
     }
-    
+
     // 检查必要字段
     if (!person.name || person.name.trim() === '') {
       issues.push(`ID ${person.id} 的成员缺少姓名`);
     }
-    
+
     if (!person.g_rank || person.g_rank < 1) {
       issues.push(`${person.name} (ID: ${person.id}) 的代数信息异常`);
     }
   });
-  
+
   return {
     isValid: issues.length === 0,
     issues

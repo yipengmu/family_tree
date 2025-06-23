@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Layout, Typography, Alert } from 'antd';
+import { ReactFlowProvider } from 'reactflow';
 import FamilyTreeFlow from './components/FamilyTreeFlow';
 import { validateFamilyData } from './utils/familyTreeUtils';
 import dbJson from './data/familyData.js';
@@ -49,10 +50,10 @@ function App() {
     <Layout className="app-layout">
       <Header className="app-header">
         <div className="header-content">
-          <Title level={2} style={{ color: 'white', margin: 0 }}>
+          <Title level={2}>
             穆氏家谱
           </Title>
-          <Text style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+          <Text>
             Interactive Family Tree Visualization
           </Text>
         </div>
@@ -72,11 +73,13 @@ function App() {
         )}
 
         {/* 家谱可视化组件 */}
-        <FamilyTreeFlow
-          familyData={familyData}
-          loading={loading}
-          error={error}
-        />
+        <ReactFlowProvider>
+          <FamilyTreeFlow
+            familyData={familyData}
+            loading={loading}
+            error={error}
+          />
+        </ReactFlowProvider>
       </Content>
     </Layout>
   );
