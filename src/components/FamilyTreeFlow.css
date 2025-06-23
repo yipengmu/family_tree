@@ -2,7 +2,7 @@
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #f5f5f5;
+  background: hsl(0 0% 100%);
 }
 
 .family-tree-container.fullscreen {
@@ -12,17 +12,23 @@
   right: 0;
   bottom: 0;
   z-index: 1000;
-  background: #fff;
+  background: hsl(0 0% 100%);
 }
 
 .control-panel {
-  margin: 16px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin: 24px;
+  border-radius: 12px;
+  border: 1px solid hsl(214.3 31.8% 91.4%);
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  background: hsl(0 0% 100%);
+}
+
+.control-panel .ant-card-body {
+  padding: 20px;
 }
 
 .control-row {
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 
 .control-row:last-child {
@@ -32,24 +38,115 @@
 .generation-filter {
   display: flex;
   align-items: center;
-  background: #fafafa;
-  padding: 8px 12px;
-  border-radius: 6px;
-  border: 1px solid #d9d9d9;
+  background: hsl(210 40% 98%);
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid hsl(214.3 31.8% 91.4%);
+  gap: 12px;
+}
+
+.generation-filter .ant-typography {
+  color: hsl(222.2 84% 4.9%);
+  font-weight: 500;
+  margin: 0;
 }
 
 .statistics-row {
-  padding-top: 12px;
-  border-top: 1px solid #f0f0f0;
+  padding-top: 16px;
+  border-top: 1px solid hsl(214.3 31.8% 91.4%);
+}
+
+/* 主要操作按钮样式 */
+.control-row .ant-btn-primary.ant-btn-lg {
+  background: linear-gradient(135deg, hsl(221.2 83.2% 53.3%) 0%, hsl(262.1 83.3% 57.8%) 100%);
+  border: none;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  font-weight: 600;
+  height: 40px;
+  padding: 0 24px;
+  border-radius: 8px;
+}
+
+.control-row .ant-btn-primary.ant-btn-lg:hover {
+  background: linear-gradient(135deg, hsl(221.2 83.2% 48.3%) 0%, hsl(262.1 83.3% 52.8%) 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 8px -1px rgb(0 0 0 / 0.15), 0 4px 6px -2px rgb(0 0 0 / 0.1);
+}
+
+.control-row .ant-btn-primary.ant-btn-lg:active {
+  transform: translateY(0);
+}
+
+/* 浮动提示样式 */
+.floating-hint {
+  background: hsl(0 0% 100%);
+  border: 1px solid hsl(214.3 31.8% 91.4%);
+  border-radius: 8px;
+  padding: 8px 16px;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  animation: fadeInUp 0.5s ease-out;
+  backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 选中节点信息面板样式 */
+.selected-node-info {
+  font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+
+.selected-node-info p {
+  margin-bottom: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: hsl(222.2 84% 4.9%);
+}
+
+.selected-node-info p:last-child {
+  margin-bottom: 0;
+}
+
+.selected-node-info strong {
+  color: hsl(222.2 84% 4.9%);
+  font-weight: 600;
+}
+
+/* React Flow Panel 样式覆盖 */
+.react-flow__panel .ant-card {
+  background: hsl(0 0% 100%) !important;
+  border: 1px solid hsl(214.3 31.8% 91.4%) !important;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
+}
+
+.react-flow__panel .ant-card-head {
+  background: hsl(210 40% 98%) !important;
+  border-bottom: 1px solid hsl(214.3 31.8% 91.4%) !important;
+  color: hsl(222.2 84% 4.9%) !important;
+}
+
+.react-flow__panel .ant-card-body {
+  background: hsl(0 0% 100%) !important;
+  color: hsl(222.2 84% 4.9%) !important;
 }
 
 .flow-container {
   flex: 1;
-  margin: 0 16px 16px 16px;
-  border-radius: 8px;
+  margin: 0 24px 24px 24px;
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  background: #fff;
+  border: 1px solid hsl(214.3 31.8% 91.4%);
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  background: hsl(0 0% 100%);
 }
 
 .family-tree-loading {
@@ -78,41 +175,48 @@
 }
 
 .react-flow__edge-default {
-  stroke: #b1b1b7;
+  stroke: hsl(215.4 16.3% 46.9%);
   stroke-width: 2;
 }
 
 .react-flow__edge-selected {
-  stroke: #1890ff;
+  stroke: hsl(221.2 83.2% 53.3%);
   stroke-width: 3;
 }
 
 .react-flow__controls {
-  background: rgba(255, 255, 255, 0.9);
+  background: hsl(0 0% 100%);
+  border: 1px solid hsl(214.3 31.8% 91.4%);
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
 }
 
 .react-flow__controls-button {
   border: none;
   background: transparent;
-  color: #595959;
+  color: hsl(215.4 16.3% 46.9%);
   font-size: 16px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .react-flow__controls-button:hover {
-  background: #f5f5f5;
-  color: #262626;
+  background: hsl(210 40% 98%);
+  color: hsl(222.2 84% 4.9%);
 }
 
 .react-flow__minimap {
-  background: rgba(255, 255, 255, 0.9);
+  background: hsl(0 0% 100%);
+  border: 1px solid hsl(214.3 31.8% 91.4%);
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
 }
 
 .react-flow__background {
-  background: #fafafa;
+  background: hsl(210 40% 98%);
 }
 
 .react-flow__panel {
@@ -203,37 +307,11 @@
   }
 }
 
-/* 暗色主题支持 */
-@media (prefers-color-scheme: dark) {
-  .family-tree-container {
-    background: #141414;
-  }
-  
-  .control-panel {
-    background: #1f1f1f;
-    border-color: #434343;
-  }
-  
-  .generation-filter {
-    background: #262626;
-    border-color: #434343;
-  }
-  
-  .flow-container {
-    background: #1f1f1f;
-  }
-  
-  .react-flow__background {
-    background: #1f1f1f;
-  }
-  
-  .react-flow__controls {
-    background: rgba(31, 31, 31, 0.9);
-  }
-  
-  .react-flow__minimap {
-    background: rgba(31, 31, 31, 0.9);
-  }
+/* 确保统一的白色主题 */
+.family-tree-container,
+.control-panel,
+.flow-container {
+  background: hsl(0 0% 100%) !important;
 }
 
 /* 打印样式 */

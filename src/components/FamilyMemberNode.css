@@ -1,11 +1,11 @@
 .family-member-node {
-  min-width: 180px;
-  max-width: 220px;
-  font-size: 12px;
+  min-width: 200px;
+  max-width: 240px;
+  font-size: 13px;
 }
 
 .family-member-node.selected .member-card {
-  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
+  box-shadow: 0 0 0 2px hsl(221.2 83.2% 53.3%);
   transform: scale(1.02);
   transition: all 0.2s ease;
 }
@@ -13,20 +13,22 @@
 .member-card {
   cursor: pointer;
   transition: all 0.2s ease;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: hsl(0 0% 100%);
+  border-radius: 12px;
+  border: 1px solid hsl(214.3 31.8% 91.4%);
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
 }
 
 .member-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
   transform: translateY(-1px);
+  border-color: hsl(214.3 31.8% 81.4%);
 }
 
 .member-header {
   display: flex;
   align-items: center;
-  margin-bottom: 4px;
+  margin-bottom: 8px;
 }
 
 .member-name {
@@ -36,29 +38,29 @@
 
 .name-text {
   font-weight: 600;
-  font-size: 13px;
-  color: #262626;
-  line-height: 1.2;
+  font-size: 14px;
+  color: hsl(222.2 84% 4.9%);
+  line-height: 1.3;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .generation-info {
-  margin-top: 2px;
+  margin-top: 4px;
 }
 
 .member-position {
   display: flex;
   align-items: center;
-  margin: 4px 0;
-  padding: 2px 0;
-  border-top: 1px solid #f0f0f0;
+  margin: 8px 0;
+  padding: 6px 0;
+  border-top: 1px solid hsl(214.3 31.8% 91.4%);
 }
 
 .position-text {
-  font-size: 11px;
-  color: #595959;
+  font-size: 12px;
+  color: hsl(215.4 16.3% 46.9%);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -68,48 +70,64 @@
 .member-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 2px;
-  margin-top: 4px;
-  padding-top: 4px;
-  border-top: 1px solid #f0f0f0;
+  gap: 4px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid hsl(214.3 31.8% 91.4%);
 }
 
 .member-meta .ant-tag {
   margin: 0;
-  font-size: 10px;
-  line-height: 16px;
-  padding: 0 4px;
+  font-size: 11px;
+  line-height: 18px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  border: 1px solid hsl(214.3 31.8% 91.4%);
+  background: hsl(210 40% 98%);
+  color: hsl(215.4 16.3% 46.9%);
 }
 
 /* 工具提示样式 */
 .family-member-tooltip {
-  max-width: 300px;
+  max-width: 320px;
+  font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
 }
 
 .family-member-tooltip > div {
-  margin-bottom: 4px;
-  font-size: 12px;
-  line-height: 1.4;
+  margin-bottom: 6px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: hsl(222.2 84% 4.9%);
 }
 
 .family-member-tooltip > div:last-child {
   margin-bottom: 0;
 }
 
+.family-member-tooltip strong {
+  color: hsl(222.2 84% 4.9%);
+  font-weight: 600;
+}
+
 /* React Flow 句柄样式 */
 .react-flow__handle {
-  width: 8px;
-  height: 8px;
-  border: 2px solid #fff;
+  width: 10px;
+  height: 10px;
+  border: 2px solid hsl(0 0% 100%);
   border-radius: 50%;
+  background: hsl(215.4 16.3% 46.9%);
+}
+
+.react-flow__handle:hover {
+  background: hsl(221.2 83.2% 53.3%);
 }
 
 .react-flow__handle-top {
-  top: -4px;
+  top: -5px;
 }
 
 .react-flow__handle-bottom {
-  bottom: -4px;
+  bottom: -5px;
 }
 
 /* 响应式设计 */
@@ -128,23 +146,47 @@
   }
 }
 
-/* 暗色主题支持 */
-@media (prefers-color-scheme: dark) {
-  .member-card {
-    background: #1f1f1f;
-    border-color: #434343;
-  }
-  
-  .name-text {
-    color: #fff;
-  }
-  
-  .position-text {
-    color: #bfbfbf;
-  }
-  
-  .member-position,
-  .member-meta {
-    border-color: #434343;
-  }
+/* 确保统一的白色主题 */
+.member-card {
+  background: hsl(0 0% 100%) !important;
+  border-color: hsl(214.3 31.8% 91.4%) !important;
+}
+
+.name-text {
+  color: hsl(222.2 84% 4.9%) !important;
+}
+
+.position-text {
+  color: hsl(215.4 16.3% 46.9%) !important;
+}
+
+.member-position,
+.member-meta {
+  border-color: hsl(214.3 31.8% 91.4%) !important;
+}
+
+/* Tooltip 白色主题样式覆盖 */
+.ant-tooltip {
+  z-index: 9999 !important;
+}
+
+.ant-tooltip-inner {
+  background: hsl(0 0% 100%) !important;
+  color: hsl(222.2 84% 4.9%) !important;
+  border: 1px solid hsl(214.3 31.8% 91.4%) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
+  font-size: 12px !important;
+  line-height: 1.5 !important;
+  padding: 12px 16px !important;
+  max-width: 320px !important;
+}
+
+.ant-tooltip-arrow {
+  display: none !important;
+}
+
+.ant-tooltip-arrow::before {
+  background: hsl(0 0% 100%) !important;
+  border: 1px solid hsl(214.3 31.8% 91.4%) !important;
 }
