@@ -189,8 +189,9 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
         setSearchHistory(history);
 
         // 构建搜索建议选项
-        const options = history.map(record => ({
+        const options = history.map((record, index) => ({
           value: record.searchTerm,
+          key: `${record.searchTerm}-${record.timestamp}-${index}`, // 使用唯一key
           label: (
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span>{record.searchTerm}</span>
@@ -422,8 +423,9 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
         setSearchHistory(updatedHistory);
 
         // 更新搜索建议选项
-        const options = updatedHistory.map(record => ({
+        const options = updatedHistory.map((record, index) => ({
           value: record.searchTerm,
+          key: `${record.searchTerm}-${record.timestamp}-${index}`, // 使用唯一key
           label: (
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span>{record.searchTerm}</span>

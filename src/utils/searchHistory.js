@@ -63,9 +63,6 @@ class SearchHistoryManager {
     if (!this.db || !searchTerm.trim()) return;
 
     try {
-      const transaction = this.db.transaction([STORE_NAME], 'readwrite');
-      const store = transaction.objectStore(STORE_NAME);
-
       const record = {
         searchTerm: searchTerm.trim(),
         timestamp: new Date().toISOString(),
@@ -80,12 +77,27 @@ class SearchHistoryManager {
         sessionId: this.getSessionId()
       };
 
-      await store.add(record);
-      
-      // 清理旧记录，保持最大数量限制
+      // 使用Promise包装事务
+      await new Promise((resolve, reject) => {
+        const transaction = this.db.transaction([STORE_NAME], 'readwrite');
+        const store = transaction.objectStore(STORE_NAME);
+
+        transaction.oncomplete = () => {
+          console.log('搜索记录已保存:', record);
+          resolve();
+        };
+
+        transaction.onerror = () => {
+          console.error('保存搜索记录失败:', transaction.error);
+          reject(transaction.error);
+        };
+
+        store.add(record);
+      });
+
+      // 在新的事务中清理旧记录
       await this.cleanupOldRecords();
-      
-      console.log('搜索记录已保存:', record);
+
     } catch (error) {
       console.error('保存搜索记录失败:', error);
     }
@@ -165,23 +177,38 @@ class SearchHistoryManager {
     if (!this.db) return;
 
     try {
-      const transaction = this.db.transaction([STORE_NAME], 'readwrite');
-      const store = transaction.objectStore(STORE_NAME);
-      const index = store.index('timestamp');
-      
       const allRecords = await this.getAllRecords();
-      
+
       if (allRecords.length > MAX_HISTORY_COUNT) {
         // 删除最旧的记录
         const recordsToDelete = allRecords
           .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
           .slice(0, allRecords.length - MAX_HISTORY_COUNT);
 
-        for (const record of recordsToDelete) {
-          await store.delete(record.id);
-        }
-        
-        console.log(`清理了 ${recordsToDelete.length} 条旧搜索记录`);
+        // 使用新的事务删除记录
+        await new Promise((resolve, reject) => {
+          const transaction = this.db.transaction([STORE_NAME], 'readwrite');
+          const store = transaction.objectStore(STORE_NAME);
+          let deletedCount = 0;
+
+          transaction.oncomplete = () => {
+            console.log(`清理了 ${deletedCount} 条旧搜索记录`);
+            resolve();
+          };
+
+          transaction.onerror = () => {
+            console.error('清理旧记录失败:', transaction.error);
+            reject(transaction.error);
+          };
+
+          // 批量删除记录
+          recordsToDelete.forEach(record => {
+            const deleteRequest = store.delete(record.id);
+            deleteRequest.onsuccess = () => {
+              deletedCount++;
+            };
+          });
+        });
       }
     } catch (error) {
       console.error('清理旧记录失败:', error);
@@ -194,14 +221,27 @@ class SearchHistoryManager {
   async getAllRecords() {
     if (!this.db) return [];
 
-    const transaction = this.db.transaction([STORE_NAME], 'readonly');
-    const store = transaction.objectStore(STORE_NAME);
-    const request = store.getAll();
+    try {
+      return new Promise((resolve, reject) => {
+        const transaction = this.db.transaction([STORE_NAME], 'readonly');
+        const store = transaction.objectStore(STORE_NAME);
+        const request = store.getAll();
 
-    return new Promise((resolve, reject) => {
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
-    });
+        request.onsuccess = () => resolve(request.result || []);
+        request.onerror = () => {
+          console.error('获取所有记录失败:', request.error);
+          reject(request.error);
+        };
+
+        transaction.onerror = () => {
+          console.error('事务失败:', transaction.error);
+          reject(transaction.error);
+        };
+      });
+    } catch (error) {
+      console.error('获取所有记录失败:', error);
+      return [];
+    }
   }
 
   /**
