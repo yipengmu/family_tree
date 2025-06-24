@@ -15,45 +15,164 @@
   background: hsl(0 0% 100%);
 }
 
-.control-panel {
-  margin: 24px;
-  border-radius: 12px;
-  border: 1px solid hsl(214.3 31.8% 91.4%);
-  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+/* 后台管理风格控制面板 */
+.admin-control-panel {
+  margin: 16px 24px;
   background: hsl(0 0% 100%);
+  border: 1px solid hsl(214.3 31.8% 91.4%);
+  border-radius: 8px;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
 }
 
-.control-panel .ant-card-body {
-  padding: 20px;
-}
-
-.control-row {
-  margin-bottom: 16px;
-}
-
-.control-row:last-child {
-  margin-bottom: 0;
-}
-
-.generation-filter {
+.control-main-row {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  gap: 20px;
+}
+
+.control-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 auto;
+}
+
+/* 搜索框样式优化 */
+.control-left .ant-select {
+  position: relative;
+}
+
+.control-left .ant-select .ant-select-selector {
+  padding-left: 32px !important;
+}
+
+.control-left .ant-input-prefix {
+  position: absolute;
+  left: 8px;
+  z-index: 2;
+  color: hsl(215.4 16.3% 46.9%);
+}
+
+.control-left .ant-input {
+  padding-left: 32px !important;
+}
+
+/* AutoComplete 下拉选项样式 */
+.ant-select-dropdown .ant-select-item {
+  padding: 8px 12px;
+}
+
+.ant-select-dropdown .ant-select-item-option-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.control-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+}
+
+.control-right {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+/* 状态指示器 */
+.status-indicator {
+  display: flex;
+  align-items: center;
+}
+
+.status-badge {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.status-badge.complete {
+  background: hsl(142.1 76.2% 96%);
+  color: hsl(142.1 76.2% 36.3%);
+  border: 1px solid hsl(142.1 76.2% 86.3%);
+}
+
+.status-badge.focus {
+  background: hsl(24.6 95% 96%);
+  color: hsl(24.6 95% 43.1%);
+  border: 1px solid hsl(24.6 95% 86.1%);
+}
+
+.status-badge.search {
+  background: hsl(262.1 83.3% 96%);
+  color: hsl(262.1 83.3% 47.8%);
+  border: 1px solid hsl(262.1 83.3% 86.8%);
+}
+
+/* 抽屉内容样式 */
+.drawer-content {
+  font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+
+.drawer-section {
+  margin-bottom: 24px;
+}
+
+.drawer-section h4 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: hsl(222.2 84% 4.9%);
+}
+
+.generation-filter-drawer {
+  padding: 16px;
   background: hsl(210 40% 98%);
-  padding: 12px 16px;
-  border-radius: 8px;
   border: 1px solid hsl(214.3 31.8% 91.4%);
+  border-radius: 8px;
+}
+
+/* 统计信息网格 */
+.statistics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
 
-.generation-filter .ant-typography {
-  color: hsl(222.2 84% 4.9%);
-  font-weight: 500;
-  margin: 0;
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  background: hsl(210 40% 98%);
+  border: 1px solid hsl(214.3 31.8% 91.4%);
+  border-radius: 6px;
 }
 
-.statistics-row {
-  padding-top: 16px;
-  border-top: 1px solid hsl(214.3 31.8% 91.4%);
+.stat-label {
+  font-size: 11px;
+  color: hsl(215.4 16.3% 46.9%);
+  margin-bottom: 4px;
+}
+
+.stat-value {
+  font-size: 18px;
+  font-weight: 600;
+  color: hsl(222.2 84% 4.9%);
+}
+
+.stat-value.male {
+  color: hsl(221.2 83.2% 53.3%);
+}
+
+.stat-value.female {
+  color: hsl(346.8 77.2% 49.8%);
 }
 
 /* 主要操作按钮样式 */
@@ -225,22 +344,20 @@
 
 /* 响应式设计 */
 @media (max-width: 1200px) {
-  .control-panel {
-    margin: 12px;
+  .admin-control-panel {
+    margin: 12px 16px;
   }
-  
+
   .flow-container {
-    margin: 0 12px 12px 12px;
+    margin: 0 16px 16px 16px;
   }
-  
-  .generation-filter {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
+
+  .control-main-row {
+    gap: 12px;
   }
-  
-  .generation-filter .ant-slider {
-    width: 200px;
+
+  .control-left .ant-input-search {
+    width: 200px !important;
   }
 }
 
@@ -248,36 +365,47 @@
   .family-tree-container {
     height: 100vh;
   }
-  
-  .control-panel {
-    margin: 8px;
+
+  .admin-control-panel {
+    margin: 8px 12px;
   }
-  
+
   .flow-container {
-    margin: 0 8px 8px 8px;
+    margin: 0 12px 12px 12px;
   }
-  
-  .control-row {
+
+  .control-main-row {
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .control-left,
+  .control-center,
+  .control-right {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .control-left {
     flex-direction: column;
     gap: 8px;
   }
-  
-  .control-row .ant-space {
-    width: 100%;
-    justify-content: space-between;
+
+  .control-left .ant-input-search {
+    width: 100% !important;
   }
-  
-  .statistics-row .ant-space {
-    flex-wrap: wrap;
-    gap: 8px;
+
+  .statistics-grid {
+    grid-template-columns: 1fr;
   }
-  
+
   .react-flow__panel {
     position: relative !important;
     transform: none !important;
     margin: 8px;
   }
-  
+
   .react-flow__panel .ant-card {
     width: calc(100vw - 32px) !important;
     max-width: none !important;
@@ -285,22 +413,27 @@
 }
 
 @media (max-width: 480px) {
-  .control-panel .ant-card-body {
+  .admin-control-panel {
+    margin: 8px;
+  }
+
+  .flow-container {
+    margin: 0 8px 8px 8px;
+  }
+
+  .control-main-row {
     padding: 12px;
   }
-  
-  .generation-filter {
-    padding: 6px 8px;
+
+  .control-center .ant-space {
+    flex-wrap: wrap;
+    justify-content: center;
   }
-  
-  .generation-filter .ant-slider {
-    width: 150px;
-  }
-  
+
   .react-flow__controls {
     bottom: 60px;
   }
-  
+
   .react-flow__minimap {
     width: 120px;
     height: 80px;
