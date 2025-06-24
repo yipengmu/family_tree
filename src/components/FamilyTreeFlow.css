@@ -45,18 +45,34 @@
 }
 
 .control-left .ant-select .ant-select-selector {
+  padding-left: 0 !important;
+}
+
+.control-left .ant-select .ant-select-selector .ant-select-selection-search {
+  left: 0 !important;
+}
+
+.control-left .ant-select .ant-select-selector .ant-select-selection-search .ant-select-selection-search-input {
   padding-left: 32px !important;
 }
 
-.control-left .ant-input-prefix {
+.control-left .ant-input-affix-wrapper {
+  position: relative;
+}
+
+.control-left .ant-input-affix-wrapper .ant-input-prefix {
   position: absolute;
-  left: 8px;
-  z-index: 2;
+  left: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10;
   color: hsl(215.4 16.3% 46.9%);
+  pointer-events: none;
 }
 
-.control-left .ant-input {
+.control-left .ant-input-affix-wrapper .ant-input {
   padding-left: 32px !important;
+  padding-right: 11px !important;
 }
 
 /* AutoComplete 下拉选项样式 */
