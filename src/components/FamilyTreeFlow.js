@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import ReactFlow, {
   MiniMap,
   Controls,
@@ -9,14 +9,15 @@ import ReactFlow, {
   Panel,
   useReactFlow,
 } from 'reactflow';
-import { Button, Card, Slider, Input, Select, Space, Typography, Spin, Alert } from 'antd';
+import { Button, Card, Slider, Input, Select, Space, Typography, Spin, Alert, Drawer, Divider, AutoComplete } from 'antd';
 import {
   ReloadOutlined,
   SearchOutlined,
-  FilterOutlined,
   FullscreenOutlined,
   EyeOutlined,
-  CompressOutlined
+  CompressOutlined,
+  MoreOutlined,
+  SettingOutlined
 } from '@ant-design/icons';
 
 import FamilyMemberNode from './FamilyMemberNode';
@@ -27,11 +28,11 @@ import {
   getFamilyStatistics,
   searchWithPathTree
 } from '../utils/familyTreeUtils';
+import searchHistoryManager from '../utils/searchHistory';
 
 import 'reactflow/dist/style.css';
 import './FamilyTreeFlow.css';
 
-const { Search } = Input;
 const { Option } = Select;
 const { Text } = Typography;
 
@@ -50,6 +51,12 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
   const [selectedNode, setSelectedNode] = useState(null);
   const [isShowingAll, setIsShowingAll] = useState(true); // 默认显示全部
   const [searchTargetPerson, setSearchTargetPerson] = useState(null); // 搜索的目标人员
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false); // 抽屉状态
+  const [showAlert, setShowAlert] = useState(true); // 控制提示显示
+  const [searchHistory, setSearchHistory] = useState([]); // 搜索历史
+  const [searchOptions, setSearchOptions] = useState([]); // 搜索建议选项
+  const [searchInputValue, setSearchInputValue] = useState(''); // 搜索输入框的值
+  const searchTimeoutRef = useRef(null); // 搜索节流定时器
   const { fitView, setCenter, getViewport, getNodes } = useReactFlow();
 
   // 理想的默认视图参数（基于穆茂节点的最佳显示效果）
@@ -174,6 +181,43 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
     processData();
   }, [processData]);
 
+  // 加载搜索历史
+  useEffect(() => {
+    const loadSearchHistory = async () => {
+      try {
+        const history = await searchHistoryManager.getSearchHistory();
+        setSearchHistory(history);
+
+        // 构建搜索建议选项
+        const options = history.map(record => ({
+          value: record.searchTerm,
+          label: (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span>{record.searchTerm}</span>
+              <span style={{ fontSize: '11px', color: '#999' }}>
+                {record.resultCount}个结果
+              </span>
+            </div>
+          )
+        }));
+        setSearchOptions(options);
+      } catch (error) {
+        console.error('加载搜索历史失败:', error);
+      }
+    };
+
+    loadSearchHistory();
+  }, []);
+
+  // 清理定时器
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
+
   // 当节点更新且为完整模式时，应用理想的默认视图
   useEffect(() => {
     if (isShowingAll && nodes.length > 0 && familyData && familyData.length > 0 && !searchTargetPerson) {
@@ -217,6 +261,17 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
     }
   }, [searchTargetPerson, nodes, setCenter, idealViewParams]);
 
+  // 自动关闭提示
+  useEffect(() => {
+    if (!isShowingAll && !searchTargetPerson && generationRange[0] === 1 && generationRange[1] === 1 && !searchTerm && showAlert) {
+      const timer = setTimeout(() => {
+        setShowAlert(false);
+      }, 2000); // 2秒后自动关闭
+
+      return () => clearTimeout(timer);
+    }
+  }, [isShowingAll, searchTargetPerson, generationRange, searchTerm, showAlert]);
+
   // 处理连接
   const onConnect = useCallback(
     (params) => setEdges((eds) => addEdge(params, eds)),
@@ -244,6 +299,7 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
     setSearchTerm('');
     setSearchTargetPerson(null);
     setIsShowingAll(false);
+    setShowAlert(true); // 重新显示提示
   }, []);
 
   // 当节点更新且处于聚焦模式时，自动聚焦到穆茂
@@ -335,6 +391,7 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
     setSearchTerm('');
     setSearchTargetPerson(null);
     setIsShowingAll(false);
+    setShowAlert(true); // 重新显示提示
     // 聚焦逻辑由useEffect处理
   }, []);
 
@@ -343,14 +400,77 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
     setIsFullscreen(!isFullscreen);
   }, [isFullscreen]);
 
-  // 处理搜索
-  const handleSearch = useCallback((value) => {
+  // 执行实际搜索（带历史记录）
+  const performSearch = useCallback(async (value) => {
     setSearchTerm(value);
+
     // 搜索时切换到相应模式
     if (value.trim()) {
       setIsShowingAll(false); // 搜索时进入聚焦模式
+
+      // 记录搜索历史
+      try {
+        const searchResult = searchWithPathTree(familyData, value);
+        await searchHistoryManager.addSearchRecord(
+          value,
+          searchResult.searchResults.length,
+          searchResult.targetPerson
+        );
+
+        // 重新加载搜索历史
+        const updatedHistory = await searchHistoryManager.getSearchHistory();
+        setSearchHistory(updatedHistory);
+
+        // 更新搜索建议选项
+        const options = updatedHistory.map(record => ({
+          value: record.searchTerm,
+          label: (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span>{record.searchTerm}</span>
+              <span style={{ fontSize: '11px', color: '#999' }}>
+                {record.resultCount}个结果
+              </span>
+            </div>
+          )
+        }));
+        setSearchOptions(options);
+      } catch (error) {
+        console.error('记录搜索历史失败:', error);
+      }
     }
-  }, []);
+  }, [familyData]);
+
+  // 节流搜索处理
+  const handleSearchWithThrottle = useCallback((value) => {
+    // 清除之前的定时器
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    // 立即更新输入框的值
+    setSearchInputValue(value);
+
+    // 如果输入为空，立即清除搜索
+    if (!value.trim()) {
+      setSearchTerm('');
+      setSearchTargetPerson(null);
+      return;
+    }
+
+    // 设置新的定时器，500ms后执行搜索
+    searchTimeoutRef.current = setTimeout(() => {
+      performSearch(value);
+    }, 500);
+  }, [performSearch]);
+
+  // 处理搜索框的回车和选择
+  const handleSearchSubmit = useCallback((value) => {
+    // 清除定时器，立即执行搜索
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    performSearch(value);
+  }, [performSearch]);
 
   // 处理代数范围变化
   const handleGenerationChange = useCallback((value) => {
@@ -421,7 +541,7 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
         />
       )}
 
-      {!isShowingAll && !searchTargetPerson && generationRange[0] === 1 && generationRange[1] === 1 && !searchTerm && (
+      {!isShowingAll && !searchTargetPerson && generationRange[0] === 1 && generationRange[1] === 1 && !searchTerm && showAlert && (
         <Alert
           message="💡 当前聚焦第1代祖上"
           description={
@@ -433,6 +553,7 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
           type="info"
           showIcon
           closable
+          onClose={() => setShowAlert(false)}
           style={{
             margin: '16px 24px 0 24px',
             borderRadius: '12px',
@@ -442,153 +563,241 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
         />
       )}
 
-      {/* 控制面板 */}
-      <Card className="control-panel" size="small">
-        <div className="control-row">
-          <Space wrap size="middle">
-            <Search
+      {/* 后台管理风格控制面板 */}
+      <div className="admin-control-panel">
+        <div className="control-main-row">
+          {/* 左侧：搜索和主要操作 */}
+          <div className="control-left">
+            <AutoComplete
+              options={searchOptions}
+              style={{ width: 240 }}
+              value={searchInputValue}
+              onSearch={handleSearchWithThrottle}
+              onSelect={handleSearchSubmit}
               placeholder="搜索家族成员..."
               allowClear
-              onSearch={handleSearch}
-              onChange={(e) => {
-                if (!e.target.value) {
+              onChange={(value) => {
+                if (!value) {
+                  setSearchInputValue('');
                   setSearchTerm('');
                   setSearchTargetPerson(null);
+                } else {
+                  handleSearchWithThrottle(value);
                 }
               }}
-              style={{ width: 200 }}
-              prefix={<SearchOutlined />}
-            />
-
-            <div className="generation-filter">
-              <Text strong style={{ marginRight: 8 }}>
-                <FilterOutlined /> 代数范围:
-              </Text>
-              <Slider
-                range
-                min={1}
-                max={statistics?.generations || 20}
-                value={generationRange}
-                onChange={handleGenerationChange}
-                style={{ width: 150 }}
-                tooltip={{
-                  formatter: (value) => `第${value}代`
-                }}
-              />
-              <Text type="secondary" style={{ marginLeft: 8 }}>
-                第{generationRange[0]}-{generationRange[1]}代
-              </Text>
-            </div>
-
-            <Select
-              value={layoutDirection}
-              onChange={handleLayoutDirectionChange}
-              style={{ width: 120 }}
             >
-              <Option value="TB">从上到下</Option>
-              <Option value="BT">从下到上</Option>
-              <Option value="LR">从左到右</Option>
-              <Option value="RL">从右到左</Option>
-            </Select>
-          </Space>
-        </div>
+              <Input
+                prefix={<SearchOutlined />}
+                onPressEnter={(e) => handleSearchSubmit(e.target.value)}
+                style={{ paddingLeft: '30px' }}
+              />
+            </AutoComplete>
 
-        <div className="control-row">
-          <Space wrap size="middle">
             {/* 主要操作按钮 */}
             {isShowingAll ? (
               <Button
                 type="primary"
                 icon={<CompressOutlined />}
                 onClick={backToFocusMode}
-                size="large"
               >
-                聚焦祖上 (第1代)
+                聚焦祖上
               </Button>
             ) : (
               <Button
                 type="primary"
                 icon={<EyeOutlined />}
                 onClick={showAllGenerations}
-                size="large"
               >
-                查看完整家谱 ({statistics?.totalMembers || 0}人)
+                查看完整家谱
               </Button>
             )}
+          </div>
 
-            {/* 快速切换按钮 */}
-            <Button onClick={focusOnFounder} size="small">
-              聚焦祖上
-            </Button>
+          {/* 中间：留空，保持简洁 */}
+          <div className="control-center">
+            {/* 保持中间区域简洁 */}
+          </div>
 
-            <Button onClick={showFirstThreeGenerations} size="small">
-              前三代
-            </Button>
-
-            <Button onClick={showLastThreeGenerations} size="small">
-              最后三代
-            </Button>
-
-            <Button icon={<ReloadOutlined />} onClick={resetView}>
-              重置
-            </Button>
-
-            <Button onClick={logViewportInfo} size="small" style={{ background: '#f0f0f0' }}>
-              📊 记录视图参数
-            </Button>
-
-            <Button onClick={applyIdealDefaultView} size="small" style={{ background: '#e6f7ff' }}>
-              🎯 应用理想视图
-            </Button>
-
-            <Button
-              icon={<FullscreenOutlined />}
-              onClick={toggleFullscreen}
-              type={isFullscreen ? 'primary' : 'default'}
-            >
-              {isFullscreen ? '退出全屏' : '全屏'}
-            </Button>
-          </Space>
-        </div>
-
-        {/* 统计信息 */}
-        {statistics && (
-          <div className="statistics-row">
-            <Space split={<span style={{ color: 'hsl(214.3 31.8% 91.4%)' }}>|</span>}>
-              <Text type="secondary">
-                总人数: <Text strong>{statistics.totalMembers}</Text>
-              </Text>
-              <Text type="secondary">
-                代数: <Text strong>{statistics.generations}</Text>
-              </Text>
-              <Text type="secondary">
-                男性: <Text strong style={{ color: 'hsl(221.2 83.2% 53.3%)' }}>{statistics.maleCount}</Text>
-              </Text>
-              <Text type="secondary">
-                女性: <Text strong style={{ color: 'hsl(346.8 77.2% 49.8%)' }}>{statistics.femaleCount}</Text>
-              </Text>
-              <Text type="secondary">
-                当前显示: <Text strong style={{ color: isShowingAll ? 'hsl(142.1 76.2% 36.3%)' : 'hsl(24.6 95% 53.1%)' }}>
-                  {nodes.length}
-                </Text> 人
-              </Text>
-              {searchTargetPerson ? (
-                <Text type="secondary" style={{ color: 'hsl(262.1 83.3% 57.8%)' }}>
-                  <strong>搜索路径模式</strong>
+          {/* 右侧：状态信息和操作按钮 */}
+          <div className="control-right">
+            <Space size="middle">
+              {/* 状态指示 */}
+              <div className="status-indicator">
+                {searchTargetPerson ? (
+                  <span className="status-badge search">搜索路径</span>
+                ) : isShowingAll ? (
+                  <span className="status-badge complete">完整模式</span>
+                ) : (
+                  <span className="status-badge focus">聚焦模式</span>
+                )}
+                <Text type="secondary" style={{ marginLeft: 8, fontSize: '12px' }}>
+                  {nodes.length}/{statistics?.totalMembers || 0}人
                 </Text>
-              ) : isShowingAll ? (
-                <Text type="secondary" style={{ color: 'hsl(142.1 76.2% 36.3%)' }}>
-                  <strong>完整模式</strong>
-                </Text>
-              ) : (
-                <Text type="secondary" style={{ color: 'hsl(24.6 95% 53.1%)' }}>
-                  <strong>聚焦模式 (第{generationRange[0]}-{generationRange[1]}代)</strong>
-                </Text>
-              )}
+              </div>
+
+              {/* 重置按钮 */}
+              <Button
+                icon={<ReloadOutlined />}
+                onClick={resetView}
+                size="small"
+                title="重置到默认状态"
+              >
+                重置
+              </Button>
+
+              {/* 全屏按钮 */}
+              <Button
+                icon={<FullscreenOutlined />}
+                onClick={toggleFullscreen}
+                type={isFullscreen ? 'primary' : 'default'}
+                size="small"
+                title={isFullscreen ? '退出全屏' : '进入全屏'}
+              />
+
+              {/* 更多操作 */}
+              <Button
+                icon={<MoreOutlined />}
+                onClick={() => setIsDrawerOpen(true)}
+                size="small"
+                title="更多设置"
+              >
+                更多
+              </Button>
             </Space>
           </div>
-        )}
-      </Card>
+        </div>
+      </div>
+
+      {/* 更多操作抽屉 */}
+      <Drawer
+        title="更多设置"
+        placement="right"
+        onClose={() => setIsDrawerOpen(false)}
+        open={isDrawerOpen}
+        width={360}
+        styles={{
+          body: { padding: '24px' }
+        }}
+      >
+        <div className="drawer-content">
+          {/* 快速切换 */}
+          <div className="drawer-section">
+            <h4>快速切换</h4>
+            <Space direction="vertical" style={{ width: '100%' }} size="small">
+              <Button
+                onClick={focusOnFounder}
+                block
+                size="small"
+              >
+                聚焦祖上 (第1代)
+              </Button>
+              <Button
+                onClick={showFirstThreeGenerations}
+                block
+                size="small"
+              >
+                前三代 (第1-3代)
+              </Button>
+              <Button
+                onClick={showLastThreeGenerations}
+                block
+                size="small"
+              >
+                最后三代
+              </Button>
+            </Space>
+          </div>
+
+          <Divider />
+
+          {/* 代数筛选 */}
+          <div className="drawer-section">
+            <h4>代数筛选</h4>
+            <div className="generation-filter-drawer">
+              <Slider
+                range
+                min={1}
+                max={statistics?.generations || 20}
+                value={generationRange}
+                onChange={handleGenerationChange}
+                tooltip={{
+                  formatter: (value) => `第${value}代`
+                }}
+              />
+              <Text type="secondary" style={{ marginTop: 8, display: 'block' }}>
+                当前显示：第{generationRange[0]}-{generationRange[1]}代
+              </Text>
+            </div>
+          </div>
+
+          <Divider />
+
+          {/* 布局设置 */}
+          <div className="drawer-section">
+            <h4>布局方向</h4>
+            <Select
+              value={layoutDirection}
+              onChange={handleLayoutDirectionChange}
+              style={{ width: '100%' }}
+            >
+              <Option value="TB">从上到下</Option>
+              <Option value="BT">从下到上</Option>
+              <Option value="LR">从左到右</Option>
+              <Option value="RL">从右到左</Option>
+            </Select>
+          </div>
+
+          <Divider />
+
+          {/* 开发工具 */}
+          <div className="drawer-section">
+            <h4>开发工具</h4>
+            <Space direction="vertical" style={{ width: '100%' }}>
+              <Button
+                onClick={logViewportInfo}
+                block
+                icon={<SettingOutlined />}
+              >
+                记录视图参数
+              </Button>
+              <Button
+                onClick={applyIdealDefaultView}
+                block
+                icon={<SettingOutlined />}
+              >
+                应用理想视图
+              </Button>
+            </Space>
+          </div>
+
+          <Divider />
+
+          {/* 统计信息 */}
+          <div className="drawer-section">
+            <h4>统计信息</h4>
+            {statistics && (
+              <div className="statistics-grid">
+                <div className="stat-item">
+                  <span className="stat-label">总人数</span>
+                  <span className="stat-value">{statistics.totalMembers}</span>
+                </div>
+                <div className="stat-item">
+                  <span className="stat-label">代数</span>
+                  <span className="stat-value">{statistics.generations}</span>
+                </div>
+                <div className="stat-item">
+                  <span className="stat-label">男性</span>
+                  <span className="stat-value male">{statistics.maleCount}</span>
+                </div>
+                <div className="stat-item">
+                  <span className="stat-label">女性</span>
+                  <span className="stat-value female">{statistics.femaleCount}</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </Drawer>
 
       {/* React Flow 图表 */}
       <div className="flow-container">
