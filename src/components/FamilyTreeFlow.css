@@ -358,6 +358,81 @@
   background: transparent;
 }
 
+/* 移动端优化 */
+.flow-container {
+  touch-action: manipulation; /* 允许双指缩放和平移 */
+  -webkit-overflow-scrolling: touch; /* iOS平滑滚动 */
+  -webkit-user-select: none; /* 防止文本选择 */
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* 防止移动端双击缩放 */
+* {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
+
+/* 移动端ReactFlow优化 */
+@media (max-width: 768px) {
+  .react-flow {
+    touch-action: manipulation; /* 允许双指缩放和平移 */
+    height: calc(100vh - 120px) !important; /* 为控制面板留出空间 */
+  }
+
+  .react-flow__pane {
+    cursor: grab;
+    touch-action: manipulation;
+  }
+
+  .react-flow__pane:active {
+    cursor: grabbing;
+  }
+
+  /* 移动端节点样式优化 */
+  .react-flow__node {
+    pointer-events: auto;
+    touch-action: manipulation;
+  }
+
+  /* 移动端控制按钮优化 */
+  .react-flow__controls {
+    bottom: 20px !important;
+    right: 10px !important;
+    z-index: 1000;
+  }
+
+  .react-flow__controls button {
+    width: 44px !important;
+    height: 44px !important;
+    font-size: 18px !important;
+    border-radius: 8px !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+  }
+
+  /* 移动端小地图优化 */
+  .react-flow__minimap {
+    width: 120px !important;
+    height: 80px !important;
+    bottom: 20px !important;
+    left: 10px !important;
+    border-radius: 8px !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+  }
+
+  /* 移动端边缘样式 */
+  .react-flow__edge {
+    pointer-events: none; /* 移动端禁用边缘点击 */
+  }
+
+  /* 移动端选择框优化 */
+  .react-flow__nodesselection,
+  .react-flow__selection {
+    display: none; /* 移动端隐藏选择框 */
+  }
+}
+
 /* 响应式设计 */
 @media (max-width: 1200px) {
   .admin-control-panel {

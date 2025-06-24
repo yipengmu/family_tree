@@ -53,19 +53,44 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
   const [searchTargetPerson, setSearchTargetPerson] = useState(null); // 搜索的目标人员
   const [isDrawerOpen, setIsDrawerOpen] = useState(false); // 抽屉状态
   const [showAlert, setShowAlert] = useState(true); // 控制提示显示
+  // eslint-disable-next-line no-unused-vars
   const [searchHistory, setSearchHistory] = useState([]); // 搜索历史
   const [searchOptions, setSearchOptions] = useState([]); // 搜索建议选项
   const [searchInputValue, setSearchInputValue] = useState(''); // 搜索输入框的值
   const searchTimeoutRef = useRef(null); // 搜索节流定时器
+  const [isMobile, setIsMobile] = useState(false); // 移动端检测
   const { fitView, setCenter, getViewport, getNodes } = useReactFlow();
 
+  // 移动端检测
+  useEffect(() => {
+    const checkMobile = () => {
+      const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+        || window.innerWidth <= 768;
+      setIsMobile(isMobileDevice);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   // 理想的默认视图参数（基于穆茂节点的最佳显示效果）
-  const idealViewParams = useMemo(() => ({
-    zoom: 1.2,
-    centerOffsetX: 100, // 节点中心偏移
-    centerOffsetY: 40,  // 节点中心偏移
-    topPadding: 20      // 顶部留白
-  }), []);
+  const idealViewParams = useMemo(() => {
+    if (isMobile) {
+      return {
+        zoom: 0.8,           // 移动端更小的缩放比例
+        centerOffsetX: 50,   // 移动端更小的偏移
+        centerOffsetY: 20,   // 移动端更小的偏移
+        topPadding: 10       // 移动端更小的留白
+      };
+    }
+    return {
+      zoom: 1.2,
+      centerOffsetX: 100,  // 节点中心偏移
+      centerOffsetY: 40,   // 节点中心偏移
+      topPadding: 20       // 顶部留白
+    };
+  }, [isMobile]);
 
   // 计算统计信息
   const statistics = useMemo(() => {
@@ -140,22 +165,23 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
       );
 
       if (founderNode && founderNode.position) {
-        console.log('🎯 应用理想默认视图 - 以穆茂为中心');
+        console.log('🎯 应用理想默认视图 - 以穆茂为中心', isMobile ? '(移动端)' : '(桌面端)');
         console.log('穆茂节点位置:', founderNode.position);
 
-        // 计算理想的视图中心点（穆茂在顶部居中，有20px留白）
+        // 计算理想的视图中心点（穆茂在顶部居中，有留白）
         const idealCenterX = founderNode.position.x + idealViewParams.centerOffsetX;
         const idealCenterY = founderNode.position.y + idealViewParams.centerOffsetY + idealViewParams.topPadding;
 
         console.log('设置理想中心点:', {
           x: idealCenterX,
           y: idealCenterY,
-          zoom: idealViewParams.zoom
+          zoom: idealViewParams.zoom,
+          isMobile
         });
 
         setCenter(idealCenterX, idealCenterY, {
           zoom: idealViewParams.zoom,
-          duration: 1000
+          duration: isMobile ? 600 : 1000 // 移动端更快的动画
         });
 
         // 记录应用后的视图状态
@@ -174,7 +200,7 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
     }, 800);
 
     return () => clearTimeout(timer);
-  }, [getNodes, setCenter, fitView, idealViewParams, logViewportInfo]);
+  }, [getNodes, setCenter, fitView, idealViewParams, logViewportInfo, isMobile]);
 
   // 当数据或筛选条件改变时重新处理数据
   useEffect(() => {
@@ -235,7 +261,7 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
         );
 
         if (targetNode && targetNode.position) {
-          console.log('🎯 聚焦到搜索目标:', searchTargetPerson.name);
+          console.log('🎯 聚焦到搜索目标:', searchTargetPerson.name, isMobile ? '(移动端)' : '(桌面端)');
           console.log('目标节点位置:', targetNode.position);
 
           // 将视图中心设置到目标节点
@@ -244,7 +270,7 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
 
           setCenter(centerX, centerY, {
             zoom: idealViewParams.zoom,
-            duration: 800
+            duration: isMobile ? 600 : 800 // 移动端更快的动画
           });
 
           // 同时选中该节点以高亮显示
@@ -253,14 +279,15 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
           console.log('设置搜索目标中心点:', {
             x: centerX,
             y: centerY,
-            zoom: idealViewParams.zoom
+            zoom: idealViewParams.zoom,
+            isMobile
           });
         }
       }, 600);
 
       return () => clearTimeout(timer);
     }
-  }, [searchTargetPerson, nodes, setCenter, idealViewParams]);
+  }, [searchTargetPerson, nodes, setCenter, idealViewParams, isMobile]);
 
   // 自动关闭提示
   useEffect(() => {
@@ -813,15 +840,29 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
           nodeTypes={nodeTypes}
           fitView
           attributionPosition="bottom-left"
-          minZoom={0.2}
-          maxZoom={3}
-          defaultViewport={{ x: 0, y: 0, zoom: 0.8 }}
-          fitViewOptions={{
-            padding: 0.2,
-            includeHiddenNodes: false,
-            minZoom: 0.5,
-            maxZoom: 1.2
+          minZoom={isMobile ? 0.3 : 0.2}
+          maxZoom={isMobile ? 2 : 3}
+          defaultViewport={{
+            x: 0,
+            y: 0,
+            zoom: isMobile ? 0.6 : 0.8
           }}
+          fitViewOptions={{
+            padding: isMobile ? 0.1 : 0.2,
+            includeHiddenNodes: false,
+            minZoom: isMobile ? 0.4 : 0.5,
+            maxZoom: isMobile ? 1.5 : 1.2
+          }}
+          // 移动端优化配置
+          panOnDrag={true}
+          panOnScroll={!isMobile} // 移动端禁用滚轮平移
+          panOnScrollMode={isMobile ? 'free' : 'vertical'}
+          zoomOnScroll={!isMobile} // 移动端禁用滚轮缩放
+          zoomOnPinch={isMobile} // 移动端启用双指缩放
+          zoomOnDoubleClick={true}
+          preventScrolling={isMobile} // 移动端防止页面滚动
+          elementsSelectable={true}
+          selectNodesOnDrag={false}
         >
           <Controls />
           <MiniMap
