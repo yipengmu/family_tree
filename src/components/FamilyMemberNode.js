@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { Handle, Position } from 'reactflow';
 import { Card, Tag, Avatar, Tooltip } from 'antd';
-import { UserOutlined, ManOutlined, WomanOutlined, CrownOutlined } from '@ant-design/icons';
+import { UserOutlined, ManOutlined, WomanOutlined, CrownOutlined, PlusOutlined } from '@ant-design/icons';
 import './FamilyMemberNode.css';
 
 const FamilyMemberNode = ({ data, selected }) => {
@@ -14,7 +14,8 @@ const FamilyMemberNode = ({ data, selected }) => {
     birthDate,
     death,
     location,
-    summary
+    summary,
+    hasCollapsedChildren
   } = data;
 
   // 根据性别选择图标和颜色
@@ -95,15 +96,18 @@ const FamilyMemberNode = ({ data, selected }) => {
       />
       
       <Tooltip title={getTooltipContent()} placement="right">
-        <Card
-          size="small"
-          className="member-card"
-          style={{
-            borderColor: getGenerationColor(rank),
-            borderWidth: selected ? 3 : 1,
-          }}
-          styles={{ body: { padding: '12px 16px' } }}
-        >
+        <div style={{ position: 'relative' }}>
+          <Card
+            size="small"
+            className={`member-card ${hasCollapsedChildren ? 'has-collapsed-children' : ''}`}
+            style={{
+              borderColor: getGenerationColor(rank),
+              borderWidth: selected ? 3 : 1,
+              cursor: hasCollapsedChildren ? 'pointer' : 'default'
+            }}
+            styles={{ body: { padding: '12px 16px' } }}
+          >
+            {/* 折叠提示图标 - 移到Card外部 */}
           <div className="member-header">
             <Avatar
               size="small"
@@ -149,6 +153,17 @@ const FamilyMemberNode = ({ data, selected }) => {
             )}
           </div>
         </Card>
+
+        {/* 折叠提示图标 - 底部中间 */}
+        {hasCollapsedChildren && (
+          <div className="collapse-indicator-bottom">
+            <PlusOutlined style={{
+              color: '#1890ff',
+              fontSize: '12px'
+            }} />
+          </div>
+        )}
+        </div>
       </Tooltip>
       
       <Handle

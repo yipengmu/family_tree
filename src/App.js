@@ -1,13 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { Layout, Typography, Alert } from 'antd';
+import { useState, useEffect } from 'react';
+import { Layout, Alert } from 'antd';
 import { ReactFlowProvider } from 'reactflow';
 import FamilyTreeFlow from './components/FamilyTreeFlow';
 import { validateFamilyData } from './utils/familyTreeUtils';
 import dbJson from './data/familyData.js';
 import './App.css';
 
-const { Header, Content } = Layout;
-const { Title, Text } = Typography;
+const { Content } = Layout;
 
 function App() {
   const [familyData, setFamilyData] = useState([]);
@@ -16,6 +15,17 @@ function App() {
   const [validationResult, setValidationResult] = useState(null);
 
   useEffect(() => {
+    // 处理ResizeObserver错误
+    const handleResizeObserverError = (e) => {
+      if (e.message && e.message.includes('ResizeObserver loop completed')) {
+        // 忽略ResizeObserver的循环错误，这不会影响功能
+        e.stopImmediatePropagation();
+        return false;
+      }
+    };
+
+    window.addEventListener('error', handleResizeObserverError);
+
     // 模拟数据加载过程
     const loadData = async () => {
       try {
@@ -44,20 +54,15 @@ function App() {
     };
 
     loadData();
+
+    return () => {
+      window.removeEventListener('error', handleResizeObserverError);
+    };
   }, []);
 
   return (
     <Layout className="app-layout">
-      <Header className="app-header">
-        <div className="header-content">
-          <Title level={2}>
-            穆氏家谱
-          </Title>
-          <Text>
-            Interactive Family Tree Visualization
-          </Text>
-        </div>
-      </Header>
+
 
       <Content className="app-content">
         {/* 数据验证警告 */}

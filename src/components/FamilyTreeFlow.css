@@ -15,6 +15,121 @@
   background: hsl(0 0% 100%);
 }
 
+/* 统一导航栏 */
+.unified-navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 24px;
+  background: hsl(0 0% 100%);
+  border-bottom: 1px solid hsl(214.3 31.8% 91.4%);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  flex-shrink: 0;
+}
+
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: hsl(210 40% 98%);
+  border-radius: 8px;
+  border: 1px solid hsl(214.3 31.8% 91.4%);
+}
+
+.title h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: hsl(222.2 84% 4.9%);
+  line-height: 1.2;
+}
+
+.title .subtitle {
+  font-size: 12px;
+  color: hsl(215.4 16.3% 46.9%);
+  display: block;
+  margin-top: 2px;
+}
+
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.status-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  min-width: 80px;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+}
+
+.count-info {
+  display: flex;
+  align-items: center;
+}
+
+.search-section {
+  display: flex;
+  align-items: center;
+}
+
+.quick-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 状态徽章样式 */
+.status-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.status-badge.focus {
+  background: hsl(25.5 95% 96%);
+  color: hsl(25.5 95% 53.8%);
+  border: 1px solid hsl(25.5 95% 86.8%);
+}
+
+.status-badge.complete {
+  background: hsl(142.1 76.2% 96%);
+  color: hsl(142.1 76.2% 36.3%);
+  border: 1px solid hsl(142.1 76.2% 86.3%);
+}
+
+.status-badge.search {
+  background: hsl(262.1 83.3% 96%);
+  color: hsl(262.1 83.3% 47.8%);
+  border: 1px solid hsl(262.1 83.3% 86.8%);
+}
+
+.status-badge.smart {
+  background: hsl(173.4 58.9% 96%);
+  color: hsl(173.4 58.9% 29.1%);
+  border: 1px solid hsl(173.4 58.9% 86.1%);
+}
+
 /* 后台管理风格控制面板 */
 .admin-control-panel {
   margin: 16px 24px;
@@ -283,7 +398,7 @@
 
 .flow-container {
   flex: 1;
-  margin: 0 24px 24px 24px;
+  margin: 16px 24px 24px 24px;
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid hsl(214.3 31.8% 91.4%);
@@ -456,6 +571,55 @@
     height: 100vh;
   }
 
+  .unified-navbar {
+    padding: 8px 16px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .navbar-left {
+    gap: 12px;
+  }
+
+  .logo {
+    width: 32px;
+    height: 32px;
+  }
+
+  .title h1 {
+    font-size: 18px;
+  }
+
+  .title .subtitle {
+    font-size: 11px;
+  }
+
+  .navbar-right {
+    gap: 12px;
+  }
+
+  .status-info {
+    min-width: 60px;
+    gap: 1px;
+  }
+
+  .status-badge {
+    font-size: 10px;
+    padding: 1px 4px;
+  }
+
+  .count-info .ant-typography {
+    font-size: 10px !important;
+  }
+
+  .search-section .ant-select {
+    width: 160px !important;
+  }
+
+  .quick-actions {
+    gap: 6px;
+  }
+
   .admin-control-panel {
     margin: 8px 12px;
   }
@@ -553,4 +717,9 @@
   .react-flow__minimap {
     display: none;
   }
+}
+
+/* 搜索框placeholder样式 */
+.ant-select-selection-placeholder {
+  padding-left: 34px !important;
 }

@@ -16,6 +16,7 @@ import {
   EyeOutlined,
   CompressOutlined,
   MoreOutlined,
+  HomeOutlined,
   SettingOutlined
 } from '@ant-design/icons';
 
@@ -31,7 +32,8 @@ import searchHistoryManager from '../utils/searchHistory';
 import {
   applySmartCollapse,
   getCurrentUser,
-  getCollapseStats
+  getCollapseStats,
+  hasCollapsedChildren
 } from '../utils/familyTreeCollapse';
 
 import 'reactflow/dist/style.css';
@@ -55,17 +57,20 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
   const [selectedNode, setSelectedNode] = useState(null);
   const [isShowingAll, setIsShowingAll] = useState(true); // 默认显示全部
   const [searchTargetPerson, setSearchTargetPerson] = useState(null); // 搜索的目标人员
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false); // 抽屉状态
+
   const [showAlert, setShowAlert] = useState(true); // 控制提示显示
   const [searchOptions, setSearchOptions] = useState([]); // 搜索建议选项
   const [searchInputValue, setSearchInputValue] = useState(''); // 搜索输入框的值
   const searchTimeoutRef = useRef(null); // 搜索节流定时器
+  const reactFlowInstanceRef = useRef(null); // ReactFlow实例引用
   const [isMobile, setIsMobile] = useState(false); // 移动端检测
+  const [isDrawerVisible, setIsDrawerVisible] = useState(false); // 抽屉状态
 
   // 智能折叠相关状态
   const [currentUser, setCurrentUser] = useState(getCurrentUser(familyData));
   const [collapseStats, setCollapseStats] = useState(null);
   const [isSmartCollapseEnabled, setIsSmartCollapseEnabled] = useState(true);
+  const [expandedNodes, setExpandedNodes] = useState(new Set()); // 用户手动展开的节点
 
   const { fitView, setCenter, getViewport, getNodes } = useReactFlow();
 
@@ -82,6 +87,20 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  // 处理ResizeObserver错误
+  useEffect(() => {
+    const handleResizeObserverError = (e) => {
+      if (e.message === 'ResizeObserver loop completed with undelivered notifications.') {
+        // 忽略这个特定的错误，它不会影响功能
+        e.stopImmediatePropagation();
+        return false;
+      }
+    };
+
+    window.addEventListener('error', handleResizeObserverError);
+    return () => window.removeEventListener('error', handleResizeObserverError);
+  }, []);
+
   // 当数据变化时更新当前用户
   useEffect(() => {
     if (familyData && familyData.length > 0) {
@@ -90,6 +109,11 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
       console.log('👤 当前用户:', realCurrentUser);
     }
   }, [familyData]);
+
+  // 当智能折叠模式切换时重置展开节点
+  useEffect(() => {
+    setExpandedNodes(new Set());
+  }, [isSmartCollapseEnabled, isShowingAll]);
 
   // 理想的默认视图参数（基于穆茂节点的最佳显示效果）
   const idealViewParams = useMemo(() => {
@@ -119,8 +143,14 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
   const processData = useCallback(() => {
     if (!familyData || familyData.length === 0) return;
 
-    let filteredData;
-    let targetPerson = null;
+    // 防抖处理，避免快速连续调用
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    searchTimeoutRef.current = setTimeout(() => {
+      let filteredData;
+      let targetPerson = null;
 
     // 应用搜索（优先处理搜索逻辑）
     if (searchTerm.trim()) {
@@ -144,7 +174,7 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
             currentUser,
             collapseAfterGeneration: 3,
             showAllGenerations: false
-          });
+          }, expandedNodes);
 
           // 计算折叠统计
           const stats = getCollapseStats(familyData, filteredData, currentUser);
@@ -164,15 +194,16 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
       setSearchTargetPerson(null);
     }
 
-    // 转换为React Flow数据格式
-    const { nodes: newNodes, edges: newEdges } = convertToReactFlowData(filteredData);
+    // 转换为React Flow数据格式，并标记有被折叠子节点的节点
+    const { nodes: newNodes, edges: newEdges } = convertToReactFlowData(filteredData, familyData, isShowingAll && isSmartCollapseEnabled);
 
     // 应用布局
     const layoutedNodes = getLayoutedElements(newNodes, newEdges, layoutDirection);
 
-    setNodes(layoutedNodes);
-    setEdges(newEdges);
-  }, [familyData, searchTerm, generationRange, layoutDirection, setNodes, setEdges, isShowingAll, isSmartCollapseEnabled, currentUser]);
+      setNodes(layoutedNodes);
+      setEdges(newEdges);
+    }, 100); // 100ms防抖延迟
+  }, [familyData, searchTerm, generationRange, layoutDirection, setNodes, setEdges, isShowingAll, isSmartCollapseEnabled, currentUser, expandedNodes]);
 
   // 添加日志功能
   const logViewportInfo = useCallback(() => {
@@ -347,8 +378,51 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
 
   // 处理节点点击
   const onNodeClick = useCallback((_, node) => {
+    console.log('节点点击:', node.data.name);
+
+    // 检查是否是智能折叠模式下的被折叠节点
+    if (isShowingAll && isSmartCollapseEnabled) {
+      const nodeId = node.data.id;
+      const visibleData = nodes.map(n => n.data);
+      const hasHiddenChildren = hasCollapsedChildren(nodeId, familyData, visibleData);
+
+      if (hasHiddenChildren) {
+        // 保存当前视图状态
+        const reactFlowInstance = reactFlowInstanceRef.current;
+        const currentViewport = reactFlowInstance?.getViewport();
+
+        // 展开该节点的直接子节点
+        const newExpandedNodes = new Set(expandedNodes);
+        newExpandedNodes.add(nodeId);
+        setExpandedNodes(newExpandedNodes);
+
+        console.log(`🔓 展开节点: ${node.data.name} (ID: ${nodeId})`);
+
+        // 延迟恢复视图位置，等待节点重新渲染
+        setTimeout(() => {
+          const reactFlow = reactFlowInstanceRef.current;
+          if (reactFlow) {
+            // 优先保持原有视图位置
+            if (currentViewport) {
+              reactFlow.setViewport(currentViewport);
+            } else {
+              // 如果没有视图信息，则聚焦到点击的节点
+              const updatedNode = reactFlow.getNode(nodeId.toString());
+              if (updatedNode) {
+                reactFlow.setCenter(updatedNode.position.x, updatedNode.position.y, { zoom: reactFlow.getZoom() });
+              }
+            }
+          }
+        }, 150); // 稍微增加延迟确保渲染完成
+
+        // 不显示详情面板，因为这是展开操作
+        return;
+      }
+    }
+
+    // 显示节点详情
     setSelectedNode(node);
-  }, []);
+  }, [isShowingAll, isSmartCollapseEnabled, familyData, nodes, expandedNodes]);
 
   // 重置视图
   const resetView = useCallback(() => {
@@ -443,24 +517,7 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
     setIsShowingAll(false);
   }, [statistics]);
 
-  // 显示全部家谱
-  const showAllGenerations = useCallback(() => {
-    const maxGen = statistics?.generations || 20;
-    setGenerationRange([1, maxGen]);
-    setSearchTerm('');
-    setSearchTargetPerson(null);
-    setIsShowingAll(true);
-  }, [statistics]);
 
-  // 回到聚焦模式（聚焦第1代）
-  const backToFocusMode = useCallback(() => {
-    setGenerationRange([1, 1]);
-    setSearchTerm('');
-    setSearchTargetPerson(null);
-    setIsShowingAll(false);
-    setShowAlert(true); // 重新显示提示
-    // 聚焦逻辑由useEffect处理
-  }, []);
 
   // 切换全屏
   const toggleFullscreen = useCallback(() => {
@@ -539,6 +596,16 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
     performSearch(value);
   }, [performSearch]);
 
+  // 处理搜索选择
+  const handleSearchSelect = useCallback((searchValue) => {
+    handleSearchSubmit(searchValue);
+  }, [handleSearchSubmit]);
+
+  // 处理搜索输入
+  const handleSearchInput = useCallback((value) => {
+    handleSearchWithThrottle(value);
+  }, [handleSearchWithThrottle]);
+
   // 处理代数范围变化
   const handleGenerationChange = useCallback((value) => {
     setGenerationRange(value);
@@ -586,6 +653,103 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
 
   return (
     <div className={`family-tree-container ${isFullscreen ? 'fullscreen' : ''}`}>
+      {/* 统一导航栏 */}
+      <div className="unified-navbar">
+        <div className="navbar-left">
+          <div className="logo">
+            <HomeOutlined style={{ fontSize: '24px', color: '#1890ff' }} />
+          </div>
+          <div className="title">
+            <h1>穆氏宗谱</h1>
+            <span className="subtitle">家族传承 · 血脉相连</span>
+          </div>
+        </div>
+
+        <div className="navbar-right">
+          {/* 状态信息 */}
+          <div className="status-info">
+            <div className="status-indicator">
+              {searchTargetPerson ? (
+                <span className="status-badge search">搜索路径</span>
+              ) : isShowingAll ? (
+                isSmartCollapseEnabled ? (
+                  <span className="status-badge smart">智能折叠</span>
+                ) : (
+                  <span className="status-badge complete">完整模式</span>
+                )
+              ) : (
+                <span className="status-badge focus">聚焦模式</span>
+              )}
+            </div>
+            <div className="count-info">
+              <Text type="secondary" style={{ fontSize: '12px' }}>
+                {nodes.length}/{statistics?.totalMembers || familyData.length}人
+              </Text>
+            </div>
+          </div>
+
+          {/* 搜索功能 */}
+          <div className="search-section">
+            <AutoComplete
+              value={searchInputValue}
+              options={searchOptions}
+              onSelect={handleSearchSelect}
+              onSearch={handleSearchInput}
+              placeholder="搜索家族成员..."
+              style={{ width: 200 }}
+              allowClear
+            >
+              <Input
+                prefix={<SearchOutlined />}
+                onPressEnter={handleSearchSubmit}
+              />
+            </AutoComplete>
+          </div>
+
+          {/* 快速切换 */}
+          <div className="quick-actions">
+            <Button
+              type={isShowingAll ? 'primary' : 'default'}
+              icon={<EyeOutlined />}
+              onClick={() => {
+                // 防抖处理模式切换
+                if (searchTimeoutRef.current) {
+                  clearTimeout(searchTimeoutRef.current);
+                }
+
+                searchTimeoutRef.current = setTimeout(() => {
+                  setIsShowingAll(!isShowingAll);
+                }, 50);
+              }}
+              size="small"
+            >
+              {isShowingAll ? '完整' : '聚焦'}
+            </Button>
+
+            <Button
+              icon={<ReloadOutlined />}
+              onClick={resetView}
+              size="small"
+              title="重置视图"
+            />
+
+            <Button
+              icon={isFullscreen ? <CompressOutlined /> : <FullscreenOutlined />}
+              onClick={toggleFullscreen}
+              size="small"
+              title={isFullscreen ? '退出全屏' : '全屏显示'}
+            />
+
+            <Button
+              icon={<MoreOutlined />}
+              onClick={() => setIsDrawerVisible(true)}
+              size="small"
+              title="更多设置"
+            />
+          </div>
+        </div>
+      </div>
+
       {/* 智能提示 */}
       {searchTargetPerson && (
         <Alert
@@ -630,121 +794,16 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
         />
       )}
 
-      {/* 后台管理风格控制面板 */}
-      <div className="admin-control-panel">
-        <div className="control-main-row">
-          {/* 左侧：搜索和主要操作 */}
-          <div className="control-left">
-            <AutoComplete
-              options={searchOptions}
-              style={{ width: 240 }}
-              value={searchInputValue}
-              onSearch={handleSearchWithThrottle}
-              onSelect={handleSearchSubmit}
-              placeholder="搜索家族成员..."
-              allowClear
-              onChange={(value) => {
-                if (!value) {
-                  setSearchInputValue('');
-                  setSearchTerm('');
-                  setSearchTargetPerson(null);
-                } else {
-                  handleSearchWithThrottle(value);
-                }
-              }}
-            >
-              <Input
-                prefix={<SearchOutlined />}
-                onPressEnter={(e) => handleSearchSubmit(e.target.value)}
-                style={{ paddingLeft: '30px' }}
-              />
-            </AutoComplete>
 
-            {/* 主要操作按钮 */}
-            {isShowingAll ? (
-              <Button
-                type="primary"
-                icon={<CompressOutlined />}
-                onClick={backToFocusMode}
-              >
-                聚焦祖上
-              </Button>
-            ) : (
-              <Button
-                type="primary"
-                icon={<EyeOutlined />}
-                onClick={showAllGenerations}
-              >
-                查看完整家谱
-              </Button>
-            )}
-          </div>
 
-          {/* 中间：留空，保持简洁 */}
-          <div className="control-center">
-            {/* 保持中间区域简洁 */}
-          </div>
 
-          {/* 右侧：状态信息和操作按钮 */}
-          <div className="control-right">
-            <Space size="middle">
-              {/* 状态指示 */}
-              <div className="status-indicator">
-                {searchTargetPerson ? (
-                  <span className="status-badge search">搜索路径</span>
-                ) : isShowingAll ? (
-                  isSmartCollapseEnabled ? (
-                    <span className="status-badge smart">智能折叠</span>
-                  ) : (
-                    <span className="status-badge complete">完整模式</span>
-                  )
-                ) : (
-                  <span className="status-badge focus">聚焦模式</span>
-                )}
-                <Text type="secondary" style={{ marginLeft: 8, fontSize: '12px' }}>
-                  {nodes.length}/{statistics?.totalMembers || 0}人
-                </Text>
-              </div>
-
-              {/* 重置按钮 */}
-              <Button
-                icon={<ReloadOutlined />}
-                onClick={resetView}
-                size="small"
-                title="重置到默认状态"
-              >
-                重置
-              </Button>
-
-              {/* 全屏按钮 */}
-              <Button
-                icon={<FullscreenOutlined />}
-                onClick={toggleFullscreen}
-                type={isFullscreen ? 'primary' : 'default'}
-                size="small"
-                title={isFullscreen ? '退出全屏' : '进入全屏'}
-              />
-
-              {/* 更多操作 */}
-              <Button
-                icon={<MoreOutlined />}
-                onClick={() => setIsDrawerOpen(true)}
-                size="small"
-                title="更多设置"
-              >
-                更多
-              </Button>
-            </Space>
-          </div>
-        </div>
-      </div>
 
       {/* 更多操作抽屉 */}
       <Drawer
         title="更多设置"
         placement="right"
-        onClose={() => setIsDrawerOpen(false)}
-        open={isDrawerOpen}
+        onClose={() => setIsDrawerVisible(false)}
+        open={isDrawerVisible}
         width={360}
         styles={{
           body: { padding: '24px' }
@@ -906,6 +965,9 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           onNodeClick={onNodeClick}
+          onInit={(instance) => {
+            reactFlowInstanceRef.current = instance;
+          }}
           nodeTypes={nodeTypes}
           fitView
           proOptions={{ hideAttribution: true }}
