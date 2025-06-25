@@ -14093,7 +14093,7 @@ const dbJson = [
 		"household_info" : null,
 		"spouse" : null,
 		"home_page" : null,
-		"dealth" : "dealth",
+		"dealth" : "alive",
 		"formal_name" : null,
 		"location" : null,
 		"childrens" : null
@@ -14116,7 +14116,7 @@ const dbJson = [
 		"household_info" : null,
 		"spouse" : null,
 		"home_page" : null,
-		"dealth" : "dealth",
+		"dealth" : "alive",
 		"formal_name" : null,
 		"location" : null,
 		"childrens" : null
@@ -14139,7 +14139,7 @@ const dbJson = [
 		"household_info" : null,
 		"spouse" : null,
 		"home_page" : null,
-		"dealth" : "dealth",
+		"dealth" : "alive",
 		"formal_name" : null,
 		"location" : null,
 		"childrens" : null
@@ -14208,7 +14208,7 @@ const dbJson = [
 		"household_info" : null,
 		"spouse" : null,
 		"home_page" : null,
-		"dealth" : "dealth",
+		"dealth" : "alive",
 		"formal_name" : null,
 		"location" : null,
 		"childrens" : null
@@ -14231,7 +14231,7 @@ const dbJson = [
 		"household_info" : null,
 		"spouse" : null,
 		"home_page" : null,
-		"dealth" : "dealth",
+		"dealth" : "alive",
 		"formal_name" : null,
 		"location" : null,
 		"childrens" : null
@@ -14254,7 +14254,7 @@ const dbJson = [
 		"household_info" : null,
 		"spouse" : null,
 		"home_page" : null,
-		"dealth" : "dealth",
+		"dealth" : "alive",
 		"formal_name" : null,
 		"location" : null,
 		"childrens" : null
@@ -14277,7 +14277,7 @@ const dbJson = [
 		"household_info" : null,
 		"spouse" : null,
 		"home_page" : null,
-		"dealth" : "dealth",
+		"dealth" : "alive",
 		"formal_name" : null,
 		"location" : null,
 		"childrens" : null
@@ -14300,7 +14300,7 @@ const dbJson = [
 		"household_info" : null,
 		"spouse" : null,
 		"home_page" : null,
-		"dealth" : "dealth",
+		"dealth" : "alive",
 		"formal_name" : null,
 		"location" : null,
 		"childrens" : null

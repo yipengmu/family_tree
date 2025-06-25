@@ -37,6 +37,7 @@
   align-items: center;
   gap: 12px;
   flex: 0 0 auto;
+  padding-left: 20px;
 }
 
 /* 搜索框样式优化 */
@@ -130,6 +131,12 @@
   background: hsl(262.1 83.3% 96%);
   color: hsl(262.1 83.3% 47.8%);
   border: 1px solid hsl(262.1 83.3% 86.8%);
+}
+
+.status-badge.smart {
+  background: hsl(173.4 58.9% 96%);
+  color: hsl(173.4 58.9% 29.1%);
+  border: 1px solid hsl(173.4 58.9% 86.1%);
 }
 
 /* 抽屉内容样式 */
@@ -411,15 +418,7 @@
     box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
   }
 
-  /* 移动端小地图优化 */
-  .react-flow__minimap {
-    width: 120px !important;
-    height: 80px !important;
-    bottom: 20px !important;
-    left: 10px !important;
-    border-radius: 8px !important;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
-  }
+
 
   /* 移动端边缘样式 */
   .react-flow__edge {
@@ -523,11 +522,6 @@
 
   .react-flow__controls {
     bottom: 60px;
-  }
-
-  .react-flow__minimap {
-    width: 120px;
-    height: 80px;
   }
 }
 
