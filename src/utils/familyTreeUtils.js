@@ -3,9 +3,11 @@ import dagre from 'dagre';
 /**
  * 将扁平化的家谱数据转换为React Flow需要的节点和边数据结构
  * @param {Array} familyData - 扁平化的家谱数据
+ * @param {Array} fullFamilyData - 完整的家谱数据（用于检查折叠状态）
+ * @param {Boolean} isCollapseMode - 是否处于折叠模式
  * @returns {Object} - 包含nodes和edges的对象
  */
-export const convertToReactFlowData = (familyData) => {
+export const convertToReactFlowData = (familyData, fullFamilyData = null, isCollapseMode = false) => {
   const nodes = [];
   const edges = [];
   
@@ -14,6 +16,14 @@ export const convertToReactFlowData = (familyData) => {
   
   // 首先创建所有节点
   familyData.forEach(person => {
+    // 检查是否有被折叠的子节点
+    let hasCollapsedChildren = false;
+    if (isCollapseMode && fullFamilyData) {
+      const allChildren = fullFamilyData.filter(p => p.g_father_id === person.id);
+      const visibleChildren = familyData.filter(p => p.g_father_id === person.id);
+      hasCollapsedChildren = allChildren.length > 0 && visibleChildren.length < allChildren.length;
+    }
+
     const node = {
       id: person.id.toString(),
       type: 'familyMember',
@@ -39,10 +49,11 @@ export const convertToReactFlowData = (familyData) => {
         death: person.dealth,
         formalName: person.formal_name,
         location: person.location,
-        childrens: person.childrens
+        childrens: person.childrens,
+        hasCollapsedChildren // 添加折叠状态标识
       }
     };
-    
+
     nodes.push(node);
     nodeMap.set(person.id, node);
   });

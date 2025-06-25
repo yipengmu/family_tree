@@ -190,3 +190,48 @@
   background: hsl(0 0% 100%) !important;
   border: 1px solid hsl(214.3 31.8% 91.4%) !important;
 }
+
+/* 折叠提示样式 */
+.has-collapsed-children {
+  position: relative;
+  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.2) !important;
+}
+
+.has-collapsed-children:hover {
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3) !important;
+  transform: translateY(-1px);
+  transition: all 0.2s ease;
+}
+
+.collapse-indicator-bottom {
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  background: hsl(0 0% 100%);
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #1890ff;
+  cursor: pointer;
+}
+
+.collapse-indicator-bottom:hover {
+  background: #f0f8ff;
+  transform: translateX(-50%) scale(1.1);
+  transition: all 0.2s ease;
+}
+
+/* 移动端折叠提示优化 */
+@media (max-width: 768px) {
+  .collapse-indicator-bottom {
+    width: 16px;
+    height: 16px;
+    bottom: -6px;
+  }
+}

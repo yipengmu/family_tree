@@ -73,9 +73,10 @@ export const getExpandedPath = (familyData, currentUser = null) => {
  * 应用智能折叠规则
  * @param {Array} familyData - 完整家谱数据
  * @param {Object} options - 折叠选项
+ * @param {Set} expandedNodes - 用户手动展开的节点ID集合
  * @returns {Array} - 折叠后的家谱数据
  */
-export const applySmartCollapse = (familyData, options = {}) => {
+export const applySmartCollapse = (familyData, options = {}, expandedNodes = new Set()) => {
   const {
     currentUser = getCurrentUser(),
     collapseAfterGeneration = 3,
@@ -90,6 +91,17 @@ export const applySmartCollapse = (familyData, options = {}) => {
   // 获取需要展开的路径
   const expandedIds = getExpandedPath(familyData, currentUser);
 
+  // 合并用户手动展开的节点
+  const allExpandedIds = new Set([...expandedIds, ...expandedNodes]);
+
+  // 为手动展开的节点添加其直接子女
+  expandedNodes.forEach(nodeId => {
+    const children = familyData.filter(person => person.g_father_id === nodeId);
+    children.forEach(child => {
+      allExpandedIds.add(child.id);
+    });
+  });
+
   // 筛选数据：前三代全部显示，之后只显示展开路径
   const filteredData = familyData.filter(person => {
     // 前三代全部显示
@@ -98,7 +110,7 @@ export const applySmartCollapse = (familyData, options = {}) => {
     }
 
     // 第三代之后只显示展开路径中的人员
-    return expandedIds.has(person.id);
+    return allExpandedIds.has(person.id);
   });
 
   console.log(`🌳 智能折叠应用完成:`);
@@ -223,4 +235,33 @@ export const getSwitchableUsers = (familyData) => {
       summary: person.summary || `第${person.g_rank}代`
     }))
     .sort((a, b) => a.generation - b.generation || a.name.localeCompare(b.name));
+};
+
+/**
+ * 检查节点是否有被折叠的子节点
+ * @param {Number} nodeId - 节点ID
+ * @param {Array} familyData - 完整家谱数据
+ * @param {Array} visibleData - 当前可见的数据
+ * @returns {Boolean} - 是否有被折叠的子节点
+ */
+export const hasCollapsedChildren = (nodeId, familyData, visibleData) => {
+  // 获取该节点的所有子节点
+  const allChildren = familyData.filter(person => person.g_father_id === nodeId);
+
+  // 获取当前可见的子节点
+  const visibleChildrenIds = new Set(visibleData.map(p => p.id));
+  const visibleChildren = allChildren.filter(child => visibleChildrenIds.has(child.id));
+
+  // 如果有子节点但不是全部可见，说明有被折叠的
+  return allChildren.length > 0 && visibleChildren.length < allChildren.length;
+};
+
+/**
+ * 获取节点的直接子节点
+ * @param {Number} nodeId - 节点ID
+ * @param {Array} familyData - 家谱数据
+ * @returns {Array} - 直接子节点列表
+ */
+export const getDirectChildren = (nodeId, familyData) => {
+  return familyData.filter(person => person.g_father_id === nodeId);
 };
