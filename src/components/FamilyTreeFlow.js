@@ -31,10 +31,7 @@ import searchHistoryManager from '../utils/searchHistory';
 import {
   applySmartCollapse,
   getCurrentUser,
-  getCollapseStats,
-  getCollapseHint,
-  switchUserPath,
-  getSwitchableUsers
+  getCollapseStats
 } from '../utils/familyTreeCollapse';
 
 import 'reactflow/dist/style.css';
@@ -60,8 +57,6 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
   const [searchTargetPerson, setSearchTargetPerson] = useState(null); // 搜索的目标人员
   const [isDrawerOpen, setIsDrawerOpen] = useState(false); // 抽屉状态
   const [showAlert, setShowAlert] = useState(true); // 控制提示显示
-  // eslint-disable-next-line no-unused-vars
-  const [searchHistory, setSearchHistory] = useState([]); // 搜索历史
   const [searchOptions, setSearchOptions] = useState([]); // 搜索建议选项
   const [searchInputValue, setSearchInputValue] = useState(''); // 搜索输入框的值
   const searchTimeoutRef = useRef(null); // 搜索节流定时器
@@ -71,7 +66,6 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
   const [currentUser, setCurrentUser] = useState(getCurrentUser(familyData));
   const [collapseStats, setCollapseStats] = useState(null);
   const [isSmartCollapseEnabled, setIsSmartCollapseEnabled] = useState(true);
-  const [dataValidation, setDataValidation] = useState(null);
 
   const { fitView, setCenter, getViewport, getNodes } = useReactFlow();
 
@@ -142,8 +136,31 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
         pathTreeDataCount: filteredData.length
       });
     } else {
-      // 没有搜索时，应用代数筛选
+      // 没有搜索时，根据模式处理数据
+      if (isShowingAll) {
+        // 完整模式：应用智能折叠
+        if (isSmartCollapseEnabled) {
+          filteredData = applySmartCollapse(familyData, {
+            currentUser,
+            collapseAfterGeneration: 3,
+            showAllGenerations: false
+          });
+
+          // 计算折叠统计
+          const stats = getCollapseStats(familyData, filteredData, currentUser);
+          setCollapseStats(stats);
+
+          console.log('🌳 智能折叠统计:', stats);
+        } else {
+          // 显示全部数据
+          filteredData = familyData;
+          setCollapseStats(null);
+        }
+      } else {
+        // 聚焦模式：应用代数筛选
         filteredData = filterByRank(familyData, generationRange[0], generationRange[1]);
+        setCollapseStats(null);
+      }
       setSearchTargetPerson(null);
     }
 
@@ -235,7 +252,6 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
     const loadSearchHistory = async () => {
       try {
         const history = await searchHistoryManager.getSearchHistory();
-        setSearchHistory(history);
 
         // 构建搜索建议选项
         const options = history.map((record, index) => ({
@@ -470,7 +486,6 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
 
         // 重新加载搜索历史
         const updatedHistory = await searchHistoryManager.getSearchHistory();
-        setSearchHistory(updatedHistory);
 
         // 更新搜索建议选项
         const options = updatedHistory.map((record, index) => ({
@@ -678,7 +693,11 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
                 {searchTargetPerson ? (
                   <span className="status-badge search">搜索路径</span>
                 ) : isShowingAll ? (
+                  isSmartCollapseEnabled ? (
+                    <span className="status-badge smart">智能折叠</span>
+                  ) : (
                     <span className="status-badge complete">完整模式</span>
+                  )
                 ) : (
                   <span className="status-badge focus">聚焦模式</span>
                 )}
@@ -757,6 +776,33 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
               >
                 最后三代
               </Button>
+            </Space>
+          </div>
+
+          <Divider />
+
+          {/* 智能折叠控制 */}
+          <div className="drawer-section">
+            <h4>智能折叠</h4>
+            <Space direction="vertical" style={{ width: '100%' }} size="small">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>启用智能折叠</span>
+                <Button
+                  size="small"
+                  type={isSmartCollapseEnabled ? 'primary' : 'default'}
+                  onClick={() => setIsSmartCollapseEnabled(!isSmartCollapseEnabled)}
+                >
+                  {isSmartCollapseEnabled ? '已启用' : '已禁用'}
+                </Button>
+              </div>
+
+              {collapseStats && (
+                <div style={{ fontSize: '11px', color: '#666', padding: '8px', background: '#f5f5f5', borderRadius: '4px' }}>
+                  <div>当前用户: {collapseStats.currentUser.name} (第{collapseStats.currentUser.g_rank}代)</div>
+                  <div>显示: {collapseStats.totalCollapsed} 人</div>
+                  <div>隐藏: {collapseStats.totalHidden} 人 ({collapseStats.collapseRatio}%)</div>
+                </div>
+              )}
             </Space>
           </div>
 
