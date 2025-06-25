@@ -1,6 +1,5 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import ReactFlow, {
-  MiniMap,
   Controls,
   Background,
   useNodesState,
@@ -29,6 +28,14 @@ import {
   searchWithPathTree
 } from '../utils/familyTreeUtils';
 import searchHistoryManager from '../utils/searchHistory';
+import {
+  applySmartCollapse,
+  getCurrentUser,
+  getCollapseStats,
+  getCollapseHint,
+  switchUserPath,
+  getSwitchableUsers
+} from '../utils/familyTreeCollapse';
 
 import 'reactflow/dist/style.css';
 import './FamilyTreeFlow.css';
@@ -59,6 +66,13 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
   const [searchInputValue, setSearchInputValue] = useState(''); // 搜索输入框的值
   const searchTimeoutRef = useRef(null); // 搜索节流定时器
   const [isMobile, setIsMobile] = useState(false); // 移动端检测
+
+  // 智能折叠相关状态
+  const [currentUser, setCurrentUser] = useState(getCurrentUser(familyData));
+  const [collapseStats, setCollapseStats] = useState(null);
+  const [isSmartCollapseEnabled, setIsSmartCollapseEnabled] = useState(true);
+  const [dataValidation, setDataValidation] = useState(null);
+
   const { fitView, setCenter, getViewport, getNodes } = useReactFlow();
 
   // 移动端检测
@@ -73,6 +87,15 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  // 当数据变化时更新当前用户
+  useEffect(() => {
+    if (familyData && familyData.length > 0) {
+      const realCurrentUser = getCurrentUser(familyData);
+      setCurrentUser(realCurrentUser);
+      console.log('👤 当前用户:', realCurrentUser);
+    }
+  }, [familyData]);
 
   // 理想的默认视图参数（基于穆茂节点的最佳显示效果）
   const idealViewParams = useMemo(() => {
@@ -120,7 +143,7 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
       });
     } else {
       // 没有搜索时，应用代数筛选
-      filteredData = filterByRank(familyData, generationRange[0], generationRange[1]);
+        filteredData = filterByRank(familyData, generationRange[0], generationRange[1]);
       setSearchTargetPerson(null);
     }
 
@@ -132,7 +155,7 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
 
     setNodes(layoutedNodes);
     setEdges(newEdges);
-  }, [familyData, searchTerm, generationRange, layoutDirection, setNodes, setEdges]);
+  }, [familyData, searchTerm, generationRange, layoutDirection, setNodes, setEdges, isShowingAll, isSmartCollapseEnabled, currentUser]);
 
   // 添加日志功能
   const logViewportInfo = useCallback(() => {
@@ -655,7 +678,7 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
                 {searchTargetPerson ? (
                   <span className="status-badge search">搜索路径</span>
                 ) : isShowingAll ? (
-                  <span className="status-badge complete">完整模式</span>
+                    <span className="status-badge complete">完整模式</span>
                 ) : (
                   <span className="status-badge focus">聚焦模式</span>
                 )}
@@ -839,7 +862,7 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
           onNodeClick={onNodeClick}
           nodeTypes={nodeTypes}
           fitView
-          attributionPosition="bottom-left"
+          proOptions={{ hideAttribution: true }}
           minZoom={isMobile ? 0.3 : 0.2}
           maxZoom={isMobile ? 2 : 3}
           defaultViewport={{
@@ -865,24 +888,10 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
           selectNodesOnDrag={false}
         >
           <Controls />
-          <MiniMap
-            nodeColor={(node) => {
-              const colors = [
-                'hsl(221.2 83.2% 53.3%)', 'hsl(142.1 76.2% 36.3%)', 'hsl(262.1 83.3% 57.8%)',
-                'hsl(346.8 77.2% 49.8%)', 'hsl(24.6 95% 53.1%)', 'hsl(47.9 95.8% 53.1%)',
-                'hsl(173.4 58.9% 39.1%)', 'hsl(270.7 91% 65.1%)', 'hsl(0 84.2% 60.2%)',
-                'hsl(20.5 90.2% 48.2%)', 'hsl(142.1 70.6% 45.3%)', 'hsl(217.2 91.2% 59.8%)'
-              ];
-              return colors[(node.data.rank - 1) % colors.length];
-            }}
-            nodeStrokeWidth={2}
-            zoomable
-            pannable
-          />
           <Background variant="dots" gap={12} size={1} />
 
-          {/* 浮动操作提示 */}
-          {!isShowingAll && (
+          {/* 浮动操作提示 - 移动端隐藏 */}
+          {!isShowingAll && !isMobile && (
             <Panel position="bottom-center">
               <div className="floating-hint">
                 <Text type="secondary" style={{ fontSize: '12px' }}>
