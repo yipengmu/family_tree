@@ -5,9 +5,11 @@ import dagre from 'dagre';
  * @param {Array} familyData - 扁平化的家谱数据
  * @param {Array} fullFamilyData - 完整的家谱数据（用于检查折叠状态）
  * @param {Boolean} isCollapseMode - 是否处于折叠模式
+ * @param {Object} options - 额外选项
  * @returns {Object} - 包含nodes和edges的对象
  */
-export const convertToReactFlowData = (familyData, fullFamilyData = null, isCollapseMode = false) => {
+export const convertToReactFlowData = (familyData, fullFamilyData = null, isCollapseMode = false, options = {}) => {
+  const { isNameProtectionEnabled = false } = options;
   const nodes = [];
   const edges = [];
   
@@ -50,7 +52,8 @@ export const convertToReactFlowData = (familyData, fullFamilyData = null, isColl
         formalName: person.formal_name,
         location: person.location,
         childrens: person.childrens,
-        hasCollapsedChildren // 添加折叠状态标识
+        hasCollapsedChildren, // 添加折叠状态标识
+        isNameProtectionEnabled // 添加姓名保护开关
       }
     };
 

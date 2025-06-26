@@ -36,12 +36,22 @@ export const getCurrentUser = (familyData = null) => {
  * 获取需要展开的路径（当前用户到根节点的路径）
  * @param {Array} familyData - 家谱数据
  * @param {Object} currentUser - 当前登录用户
+ * @param {Object} options - 展开选项
  * @returns {Set} - 需要展开的人员ID集合
  */
-export const getExpandedPath = (familyData, currentUser = null) => {
+export const getExpandedPath = (familyData, currentUser = null, options = {}) => {
   if (!currentUser) {
     currentUser = getCurrentUser();
   }
+
+  const {
+    isFocusMode = false,
+    searchTargetPerson = null
+  } = options;
+
+  // 获取最大代数
+  const maxGeneration = Math.max(...familyData.map(p => p.g_rank));
+  const lastThreeGenerations = [maxGeneration - 2, maxGeneration - 1, maxGeneration];
 
   // 获取从当前用户到根节点的路径
   const pathPersons = getPathToRoot(familyData, currentUser.id);
@@ -49,8 +59,8 @@ export const getExpandedPath = (familyData, currentUser = null) => {
 
   // 添加路径上每个节点的直接子女（显示兄弟姐妹关系）
   pathPersons.forEach(pathPerson => {
-    const siblings = familyData.filter(person => 
-      person.g_father_id === pathPerson.g_father_id && 
+    const siblings = familyData.filter(person =>
+      person.g_father_id === pathPerson.g_father_id &&
       person.g_father_id !== 0
     );
     siblings.forEach(sibling => {
@@ -59,12 +69,41 @@ export const getExpandedPath = (familyData, currentUser = null) => {
   });
 
   // 添加当前用户的直接子女
-  const currentUserChildren = familyData.filter(person => 
+  const currentUserChildren = familyData.filter(person =>
     person.g_father_id === currentUser.id
   );
   currentUserChildren.forEach(child => {
     expandedIds.add(child.id);
   });
+
+  // 添加当前用户同代的所有成员（堂兄弟姐妹）
+  const sameGenerationMembers = familyData.filter(person =>
+    person.g_rank === currentUser.g_rank
+  );
+  sameGenerationMembers.forEach(member => {
+    expandedIds.add(member.id);
+  });
+
+  // 聚焦模式下的特殊逻辑：如果搜索目标是最后3代人员，展开最后3代所有人员
+  if (isFocusMode && searchTargetPerson) {
+    const targetGeneration = searchTargetPerson.g_rank;
+
+    // 如果搜索目标在最后3代中
+    if (lastThreeGenerations.includes(targetGeneration)) {
+      console.log(`🎯 聚焦模式：搜索目标在第${targetGeneration}代（最后3代之一），展开最后3代所有人员`);
+
+      // 添加最后3代的所有人员
+      const lastThreeGenerationsMembers = familyData.filter(person =>
+        lastThreeGenerations.includes(person.g_rank)
+      );
+
+      lastThreeGenerationsMembers.forEach(member => {
+        expandedIds.add(member.id);
+      });
+
+      console.log(`📊 最后3代展开统计: 第${lastThreeGenerations[0]}-${lastThreeGenerations[2]}代，共${lastThreeGenerationsMembers.length}人`);
+    }
+  }
 
   return expandedIds;
 };
@@ -80,7 +119,9 @@ export const applySmartCollapse = (familyData, options = {}, expandedNodes = new
   const {
     currentUser = getCurrentUser(),
     collapseAfterGeneration = 3,
-    showAllGenerations = false
+    showAllGenerations = false,
+    isFocusMode = false,
+    searchTargetPerson = null
   } = options;
 
   // 如果显示全部代数，不进行折叠
@@ -88,8 +129,11 @@ export const applySmartCollapse = (familyData, options = {}, expandedNodes = new
     return familyData;
   }
 
-  // 获取需要展开的路径
-  const expandedIds = getExpandedPath(familyData, currentUser);
+  // 获取需要展开的路径，传递聚焦模式和搜索目标信息
+  const expandedIds = getExpandedPath(familyData, currentUser, {
+    isFocusMode,
+    searchTargetPerson
+  });
 
   // 合并用户手动展开的节点
   const allExpandedIds = new Set([...expandedIds, ...expandedNodes]);

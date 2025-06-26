@@ -10,7 +10,7 @@ import ReactFlow, {
   ConnectionLineType,
   MarkerType,
 } from 'reactflow';
-import { Button, Card, Slider, Input, Select, Space, Typography, Spin, Alert, Drawer, Divider, AutoComplete } from 'antd';
+import { Button, Card, Slider, Input, Select, Space, Typography, Spin, Alert, Drawer, Divider, AutoComplete, Switch, Tag } from 'antd';
 import {
   ReloadOutlined,
   SearchOutlined,
@@ -68,6 +68,8 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
   const reactFlowInstanceRef = useRef(null); // ReactFlow实例引用
   const [isMobile, setIsMobile] = useState(false); // 移动端检测
   const [isDrawerVisible, setIsDrawerVisible] = useState(false); // 抽屉状态
+  const [isNodeDraggable, setIsNodeDraggable] = useState(false); // 节点拖拽开关，默认关闭
+  const [isNameProtectionEnabled, setIsNameProtectionEnabled] = useState(false); // 在世人员姓名保护开关，默认关闭
 
   // 智能折叠相关状态
   const [currentUser, setCurrentUser] = useState(getCurrentUser(familyData));
@@ -194,11 +196,31 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
       targetPerson = searchResult.targetPerson;
       setSearchTargetPerson(targetPerson);
 
+      // 聚焦模式下，如果搜索目标是最后3代人员，应用智能折叠展开最后3代
+      if (!isShowingAll && targetPerson && isSmartCollapseEnabled) {
+        const maxGeneration = Math.max(...familyData.map(p => p.g_rank));
+        const lastThreeGenerations = [maxGeneration - 2, maxGeneration - 1, maxGeneration];
+
+        if (lastThreeGenerations.includes(targetPerson.g_rank)) {
+          console.log(`🎯 聚焦模式搜索：目标在第${targetPerson.g_rank}代（最后3代），应用智能折叠`);
+
+          filteredData = applySmartCollapse(familyData, {
+            currentUser,
+            collapseAfterGeneration: 3,
+            showAllGenerations: false,
+            isFocusMode: true,
+            searchTargetPerson: targetPerson
+          }, expandedNodes);
+        }
+      }
+
       console.log('🔍 搜索结果:', {
         searchTerm,
         searchResults: searchResult.searchResults,
         targetPerson,
-        pathTreeDataCount: filteredData.length
+        pathTreeDataCount: filteredData.length,
+        isFocusMode: !isShowingAll,
+        appliedSmartCollapse: !isShowingAll && targetPerson && isSmartCollapseEnabled
       });
     } else {
       // 没有搜索时，根据模式处理数据
@@ -208,7 +230,9 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
           filteredData = applySmartCollapse(familyData, {
             currentUser,
             collapseAfterGeneration: 3,
-            showAllGenerations: false
+            showAllGenerations: false,
+            isFocusMode: false,
+            searchTargetPerson: null
           }, expandedNodes);
 
           // 计算折叠统计
@@ -222,15 +246,37 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
           setCollapseStats(null);
         }
       } else {
-        // 聚焦模式：应用代数筛选
-        filteredData = filterByRank(familyData, generationRange[0], generationRange[1]);
-        setCollapseStats(null);
+        // 聚焦模式：应用智能折叠（支持最后3代展开逻辑）
+        if (isSmartCollapseEnabled) {
+          filteredData = applySmartCollapse(familyData, {
+            currentUser,
+            collapseAfterGeneration: 3,
+            showAllGenerations: false,
+            isFocusMode: true,
+            searchTargetPerson: searchTargetPerson
+          }, expandedNodes);
+
+          // 计算折叠统计
+          const stats = getCollapseStats(familyData, filteredData, currentUser);
+          setCollapseStats(stats);
+
+          console.log('🎯 聚焦模式智能折叠统计:', stats);
+        } else {
+          // 聚焦模式：应用代数筛选
+          filteredData = filterByRank(familyData, generationRange[0], generationRange[1]);
+          setCollapseStats(null);
+        }
       }
       setSearchTargetPerson(null);
     }
 
     // 转换为React Flow数据格式，并标记有被折叠子节点的节点
-    const { nodes: newNodes, edges: newEdges } = convertToReactFlowData(filteredData, familyData, isShowingAll && isSmartCollapseEnabled);
+    const { nodes: newNodes, edges: newEdges } = convertToReactFlowData(
+      filteredData,
+      familyData,
+      isShowingAll && isSmartCollapseEnabled,
+      { isNameProtectionEnabled }
+    );
 
     // 应用布局
     const layoutedNodes = getLayoutedElements(newNodes, newEdges, layoutDirection);
@@ -986,6 +1032,46 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
 
           <Divider />
 
+          {/* 交互设置 */}
+          <div className="drawer-section">
+            <h4>交互设置</h4>
+            <Space direction="vertical" style={{ width: '100%' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>节点拖拽</span>
+                <Switch
+                  checked={isNodeDraggable}
+                  onChange={setIsNodeDraggable}
+                  size="small"
+                />
+              </div>
+              <Text type="secondary" style={{ fontSize: '12px' }}>
+                开启后可以自由拖拽移动节点位置
+              </Text>
+            </Space>
+          </div>
+
+          <Divider />
+
+          {/* 隐私设置 */}
+          <div className="drawer-section">
+            <h4>隐私设置</h4>
+            <Space direction="vertical" style={{ width: '100%' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span>在世人员姓名保护</span>
+                <Switch
+                  checked={isNameProtectionEnabled}
+                  onChange={setIsNameProtectionEnabled}
+                  size="small"
+                />
+              </div>
+              <Text type="secondary" style={{ fontSize: '12px' }}>
+                开启后在世人员姓名最后一个字用*号替代
+              </Text>
+            </Space>
+          </div>
+
+          <Divider />
+
           {/* 开发工具 */}
           <div className="drawer-section">
             <h4>开发工具</h4>
@@ -1049,7 +1135,7 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
         <ReactFlow
           nodes={nodes}
           edges={edges}
-          onNodesChange={onNodesChange}
+          onNodesChange={isNodeDraggable ? onNodesChange : undefined}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           onNodeClick={onNodeClick}
@@ -1057,6 +1143,9 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
             reactFlowInstanceRef.current = instance;
           }}
           nodeTypes={nodeTypes}
+          nodesDraggable={isNodeDraggable}
+          nodesConnectable={false}
+          elementsSelectable={isNodeDraggable}
           connectionLineType={ConnectionLineType.Straight}
           defaultEdgeOptions={{
             type: 'straight',

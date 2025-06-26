@@ -15,7 +15,8 @@ const FamilyMemberNode = ({ data, selected }) => {
     death,
     location,
     summary,
-    hasCollapsedChildren
+    hasCollapsedChildren,
+    isNameProtectionEnabled = false // 姓名保护开关，默认关闭
   } = data;
 
   // 根据性别选择图标和颜色
@@ -67,6 +68,11 @@ const FamilyMemberNode = ({ data, selected }) => {
 
     // 检查是否为在世人员（只有"alive"才代表在世，null代表已故）
     const isAlive = death === 'alive';
+
+    // 如果姓名保护开关关闭，直接返回原名
+    if (!isNameProtectionEnabled) {
+      return originalName;
+    }
 
     if (isAlive && originalName.length > 1) {
       // 处理包含注音符号的姓名，如"穆垠（yin）彤"
