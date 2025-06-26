@@ -8,9 +8,14 @@ const path = require('path');
 function validateRefreshedData() {
   console.log('🔍 开始验证刷新后的数据...\n');
   
-  // 读取oneTree.json.txt
-  const oneTreePath = path.join(__dirname, '../common/oneTree.json.txt');
-  const oneTreeData = JSON.parse(fs.readFileSync(oneTreePath, 'utf8'));
+  // 直接从主数据源读取数据
+  const dbJsonPath = path.join(__dirname, '../data/familyData.js');
+  const dbJsonContent = fs.readFileSync(dbJsonPath, 'utf8');
+  const arrayMatch = dbJsonContent.match(/const familyData = (\[[\s\S]*?\]);/);
+  const allData = arrayMatch ? JSON.parse(arrayMatch[1]) : [];
+
+  // 筛选19-20代数据
+  const oneTreeData = allData.filter(person => person.g_rank >= 19 && person.g_rank <= 20);
   
   console.log('📊 数据概览:');
   console.log(`- 总记录数: ${oneTreeData.length}`);
@@ -78,15 +83,13 @@ function validateRefreshedData() {
   console.log(`- 有效父子关系: ${validRelations}`);
   console.log(`- 无效父子关系: ${invalidRelations}`);
   
-  // 验证文件完整性
-  console.log('\n📁 文件验证:');
-  const files = [
-    'src/common/queryTree.txt',
-    'src/common/oneTree.json.txt',
-    'src/common/fullTree.json.txt'
+  // 验证数据源文件完整性
+  console.log('\n📁 数据源验证:');
+  const dataFiles = [
+    'src/data/familyData.js'
   ];
-  
-  files.forEach(file => {
+
+  dataFiles.forEach(file => {
     const filePath = path.join(__dirname, '..', '..', file);
     if (fs.existsSync(filePath)) {
       const stats = fs.statSync(filePath);

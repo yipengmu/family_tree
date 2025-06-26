@@ -31,6 +31,7 @@ import {
   searchWithPathTree
 } from '../utils/familyTreeUtils';
 import searchHistoryManager from '../utils/searchHistory';
+import familyDataService from '../services/familyDataService';
 import {
   applySmartCollapse,
   getCurrentUser,
@@ -467,6 +468,23 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
     setSelectedNode(null);
     setIsShowingAll(true);
   }, [statistics]);
+
+  // 强制刷新数据
+  const forceRefreshData = useCallback(async () => {
+    try {
+      console.log('🔄 开始强制刷新数据...');
+
+      // 调用数据服务的强制刷新方法
+      await familyDataService.forceRefreshAll();
+
+      // 触发页面重新加载以获取最新数据
+      window.location.reload();
+
+    } catch (error) {
+      console.error('❌ 数据刷新失败:', error);
+      // 可以在这里添加错误提示
+    }
+  }, []);
 
   // 聚焦第1代祖上（穆茂）
   const focusOnFounder = useCallback(() => {
@@ -972,6 +990,14 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
           <div className="drawer-section">
             <h4>开发工具</h4>
             <Space direction="vertical" style={{ width: '100%' }}>
+              <Button
+                onClick={forceRefreshData}
+                block
+                icon={<ReloadOutlined />}
+                type="primary"
+              >
+                强制刷新数据
+              </Button>
               <Button
                 onClick={logViewportInfo}
                 block
