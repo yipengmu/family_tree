@@ -65,15 +65,19 @@ export const convertToReactFlowData = (familyData, fullFamilyData = null, isColl
         id: `edge-${person.g_father_id}-${person.id}`,
         source: person.g_father_id.toString(),
         target: person.id.toString(),
-        type: 'smoothstep',
+        type: 'straight',  // 使用直线连接，避免交错
         animated: false,
         style: {
-          stroke: '#b1b1b7',
+          stroke: 'hsl(215.4 16.3% 46.9%)',  // 使用统一的颜色
           strokeWidth: 2,
+          strokeLinecap: 'round',
+          strokeLinejoin: 'round',
         },
         markerEnd: {
           type: 'arrowclosed',
-          color: '#b1b1b7',
+          color: 'hsl(215.4 16.3% 46.9%)',
+          width: 12,
+          height: 12,
         }
       };
       edges.push(edge);
@@ -96,12 +100,15 @@ export const getLayoutedElements = (nodes, edges, direction = 'TB') => {
   const nodeWidth = 200;
   const nodeHeight = 80;
   
-  dagreGraph.setGraph({ 
+  dagreGraph.setGraph({
     rankdir: direction,
-    nodesep: 50,
-    ranksep: 100,
+    nodesep: 80,     // 增加节点间距，从50增加到80，减少连接线交错
+    ranksep: 120,    // 增加行间距，从90增加到120，保持代际间合适高度
     marginx: 20,
-    marginy: 20
+    marginy: 10,     // 减少顶部边距，从20减少到10
+    align: undefined, // 移除对齐限制，让Dagre自动居中对齐父子节点
+    acyclicer: 'greedy',  // 使用贪心算法减少环路
+    ranker: 'tight-tree'  // 使用紧凑树排列，优化连接线
   });
   
   nodes.forEach((node) => {
@@ -113,19 +120,134 @@ export const getLayoutedElements = (nodes, edges, direction = 'TB') => {
   });
   
   dagre.layout(dagreGraph);
-  
-  return nodes.map((node) => {
+
+  // 获取布局后的节点位置
+  const layoutedNodes = nodes.map((node) => {
     const nodeWithPosition = dagreGraph.node(node.id);
     node.targetPosition = 'top';
     node.sourcePosition = 'bottom';
-    
+
     // 调整位置，使节点居中
     node.position = {
       x: nodeWithPosition.x - nodeWidth / 2,
       y: nodeWithPosition.y - nodeHeight / 2,
     };
-    
+
     return node;
+  });
+
+  // 手动调整父子节点的水平对齐
+  return adjustParentChildAlignment(layoutedNodes, edges);
+};
+
+/**
+ * 调整父子节点的水平对齐，同时避免同级节点重叠
+ * @param {Array} nodes - 布局后的节点数组
+ * @param {Array} edges - 边数组
+ * @returns {Array} - 调整对齐后的节点数组
+ */
+const adjustParentChildAlignment = (nodes, edges) => {
+  const nodeWidth = 200;
+  const minNodeSpacing = 80; // 节点间最小间距
+
+  // 创建节点映射
+  const nodeMap = new Map(nodes.map(node => [node.id, node]));
+
+  // 创建父子关系映射
+  const parentChildrenMap = new Map();
+  edges.forEach(edge => {
+    const parentId = edge.source;
+    const childId = edge.target;
+
+    if (!parentChildrenMap.has(parentId)) {
+      parentChildrenMap.set(parentId, []);
+    }
+    parentChildrenMap.get(parentId).push(childId);
+  });
+
+  // 按Y坐标分组节点到不同代数
+  const generations = new Map();
+  nodes.forEach(node => {
+    const y = Math.round(node.position.y / 60) * 60;
+    if (!generations.has(y)) {
+      generations.set(y, []);
+    }
+    generations.get(y).push(node);
+  });
+
+  // 从上到下逐代处理
+  const processedGenerations = Array.from(generations.keys()).sort((a, b) => a - b);
+
+  processedGenerations.forEach(generationY => {
+    const generationNodes = generations.get(generationY);
+
+    // 先尝试居中对齐父子节点
+    generationNodes.forEach(parentNode => {
+      const childrenIds = parentChildrenMap.get(parentNode.id);
+      if (childrenIds && childrenIds.length > 0) {
+        const childrenNodes = childrenIds.map(id => nodeMap.get(id)).filter(Boolean);
+
+        if (childrenNodes.length > 0) {
+          // 计算子节点的水平中心位置
+          const childrenXPositions = childrenNodes.map(child => child.position.x + nodeWidth / 2);
+          const minX = Math.min(...childrenXPositions);
+          const maxX = Math.max(...childrenXPositions);
+          const centerX = (minX + maxX) / 2;
+
+          // 设置父节点的理想位置
+          parentNode.idealX = centerX - nodeWidth / 2;
+        }
+      }
+    });
+
+    // 解决同级节点重叠问题
+    resolveOverlaps(generationNodes, nodeWidth, minNodeSpacing);
+  });
+
+  return nodes;
+};
+
+/**
+ * 解决同级节点重叠问题
+ * @param {Array} nodes - 同一代的节点数组
+ * @param {number} nodeWidth - 节点宽度
+ * @param {number} minSpacing - 最小间距
+ */
+const resolveOverlaps = (nodes, nodeWidth, minSpacing) => {
+  if (nodes.length <= 1) return;
+
+  // 按X坐标排序
+  const sortedNodes = [...nodes].sort((a, b) => {
+    const aX = a.idealX !== undefined ? a.idealX : a.position.x;
+    const bX = b.idealX !== undefined ? b.idealX : b.position.x;
+    return aX - bX;
+  });
+
+  // 使用理想位置或当前位置
+  sortedNodes.forEach(node => {
+    if (node.idealX !== undefined) {
+      node.position.x = node.idealX;
+    }
+  });
+
+  // 从左到右调整位置，确保没有重叠
+  for (let i = 1; i < sortedNodes.length; i++) {
+    const prevNode = sortedNodes[i - 1];
+    const currentNode = sortedNodes[i];
+
+    const prevRight = prevNode.position.x + nodeWidth;
+    const currentLeft = currentNode.position.x;
+    const requiredLeft = prevRight + minSpacing;
+
+    // 如果当前节点与前一个节点重叠，向右移动
+    if (currentLeft < requiredLeft) {
+      currentNode.position.x = requiredLeft;
+    }
+  }
+
+  // 清理临时属性
+  sortedNodes.forEach(node => {
+    delete node.idealX;
   });
 };
 

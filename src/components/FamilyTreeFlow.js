@@ -7,6 +7,8 @@ import ReactFlow, {
   addEdge,
   Panel,
   useReactFlow,
+  ConnectionLineType,
+  MarkerType,
 } from 'reactflow';
 import { Button, Card, Slider, Input, Select, Space, Typography, Spin, Alert, Drawer, Divider, AutoComplete } from 'antd';
 import {
@@ -122,14 +124,14 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
         zoom: 0.8,           // 移动端更小的缩放比例
         centerOffsetX: 50,   // 移动端更小的偏移
         centerOffsetY: 20,   // 移动端更小的偏移
-        topPadding: 10       // 移动端更小的留白
+        topPadding: 5        // 移动端减少顶部留白，从10减少到5
       };
     }
     return {
-      zoom: 1.2,
+      zoom: 0.7,           // PC端缩小缩放比例，从1.2减少到0.7，以显示3行内容
       centerOffsetX: 100,  // 节点中心偏移
-      centerOffsetY: 40,   // 节点中心偏移
-      topPadding: 20       // 顶部留白
+      centerOffsetY: 120,  // 增加Y偏移，从40增加到120，让根节点在上方1/3位置
+      topPadding: 10       // 桌面端减少顶部留白，从20减少到10
     };
   }, [isMobile]);
 
@@ -137,6 +139,38 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
   const statistics = useMemo(() => {
     if (!familyData || familyData.length === 0) return null;
     return getFamilyStatistics(familyData);
+  }, [familyData]);
+
+  // 调试：检查第20代成员显示状态
+  const debug20thGeneration = useCallback(() => {
+    const gen20Members = familyData.filter(person => person.g_rank === 20);
+    console.log('=== 第20代成员显示状态检查 ===');
+    gen20Members.forEach(member => {
+      const isAlive = member.dealth === 'alive';
+      const protectedName = isAlive && member.name.length > 1 ?
+        (() => {
+          const annotationMatch = member.name.match(/（[^）]*）/);
+          let baseName = member.name;
+          let annotation = '';
+
+          if (annotationMatch) {
+            annotation = annotationMatch[0];
+            baseName = member.name.replace(annotation, '');
+          }
+
+          if (baseName.length > 1) {
+            const protectedBase = baseName.slice(0, -1) + '*';
+            if (annotation && protectedBase.length > 1) {
+              return protectedBase.slice(0, -1) + annotation + protectedBase.slice(-1);
+            }
+            return protectedBase;
+          }
+          return member.name;
+        })() : member.name;
+
+      console.log(`ID: ${member.id}, 原名: "${member.name}", 显示名: "${protectedName}", 状态: ${isAlive ? '在世' : '已故'}, 父亲ID: ${member.g_father_id}`);
+    });
+    console.log('=== 检查完成 ===');
   }, [familyData]);
 
   // 处理数据转换和布局
@@ -202,8 +236,11 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
 
       setNodes(layoutedNodes);
       setEdges(newEdges);
+
+      // 调试第20代成员显示
+      debug20thGeneration();
     }, 100); // 100ms防抖延迟
-  }, [familyData, searchTerm, generationRange, layoutDirection, setNodes, setEdges, isShowingAll, isSmartCollapseEnabled, currentUser, expandedNodes]);
+  }, [familyData, searchTerm, generationRange, layoutDirection, setNodes, setEdges, isShowingAll, isSmartCollapseEnabled, currentUser, expandedNodes, debug20thGeneration]);
 
   // 添加日志功能
   const logViewportInfo = useCallback(() => {
@@ -387,10 +424,6 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
       const hasHiddenChildren = hasCollapsedChildren(nodeId, familyData, visibleData);
 
       if (hasHiddenChildren) {
-        // 保存当前视图状态
-        const reactFlowInstance = reactFlowInstanceRef.current;
-        const currentViewport = reactFlowInstance?.getViewport();
-
         // 展开该节点的直接子节点
         const newExpandedNodes = new Set(expandedNodes);
         newExpandedNodes.add(nodeId);
@@ -398,19 +431,20 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
 
         console.log(`🔓 展开节点: ${node.data.name} (ID: ${nodeId})`);
 
-        // 延迟恢复视图位置，等待节点重新渲染
+        // 延迟调整视图位置，等待节点重新渲染
         setTimeout(() => {
           const reactFlow = reactFlowInstanceRef.current;
           if (reactFlow) {
-            // 优先保持原有视图位置
-            if (currentViewport) {
-              reactFlow.setViewport(currentViewport);
-            } else {
-              // 如果没有视图信息，则聚焦到点击的节点
-              const updatedNode = reactFlow.getNode(nodeId.toString());
-              if (updatedNode) {
-                reactFlow.setCenter(updatedNode.position.x, updatedNode.position.y, { zoom: reactFlow.getZoom() });
-              }
+            // 聚焦到点击的节点，保持在当前节点位置
+            const updatedNode = reactFlow.getNode(nodeId.toString());
+            if (updatedNode) {
+              // 保持当前缩放级别，只调整位置确保节点可见
+              const currentZoom = reactFlow.getZoom();
+              reactFlow.setCenter(
+                updatedNode.position.x,
+                updatedNode.position.y,
+                { zoom: currentZoom, duration: 300 }
+              );
             }
           }
         }, 150); // 稍微增加延迟确保渲染完成
@@ -718,7 +752,35 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
                 }
 
                 searchTimeoutRef.current = setTimeout(() => {
-                  setIsShowingAll(!isShowingAll);
+                  const newShowingAll = !isShowingAll;
+                  setIsShowingAll(newShowingAll);
+
+                  // 如果切换到完整模式，定位到根节点
+                  if (newShowingAll) {
+                    setTimeout(() => {
+                      const reactFlow = reactFlowInstanceRef.current;
+                      if (reactFlow && familyData.length > 0) {
+                        // 找到根节点（g_father_id为0或null的节点）
+                        const rootNode = familyData.find(person =>
+                          person.g_father_id === 0 || !person.g_father_id
+                        );
+
+                        if (rootNode) {
+                          const rootFlowNode = reactFlow.getNode(rootNode.id.toString());
+                          if (rootFlowNode) {
+                            // 保持当前缩放比例，定位到根节点
+                            const currentZoom = reactFlow.getZoom();
+                            reactFlow.setCenter(
+                              rootFlowNode.position.x,
+                              rootFlowNode.position.y,
+                              { zoom: currentZoom, duration: 500 }
+                            );
+                            console.log(`🎯 定位到根节点: ${rootNode.name}`);
+                          }
+                        }
+                      }
+                    }, 200); // 等待数据处理完成
+                  }
                 }, 50);
               }}
               size="small"
@@ -969,6 +1031,20 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
             reactFlowInstanceRef.current = instance;
           }}
           nodeTypes={nodeTypes}
+          connectionLineType={ConnectionLineType.Straight}
+          defaultEdgeOptions={{
+            type: 'straight',
+            markerEnd: {
+              type: MarkerType.ArrowClosed,
+              width: 15,
+              height: 15,
+              color: 'hsl(215.4 16.3% 46.9%)',
+            },
+            style: {
+              strokeWidth: 2,
+              stroke: 'hsl(215.4 16.3% 46.9%)',
+            },
+          }}
           fitView
           proOptions={{ hideAttribution: true }}
           minZoom={isMobile ? 0.3 : 0.2}
@@ -976,7 +1052,7 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
           defaultViewport={{
             x: 0,
             y: 0,
-            zoom: isMobile ? 0.6 : 0.8
+            zoom: isMobile ? 0.4 : 0.6  // PC端稍微增加默认缩放，从0.5增加到0.6，以便显示3行
           }}
           fitViewOptions={{
             padding: isMobile ? 0.1 : 0.2,
