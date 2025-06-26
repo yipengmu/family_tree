@@ -61,20 +61,66 @@ const FamilyMemberNode = ({ data, selected }) => {
     return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
   };
 
+  // 保护在世人员姓名（最后一个字用*号替代）
+  const getProtectedName = (originalName) => {
+    if (!originalName) return '';
+
+    // 检查是否为在世人员（只有"alive"才代表在世，null代表已故）
+    const isAlive = death === 'alive';
+
+    if (isAlive && originalName.length > 1) {
+      // 处理包含注音符号的姓名，如"穆垠（yin）彤"
+      // 先提取注音部分
+      const annotationMatch = originalName.match(/（[^）]*）/);
+      let baseName = originalName;
+      let annotation = '';
+
+      if (annotationMatch) {
+        annotation = annotationMatch[0];
+        baseName = originalName.replace(annotation, '');
+      }
+
+      // 对基础姓名进行保护（最后一个字用*替代）
+      if (baseName.length > 1) {
+        const protectedBase = baseName.slice(0, -1) + '*';
+        // 如果有注音，将注音加在倒数第二个字后面
+        if (annotation && protectedBase.length > 1) {
+          return protectedBase.slice(0, -1) + annotation + protectedBase.slice(-1);
+        }
+        return protectedBase;
+      }
+    }
+
+    return originalName;
+  };
+
+  // 获取生存状态显示
+  const getLifeStatus = () => {
+    if (death === 'alive') {
+      return { text: '在世', color: 'success' };
+    } else if (death === null || death === 'dealth') {
+      return { text: '已故', color: 'default' };
+    }
+    return null;
+  };
+
   // 构建工具提示内容
   const getTooltipContent = () => {
+    const lifeStatus = getLifeStatus();
+    const displayName = getProtectedName(name);
+
     return (
       <div className="family-member-tooltip">
-        <div><strong>姓名:</strong> {name}</div>
+        <div><strong>姓名:</strong> {displayName}</div>
         <div><strong>第{rank}代</strong> (排行第{rankIndex})</div>
+        {lifeStatus && (
+          <div><strong>状态:</strong> {lifeStatus.text}</div>
+        )}
         {officialPosition && (
           <div><strong>职位:</strong> {officialPosition}</div>
         )}
         {birthDate && (
           <div><strong>生日:</strong> {birthDate}</div>
-        )}
-        {death && (
-          <div><strong>状态:</strong> 已故</div>
         )}
         {location && (
           <div><strong>地点:</strong> {location}</div>
@@ -118,8 +164,8 @@ const FamilyMemberNode = ({ data, selected }) => {
               }}
             />
             <div className="member-name">
-              <div className="name-text" title={name}>
-                {formatDisplayText(name, 8)}
+              <div className="name-text" title={getProtectedName(name)}>
+                {formatDisplayText(getProtectedName(name), 8)}
               </div>
               <div className="generation-info">
                 <Tag
@@ -143,9 +189,14 @@ const FamilyMemberNode = ({ data, selected }) => {
           )}
           
           <div className="member-meta">
-            {death && (
-              <Tag color="default" size="small">已故</Tag>
-            )}
+            {(() => {
+              const lifeStatus = getLifeStatus();
+              return lifeStatus && (
+                <Tag color={lifeStatus.color} size="small">
+                  {lifeStatus.text}
+                </Tag>
+              );
+            })()}
             {location && (
               <Tag color="blue" size="small">
                 {formatDisplayText(location, 6)}
