@@ -18,11 +18,11 @@ import {
   EyeOutlined,
   CompressOutlined,
   MoreOutlined,
-  HomeOutlined,
   SettingOutlined
 } from '@ant-design/icons';
 
 import FamilyMemberNode from './FamilyMemberNode';
+import muLogo from '../res/img/mulogo.png';
 import {
   convertToReactFlowData,
   getLayoutedElements,
@@ -755,7 +755,15 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
       <div className="unified-navbar">
         <div className="navbar-left">
           <div className="logo">
-            <HomeOutlined style={{ fontSize: '24px', color: '#1890ff' }} />
+            <img
+              src={muLogo}
+              alt="穆氏家族logo"
+              style={{
+                height: '32px',
+                width: 'auto',
+                objectFit: 'contain'
+              }}
+            />
           </div>
           <div className="title">
             <h1>穆氏宗谱</h1>
@@ -1183,7 +1191,6 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
           zoomOnPinch={isMobile} // 移动端启用双指缩放
           zoomOnDoubleClick={true}
           preventScrolling={isMobile} // 移动端防止页面滚动
-          elementsSelectable={true}
           selectNodesOnDrag={false}
         >
           <Controls />
