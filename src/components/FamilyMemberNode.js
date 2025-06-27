@@ -21,11 +21,11 @@ const FamilyMemberNode = ({ data, selected }) => {
 
   // 根据性别选择图标和颜色
   const getGenderIcon = () => {
-    if (sex === 'MAN') {
-      return <ManOutlined style={{ color: '#1890ff' }} />;
-    } else if (sex === 'WOMAN') {
-      return <WomanOutlined style={{ color: '#eb2f96' }} />;
-    }
+    // if (sex === 'MAN') {
+    //   return <ManOutlined style={{ color: '#1890ff' }} />;
+    // } else if (sex === 'WOMAN') {
+    //   return <WomanOutlined style={{ color: '#eb2f96' }} />;
+    // }
     return <UserOutlined />;
   };
 
@@ -60,6 +60,40 @@ const FamilyMemberNode = ({ data, selected }) => {
   const formatDisplayText = (text, maxLength = 20) => {
     if (!text) return '';
     return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
+  };
+
+  // 判断是否为前3代祖先
+  const isFoundingGeneration = () => {
+    return rank <= 3;
+  };
+
+  // 获取前3代的特殊样式
+  const getFoundingGenerationStyle = () => {
+    if (!isFoundingGeneration()) return {};
+
+    const styles = {
+      1: {
+        background: 'linear-gradient(135deg, #ffd700 0%, #ffed4e 50%, #ffd700 100%)',
+        borderColor: '#d4af37',
+        // borderWidth: '3px',
+        boxShadow: '0 4px 10px rgba(212, 175, 55, 0.4), 0 0 10px rgba(255, 215, 0, 0.3)',
+        transform: 'scale(1.1)',
+        zIndex: 100
+      }
+    };
+
+    return styles[rank] || {};
+  };
+
+  // 获取前3代的文字颜色
+  const getFoundingTextColor = () => {
+    if (!isFoundingGeneration()) return {};
+
+    return {
+      color: rank === 1 ? '#8b4513' : rank === 2 ? '#2c2c2c' : '#654321',
+      fontWeight: 'bold',
+      textShadow: rank === 1 ? '1px 1px 2px rgba(139, 69, 19, 0.3)' : 'none'
+    };
   };
 
   // 保护在世人员姓名（最后一个字用*号替代）
@@ -151,35 +185,60 @@ const FamilyMemberNode = ({ data, selected }) => {
         <div style={{ position: 'relative' }}>
           <Card
             size="small"
-            className={`member-card ${hasCollapsedChildren ? 'has-collapsed-children' : ''}`}
+            className={`member-card ${hasCollapsedChildren ? 'has-collapsed-children' : ''} ${isFoundingGeneration() ? 'founding-generation' : ''}`}
             style={{
-              borderColor: getGenerationColor(rank),
-              borderWidth: selected ? 3 : 1,
-              cursor: hasCollapsedChildren ? 'pointer' : 'default'
+              borderColor: isFoundingGeneration() ? getFoundingGenerationStyle().borderColor : getGenerationColor(rank),
+              borderWidth: isFoundingGeneration() ? getFoundingGenerationStyle().borderWidth : (selected ? 3 : 1),
+              cursor: hasCollapsedChildren ? 'pointer' : 'default',
+              ...getFoundingGenerationStyle()
             }}
-            styles={{ body: { padding: '12px 16px' } }}
+            styles={{
+              body: {
+                padding: '12px 16px',
+                background: isFoundingGeneration() ? 'transparent' : undefined
+              }
+            }}
           >
             {/* 折叠提示图标 - 移到Card外部 */}
           <div className="member-header">
             <Avatar
               size="small"
-              icon={getGenderIcon()}
+              icon={isFoundingGeneration() && rank === 1 ? <CrownOutlined /> : getGenderIcon()}
               style={{
-                backgroundColor: sex === 'MAN' ? '#1890ff' : '#eb2f96',
-                marginRight: 8
+                backgroundColor: isFoundingGeneration() ?
+                  (rank === 1 ? '#ffd700' : rank === 2 ? '#cd7f32' : '#cd7f32') :
+                  (sex === 'MAN' ? '#1890ff' : '#eb2f96'),
+                marginRight: 8,
+                border: isFoundingGeneration() ? '2px solid #d4af37' : 'none',
+                ...(isFoundingGeneration() && rank === 1 ? {
+                  boxShadow: '0 0 10px rgba(255, 215, 0, 0.5)'
+                } : {})
               }}
             />
             <div className="member-name">
-              <div className="name-text" title={getProtectedName(name)}>
+              <div
+                className="name-text"
+                title={getProtectedName(name)}
+                style={getFoundingTextColor()}
+              >
                 {formatDisplayText(getProtectedName(name), 8)}
               </div>
               <div className="generation-info">
                 <Tag
-                  color={getGenerationColor(rank)}
+                  color={isFoundingGeneration() ? (rank === 1 ? 'gold' : rank === 2 ? 'orange' : 'orange') : getGenerationColor(rank)}
                   size="small"
-                  style={{ margin: 0, fontSize: '10px' }}
+                  style={{
+                    margin: 0,
+                    fontSize: '10px',
+                    fontWeight: isFoundingGeneration() ? 'bold' : 'normal',
+                    ...(isFoundingGeneration() && rank === 1 ? {
+                      background: 'linear-gradient(45deg, #ffd700, #ffed4e)',
+                      border: '1px solid #d4af37',
+                      color: '#8b4513'
+                    } : {})
+                  }}
                 >
-                  第{rank}代
+                  {isFoundingGeneration() ? `始祖第${rank}代` : `第${rank}代`}
                 </Tag>
               </div>
             </div>

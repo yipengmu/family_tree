@@ -25,6 +25,39 @@
   border-color: hsl(214.3 31.8% 81.4%);
 }
 
+/* 前3代祖先特殊样式 */
+.member-card.founding-generation {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.member-card.founding-generation::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, transparent, rgba(255, 215, 0, 0.1), transparent);
+  border-radius: 14px;
+  z-index: -1;
+  animation: foundingGlow 3s ease-in-out infinite alternate;
+}
+
+.member-card.founding-generation:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+@keyframes foundingGlow {
+  0% {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 0.7;
+  }
+}
+
 .member-header {
   display: flex;
   align-items: center;
