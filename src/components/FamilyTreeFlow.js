@@ -281,11 +281,13 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
     // 应用布局
     const layoutedNodes = getLayoutedElements(newNodes, newEdges, layoutDirection);
 
-      setNodes(layoutedNodes);
-      setEdges(newEdges);
+    setNodes(layoutedNodes);
+    setEdges(newEdges);
 
-      // 调试第20代成员显示
-      debug20thGeneration();
+    // 移除自动fitView，避免展开节点时视角跳转
+
+    // 调试第20代成员显示
+    debug20thGeneration();
     }, 100); // 100ms防抖延迟
   }, [familyData, searchTerm, generationRange, layoutDirection, setNodes, setEdges, isShowingAll, isSmartCollapseEnabled, currentUser, expandedNodes, debug20thGeneration, isNameProtectionEnabled, searchTargetPerson]);
 
@@ -399,12 +401,7 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
     };
   }, []);
 
-  // 当节点更新且为完整模式时，应用理想的默认视图
-  useEffect(() => {
-    if (isShowingAll && nodes.length > 0 && familyData && familyData.length > 0 && !searchTargetPerson) {
-      applyIdealDefaultView();
-    }
-  }, [nodes.length, isShowingAll, familyData, applyIdealDefaultView, searchTargetPerson]);
+  // 移除自动视图调整，避免展开节点时跳转
 
   // 当搜索到目标人员时，自动聚焦到该人员
   useEffect(() => {
@@ -471,32 +468,11 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
       const hasHiddenChildren = hasCollapsedChildren(nodeId, familyData, visibleData);
 
       if (hasHiddenChildren) {
-        // 展开该节点的直接子节点
+        // 展开节点
         const newExpandedNodes = new Set(expandedNodes);
         newExpandedNodes.add(nodeId);
         setExpandedNodes(newExpandedNodes);
-
         console.log(`🔓 展开节点: ${node.data.name} (ID: ${nodeId})`);
-
-        // 延迟调整视图位置，等待节点重新渲染
-        setTimeout(() => {
-          const reactFlow = reactFlowInstanceRef.current;
-          if (reactFlow) {
-            // 聚焦到点击的节点，保持在当前节点位置
-            const updatedNode = reactFlow.getNode(nodeId.toString());
-            if (updatedNode) {
-              // 保持当前缩放级别，只调整位置确保节点可见
-              const currentZoom = reactFlow.getZoom();
-              reactFlow.setCenter(
-                updatedNode.position.x,
-                updatedNode.position.y,
-                { zoom: currentZoom, duration: 300 }
-              );
-            }
-          }
-        }, 150); // 稍微增加延迟确保渲染完成
-
-        // 不显示详情面板，因为这是展开操作
         return;
       }
     }
@@ -513,7 +489,17 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
     setGenerationRange([1, maxGen]); // 重置为完整家谱
     setSelectedNode(null);
     setIsShowingAll(true);
-  }, [statistics]);
+
+    // 延迟执行fitView，确保数据更新完成
+    setTimeout(() => {
+      fitView({
+        padding: isMobile ? 0.1 : 0.2,
+        duration: 500,
+        minZoom: isMobile ? 0.4 : 0.5,
+        maxZoom: isMobile ? 1.5 : 1.2
+      });
+    }, 300);
+  }, [statistics, fitView, isMobile]);
 
   // 强制刷新数据
   const forceRefreshData = useCallback(async () => {
@@ -542,61 +528,7 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
   }, []);
 
   // 当节点更新且处于聚焦模式时，自动聚焦到穆茂
-  useEffect(() => {
-    if (!isShowingAll && generationRange[0] === 1 && generationRange[1] === 1 && nodes.length > 0) {
-      // 延迟执行，确保布局完成
-      const timer = setTimeout(() => {
-        // 找到穆茂节点（第1代，通常id为1）
-        const founderNode = nodes.find(node =>
-          node.data.rank === 1 && (node.data.name === '穆茂' || node.data.id === 1)
-        );
-
-        if (founderNode && founderNode.position) {
-          console.log('🎯 聚焦到穆茂节点');
-          console.log('节点位置:', founderNode.position);
-
-          // 使用理想参数设置中心点
-          const centerX = founderNode.position.x + idealViewParams.centerOffsetX;
-          const centerY = founderNode.position.y + idealViewParams.centerOffsetY + idealViewParams.topPadding;
-
-          console.log('设置中心点:', {
-            x: centerX,
-            y: centerY,
-            zoom: idealViewParams.zoom
-          });
-
-          // 将视图中心设置到穆茂节点
-          setCenter(centerX, centerY, {
-            zoom: idealViewParams.zoom,
-            duration: 800
-          });
-
-          // 同时选中该节点以高亮显示
-          setSelectedNode(founderNode);
-
-          // 延迟记录最终视图状态
-          setTimeout(() => {
-            logViewportInfo();
-          }, 1000);
-        } else {
-          console.log('⚠️ 未找到穆茂节点，执行fitView');
-          // 如果找不到具体节点，至少适应视图
-          fitView({
-            padding: 0.3,
-            duration: 800,
-            minZoom: 0.8,
-            maxZoom: 1.5
-          });
-
-          setTimeout(() => {
-            logViewportInfo();
-          }, 1000);
-        }
-      }, 500);
-
-      return () => clearTimeout(timer);
-    }
-  }, [nodes, isShowingAll, generationRange, setCenter, fitView, logViewportInfo, idealViewParams]);
+  // 移除自动聚焦到穆茂的逻辑，避免展开节点时跳转
 
   // 快速切换到前三代
   const showFirstThreeGenerations = useCallback(() => {
@@ -1168,7 +1100,6 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
               stroke: 'hsl(215.4 16.3% 46.9%)',
             },
           }}
-          fitView
           proOptions={{ hideAttribution: true }}
           minZoom={isMobile ? 0.3 : 0.2}
           maxZoom={isMobile ? 2 : 3}
