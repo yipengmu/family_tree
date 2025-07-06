@@ -287,7 +287,7 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
       // 调试第20代成员显示
       debug20thGeneration();
     }, 100); // 100ms防抖延迟
-  }, [familyData, searchTerm, generationRange, layoutDirection, setNodes, setEdges, isShowingAll, isSmartCollapseEnabled, currentUser, expandedNodes, debug20thGeneration]);
+  }, [familyData, searchTerm, generationRange, layoutDirection, setNodes, setEdges, isShowingAll, isSmartCollapseEnabled, currentUser, expandedNodes, debug20thGeneration, isNameProtectionEnabled, searchTargetPerson]);
 
   // 添加日志功能
   const logViewportInfo = useCallback(() => {

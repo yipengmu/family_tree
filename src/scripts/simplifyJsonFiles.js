@@ -97,31 +97,7 @@ const main = () => {
 
   // 注意：原始JSON文件已被清理，此脚本需要更新为直接处理主数据源
   console.log('⚠️ 原始JSON文件已被清理，请使用 familyDataService 进行数据处理');
-  return;
-  const allStats = [];
-
-  jsonFiles.forEach(fileName => {
-    const stats = simplifyJsonFile(fileName);
-    if (stats) {
-      allStats.push({ fileName, ...stats });
-    }
-  });
-
-  // 总结统计
-  if (allStats.length > 0) {
-    console.log('\n📋 总结统计:');
-    const totalOriginal = allStats.reduce((sum, stat) => sum + stat.originalSize, 0);
-    const totalSimplified = allStats.reduce((sum, stat) => sum + stat.simplifiedSize, 0);
-    const totalSaved = totalOriginal - totalSimplified;
-    const totalCompressionRatio = ((totalSaved / totalOriginal) * 100).toFixed(1);
-
-    console.log(`  - 总原始大小: ${(totalOriginal / 1024).toFixed(1)} KB`);
-    console.log(`  - 总简化大小: ${(totalSimplified / 1024).toFixed(1)} KB`);
-    console.log(`  - 总节省空间: ${(totalSaved / 1024).toFixed(1)} KB`);
-    console.log(`  - 总压缩率: ${totalCompressionRatio}%`);
-  }
-
-  console.log('\n✅ 简化完成!');
+  console.log('\n✅ 脚本已废弃!');
 };
 
 // 如果直接运行此脚本
