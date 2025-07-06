@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { Handle, Position } from 'reactflow';
 import { Card, Tag, Avatar, Tooltip } from 'antd';
-import { UserOutlined, ManOutlined, WomanOutlined, CrownOutlined, PlusOutlined } from '@ant-design/icons';
+import { UserOutlined, CrownOutlined, PlusOutlined } from '@ant-design/icons';
 import './FamilyMemberNode.css';
 
 const FamilyMemberNode = ({ data, selected }) => {

@@ -10,7 +10,7 @@ import ReactFlow, {
   ConnectionLineType,
   MarkerType,
 } from 'reactflow';
-import { Button, Card, Slider, Input, Select, Space, Typography, Spin, Alert, Drawer, Divider, AutoComplete, Switch, Tag } from 'antd';
+import { Button, Card, Slider, Input, Select, Space, Typography, Spin, Alert, Drawer, Divider, AutoComplete, Switch } from 'antd';
 import {
   ReloadOutlined,
   SearchOutlined,
