@@ -65,3 +65,5 @@ npx serve -s build
 - `birth_date`: 生日
 - `location`: 地点
 - `summary`: 简介
+
+![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/yipengmu/family_tree?utm_source=oss&utm_medium=github&utm_campaign=yipengmu%2Ffamily_tree&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
