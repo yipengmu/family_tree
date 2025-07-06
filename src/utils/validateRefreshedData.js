@@ -63,7 +63,6 @@ function validateRefreshedData() {
   
   // 验证父子关系
   console.log('\n🔗 父子关系验证:');
-  const fatherIds = [...new Set(oneTreeData.map(p => p.g_father_id).filter(id => id))];
   const personIds = new Set(oneTreeData.map(p => p.id));
   
   let validRelations = 0;
