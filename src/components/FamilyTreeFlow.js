@@ -58,6 +58,7 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
   const [layoutDirection, setLayoutDirection] = useState('TB');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedNode, setSelectedNode] = useState(null);
+  const [panelPosition, setPanelPosition] = useState({ left: 0, top: 0 });
   const [isShowingAll, setIsShowingAll] = useState(true); // 默认显示全部
   const [searchTargetPerson, setSearchTargetPerson] = useState(null); // 搜索的目标人员
 
@@ -457,6 +458,44 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
     [setEdges]
   );
 
+  // 计算节点信息面板的位置
+  const calculatePanelPosition = useCallback((node) => {
+    const panelWidth = 320;
+    const panelHeight = 450;
+    const offset = 20; // 与节点的间距
+
+    // 获取当前视口信息
+    const viewport = reactFlowInstanceRef.current?.getViewport();
+    if (!viewport) return { left: node.position.x + 200, top: node.position.y };
+
+    // 计算节点在屏幕上的实际位置
+    const nodeScreenX = node.position.x * viewport.zoom + viewport.x;
+    const nodeScreenY = node.position.y * viewport.zoom + viewport.y;
+
+    // 获取容器尺寸
+    const containerWidth = window.innerWidth;
+    const containerHeight = window.innerHeight;
+
+    // 默认在节点右侧
+    let left = nodeScreenX + 150; // 节点宽度约150px
+    let top = nodeScreenY;
+
+    // 如果右侧空间不够，放在左侧
+    if (left + panelWidth > containerWidth - offset) {
+      left = nodeScreenX - panelWidth - offset;
+    }
+
+    // 如果左侧也不够，居中显示
+    if (left < offset) {
+      left = (containerWidth - panelWidth) / 2;
+    }
+
+    // 垂直位置调整，确保不超出屏幕
+    top = Math.max(offset, Math.min(top - panelHeight / 2, containerHeight - panelHeight - offset));
+
+    return { left, top };
+  }, []);
+
   // 处理节点点击
   const onNodeClick = useCallback((_, node) => {
     console.log('节点点击:', node.data.name);
@@ -468,7 +507,9 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
       const hasHiddenChildren = hasCollapsedChildren(nodeId, familyData, visibleData);
 
       if (hasHiddenChildren) {
-        // 展开节点
+        // 展开节点时清除之前选中的节点
+        setSelectedNode(null);
+        setPanelPosition({ left: 0, top: 0 });
         const newExpandedNodes = new Set(expandedNodes);
         newExpandedNodes.add(nodeId);
         setExpandedNodes(newExpandedNodes);
@@ -477,9 +518,11 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
       }
     }
 
-    // 显示节点详情
+    // 显示节点详情并计算面板位置
+    const position = calculatePanelPosition(node);
+    setPanelPosition(position);
     setSelectedNode(node);
-  }, [isShowingAll, isSmartCollapseEnabled, familyData, nodes, expandedNodes]);
+  }, [isShowingAll, isSmartCollapseEnabled, familyData, nodes, expandedNodes, calculatePanelPosition]);
 
   // 重置视图
   const resetView = useCallback(() => {
@@ -488,6 +531,7 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
     const maxGen = statistics?.generations || 20;
     setGenerationRange([1, maxGen]); // 重置为完整家谱
     setSelectedNode(null);
+    setPanelPosition({ left: 0, top: 0 });
     setIsShowingAll(true);
 
     // 延迟执行fitView，确保数据更新完成
@@ -1138,9 +1182,17 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
             </Panel>
           )}
 
-          {/* 选中节点信息面板 */}
+          {/* 选中节点信息面板 - 动态定位 */}
           {selectedNode && (
-            <Panel position="top-right">
+            <div
+              style={{
+                position: 'fixed',
+                left: `${panelPosition.left}px`,
+                top: `${panelPosition.top}px`,
+                zIndex: 1000,
+                pointerEvents: 'auto'
+              }}
+            >
               <Card
                 title={selectedNode.data.name}
                 size="small"
@@ -1151,7 +1203,8 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
                   background: 'hsl(0 0% 100%)',
                   border: '1px solid hsl(214.3 31.8% 91.4%)',
                   borderRadius: '12px',
-                  boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)'
+                  boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15)',
+                  transform: 'translateY(-50%)' // 垂直居中对齐节点
                 }}
                 styles={{
                   header: {
@@ -1170,7 +1223,10 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
                   <Button
                     type="text"
                     size="small"
-                    onClick={() => setSelectedNode(null)}
+                    onClick={() => {
+                      setSelectedNode(null);
+                      setPanelPosition({ left: 0, top: 0 });
+                    }}
                     style={{
                       color: 'hsl(215.4 16.3% 46.9%)',
                       fontSize: '16px',
@@ -1219,7 +1275,7 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
                   )}
                 </div>
               </Card>
-            </Panel>
+            </div>
           )}
         </ReactFlow>
       </div>
