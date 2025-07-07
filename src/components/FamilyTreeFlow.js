@@ -365,9 +365,12 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
     processData();
   }, [processData]);
 
-  // 确保根节点穆茂在画布正中心
+  // 添加一个状态来跟踪是否已经执行过初始居中
+  const [hasInitialCentered, setHasInitialCentered] = useState(false);
+
+  // 确保根节点穆茂在画布正中心（只在初始加载时执行一次）
   useEffect(() => {
-    if (nodes.length > 0 && !searchTerm && isShowingAll) {
+    if (nodes.length > 0 && !searchTerm && isShowingAll && !hasInitialCentered) {
       const timer = setTimeout(() => {
         const reactFlow = reactFlowInstanceRef.current;
         if (reactFlow) {
@@ -379,26 +382,28 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
           if (rootNode) {
             console.log('🎯 找到根节点穆茂，设置画布正中心:', rootNode.position);
 
-            // 直接将根节点设置为画布中心，不使用偏移
+            // 直接将根节点设置为画布中心
             reactFlow.setCenter(rootNode.position.x, rootNode.position.y + 200, {
               zoom: isMobile ? 0.6 : 0.7,
               duration: 800
             });
 
             console.log('✅ 根节点穆茂已设置为画布正中心');
+            setHasInitialCentered(true); // 标记已执行过初始居中
           } else {
             console.log('⚠️ 未找到根节点穆茂，使用fitView');
             reactFlow.fitView({
               padding: isMobile ? 0.15 : 0.2,
               duration: 800
             });
+            setHasInitialCentered(true); // 即使使用fitView也标记为已执行
           }
         }
       }, 600); // 稍微延长等待时间确保节点完全渲染
 
       return () => clearTimeout(timer);
     }
-  }, [nodes, searchTerm, isShowingAll, isMobile]);
+  }, [nodes, searchTerm, isShowingAll, isMobile, hasInitialCentered]);
 
   // 加载搜索历史
   useEffect(() => {
@@ -568,6 +573,7 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
     setSelectedNode(null);
     setPanelPosition({ left: 0, top: 0 });
     setIsShowingAll(true);
+    setHasInitialCentered(false); // 重置居中状态，允许重新自动居中
 
     // 延迟执行fitView，确保数据更新完成
     setTimeout(() => {
