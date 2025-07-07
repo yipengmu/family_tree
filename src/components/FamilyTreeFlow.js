@@ -12,11 +12,7 @@ import ReactFlow, {
 } from 'reactflow';
 import { Button, Card, Slider, Input, Select, Space, Typography, Spin, Alert, Drawer, Divider, AutoComplete, Switch } from 'antd';
 import {
-  ReloadOutlined,
   SearchOutlined,
-  FullscreenOutlined,
-  EyeOutlined,
-  CompressOutlined,
   MoreOutlined,
   SettingOutlined
 } from '@ant-design/icons';
@@ -31,7 +27,6 @@ import {
   searchWithPathTree
 } from '../utils/familyTreeUtils';
 import searchHistoryManager from '../utils/searchHistory';
-import familyDataService from '../services/familyDataService';
 import {
   applySmartCollapse,
   getCurrentUser,
@@ -56,7 +51,6 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [generationRange, setGenerationRange] = useState([1, 20]); // 默认显示完整家谱
   const [layoutDirection, setLayoutDirection] = useState('TB');
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedNode, setSelectedNode] = useState(null);
   const [isShowingAll, setIsShowingAll] = useState(true); // 默认显示全部
   const [searchTargetPerson, setSearchTargetPerson] = useState(null); // 搜索的目标人员
@@ -532,43 +526,9 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
     setSelectedNode(node);
   }, [isShowingAll, isSmartCollapseEnabled, familyData, nodes, expandedNodes]);
 
-  // 重置视图
-  const resetView = useCallback(() => {
-    setSearchTerm('');
-    setSearchTargetPerson(null);
-    const maxGen = statistics?.generations || 20;
-    setGenerationRange([1, maxGen]); // 重置为完整家谱
-    setSelectedNode(null);
-    setIsShowingAll(true);
-    setHasInitialCentered(false); // 重置居中状态，允许重新自动居中
+  // 移除重置视图功能
 
-    // 延迟执行fitView，确保数据更新完成
-    setTimeout(() => {
-      fitView({
-        padding: isMobile ? 0.1 : 0.2,
-        duration: 500,
-        minZoom: isMobile ? 0.4 : 0.5,
-        maxZoom: isMobile ? 1.5 : 1.2
-      });
-    }, 300);
-  }, [statistics, fitView, isMobile]);
-
-  // 强制刷新数据
-  const forceRefreshData = useCallback(async () => {
-    try {
-      console.log('🔄 开始强制刷新数据...');
-
-      // 调用数据服务的强制刷新方法
-      await familyDataService.forceRefreshAll();
-
-      // 触发页面重新加载以获取最新数据
-      window.location.reload();
-
-    } catch (error) {
-      console.error('❌ 数据刷新失败:', error);
-      // 可以在这里添加错误提示
-    }
-  }, []);
+  // 移除强制刷新数据功能
 
   // 聚焦第1代祖上（穆茂）
   const focusOnFounder = useCallback(() => {
@@ -601,10 +561,7 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
 
 
 
-  // 切换全屏
-  const toggleFullscreen = useCallback(() => {
-    setIsFullscreen(!isFullscreen);
-  }, [isFullscreen]);
+  // 移除全屏功能
 
   // 执行实际搜索（带历史记录）
   const performSearch = useCallback(async (value) => {
@@ -734,7 +691,7 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
   }
 
   return (
-    <div className={`family-tree-container ${isFullscreen ? 'fullscreen' : ''}`}>
+    <div className="family-tree-container">
       {/* 统一导航栏 */}
       <div className="unified-navbar">
         <div className="navbar-left">
@@ -798,65 +755,9 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
 
           {/* 快速切换 */}
           <div className="quick-actions">
-            <Button
-              type={isShowingAll ? 'primary' : 'default'}
-              icon={<EyeOutlined />}
-              onClick={() => {
-                // 防抖处理模式切换
-                if (searchTimeoutRef.current) {
-                  clearTimeout(searchTimeoutRef.current);
-                }
+            {/* 移除完整/聚焦切换按钮 */}
 
-                searchTimeoutRef.current = setTimeout(() => {
-                  const newShowingAll = !isShowingAll;
-                  setIsShowingAll(newShowingAll);
-
-                  // 如果切换到完整模式，定位到根节点
-                  if (newShowingAll) {
-                    setTimeout(() => {
-                      const reactFlow = reactFlowInstanceRef.current;
-                      if (reactFlow && familyData.length > 0) {
-                        // 找到根节点（g_father_id为0或null的节点）
-                        const rootNode = familyData.find(person =>
-                          person.g_father_id === 0 || !person.g_father_id
-                        );
-
-                        if (rootNode) {
-                          const rootFlowNode = reactFlow.getNode(rootNode.id.toString());
-                          if (rootFlowNode) {
-                            // 保持当前缩放比例，定位到根节点
-                            const currentZoom = reactFlow.getZoom();
-                            reactFlow.setCenter(
-                              rootFlowNode.position.x,
-                              rootFlowNode.position.y,
-                              { zoom: currentZoom, duration: 500 }
-                            );
-                            console.log(`🎯 定位到根节点: ${rootNode.name}`);
-                          }
-                        }
-                      }
-                    }, 200); // 等待数据处理完成
-                  }
-                }, 50);
-              }}
-              size="small"
-            >
-              {isShowingAll ? '完整' : '聚焦'}
-            </Button>
-
-            <Button
-              icon={<ReloadOutlined />}
-              onClick={resetView}
-              size="small"
-              title="重置视图"
-            />
-
-            <Button
-              icon={isFullscreen ? <CompressOutlined /> : <FullscreenOutlined />}
-              onClick={toggleFullscreen}
-              size="small"
-              title={isFullscreen ? '退出全屏' : '全屏显示'}
-            />
+            {/* 移除重置视图和全屏按钮 */}
 
             <Button
               icon={<MoreOutlined />}
@@ -1068,14 +969,7 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
           <div className="drawer-section">
             <h4>开发工具</h4>
             <Space direction="vertical" style={{ width: '100%' }}>
-              <Button
-                onClick={forceRefreshData}
-                block
-                icon={<ReloadOutlined />}
-                type="primary"
-              >
-                强制刷新数据
-              </Button>
+              {/* 移除强制刷新数据按钮 */}
               <Button
                 onClick={logViewportInfo}
                 block
