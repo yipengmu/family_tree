@@ -383,6 +383,8 @@
   background: hsl(0 0% 100%) !important;
   border: 1px solid hsl(214.3 31.8% 91.4%) !important;
   box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
+
+  max-height: 600px;
 }
 
 .react-flow__panel .ant-card-head {
@@ -417,7 +419,7 @@
 .selected-node-info p {
   margin-bottom: 8px;
   font-size: 13px;
-  line-height: 1.4;
+  line-height: 1;
 }
 
 .selected-node-info p:last-child {
@@ -492,6 +494,7 @@
 
 .react-flow__panel {
   background: transparent;
+  margin-top: 200px;
 }
 
 /* 移动端优化 */
