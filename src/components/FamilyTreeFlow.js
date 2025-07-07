@@ -365,6 +365,41 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
     processData();
   }, [processData]);
 
+  // 确保根节点穆茂在画布正中心
+  useEffect(() => {
+    if (nodes.length > 0 && !searchTerm && isShowingAll) {
+      const timer = setTimeout(() => {
+        const reactFlow = reactFlowInstanceRef.current;
+        if (reactFlow) {
+          // 找到根节点穆茂
+          const rootNode = nodes.find(node =>
+            node.data.rank === 1 && (node.data.name === '穆茂' || node.data.id === 1)
+          );
+
+          if (rootNode) {
+            console.log('🎯 找到根节点穆茂，设置画布正中心:', rootNode.position);
+
+            // 直接将根节点设置为画布中心，不使用偏移
+            reactFlow.setCenter(rootNode.position.x, rootNode.position.y + 200, {
+              zoom: isMobile ? 0.6 : 0.7,
+              duration: 800
+            });
+
+            console.log('✅ 根节点穆茂已设置为画布正中心');
+          } else {
+            console.log('⚠️ 未找到根节点穆茂，使用fitView');
+            reactFlow.fitView({
+              padding: isMobile ? 0.15 : 0.2,
+              duration: 800
+            });
+          }
+        }
+      }, 600); // 稍微延长等待时间确保节点完全渲染
+
+      return () => clearTimeout(timer);
+    }
+  }, [nodes, searchTerm, isShowingAll, isMobile]);
+
   // 加载搜索历史
   useEffect(() => {
     const loadSearchHistory = async () => {
