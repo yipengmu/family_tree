@@ -4,7 +4,6 @@
  */
 
 import cacheManager from '../utils/cacheManager';
-import dataUpdateManager from '../utils/dataUpdateManager.js';
 
 const CACHE_KEYS = {
   FAMILY_DATA: 'familyData',
@@ -375,32 +374,23 @@ class FamilyDataService {
     console.log('🔄 开始强制刷新所有数据...');
 
     try {
-      // 使用数据更新管理器进行统一刷新
-      const success = await dataUpdateManager.forceRefreshAll();
-
-      if (success) {
-        // 重新加载数据
-        const data = await this.getFamilyData(true);
-
-        // 重新计算统计信息
-        await this.getFamilyStatistics(true);
-
-        console.log('✅ 数据刷新完成');
-        return data;
-      } else {
-        throw new Error('数据更新管理器刷新失败');
-      }
-    } catch (error) {
-      console.error('❌ 强制刷新失败:', error);
-
-      // 降级处理：直接清除缓存
+      // 直接清除缓存并重新加载
       Object.values(CACHE_KEYS).forEach(key => {
         cacheManager.delete(key);
       });
-      console.log('🗑️ 降级处理：所有缓存已清除');
+      console.log('🗑️ 所有缓存已清除');
 
+      // 重新加载数据
       const data = await this.getFamilyData(true);
+
+      // 重新计算统计信息
+      await this.getFamilyStatistics(data);
+
+      console.log('✅ 数据刷新完成');
       return data;
+    } catch (error) {
+      console.error('❌ 强制刷新失败:', error);
+      throw error;
     }
   }
 }
