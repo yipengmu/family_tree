@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>搜索功能测试</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f8fafc;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 32px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .test-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+        .test-section {
+            margin: 24px 0;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+        }
+        .test-section h3 {
+            margin: 0 0 16px 0;
+            color: #475569;
+        }
+        .test-item {
+            margin: 12px 0;
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+        .test-item strong {
+            color: #8b5cf6;
+        }
+        .status-good {
+            color: #10b981;
+            font-weight: 600;
+        }
+        .status-bad {
+            color: #ef4444;
+            font-weight: 600;
+        }
+        .test-link {
+            display: inline-block;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 8px 8px 8px 0;
+        }
+        .test-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(139, 92, 246, 0.3);
+            color: white;
+            text-decoration: none;
+        }
+        .code-block {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            margin: 12px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1 class="test-title">🔍 搜索功能测试</h1>
+        
+        <div class="test-section">
+            <h3>修复内容</h3>
+            <div class="test-item">
+                <strong>1. 数据传递问题</strong><br>
+                修复了nodes数据从FamilyTreeFlow传递到FamilySearchBar的问题
+            </div>
+            <div class="test-item">
+                <strong>2. 搜索逻辑实现</strong><br>
+                实现了真正的搜索功能，连接FamilySearchBar和FamilyTreeFlow
+            </div>
+            <div class="test-item">
+                <strong>3. 组件通信</strong><br>
+                使用forwardRef和useImperativeHandle实现组件间通信
+            </div>
+            <div class="test-item">
+                <strong>4. 节点数量显示</strong><br>
+                修复了节点数量显示不正确的问题，应该显示62人
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>测试步骤</h3>
+            <div class="test-item">
+                <strong>步骤1:</strong> 打开主页面，检查搜索栏是否显示正确的人数（62/689人）
+            </div>
+            <div class="test-item">
+                <strong>步骤2:</strong> 在搜索框中输入"穆"，检查是否出现搜索建议
+            </div>
+            <div class="test-item">
+                <strong>步骤3:</strong> 选择一个搜索建议，检查是否正确跳转到对应节点
+            </div>
+            <div class="test-item">
+                <strong>步骤4:</strong> 按回车键搜索，检查是否正确执行搜索
+            </div>
+            <div class="test-item">
+                <strong>步骤5:</strong> 检查搜索历史是否正确保存和显示
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>技术实现</h3>
+            <div class="code-block">
+// FamilyTreePage.js - 管理搜索状态
+const [nodes, setNodes] = useState([]);
+const [statistics, setStatistics] = useState(null);
+
+// FamilyTreeFlow.js - 暴露搜索方法
+useImperativeHandle(ref, () => ({
+  handleSearch: (query) => { /* 搜索逻辑 */ },
+  handleSearchSelect: (value, option) => { /* 选择逻辑 */ }
+}));
+
+// FamilySearchBar.js - 调用搜索方法
+const handleSearch = useCallback((query) => {
+  if (onSearch) {
+    onSearch(query);
+  }
+}, [onSearch]);
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h3>预期结果</h3>
+            <div class="test-item">
+                <span class="status-good">✓</span> 搜索栏显示正确的节点数量
+            </div>
+            <div class="test-item">
+                <span class="status-good">✓</span> 搜索建议正常显示
+            </div>
+            <div class="test-item">
+                <span class="status-good">✓</span> 搜索功能正常工作
+            </div>
+            <div class="test-item">
+                <span class="status-good">✓</span> 搜索历史正常保存
+            </div>
+            <div class="test-item">
+                <span class="status-good">✓</span> 节点跳转正常工作
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 32px;">
+            <a href="/" class="test-link">🌳 测试主页面</a>
+            <a href="/debug.html" class="test-link">🔧 调试工具</a>
+        </div>
+
+        <div class="test-section">
+            <h3>常见问题排查</h3>
+            <div class="test-item">
+                <strong>问题1:</strong> 节点数量显示为0<br>
+                <strong>解决:</strong> 检查onDataUpdate回调是否正确触发
+            </div>
+            <div class="test-item">
+                <strong>问题2:</strong> 搜索无反应<br>
+                <strong>解决:</strong> 检查useImperativeHandle是否正确暴露方法
+            </div>
+            <div class="test-item">
+                <strong>问题3:</strong> 搜索建议不显示<br>
+                <strong>解决:</strong> 检查familyData是否正确传递
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 页面加载完成后的检查
+        window.addEventListener('load', function() {
+            console.log('搜索功能测试页面已加载');
+            console.log('请按照测试步骤进行功能验证');
+        });
+    </script>
+</body>
+</html>

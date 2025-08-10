@@ -1,0 +1,237 @@
+/* 基础卡片样式 */
+.card {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 阴影变体 */
+.card-shadow-default {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.card-shadow-sm {
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.card-shadow-lg {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.card-shadow-none {
+  box-shadow: none;
+}
+
+/* 内边距变体 */
+.card-padding-none {
+  padding: 0;
+}
+
+.card-padding-sm {
+  padding: 16px;
+}
+
+.card-padding-default {
+  padding: 24px;
+}
+
+.card-padding-lg {
+  padding: 32px;
+}
+
+/* 悬停效果 */
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border-color: #cbd5e1;
+}
+
+/* 特殊卡片样式 */
+.profile-card {
+  text-align: center;
+  position: relative;
+}
+
+.profile-avatar {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 32px;
+  margin: 0 auto 16px;
+  border: 4px solid white;
+  box-shadow: 0 8px 16px rgba(139, 92, 246, 0.3);
+}
+
+.profile-name {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 8px;
+}
+
+.profile-location {
+  color: #64748b;
+  font-size: 16px;
+  margin-bottom: 24px;
+}
+
+.profile-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* About卡片样式 */
+.about-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 20px;
+}
+
+.about-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 8px 0;
+}
+
+.about-item:last-child {
+  margin-bottom: 0;
+}
+
+.about-icon {
+  width: 20px;
+  height: 20px;
+  color: #8b5cf6;
+  flex-shrink: 0;
+}
+
+.about-text {
+  color: #475569;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+/* 侧边栏卡片样式 */
+.sidebar-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 16px;
+}
+
+.people-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.people-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid #f1f5f9;
+  position: relative;
+}
+
+.people-item:last-child {
+  border-bottom: none;
+}
+
+.people-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.people-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.people-info h5 {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 4px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.people-email {
+  font-size: 13px;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 状态指示器 */
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.status-online {
+  background: #10b981;
+}
+
+.status-busy {
+  background: #f59e0b;
+}
+
+.status-offline {
+  background: #6b7280;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .card-padding-default {
+    padding: 20px;
+  }
+  
+  .card-padding-lg {
+    padding: 24px;
+  }
+  
+  .profile-avatar {
+    width: 60px;
+    height: 60px;
+    font-size: 24px;
+  }
+  
+  .profile-name {
+    font-size: 20px;
+  }
+  
+  .profile-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
