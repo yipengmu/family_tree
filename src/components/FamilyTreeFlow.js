@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import ReactFlow, {
   Controls,
   Background,
@@ -10,15 +10,12 @@ import ReactFlow, {
   ConnectionLineType,
   MarkerType,
 } from 'reactflow';
-import { Button, Card, Slider, Input, Select, Space, Typography, Spin, Alert, Drawer, Divider, AutoComplete, Switch } from 'antd';
+import { Button, Card, Slider, Select, Space, Typography, Spin, Alert, Drawer, Divider, Switch } from 'antd';
 import {
-  SearchOutlined,
-  MoreOutlined,
   SettingOutlined
 } from '@ant-design/icons';
 
 import FamilyMemberNode from './FamilyMemberNode';
-import muLogo from '../res/img/mulogo.png';
 import {
   convertToReactFlowData,
   getLayoutedElements,
@@ -26,7 +23,6 @@ import {
   getFamilyStatistics,
   searchWithPathTree
 } from '../utils/familyTreeUtils';
-import searchHistoryManager from '../utils/searchHistory';
 import {
   applySmartCollapse,
   getCurrentUser,
@@ -45,7 +41,7 @@ const nodeTypes = {
   familyMember: FamilyMemberNode,
 };
 
-const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
+const FamilyTreeFlow = forwardRef(({ familyData, loading = false, error = null, onDataUpdate }, ref) => {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -56,9 +52,6 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
   const [searchTargetPerson, setSearchTargetPerson] = useState(null); // 搜索的目标人员
 
   const [showAlert, setShowAlert] = useState(true); // 控制提示显示
-  const [searchOptions, setSearchOptions] = useState([]); // 搜索建议选项
-  const [searchInputValue, setSearchInputValue] = useState(''); // 搜索输入框的值
-  const searchTimeoutRef = useRef(null); // 搜索节流定时器
   const reactFlowInstanceRef = useRef(null); // ReactFlow实例引用
   const [isMobile, setIsMobile] = useState(false); // 移动端检测
   const [isDrawerVisible, setIsDrawerVisible] = useState(false); // 抽屉状态
@@ -138,6 +131,99 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
     return getFamilyStatistics(familyData);
   }, [familyData]);
 
+  // 当nodes或statistics变化时，通知父组件
+  useEffect(() => {
+    if (onDataUpdate && nodes && statistics) {
+      onDataUpdate(nodes, statistics);
+    }
+  }, [nodes, statistics, onDataUpdate]);
+
+  // 暴露给父组件的方法
+  useImperativeHandle(ref, () => ({
+    handleSearch: (query) => {
+      setSearchTerm(query || '');
+      // 直接实现搜索逻辑
+      if (query && typeof query === 'string' && query.trim()) {
+        const searchResults = searchWithPathTree(familyData, query.trim());
+        if (searchResults && searchResults.length > 0) {
+          setSearchTargetPerson(searchResults[0]);
+          setIsShowingAll(false);
+
+          // 延迟聚焦到目标节点，等待节点渲染完成
+          setTimeout(() => {
+            const targetNodeId = `person-${searchResults[0].id}`;
+            const currentNodes = getNodes();
+            const targetNode = currentNodes.find(node => node.id === targetNodeId);
+
+            if (targetNode && targetNode.position) {
+              console.log('🎯 聚焦到搜索目标:', searchResults[0].name, targetNode.position);
+              // 使用ReactFlow的setCenter方法聚焦到目标节点
+              setCenter(targetNode.position.x, targetNode.position.y, {
+                zoom: 1.2,
+                duration: 800
+              });
+            }
+          }, 500);
+        }
+      } else {
+        setSearchTargetPerson(null);
+        setIsShowingAll(true);
+      }
+    },
+    handleSearchSelect: (value, option) => {
+      setSearchTerm(value || '');
+      if (option && option.member) {
+        // 如果选择的是成员，进行搜索
+        const searchResults = searchWithPathTree(familyData, value);
+        if (searchResults && searchResults.length > 0) {
+          setSearchTargetPerson(searchResults[0]);
+          setIsShowingAll(false);
+
+          // 延迟聚焦到目标节点
+          setTimeout(() => {
+            const targetNodeId = `person-${searchResults[0].id}`;
+            const currentNodes = getNodes();
+            const targetNode = currentNodes.find(node => node.id === targetNodeId);
+
+            if (targetNode && targetNode.position) {
+              console.log('🎯 聚焦到搜索目标:', searchResults[0].name, targetNode.position);
+              // 使用ReactFlow的setCenter方法聚焦到目标节点
+              setCenter(targetNode.position.x, targetNode.position.y, {
+                zoom: 1.2,
+                duration: 800
+              });
+            }
+          }, 500);
+        }
+      } else if (value && typeof value === 'string' && value.trim()) {
+        // 如果是直接搜索文本
+        const searchResults = searchWithPathTree(familyData, value.trim());
+        if (searchResults && searchResults.length > 0) {
+          setSearchTargetPerson(searchResults[0]);
+          setIsShowingAll(false);
+
+          // 延迟聚焦到目标节点
+          setTimeout(() => {
+            const targetNodeId = `person-${searchResults[0].id}`;
+            const currentNodes = getNodes();
+            const targetNode = currentNodes.find(node => node.id === targetNodeId);
+
+            if (targetNode && targetNode.position) {
+              console.log('🎯 聚焦到搜索目标:', searchResults[0].name, targetNode.position);
+              // 使用ReactFlow的setCenter方法聚焦到目标节点
+              setCenter(targetNode.position.x, targetNode.position.y, {
+                zoom: 1.2,
+                duration: 800
+              });
+            }
+          }, 500);
+        }
+      }
+    },
+    getNodes: () => nodes,
+    getStatistics: () => statistics
+  }), [nodes, statistics, familyData, getNodes, setCenter]);
+
   // 调试：检查第20代成员显示状态
   const debug20thGeneration = useCallback(() => {
     const gen20Members = familyData.filter(person => person.g_rank === 20);
@@ -173,18 +259,11 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
   // 处理数据转换和布局
   const processData = useCallback(() => {
     if (!familyData || familyData.length === 0) return;
-
-    // 防抖处理，避免快速连续调用
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-
-    searchTimeoutRef.current = setTimeout(() => {
       let filteredData;
       let targetPerson = null;
 
     // 应用搜索（优先处理搜索逻辑）
-    if (searchTerm.trim()) {
+    if (searchTerm && typeof searchTerm === 'string' && searchTerm.trim()) {
       const searchResult = searchWithPathTree(familyData, searchTerm);
       filteredData = searchResult.pathTreeData;
       targetPerson = searchResult.targetPerson;
@@ -282,7 +361,6 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
 
     // 调试第20代成员显示
     debug20thGeneration();
-    }, 100); // 100ms防抖延迟
   }, [familyData, searchTerm, generationRange, layoutDirection, setNodes, setEdges, isShowingAll, isSmartCollapseEnabled, currentUser, expandedNodes, debug20thGeneration, isNameProtectionEnabled, searchTargetPerson]);
 
   // 添加日志功能
@@ -398,42 +476,7 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
     }
   }, [nodes, searchTerm, isShowingAll, isMobile, hasInitialCentered]);
 
-  // 加载搜索历史
-  useEffect(() => {
-    const loadSearchHistory = async () => {
-      try {
-        const history = await searchHistoryManager.getSearchHistory();
 
-        // 构建搜索建议选项
-        const options = history.map((record, index) => ({
-          value: record.searchTerm,
-          key: `${record.searchTerm}-${record.timestamp}-${index}`, // 使用唯一key
-          label: (
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span>{record.searchTerm}</span>
-              <span style={{ fontSize: '11px', color: '#999' }}>
-                {record.resultCount}个结果
-              </span>
-            </div>
-          )
-        }));
-        setSearchOptions(options);
-      } catch (error) {
-        console.error('加载搜索历史失败:', error);
-      }
-    };
-
-    loadSearchHistory();
-  }, []);
-
-  // 清理定时器
-  useEffect(() => {
-    return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-    };
-  }, []);
 
   // 移除自动视图调整，避免展开节点时跳转
 
@@ -563,87 +606,11 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
 
   // 移除全屏功能
 
-  // 执行实际搜索（带历史记录）
-  const performSearch = useCallback(async (value) => {
-    setSearchTerm(value);
 
-    // 搜索时切换到相应模式
-    if (value.trim()) {
-      setIsShowingAll(false); // 搜索时进入聚焦模式
 
-      // 记录搜索历史
-      try {
-        const searchResult = searchWithPathTree(familyData, value);
-        await searchHistoryManager.addSearchRecord(
-          value,
-          searchResult.searchResults.length,
-          searchResult.targetPerson
-        );
 
-        // 重新加载搜索历史
-        const updatedHistory = await searchHistoryManager.getSearchHistory();
 
-        // 更新搜索建议选项
-        const options = updatedHistory.map((record, index) => ({
-          value: record.searchTerm,
-          key: `${record.searchTerm}-${record.timestamp}-${index}`, // 使用唯一key
-          label: (
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span>{record.searchTerm}</span>
-              <span style={{ fontSize: '11px', color: '#999' }}>
-                {record.resultCount}个结果
-              </span>
-            </div>
-          )
-        }));
-        setSearchOptions(options);
-      } catch (error) {
-        console.error('记录搜索历史失败:', error);
-      }
-    }
-  }, [familyData]);
 
-  // 节流搜索处理
-  const handleSearchWithThrottle = useCallback((value) => {
-    // 清除之前的定时器
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-
-    // 立即更新输入框的值
-    setSearchInputValue(value);
-
-    // 如果输入为空，立即清除搜索
-    if (!value.trim()) {
-      setSearchTerm('');
-      setSearchTargetPerson(null);
-      return;
-    }
-
-    // 设置新的定时器，500ms后执行搜索
-    searchTimeoutRef.current = setTimeout(() => {
-      performSearch(value);
-    }, 500);
-  }, [performSearch]);
-
-  // 处理搜索框的回车和选择
-  const handleSearchSubmit = useCallback((value) => {
-    // 清除定时器，立即执行搜索
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-    performSearch(value);
-  }, [performSearch]);
-
-  // 处理搜索选择
-  const handleSearchSelect = useCallback((searchValue) => {
-    handleSearchSubmit(searchValue);
-  }, [handleSearchSubmit]);
-
-  // 处理搜索输入
-  const handleSearchInput = useCallback((value) => {
-    handleSearchWithThrottle(value);
-  }, [handleSearchWithThrottle]);
 
   // 处理代数范围变化
   const handleGenerationChange = useCallback((value) => {
@@ -692,83 +659,6 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
 
   return (
     <div className="family-tree-container">
-      {/* 统一导航栏 */}
-      <div className="unified-navbar">
-        <div className="navbar-left">
-          <div className="logo">
-            <img
-              src={muLogo}
-              alt="穆氏家族logo"
-              style={{
-                height: '32px',
-                width: 'auto',
-                objectFit: 'contain'
-              }}
-            />
-          </div>
-          <div className="title">
-            <h1>穆氏宗谱</h1>
-            <span className="subtitle">家族传承 · 血脉相连</span>
-          </div>
-        </div>
-
-        <div className="navbar-right">
-          {/* 状态信息 */}
-          <div className="status-info">
-            <div className="status-indicator">
-              {searchTargetPerson ? (
-                <span className="status-badge search">搜索路径</span>
-              ) : isShowingAll ? (
-                isSmartCollapseEnabled ? (
-                  <span className="status-badge smart">智能折叠</span>
-                ) : (
-                  <span className="status-badge complete">完整模式</span>
-                )
-              ) : (
-                <span className="status-badge focus">聚焦模式</span>
-              )}
-            </div>
-            <div className="count-info">
-              <Text type="secondary" style={{ fontSize: '12px' }}>
-                {nodes.length}/{statistics?.totalMembers || familyData.length}人
-              </Text>
-            </div>
-          </div>
-
-          {/* 搜索功能 */}
-          <div className="search-section">
-            <AutoComplete
-              value={searchInputValue}
-              options={searchOptions}
-              onSelect={handleSearchSelect}
-              onSearch={handleSearchInput}
-              placeholder="搜索家族成员..."
-              style={{ width: 200 }}
-              allowClear
-            >
-              <Input
-                prefix={<SearchOutlined />}
-                onPressEnter={handleSearchSubmit}
-              />
-            </AutoComplete>
-          </div>
-
-          {/* 快速切换 */}
-          <div className="quick-actions">
-            {/* 移除完整/聚焦切换按钮 */}
-
-            {/* 移除重置视图和全屏按钮 */}
-
-            <Button
-              icon={<MoreOutlined />}
-              onClick={() => setIsDrawerVisible(true)}
-              size="small"
-              title="更多设置"
-            />
-          </div>
-        </div>
-      </div>
-
       {/* 智能提示 */}
       {searchTargetPerson && (
         <Alert
@@ -1173,6 +1063,8 @@ const FamilyTreeFlow = ({ familyData, loading = false, error = null }) => {
       </div>
     </div>
   );
-};
+});
+
+FamilyTreeFlow.displayName = 'FamilyTreeFlow';
 
 export default FamilyTreeFlow;
