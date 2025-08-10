@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>移动端测试 - 家谱系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f5f5f5;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .mobile-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .content-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            padding-bottom: 80px; /* 为底部Tab留出空间 */
+        }
+        
+        .tab-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 70px;
+            background: white;
+            border-top: 1px solid #e8e8e8;
+            display: flex;
+            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .tab-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+            cursor: pointer;
+            transition: color 0.3s;
+            color: #666;
+        }
+        
+        .tab-item.active {
+            color: #1890ff;
+        }
+        
+        .tab-icon {
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+        
+        .tab-label {
+            font-size: 12px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+        
+        .card h3 {
+            margin-bottom: 12px;
+            color: #333;
+        }
+        
+        .card p {
+            color: #666;
+            line-height: 1.5;
+        }
+        
+        .tree-view {
+            display: none;
+        }
+        
+        .settings-view {
+            display: none;
+        }
+        
+        .tree-view.active,
+        .settings-view.active {
+            display: block;
+        }
+        
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+        
+        .switch {
+            width: 48px;
+            height: 28px;
+            background: #ccc;
+            border-radius: 14px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .switch.on {
+            background: #1890ff;
+        }
+        
+        .switch::after {
+            content: '';
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.3s;
+        }
+        
+        .switch.on::after {
+            transform: translateX(20px);
+        }
+    </style>
+</head>
+<body>
+    <div class="mobile-container">
+        <div class="content-area">
+            <!-- 家谱视图 -->
+            <div class="tree-view active">
+                <div class="card">
+                    <h3>🌳 家谱主视图</h3>
+                    <p>这里是家谱的可视化展示区域。在实际应用中，这里会显示完整的家族树状结构，支持缩放、拖拽等交互操作。</p>
+                </div>
+                
+                <div class="card">
+                    <h3>📊 家族统计</h3>
+                    <p>• 家族成员总数：689 人</p>
+                    <p>• 传承代数：20 代</p>
+                    <p>• 最新更新：2024年1月</p>
+                </div>
+                
+                <div class="card">
+                    <h3>🔍 快速搜索</h3>
+                    <p>支持按姓名、职位、地点等多维度搜索家族成员，快速定位目标人员。</p>
+                </div>
+            </div>
+            
+            <!-- 设置视图 -->
+            <div class="settings-view">
+                <div class="card">
+                    <h3>⚙️ 显示设置</h3>
+                    
+                    <div class="setting-item">
+                        <div>
+                            <div style="font-weight: 500;">显示搜索历史</div>
+                            <div style="font-size: 12px; color: #666;">在搜索页面显示历史搜索记录</div>
+                        </div>
+                        <div class="switch on" onclick="toggleSwitch(this)"></div>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div>
+                            <div style="font-weight: 500;">智能折叠</div>
+                            <div style="font-size: 12px; color: #666;">自动折叠第3代以后的家族成员</div>
+                        </div>
+                        <div class="switch on" onclick="toggleSwitch(this)"></div>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div>
+                            <div style="font-weight: 500;">显示代数</div>
+                            <div style="font-size: 12px; color: #666;">在节点上显示代数信息</div>
+                        </div>
+                        <div class="switch" onclick="toggleSwitch(this)"></div>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <div>
+                            <div style="font-weight: 500;">移动端优化</div>
+                            <div style="font-size: 12px; color: #666;">启用移动端专用的交互优化</div>
+                        </div>
+                        <div class="switch on" onclick="toggleSwitch(this)"></div>
+                    </div>
+                </div>
+                
+                <div class="card">
+                    <h3>📱 应用信息</h3>
+                    <p>• 版本：v0.2.0</p>
+                    <p>• 更新时间：2024年1月</p>
+                    <p>• 技术栈：React + Ant Design</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 底部Tab导航 -->
+        <div class="tab-bar">
+            <div class="tab-item active" onclick="switchTab('tree')">
+                <div class="tab-icon">🌳</div>
+                <div class="tab-label">家谱</div>
+            </div>
+            <div class="tab-item" onclick="switchTab('settings')">
+                <div class="tab-icon">⚙️</div>
+                <div class="tab-label">设置</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tab) {
+            // 移除所有active类
+            document.querySelectorAll('.tab-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelectorAll('.tree-view, .settings-view').forEach(view => {
+                view.classList.remove('active');
+            });
+            
+            // 添加active类到当前tab
+            event.currentTarget.classList.add('active');
+            
+            if (tab === 'tree') {
+                document.querySelector('.tree-view').classList.add('active');
+            } else if (tab === 'settings') {
+                document.querySelector('.settings-view').classList.add('active');
+            }
+        }
+        
+        function toggleSwitch(element) {
+            element.classList.toggle('on');
+        }
+        
+        // 防止页面滚动
+        document.addEventListener('touchmove', function(e) {
+            if (e.target.closest('.content-area')) {
+                return; // 允许内容区域滚动
+            }
+            e.preventDefault();
+        }, { passive: false });
+    </script>
+</body>
+</html>
