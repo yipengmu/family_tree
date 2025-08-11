@@ -26,20 +26,20 @@ const Sidebar = ({ activeItem = 'tree', onMenuClick }) => {
     {
       key: 'discover',
       icon: <TeamOutlined />,
-      label: '发现本家',
+      label: '发现',
       path: '/discover'
     },
     {
       key: 'events',
       icon: <FolderOutlined />,
-      label: '家族大事记',
-      path: '/events'
+      label: '大事',
+      path: '/'
     },
     {
       key: 'analytics',
       icon: <BarChartOutlined />,
-      label: '数据分析',
-      path: '/analytics'
+      label: '数据',
+      path: '/'
     },
     {
       key: 'settings',

@@ -6,6 +6,7 @@ import dbJson from './data/familyData.js';
 import FamilyTreePage from './components/Pages/FamilyTreePage';
 import SettingsPage from './components/Pages/SettingsPage';
 import CreatePage from './components/Pages/CreatePage';
+import DiscoverPage from './components/Pages/DiscoverPage';
 import './App.css';
 
 const { Content } = Layout;
@@ -151,6 +152,7 @@ function App() {
       case 'create':
         return <CreatePage {...commonProps} />;
       case 'discover':
+        return <DiscoverPage {...commonProps} />;
       case 'events':
       case 'analytics':
         return (

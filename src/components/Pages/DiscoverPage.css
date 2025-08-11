@@ -1,0 +1,70 @@
+/* 发现本家 - 高保真视觉样式 */
+.discover-page { background:#f4f5f7;}
+
+/* 封面背景 */
+.discover-cover{ height:280px; background:linear-gradient(135deg,#d63384,#a855f7); border-radius:5px; margin-bottom:40px; position:relative; }
+
+/* 三列网格 */
+.discover-grid{ display:grid; grid-template-columns:260px 1fr 260px; gap:30px; margin-top:-120px; position:relative; z-index:10; }
+.left-column,.center-column,.right-column{ display:block; }
+
+/* 个人资料卡片 */
+.profile-card-box{ background:#fff; border-radius:10px; padding:30px; box-shadow:0 4px 12px rgba(0,0,0,0.06); text-align:center; }
+.profile-card-avatar{ width:180px; height:180px; border-radius:50%; display:block; margin:0 auto 30px; background:#fbb03b; object-fit:cover; }
+.profile-card-name{ font-size:30px; font-weight:800; color:#a303a0; margin:0 0 10px; }
+.profile-card-location{ color:rgba(163,3,160,0.7); margin:0 0 30px; }
+.profile-card-actions{ display:flex; gap:12px; justify-content:center; margin-bottom:30px; }
+.profile-card-actions .message-btn{ width:46px; height:46px; border-radius:50%; background:#a303a0; color:#fff; border:none; display:flex; align-items:center; justify-content:center; }
+.profile-card-actions .follow-btn{ background:#a303a0; color:#fff; border:none; padding:10px 18px; border-radius:10px; font-weight:600; }
+.profile-card-actions .family-btn{ background:transparent; color:#a303a0; border:1px solid #a303a0; padding:10px 18px; border-radius:10px; font-weight:600; }
+.profile-card-actions .icon{ width:24px; height:24px; }
+
+/* About 卡片 */
+.about-card-box{ background:#fff; border-radius:10px; padding:30px; box-shadow:0 4px 12px rgba(0,0,0,0.06); }
+.about-title{ font-size:18px; font-weight:800; color:#a303a0; margin:0 0 20px; }
+.about-list{ display:flex; flex-direction:column; gap:8px; }
+.about-row{ display:flex; align-items:center; padding:8px 0; border-bottom:1px solid rgba(3,2,41,0.1); }
+.about-row:last-child{ border-bottom:none; }
+.about-row .icon.purple{ color:#a303a0; width:24px; height:24px; margin-right:10px; }
+.about-text{ color:rgba(73,0,87,0.7); }
+
+/* 中间帖子 */
+.center-column{ background:#fff; border-radius:10px; padding:30px; box-shadow:0 4px 12px rgba(0,0,0,0.06); }
+.feed-tabs{ display:flex; gap:30px; margin-bottom:30px; padding-bottom:12px; border-bottom:1px solid rgba(3,2,41,0.1); }
+.tab{ font-size:20px; color:rgba(163,3,160,0.7); background:transparent; border:none; padding:0; cursor:pointer; }
+.tab.active{ color:#a303a0; font-weight:800; }
+
+.posts-list{ display:flex; flex-direction:column; gap:40px; }
+.post-card{ border-bottom:1px solid rgba(3,2,41,0.1); padding-bottom:40px; }
+.post-card:last-child{ border-bottom:none; }
+.post-header{ display:flex; align-items:center; margin-bottom:12px; }
+.post-user{ display:flex; align-items:center; gap:12px; }
+.post-avatar{ width:80px; height:80px; border-radius:50%; }
+.post-user-name{ font-weight:800; color:#490057; }
+.post-time{ font-size:10px; color:rgba(73,0,87,0.6); margin-top:2px; }
+.more-btn{ margin-left:auto; background:transparent; border:none; cursor:pointer; }
+.post-image{ width:100%; height:256px; object-fit:cover; border-radius:10px; margin:12px 0 16px; }
+.post-text{ margin:0 0 16px; color:#490057; }
+.post-actions-row{ display:flex; gap:20px; align-items:center; }
+.action{ display:flex; gap:8px; align-items:center; color:#a303a0; font-weight:800; }
+.action .icon{ width:28px; height:28px; }
+.action-text{ color:#a303a0; }
+
+/* 右侧边栏 */
+.right-column{ display:flex; flex-direction:column; gap:20px; }
+.side-card{ background:#fff; border-radius:10px; padding:25px; box-shadow:0 4px 12px rgba(0,0,0,0.06); }
+.side-title{ font-weight:800; color:#490057; margin:0 0 16px; }
+.side-list{ display:flex; flex-direction:column; gap:14px; }
+.side-row{ display:flex; align-items:center; gap:12px; padding-bottom:12px; }
+.side-row.with-border{ border-bottom:1px solid rgba(0,0,0,0.05); }
+.side-avatar{ width:34px; height:34px; border-radius:50%; }
+.side-meta .side-name{ font-size:12px; color:#490057; margin-bottom:2px; }
+.side-meta .side-sub{ font-size:10px; color:rgba(73,0,87,0.5); }
+.status-dot{ width:5px; height:5px; border-radius:50%; margin-left:auto; }
+.status-dot.online{ background:#2cc84a; }
+.status-dot.busy{ background:#ff8f6b; }
+.status-dot.offline{ background:#9ca3af; }
+
+/* 响应式 */
+@media (max-width: 1100px){ .discover-grid{ grid-template-columns: 1fr; margin-top:-40px; } .right-column{ order:3 } .left-column{ order:1 } .center-column{ order:2 } }
+@media (max-width: 768px){ .discover-cover{ height:220px; } .center-column,.side-card{ padding:20px; } .profile-card-box,.about-card-box{ padding:20px; } }
