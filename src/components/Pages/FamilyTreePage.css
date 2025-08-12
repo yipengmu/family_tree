@@ -1,0 +1,55 @@
+/* 家谱页面样式 */
+.family-tree-page {
+  height: 100%; /* 占满父容器 */
+  display: flex;
+  flex-direction: column;
+  min-height: 600px; /* 最小高度保证 */
+}
+
+.family-tree-wrapper {
+  flex: 1;
+  position: relative;
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e2e8f0;
+  min-height: 500px; /* 确保最小高度 */
+}
+
+/* 覆盖FamilyTreeFlow的容器样式 */
+.family-tree-wrapper .family-tree-container {
+  height: 100% !important;
+  background: transparent !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* 确保ReactFlow占满容器 */
+.family-tree-wrapper .family-tree-container > div:last-child {
+  flex: 1 !important;
+  height: auto !important;
+}
+
+/* 确保ReactFlow容器正确显示 */
+.family-tree-wrapper .react-flow {
+  background: white;
+  height: 100%;
+}
+
+.family-tree-wrapper .react-flow__viewport {
+  height: 100%;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .family-tree-page {
+    height: calc(100vh - 120px); /* 移动端减少封面图片高度 */
+  }
+
+  .family-tree-wrapper {
+    border-radius: 12px;
+    margin: 0 -16px;
+    min-height: 400px;
+  }
+}

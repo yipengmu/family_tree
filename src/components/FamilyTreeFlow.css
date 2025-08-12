@@ -37,12 +37,9 @@
 .logo {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 40px;
+  justify-content: left;
   height: 40px;
-  background: hsl(210 40% 98%);
   border-radius: 8px;
-  border: 1px solid hsl(214.3 31.8% 91.4%);
 }
 
 .title h1 {
@@ -517,7 +514,19 @@
 @media (max-width: 768px) {
   .react-flow {
     touch-action: manipulation; /* 允许双指缩放和平移 */
-    height: calc(100vh - 120px) !important; /* 为控制面板留出空间 */
+    height: calc(100vh - 140px) !important; /* 为底部Tab和控制面板留出空间 */
+  }
+
+  /* 移动端Tab模式下的特殊处理 */
+  .mobile-layout .react-flow {
+    height: calc(100vh - 104px) !important; /* 优化高度：56px(微信Tab) + 48px(导航栏) */
+    width: 100% !important;
+  }
+
+  /* 移动端React Flow容器优化 */
+  .mobile-layout .react-flow__renderer {
+    width: 100% !important;
+    height: 100% !important;
   }
 
   .react-flow__pane {
@@ -588,10 +597,119 @@
     height: 100vh;
   }
 
+  /* 移动端Tab模式下的容器高度调整 */
+  .mobile-layout .family-tree-container {
+    height: calc(100vh - 56px); /* 减去微信风格Tab高度 */
+  }
+
   .unified-navbar {
     padding: 8px 16px;
     flex-wrap: wrap;
     gap: 8px;
+  }
+
+  /* 移动端导航栏整体布局优化 */
+  .mobile-layout .unified-navbar {
+    padding: 4px 12px; /* 更紧凑的间距 */
+    flex-wrap: nowrap !important; /* 强制单行 */
+    gap: 8px;
+    min-height: 44px; /* 减小高度 */
+    align-items: center;
+    background: #fff; /* 确保白色背景 */
+    border-bottom: 0.5px solid #e5e5e5; /* 微信风格细边框 */
+  }
+
+  /* 移动端导航栏左侧区域优化 */
+  .mobile-layout .navbar-left {
+    flex: 1;
+    min-width: 0; /* 允许收缩 */
+    gap: 8px;
+  }
+
+  /* 移动端logo缩小 */
+  .mobile-layout .logo {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+  }
+
+  /* 移动端标题缩小 */
+  .mobile-layout .title h1 {
+    font-size: 16px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* 移动端右侧控制区域优化 */
+  .mobile-layout .navbar-right {
+    flex-shrink: 0;
+    gap: 4px;
+  }
+
+  /* 移动端搜索框优化 */
+  .mobile-layout .control-left {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .mobile-layout .control-left .ant-input-search {
+    width: 100% !important;
+    max-width: 150px;
+  }
+
+  /* 移动端信息显示优化 */
+  .mobile-layout .control-right {
+    flex-shrink: 0;
+    gap: 4px;
+  }
+
+  .mobile-layout .control-right .ant-typography {
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  /* 移动端隐藏不必要的控制元素 */
+  .mobile-layout .control-right .ant-btn:not(.mode-toggle):not(.member-count) {
+    display: none !important;
+  }
+
+  /* 隐藏移动端的三点菜单和其他复杂控件 */
+  .mobile-layout .ant-dropdown-trigger,
+  .mobile-layout .control-right .ant-dropdown,
+  .mobile-layout .navbar-right .ant-dropdown {
+    display: none !important;
+  }
+
+  /* 隐藏移动端的更多设置按钮 */
+  .mobile-layout .control-right .ant-btn[title*="更多"],
+  .mobile-layout .control-right .ant-btn[title*="设置"],
+  .mobile-layout .control-right .ant-btn[title*="菜单"] {
+    display: none !important;
+  }
+
+  /* 简化移动端导航栏 - 只保留核心元素 */
+  .mobile-layout .navbar-right {
+    gap: 2px; /* 进一步减小间距 */
+  }
+
+  /* 移动端只显示最核心的信息 */
+  .mobile-layout .control-right > *:not(.mode-toggle):not(.member-count) {
+    display: none !important;
+  }
+
+  /* 移动端模式切换按钮优化 */
+  .mobile-layout .mode-toggle {
+    padding: 4px 8px !important;
+    font-size: 12px !important;
+    height: 28px !important;
+  }
+
+  /* 移动端成员计数显示优化 */
+  .mobile-layout .member-count {
+    font-size: 11px !important;
+    padding: 2px 6px !important;
+    height: 24px !important;
   }
 
   .navbar-left {

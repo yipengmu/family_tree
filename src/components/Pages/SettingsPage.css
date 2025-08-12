@@ -1,0 +1,197 @@
+/* 设置页面样式 */
+.settings-page {
+  height: 100%;
+  overflow: auto;
+  padding-bottom: 80px; /* 为底部Tab留出空间 */
+}
+
+.settings-container {
+  max-width: 600px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.settings-card {
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+}
+
+.settings-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* 设置列表项 */
+.settings-list-item {
+  padding: 16px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.settings-list-item:last-child {
+  border-bottom: none;
+}
+
+.settings-icon {
+  color: #8b5cf6;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+.settings-title {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 15px;
+}
+
+.settings-description {
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+/* 统计项 */
+.stat-item {
+  text-align: center;
+  padding: 8px 0;
+}
+
+/* 控制按钮 */
+.control-button {
+  height: auto;
+  min-height: 56px;
+  border-radius: 12px;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 16px;
+  border: 2px solid #e2e8f0;
+  background: white;
+  transition: all 0.3s ease;
+}
+
+.control-button:hover {
+  border-color: #8b5cf6;
+  background: #faf9ff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.15);
+}
+
+.control-title {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 15px;
+  margin-bottom: 4px;
+}
+
+.control-description {
+  font-size: 13px;
+  color: #64748b;
+  font-weight: normal;
+  line-height: 1.4;
+}
+
+/* 关于按钮 */
+.about-button {
+  height: 56px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  border: none;
+  color: white;
+  font-weight: 600;
+  font-size: 16px;
+  transition: all 0.3s ease;
+}
+
+.about-button:hover {
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 16px rgba(139, 92, 246, 0.3);
+  color: white;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .settings-container {
+    padding: 0 16px;
+  }
+  
+  .settings-card {
+    border-radius: 12px;
+  }
+  
+  .control-button {
+    min-height: 48px;
+    padding: 12px;
+  }
+  
+  .control-title {
+    font-size: 14px;
+  }
+  
+  .control-description {
+    font-size: 12px;
+  }
+  
+  .about-button {
+    height: 48px;
+    font-size: 15px;
+  }
+}
+
+/* 开关样式覆盖 */
+.settings-list-item .ant-switch {
+  background-color: #e2e8f0;
+}
+
+.settings-list-item .ant-switch-checked {
+  background-color: #8b5cf6;
+}
+
+.settings-list-item .ant-switch:focus {
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+}
+
+/* 标签样式 */
+.settings-card .ant-tag {
+  border-radius: 8px;
+  font-weight: 500;
+  padding: 4px 12px;
+}
+
+/* 分割线样式 */
+.settings-card .ant-divider {
+  border-color: #f1f5f9;
+}
+
+/* 模态框样式覆盖 */
+.ant-modal-content {
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.ant-modal-header {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  border-bottom: none;
+  padding: 20px 24px;
+}
+
+.ant-modal-title {
+  color: white;
+  font-weight: 600;
+}
+
+.ant-modal-close {
+  color: white;
+}
+
+.ant-modal-close:hover {
+  color: rgba(255, 255, 255, 0.8);
+}

@@ -181,3 +181,194 @@
     min-height: auto;
   }
 }
+
+/* 移动端底部Tab导航样式 */
+.mobile-layout {
+  height: 100vh;
+  background: #f5f5f5;
+}
+
+.mobile-layout .ant-layout {
+  background: #f5f5f5;
+}
+
+.mobile-layout .ant-layout-content {
+  height: 100%;
+  padding: 0;
+  overflow: hidden;
+}
+
+.mobile-layout .ant-tabs {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.mobile-layout .ant-tabs-content-holder {
+  flex: 1;
+  overflow: hidden;
+}
+
+.mobile-layout .ant-tabs-tabpane {
+  height: 100%;
+  overflow: hidden;
+}
+
+/* 微信风格的底部Tab */
+.mobile-layout .ant-tabs-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 8px !important;
+  margin: 0 !important;
+  min-height: 56px; /* 微信Tab高度 */
+  flex: 1;
+  text-align: center;
+  background: transparent;
+  border: none;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.mobile-layout .ant-tabs-tab-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px; /* 减小图标和文字间距 */
+  font-size: 10px; /* 微信风格的小字体 */
+  line-height: 1.2;
+  color: #999; /* 未激活状态的灰色 */
+  transition: color 0.2s ease;
+}
+
+.mobile-layout .ant-tabs-tab-btn .anticon {
+  font-size: 22px; /* 微信风格的图标大小 */
+  margin: 0;
+  transition: color 0.2s ease;
+}
+
+/* 激活状态 - 微信绿色 */
+.mobile-layout .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: #07c160; /* 微信绿色 */
+}
+
+.mobile-layout .ant-tabs-tab.ant-tabs-tab-active .anticon {
+  color: #07c160; /* 微信绿色 */
+}
+
+/* 隐藏默认的下划线 */
+.mobile-layout .ant-tabs-ink-bar {
+  display: none;
+}
+
+/* 微信风格的Tab栏背景 */
+.mobile-layout .ant-tabs-tab-bar {
+  background: #f7f7f7; /* 微信浅灰背景 */
+  border-top: 0.5px solid #e5e5e5; /* 微信风格的细边框 */
+  margin: 0;
+  padding: 0;
+}
+
+/* 桌面端布局 */
+.desktop-layout {
+  height: 100vh;
+}
+
+.desktop-layout .ant-layout {
+  background: #f0f2f5;
+}
+
+.desktop-layout .ant-layout-content {
+  height: 100%;
+  padding: 0;
+}
+
+/* React Flow 移动端优化 */
+@media (max-width: 768px) {
+  .react-flow {
+    height: calc(100vh - 70px) !important; /* 减去底部Tab高度 */
+  }
+
+  /* 移动端隐藏所有React Flow控制组件 */
+  .mobile-layout .react-flow__controls {
+    display: none !important; /* 隐藏放大缩小控制按钮 */
+  }
+
+  .mobile-layout .react-flow__minimap {
+    display: none !important; /* 隐藏小地图 */
+  }
+
+  .mobile-layout .react-flow__attribution {
+    display: none !important; /* 隐藏版权信息 */
+  }
+
+  .mobile-layout .react-flow__panel {
+    display: none !important; /* 隐藏所有面板 */
+  }
+
+  /* 移动端节点样式调整 */
+  .mobile-layout .react-flow__node {
+    font-size: 12px;
+  }
+
+  /* 移动端边样式调整 */
+  .mobile-layout .react-flow__edge {
+    stroke-width: 1px;
+  }
+
+  /* 移动端家谱容器 */
+  .mobile-layout .ant-tabs-tabpane {
+    height: calc(100vh - 56px) !important; /* 微信风格Tab高度 */
+    overflow: hidden;
+  }
+
+  /* 移动端家谱内容区域 */
+  .mobile-layout .family-tree-container {
+    height: 100% !important;
+    position: relative;
+  }
+}
+
+/* 触摸友好的交互 */
+@media (hover: none) and (pointer: coarse) {
+  .ant-btn,
+  .ant-list-item,
+  .ant-card {
+    cursor: default;
+  }
+
+  .ant-btn:hover,
+  .ant-list-item:hover,
+  .ant-card:hover {
+    transform: none;
+  }
+
+  /* 增加点击区域 */
+  .ant-switch {
+    min-width: 48px;
+    min-height: 28px;
+  }
+
+  .ant-tabs-tab {
+    min-height: 60px;
+    min-width: 60px;
+  }
+}
+
+/* 安全区域适配（iPhone X等） - 微信风格 */
+@supports (padding: max(0px)) {
+  .mobile-layout {
+    padding-bottom: max(0px, env(safe-area-inset-bottom));
+  }
+
+  .mobile-layout .ant-tabs-tab-bar {
+    height: max(56px, calc(56px + env(safe-area-inset-bottom))); /* 微信风格适配 */
+    padding-bottom: max(0px, env(safe-area-inset-bottom));
+  }
+
+  /* 内容区域也需要适配 */
+  .mobile-layout .ant-tabs-tabpane {
+    height: calc(100vh - max(56px, calc(56px + env(safe-area-inset-bottom)))) !important;
+  }
+}
