@@ -5,7 +5,7 @@ import { validateFamilyData } from './utils/familyTreeUtils';
 import dbJson from './data/familyData.js';
 import FamilyTreePage from './components/Pages/FamilyTreePage';
 import SettingsPage from './components/Pages/SettingsPage';
-import CreatePage from './components/Pages/CreatePage';
+import CreatorPage from './components/Pages/CreatorPage';
 import DiscoverPage from './components/Pages/DiscoverPage';
 import './App.css';
 
@@ -150,7 +150,7 @@ function App() {
       case 'settings':
         return <SettingsPage {...commonProps} />;
       case 'create':
-        return <CreatePage {...commonProps} />;
+        return <CreatorPage {...commonProps} />;
       case 'discover':
         return <DiscoverPage {...commonProps} />;
       case 'events':
