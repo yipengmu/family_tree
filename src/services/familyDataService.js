@@ -4,11 +4,18 @@
  */
 
 import cacheManager from '../utils/cacheManager';
+import tenantService from './tenantService';
 
 const CACHE_KEYS = {
   FAMILY_DATA: 'familyData',
   FAMILY_STATISTICS: 'familyStatistics',
   PROCESSED_DATA: 'processedData'
+};
+
+// 获取租户相关的缓存键
+const getTenantCacheKey = (key, tenantId = null) => {
+  const currentTenantId = tenantId || tenantService.getCurrentTenant().id;
+  return `${key}_${currentTenantId}`;
 };
 
 // 缓存过期时间配置
@@ -27,51 +34,64 @@ class FamilyDataService {
   /**
    * 获取原始家谱数据
    * @param {boolean} forceRefresh - 是否强制刷新
+   * @param {string} tenantId - 租户ID
    * @returns {Promise<Array>} - 家谱数据
    */
-  async getFamilyData(forceRefresh = false) {
+  async getFamilyData(forceRefresh = false, tenantId = null) {
+    const currentTenantId = tenantId || tenantService.getCurrentTenant().id;
+    const cacheKey = getTenantCacheKey(CACHE_KEYS.FAMILY_DATA, currentTenantId);
+
     // 如果不强制刷新，先检查缓存
     if (!forceRefresh) {
-      const cachedData = cacheManager.get(CACHE_KEYS.FAMILY_DATA);
+      const cachedData = cacheManager.get(cacheKey);
       if (cachedData) {
-        console.log('📦 从缓存加载家谱数据');
+        console.log(`📦 从缓存加载家谱数据 (租户: ${currentTenantId})`);
         return cachedData;
       }
     }
 
     // 防止重复请求
-    if (this.isLoading && this.loadingPromise) {
-      console.log('⏳ 等待正在进行的数据加载...');
+    const loadingKey = `loading_${currentTenantId}`;
+    if (this[loadingKey] && this.loadingPromise) {
+      console.log(`⏳ 等待正在进行的数据加载... (租户: ${currentTenantId})`);
       return this.loadingPromise;
     }
 
-    this.isLoading = true;
-    this.loadingPromise = this.loadFamilyDataFromServer();
+    this[loadingKey] = true;
+    this.loadingPromise = this.loadFamilyDataFromServer(currentTenantId);
 
     try {
       const data = await this.loadingPromise;
-      
+
       // 缓存数据
-      cacheManager.set(CACHE_KEYS.FAMILY_DATA, data, CACHE_EXPIRY.FAMILY_DATA);
-      
-      console.log('🌐 从服务器加载家谱数据完成');
+      cacheManager.set(cacheKey, data, CACHE_EXPIRY.FAMILY_DATA);
+
+      console.log(`🌐 从服务器加载家谱数据完成 (租户: ${currentTenantId})`);
       return data;
     } finally {
-      this.isLoading = false;
+      this[loadingKey] = false;
       this.loadingPromise = null;
     }
   }
 
   /**
    * 从服务器加载家谱数据
+   * @param {string} tenantId - 租户ID
    * @returns {Promise<Array>} - 家谱数据
    */
-  async loadFamilyDataFromServer() {
+  async loadFamilyDataFromServer(tenantId) {
     try {
-      console.log('🌐 开始从服务器加载家谱数据...');
+      console.log(`🌐 开始从服务器加载家谱数据... (租户: ${tenantId})`);
       const startTime = Date.now();
 
-      const response = await fetch('/api/family-data');
+      const baseURL = process.env.REACT_APP_API_BASE_URL || '';
+      const url = `${baseURL}/api/family-data?tenantId=${tenantId}`;
+
+      const response = await fetch(url, {
+        headers: {
+          ...tenantService.getTenantHeaders(),
+        },
+      });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -82,47 +102,78 @@ class FamilyDataService {
         throw new Error('服务器返回的不是JSON数据');
       }
 
-      const data = await response.json();
+      const result = await response.json();
+      const data = result.data || result;
       const loadTime = Date.now() - startTime;
 
-      console.log(`✅ 家谱数据加载完成 (${loadTime}ms, ${data.length}条记录)`);
+      console.log(`✅ 家谱数据加载完成 (${loadTime}ms, ${data.length}条记录, 租户: ${tenantId})`);
 
       return data;
     } catch (error) {
-      console.error('❌ 加载家谱数据失败:', error);
+      console.error(`❌ 加载家谱数据失败 (租户: ${tenantId}):`, error);
 
-      // 如果网络请求失败，尝试从缓存获取旧数据
-      const cachedData = cacheManager.get(CACHE_KEYS.FAMILY_DATA);
+      // 如果网络请求失败，尝试从租户缓存获取旧数据
+      const cacheKey = getTenantCacheKey(CACHE_KEYS.FAMILY_DATA, tenantId);
+      const cachedData = cacheManager.get(cacheKey);
       if (cachedData) {
-        console.log('🔄 网络失败，使用缓存数据');
+        console.log(`🔄 网络失败，使用缓存数据 (租户: ${tenantId})`);
         return cachedData;
       }
 
-      // 如果没有缓存数据，使用真实的本地数据
-      console.log('📝 使用本地真实数据');
-      return this.getLocalFamilyData();
+      // 如果没有缓存数据，使用本地数据
+      console.log(`📝 使用本地数据 (租户: ${tenantId})`);
+      return this.getLocalFamilyData(tenantId);
     }
   }
 
   /**
-   * 获取本地真实家谱数据
-   * @returns {Array} - 真实的家谱数据
+   * 获取本地家谱数据
+   * @param {string} tenantId - 租户ID
+   * @returns {Array} - 家谱数据
    */
-  getLocalFamilyData() {
-    // 导入真实的家谱数据
-    const dbJson = require('../data/familyData.js');
-    const data = dbJson.default || dbJson;
+  getLocalFamilyData(tenantId = null) {
+    const currentTenantId = tenantId || tenantService.getCurrentTenant().id;
 
-    // 数据校验
-    const validationResult = this.validateFamilyData(data);
-    if (!validationResult.isValid) {
-      console.warn('⚠️ 家谱数据校验发现问题:', validationResult.issues);
-    } else {
-      console.log('✅ 家谱数据校验通过');
+    // 首先尝试从localStorage获取租户数据
+    const localKey = `family_data_${currentTenantId}`;
+    const storedData = localStorage.getItem(localKey);
+
+    if (storedData) {
+      try {
+        const data = JSON.parse(storedData);
+        console.log(`📊 从本地存储加载家谱数据: ${data.length} 条记录 (租户: ${currentTenantId})`);
+        return data;
+      } catch (error) {
+        console.error('解析本地存储数据失败:', error);
+      }
     }
 
-    console.log(`📊 加载家谱数据: ${data.length} 条记录`);
-    return data;
+    // 如果是默认租户且没有本地数据，使用内置数据
+    if (currentTenantId === 'default' || currentTenantId === process.env.REACT_APP_DEFAULT_TENANT_ID) {
+      const dbJson = require('../data/familyData.js');
+      const data = dbJson.default || dbJson;
+
+      // 为默认数据添加租户信息
+      const dataWithTenant = data.map(item => ({
+        ...item,
+        tenant_id: currentTenantId,
+      }));
+
+      // 数据校验
+      const validationResult = this.validateFamilyData(dataWithTenant);
+      if (!validationResult.isValid) {
+        console.warn('⚠️ 家谱数据校验发现问题:', validationResult.issues);
+      } else {
+        console.log('✅ 家谱数据校验通过');
+      }
+
+      console.log(`📊 加载默认家谱数据: ${dataWithTenant.length} 条记录 (租户: ${currentTenantId})`);
+      return dataWithTenant;
+    }
+
+    // 其他租户返回空数组
+    console.log(`📊 租户 ${currentTenantId} 暂无数据`);
+    return [];
   }
 
   /**
@@ -368,17 +419,84 @@ class FamilyDataService {
   }
 
   /**
+   * 保存家谱数据
+   * @param {Array} familyData - 家谱数据
+   * @param {string} tenantId - 租户ID
+   * @returns {Promise<boolean>} - 是否保存成功
+   */
+  async saveFamilyData(familyData, tenantId = null) {
+    try {
+      const currentTenantId = tenantId || tenantService.getCurrentTenant().id;
+      console.log(`💾 保存家谱数据 (租户: ${currentTenantId}, 记录数: ${familyData.length})`);
+
+      // 添加租户信息到每条记录
+      const dataWithTenant = familyData.map(item => ({
+        ...item,
+        tenant_id: currentTenantId,
+        updated_at: new Date().toISOString(),
+      }));
+
+      // 如果有后端API，保存到服务器
+      const baseURL = process.env.REACT_APP_API_BASE_URL;
+      if (baseURL) {
+        try {
+          const response = await fetch(`${baseURL}/api/family-data`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...tenantService.getTenantHeaders(),
+            },
+            body: JSON.stringify({
+              data: dataWithTenant,
+              tenantId: currentTenantId,
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error(`服务器保存失败: ${response.status}`);
+          }
+
+          console.log('✅ 数据已保存到服务器');
+        } catch (error) {
+          console.warn('⚠️ 服务器保存失败，保存到本地:', error);
+        }
+      }
+
+      // 保存到本地存储
+      const localKey = `family_data_${currentTenantId}`;
+      localStorage.setItem(localKey, JSON.stringify(dataWithTenant));
+
+      // 更新缓存
+      const cacheKey = getTenantCacheKey(CACHE_KEYS.FAMILY_DATA, currentTenantId);
+      cacheManager.set(cacheKey, dataWithTenant, CACHE_EXPIRY.FAMILY_DATA);
+
+      // 清除统计缓存，强制重新计算
+      const statsCacheKey = getTenantCacheKey(CACHE_KEYS.FAMILY_STATISTICS, currentTenantId);
+      cacheManager.remove(statsCacheKey);
+
+      console.log('✅ 家谱数据保存完成');
+      return true;
+    } catch (error) {
+      console.error('❌ 保存家谱数据失败:', error);
+      throw error;
+    }
+  }
+
+  /**
    * 强制刷新所有数据
    */
   async forceRefreshAll() {
     console.log('🔄 开始强制刷新所有数据...');
 
     try {
-      // 直接清除缓存并重新加载
+      const currentTenantId = tenantService.getCurrentTenant().id;
+
+      // 清除当前租户的缓存
       Object.values(CACHE_KEYS).forEach(key => {
-        cacheManager.delete(key);
+        const tenantCacheKey = getTenantCacheKey(key, currentTenantId);
+        cacheManager.delete(tenantCacheKey);
       });
-      console.log('🗑️ 所有缓存已清除');
+      console.log(`🗑️ 租户 ${currentTenantId} 的缓存已清除`);
 
       // 重新加载数据
       const data = await this.getFamilyData(true);

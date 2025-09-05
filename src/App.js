@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Layout, Alert, Tabs } from 'antd';
+import { Layout, Alert, Tabs, message } from 'antd';
 import { TeamOutlined, SettingOutlined } from '@ant-design/icons';
 import { validateFamilyData } from './utils/familyTreeUtils';
 import dbJson from './data/familyData.js';
@@ -7,6 +7,10 @@ import FamilyTreePage from './components/Pages/FamilyTreePage';
 import SettingsPage from './components/Pages/SettingsPage';
 import CreatorPage from './components/Pages/CreatorPage';
 import DiscoverPage from './components/Pages/DiscoverPage';
+import TenantSelector from './components/TenantSelector';
+import familyDataService from './services/familyDataService';
+import tenantService from './services/tenantService';
+import './utils/testServices'; // 导入测试工具（开发环境自动运行）
 import './App.css';
 
 const { Content } = Layout;
@@ -24,6 +28,7 @@ function App() {
   const [activeTab, setActiveTab] = useState('tree');
   const [mobile, setMobile] = useState(isMobile());
   const [currentPage, setCurrentPage] = useState('tree'); // 新增页面状态
+  const [currentTenant, setCurrentTenant] = useState(null);
 
   // 处理菜单点击
   const handleMenuClick = (menuKey) => {
@@ -52,37 +57,55 @@ function App() {
 
     window.addEventListener('error', handleResizeObserverError);
 
-    // 模拟数据加载过程
-    const loadData = async () => {
+    // 加载家谱数据
+    const loadFamilyData = async (tenantId = null) => {
       try {
         setLoading(true);
-
-        // 使用本地数据（从dbjson.js导入）
-        // 如果需要从API获取数据，可以在这里添加fetch逻辑
-        const data = dbJson || [];
-
-        // 验证数据完整性
-        const validation = validateFamilyData(data);
-        setValidationResult(validation);
-
-        if (!validation.isValid) {
-          console.warn('数据验证发现问题:', validation.issues);
-        }
-
-        setFamilyData(data);
         setError(null);
+
+        // 使用familyDataService加载数据
+        const data = await familyDataService.getFamilyData(false, tenantId);
+
+        // 验证数据
+        const result = validateFamilyData(data);
+        setValidationResult(result);
+
+        if (result.isValid) {
+          setFamilyData(data);
+        } else {
+          console.warn('数据验证失败:', result.issues);
+          setFamilyData(data); // 即使验证失败也加载数据，但会显示警告
+        }
       } catch (err) {
-        console.error('加载家谱数据失败:', err);
-        setError(err.message || '加载数据时发生未知错误');
+        console.error('加载数据失败:', err);
+        setError(err.message);
+        message.error(`加载家谱数据失败: ${err.message}`);
       } finally {
         setLoading(false);
       }
     };
 
-    loadData();
+    // 初始化应用
+    const initializeApp = async () => {
+      // 获取当前租户
+      const tenant = tenantService.getCurrentTenant();
+      setCurrentTenant(tenant);
+
+      // 加载数据
+      await loadFamilyData(tenant.id);
+    };
+
+    initializeApp();
+
+    // 监听租户切换事件
+    const unsubscribe = tenantService.onTenantChange(async (tenant) => {
+      setCurrentTenant(tenant);
+      await loadFamilyData(tenant.id);
+    });
 
     return () => {
       window.removeEventListener('error', handleResizeObserverError);
+      unsubscribe();
     };
   }, []);
 

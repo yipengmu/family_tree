@@ -4,7 +4,10 @@
   "private": true,
   "dependencies": {
     "@ant-design/icons": "^5.2.6",
+    "ag-grid-community": "^34.1.2",
+    "ag-grid-react": "^34.1.2",
     "ajv": "^8.17.1",
+    "ali-oss": "^6.23.0",
     "antd": "^5.12.8",
     "dagre": "^0.8.5",
     "lodash": "^4.17.21",
@@ -18,13 +21,12 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "vercel-build": "npm run build"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
+    "vercel-build": "npm run build",
+    "lint": "eslint src --ext .js,.jsx",
+    "lint:fix": "eslint src --ext .js,.jsx --fix",
+    "format": "prettier --write \"src/**/*.{js,jsx,css,md,json}\"",
+    "format:check": "prettier --check \"src/**/*.{js,jsx,css,md,json}\"",
+    "code-quality": "npm run lint && npm run format:check"
   },
   "browserslist": {
     "production": [
@@ -40,6 +42,9 @@
   },
   "devDependencies": {
     "@types/dagre": "^0.7.52",
-    "@types/lodash": "^4.14.202"
+    "@types/lodash": "^4.14.202",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
+    "prettier": "^3.6.2"
   }
 }

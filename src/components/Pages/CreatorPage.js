@@ -1,5 +1,13 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
+import { message, Progress, Alert, Button, Space, Tooltip } from 'antd';
+import { InfoCircleOutlined, CheckCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import AppLayout from '../Layout/AppLayout';
+import TenantSelector from '../TenantSelector';
+import OSSTestPanel from '../OSSTestPanel';
+import ocrService from '../../services/ocrService';
+import uploadService from '../../services/uploadService';
+import tenantService from '../../services/tenantService';
+import familyDataService from '../../services/familyDataService';
 import './CreatorPage.css';
 
 // 轻量创作向导（不新增外部依赖）
@@ -21,67 +29,178 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
   const [rows, setRows] = useState([emptyRow()]);
   const [jsonOutput, setJsonOutput] = useState('');
   const [busy, setBusy] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [ocrProgress, setOcrProgress] = useState(0);
+  const [currentTenant, setCurrentTenant] = useState(null);
+  const [uploadConfig, setUploadConfig] = useState(null);
+  const [ocrConfig, setOcrConfig] = useState(null);
+  const [showOSSTest, setShowOSSTest] = useState(false);
+
+  // 初始化配置
+  useEffect(() => {
+    const tenant = tenantService.getCurrentTenant();
+    setCurrentTenant(tenant);
+
+    const uploadConf = uploadService.getUploadConfig();
+    console.log('✅ OSS客户端初始化 constructor11');
+
+    setUploadConfig(uploadConf);
+
+    const ocrConf = ocrService.validateConfig();
+    setOcrConfig(ocrConf);
+  }, []);
+
+  // 监听租户切换
+  useEffect(() => {
+    const unsubscribe = tenantService.onTenantChange((tenant) => {
+      setCurrentTenant(tenant);
+      // 租户切换时重置状态
+      setStep(1);
+      setFiles([]);
+      setPreviews([]);
+      setOssUrls([]);
+      setRows([emptyRow()]);
+      setJsonOutput('');
+      message.info(`已切换到 ${tenant.name}，请重新开始创作流程`);
+    });
+
+    return unsubscribe;
+  }, []);
 
   // 选择文件，限制最多 10 张
   const onPickFiles = (e) => {
-    const list = Array.from(e.target.files || []).slice(0, 10);
-    setFiles(list);
-    setPreviews(list.map((f) => URL.createObjectURL(f)));
-  };
+    const fileList = Array.from(e.target.files || []);
 
-  // 占位：上传至阿里云 OSS（需后端签名/网关）
-  const uploadToOSS = async (selectedFiles) => {
-    // TODO: 替换为你的网关地址，网关负责获取 STS、完成直传
-    const GATEWAY = process.env.REACT_APP_OSS_UPLOAD_ENDPOINT || '/api/oss/upload';
-    const urls = [];
-    for (const f of selectedFiles) {
-      // 占位：前端直接传 FormData 到你的后端网关
-      const fd = new FormData();
-      fd.append('file', f);
-      try {
-        const res = await fetch(GATEWAY, { method: 'POST', body: fd });
-        if (!res.ok) throw new Error('OSS 上传失败');
-        const data = await res.json(); // 期望 { url: 'https://oss-bucket/xxx.jpg' }
-        urls.push(data.url || '');
-      } catch (err) {
-        console.error(err);
-      }
+    // 验证文件
+    const validation = uploadService.validateFiles(fileList);
+    if (!validation.isValid) {
+      message.error(validation.errors.join('\n'));
+      return;
     }
-    return urls.filter(Boolean);
+
+    const list = fileList.slice(0, 10);
+    setFiles(list);
+
+    // 创建预览URL
+    const previewUrls = list.map((f) => uploadService.createPreviewUrl(f));
+    setPreviews(previewUrls);
   };
 
-  // 占位：调用火山引擎 OCR，输入图片 URL，返回解析后的结构化行
+  // 上传文件到OSS或服务器
+  const uploadToOSS = async (selectedFiles) => {
+    try {
+      setUploadProgress(0);
+      const tenantId = currentTenant?.id || 'default';
+
+      // 模拟上传进度
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return prev;
+          }
+          return prev + Math.random() * 20;
+        });
+      }, 200);
+
+      const urls = await uploadService.uploadFiles(selectedFiles, tenantId);
+
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+
+      return urls;
+    } catch (error) {
+      setUploadProgress(0);
+      throw error;
+    }
+  };
+
+  // 调用火山引擎 OCR 识别家谱信息
   const runVolcengineOCR = async (imageUrls) => {
-    // TODO: 用你自己的后端代理 REACT_APP_VOLC_OCR_ENDPOINT 调用火山 OCR
-    // 这里返回 mock 数据，方便前端先整合
-    const mock = [
-      { id: 1, name: '穆森', g_rank: 2, rank_index: 1, g_father_id: 1, official_position: '', summary: null, adoption: 'none', sex: 'MAN', g_mother_id: null, birth_date: null, id_card: null, face_img: null, photos: null, household_info: null, spouse: null, home_page: null, dealth: null, formal_name: null, location: null, childrens: null },
-    ];
-    // 根据图片数量复制几行示例
-    return imageUrls.length ? mock : [];
+    try {
+      setOcrProgress(0);
+      const tenantId = currentTenant?.id || 'default';
+
+      // 模拟OCR进度
+      const progressInterval = setInterval(() => {
+        setOcrProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return prev;
+          }
+          return prev + Math.random() * 15;
+        });
+      }, 300);
+
+      const result = await ocrService.recognizeFamilyTree(imageUrls, tenantId);
+
+      clearInterval(progressInterval);
+      setOcrProgress(100);
+
+      return result;
+    } catch (error) {
+      setOcrProgress(0);
+      throw error;
+    }
   };
 
   const handleUpload = async () => {
-    if (!files.length) return;
+    if (!files.length) {
+      message.warning('请先选择要上传的图片');
+      return;
+    }
+
     setBusy(true);
     try {
+      message.loading('正在上传图片...', 0);
       const urls = await uploadToOSS(files);
+      message.destroy();
+
       setOssUrls(urls);
-      if (urls.length) setStep(2);
+      if (urls.length) {
+        setStep(2);
+        message.success(`成功上传 ${urls.length} 张图片`);
+      } else {
+        message.error('图片上传失败，请重试');
+      }
+    } catch (error) {
+      message.destroy();
+      message.error(`上传失败: ${error.message}`);
+      console.error('上传失败:', error);
     } finally {
       setBusy(false);
+      setUploadProgress(0);
     }
   };
 
   const handleOCR = async () => {
-    if (!ossUrls.length) return;
+    if (!ossUrls.length) {
+      message.warning('请先上传图片');
+      return;
+    }
+
     setBusy(true);
     try {
+      message.loading('正在识别图片中的家谱信息...', 0);
       const parsed = await runVolcengineOCR(ossUrls);
-      setRows(parsed.length ? parsed : [emptyRow()]);
-      setStep(3);
+      message.destroy();
+
+      if (parsed.length > 0) {
+        setRows(parsed);
+        setStep(3);
+        message.success(`成功识别 ${parsed.length} 条家谱记录`);
+      } else {
+        setRows([emptyRow()]);
+        setStep(3);
+        message.warning('未识别到家谱信息，请手动添加或检查图片质量');
+      }
+    } catch (error) {
+      message.destroy();
+      message.error(`OCR识别失败: ${error.message}`);
+      console.error('OCR识别失败:', error);
     } finally {
       setBusy(false);
+      setOcrProgress(0);
     }
   };
 
@@ -141,8 +260,60 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = 'genealogy.json'; a.click();
+    const tenantName = currentTenant?.name || 'genealogy';
+    const fileName = `${tenantName}_${new Date().toISOString().split('T')[0]}.json`;
+    a.href = url;
+    a.download = fileName;
+    a.click();
     URL.revokeObjectURL(url);
+    message.success('JSON文件下载成功');
+  };
+
+  // 保存家谱数据到当前租户
+  const saveToCurrentTenant = async () => {
+    try {
+      if (!rows.length || rows.every(row => !row.name)) {
+        message.warning('请先添加家谱数据');
+        return;
+      }
+
+      setBusy(true);
+      message.loading('正在保存家谱数据...', 0);
+
+      // 过滤掉空行
+      const validRows = rows.filter(row => row.name && row.name.trim());
+
+      await familyDataService.saveFamilyData(validRows, currentTenant?.id);
+      message.destroy();
+      message.success(`成功保存 ${validRows.length} 条家谱记录到 ${currentTenant?.name}`);
+
+      // 生成JSON用于预览
+      convertToJSON();
+    } catch (error) {
+      message.destroy();
+      message.error(`保存失败: ${error.message}`);
+      console.error('保存家谱数据失败:', error);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // 一键生成家谱网站
+  const generateWebsite = async () => {
+    try {
+      if (!rows.length || rows.every(row => !row.name)) {
+        message.warning('请先添加家谱数据');
+        return;
+      }
+
+      // 先保存数据
+      await saveToCurrentTenant();
+
+      // TODO: 集成Vercel自动部署或其他部署服务
+      message.info('网站生成功能开发中，敬请期待！');
+    } catch (error) {
+      message.error(`生成网站失败: ${error.message}`);
+    }
   };
 
   const canNextFromStep1 = files.length > 0;
@@ -153,8 +324,61 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
     <AppLayout activeMenuItem={activeMenuItem} onMenuClick={onMenuClick}>
       <div className="creator-page">
         <div className="creator-header">
-          <h1>家谱不会丢，数据永流传</h1>
-          <p>2分钟将纸质家谱数字化</p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <div>
+              <h1>家谱不会丢，数据永流传</h1>
+              <p>2分钟将纸质家谱数字化</p>
+            </div>
+            <TenantSelector onTenantChange={setCurrentTenant} />
+          </div>
+
+          {/* 配置状态提示 */}
+          <div style={{ marginBottom: '16px' }}>
+            <Space>
+              {uploadConfig && (
+                <Tooltip title={`上传方式: ${uploadConfig.uploadMethod}, 最大文件: ${uploadConfig.maxFileSize / 1024 / 1024}MB`}>
+                  <Alert
+                    message={`上传: ${uploadConfig.uploadMethod}`}
+                    type={uploadConfig.isOSSEnabled ? 'success' : 'warning'}
+                    showIcon
+                    icon={uploadConfig.isOSSEnabled ? <CheckCircleOutlined /> : <ExclamationCircleOutlined />}
+                    style={{ cursor: 'pointer' }}
+                  />
+                </Tooltip>
+              )}
+
+              {ocrConfig && (
+                <Tooltip title={ocrConfig.isDevMode ? 'OCR: 开发模式 (使用模拟数据)' : 'OCR: 生产模式'}>
+                  <Alert
+                    message={`OCR: ${ocrConfig.isDevMode ? '开发模式' : '生产模式'}`}
+                    type={ocrConfig.isValid ? 'success' : 'info'}
+                    showIcon
+                    icon={ocrConfig.isValid ? <CheckCircleOutlined /> : <InfoCircleOutlined />}
+                    style={{ cursor: 'pointer' }}
+                  />
+                </Tooltip>
+              )}
+
+              {currentTenant && (
+                <Alert
+                  message={`当前家谱: ${currentTenant.name}`}
+                  type="info"
+                  showIcon
+                  icon={<InfoCircleOutlined />}
+                />
+              )}
+
+              {process.env.REACT_APP_DEBUG === 'true' && (
+                <Button
+                  type={showOSSTest ? 'primary' : 'default'}
+                  onClick={() => setShowOSSTest(!showOSSTest)}
+                  size="small"
+                >
+                  {showOSSTest ? '隐藏OSS测试' : '显示OSS测试'}
+                </Button>
+              )}
+            </Space>
+          </div>
         </div>
 
         <div className="creator-steps">
@@ -165,11 +389,45 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
 
         {/* Step 1 */}
         <section className="card card-padding">
-          <h3>Step 1 · 上传 10 张族谱图片</h3>
+          <h3>Step 1 · 上传族谱图片 (最多10张)</h3>
           <div className="uploader">
-            <input type="file" multiple accept="image/*" onChange={onPickFiles} />
-            <button className="btn primary" disabled={!canUpload} onClick={handleUpload}>{busy? '上传中...' : '上传到 OSS'}</button>
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              onChange={onPickFiles}
+              disabled={busy}
+            />
+            <Space>
+              <Button
+                type="primary"
+                disabled={!canUpload}
+                loading={busy && uploadProgress > 0}
+                onClick={handleUpload}
+              >
+                {busy && uploadProgress > 0 ? '上传中...' : '上传图片'}
+              </Button>
+              {uploadConfig && (
+                <Tooltip title={`支持格式: ${uploadConfig.allowedTypes.join(', ')}`}>
+                  <Button icon={<InfoCircleOutlined />} type="text" />
+                </Tooltip>
+              )}
+            </Space>
           </div>
+
+          {/* 上传进度 */}
+          {uploadProgress > 0 && uploadProgress < 100 && (
+            <div style={{ marginTop: '16px' }}>
+              <Progress
+                percent={Math.round(uploadProgress)}
+                status="active"
+                strokeColor={{
+                  '0%': '#108ee9',
+                  '100%': '#87d068',
+                }}
+              />
+            </div>
+          )}
           {files.length>0 && (
             <div className="preview-grid">
               {previews.map((src, i) => (
@@ -184,12 +442,35 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
 
         {/* Step 2 */}
         <section className="card card-padding">
-          <h3>Step 2 · 调用火山引擎 OCR 并在多维表中校对</h3>
+          <h3>Step 2 · OCR识别家谱信息并校对</h3>
           <div className="uploader">
-            <button className="btn" disabled={!canOCR} onClick={handleOCR}>{busy? '识别中...' : '识别图片'}</button>
-            <button className="btn" onClick={addRow}>新增一行</button>
-            <button className="btn" onClick={exportExcels}>导出两份 Excel（CSV 占位）</button>
+            <Space>
+              <Button
+                type="primary"
+                disabled={!canOCR}
+                loading={busy && ocrProgress > 0}
+                onClick={handleOCR}
+              >
+                {busy && ocrProgress > 0 ? 'OCR识别中...' : '开始识别'}
+              </Button>
+              <Button onClick={addRow}>新增一行</Button>
+              <Button onClick={exportExcels}>导出Excel</Button>
+            </Space>
           </div>
+
+          {/* OCR进度 */}
+          {ocrProgress > 0 && ocrProgress < 100 && (
+            <div style={{ marginTop: '16px' }}>
+              <Progress
+                percent={Math.round(ocrProgress)}
+                status="active"
+                strokeColor={{
+                  '0%': '#722ed1',
+                  '100%': '#52c41a',
+                }}
+              />
+            </div>
+          )}
 
           <div className="grid">
             <table>
@@ -226,7 +507,20 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
           <div className="uploader">
             <button className="btn primary" onClick={convertToJSON}>生成 JSON</button>
             <button className="btn" onClick={downloadJSON}>下载 JSON</button>
-            <button className="btn" onClick={() => alert('发布流程占位：可接 Vercel 自动部署/数据推送')}>一键生成家谱网站</button>
+            <Button
+              type="primary"
+              loading={busy}
+              onClick={saveToCurrentTenant}
+              style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
+            >
+              保存到当前家谱
+            </Button>
+            <Button
+              onClick={generateWebsite}
+              style={{ backgroundColor: '#722ed1', borderColor: '#722ed1', color: 'white' }}
+            >
+              一键生成网站
+            </Button>
           </div>
           <textarea className="json-output" rows={12} readOnly value={jsonOutput} placeholder="点击“生成 JSON”查看输出" />
         </section>
@@ -241,6 +535,11 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
             <li>JSON 字段含 dealth：null 表示去世，只有 'alive' 表示在世（遵循你的规则）。</li>
           </ul>
         </div>
+
+        {/* OSS测试面板 */}
+        {showOSSTest && (
+          <OSSTestPanel />
+        )}
       </div>
     </AppLayout>
   );
