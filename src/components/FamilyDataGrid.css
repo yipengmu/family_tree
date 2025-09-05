@@ -1,0 +1,260 @@
+/* AG Grid 自定义样式 */
+
+.family-data-grid {
+  width: 100%;
+  margin: 16px 0;
+}
+
+.family-data-grid .ag-theme-alpine {
+  --ag-header-height: 45px;
+  --ag-row-height: 40px;
+  --ag-font-size: 13px;
+  --ag-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  
+  /* 颜色主题 */
+  --ag-background-color: #ffffff;
+  --ag-header-background-color: #f5f5f5;
+  --ag-odd-row-background-color: #fafafa;
+  --ag-row-hover-color: #e6f7ff;
+  --ag-selected-row-background-color: #bae7ff;
+  
+  /* 边框 */
+  --ag-border-color: #d9d9d9;
+  --ag-row-border-color: #f0f0f0;
+  
+  /* 文字颜色 */
+  --ag-foreground-color: #262626;
+  --ag-header-foreground-color: #262626;
+  --ag-disabled-foreground-color: #bfbfbf;
+}
+
+/* 表头样式 */
+.family-data-grid .ag-header {
+  border-bottom: 2px solid #1890ff;
+}
+
+.family-data-grid .ag-header-cell {
+  font-weight: 600;
+  color: #262626;
+}
+
+.family-data-grid .ag-header-cell-label {
+  justify-content: center;
+}
+
+/* 单元格样式 */
+.family-data-grid .ag-cell {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-right: 1px solid #f0f0f0;
+}
+
+.family-data-grid .ag-cell:focus {
+  border: 2px solid #1890ff;
+  outline: none;
+}
+
+/* 可编辑单元格 */
+.family-data-grid .ag-cell-editable {
+  background-color: #fff7e6;
+}
+
+.family-data-grid .ag-cell-editable:hover {
+  background-color: #fff1b8;
+}
+
+/* 输入框样式 */
+.family-data-grid .ag-cell input,
+.family-data-grid .ag-cell .ant-select,
+.family-data-grid .ag-cell .ant-date-picker {
+  border: none;
+  box-shadow: none;
+  background: transparent;
+  width: 100%;
+  height: 100%;
+}
+
+.family-data-grid .ag-cell input:focus,
+.family-data-grid .ag-cell .ant-select:focus,
+.family-data-grid .ag-cell .ant-date-picker:focus {
+  border: none;
+  box-shadow: none;
+}
+
+/* 选择器样式 */
+.family-data-grid .ag-cell .ant-select-selector {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+}
+
+.family-data-grid .ag-cell .ant-select-selection-item {
+  padding: 0 !important;
+}
+
+/* 日期选择器样式 */
+.family-data-grid .ag-cell .ant-picker {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+}
+
+.family-data-grid .ag-cell .ant-picker-input > input {
+  padding: 0 !important;
+}
+
+/* 操作按钮样式 */
+.family-data-grid .ag-cell .ant-btn {
+  border: none;
+  box-shadow: none;
+  padding: 0 4px;
+  height: auto;
+  line-height: 1.2;
+}
+
+.family-data-grid .ag-cell .ant-btn:hover {
+  background-color: #ff4d4f;
+  color: white;
+}
+
+/* 行选择样式 */
+.family-data-grid .ag-row-selected {
+  background-color: #e6f7ff !important;
+}
+
+.family-data-grid .ag-row-selected .ag-cell {
+  background-color: transparent;
+}
+
+/* 排序图标 */
+.family-data-grid .ag-header-cell-menu-button,
+.family-data-grid .ag-header-cell-filter-button {
+  opacity: 0.6;
+}
+
+.family-data-grid .ag-header-cell:hover .ag-header-cell-menu-button,
+.family-data-grid .ag-header-cell:hover .ag-header-cell-filter-button {
+  opacity: 1;
+}
+
+/* 筛选器样式 */
+.family-data-grid .ag-filter {
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+}
+
+/* 工具栏样式 */
+.family-data-grid-toolbar {
+  margin-bottom: 16px;
+  padding: 12px;
+  background: #fafafa;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+}
+
+.family-data-grid-toolbar .ant-btn {
+  margin-right: 8px;
+}
+
+.family-data-grid-toolbar .ant-btn:last-child {
+  margin-right: 0;
+}
+
+/* 加载状态 */
+.family-data-grid .ag-overlay-loading-wrapper {
+  background-color: rgba(255, 255, 255, 0.8);
+}
+
+.family-data-grid .ag-overlay-loading-center {
+  background-color: white;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  padding: 20px;
+}
+
+/* 空数据状态 */
+.family-data-grid .ag-overlay-no-rows-wrapper {
+  background-color: rgba(255, 255, 255, 0.8);
+}
+
+.family-data-grid .ag-overlay-no-rows-center {
+  background-color: white;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  padding: 20px;
+  color: #8c8c8c;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .family-data-grid .ag-theme-alpine {
+    --ag-header-height: 40px;
+    --ag-row-height: 36px;
+    --ag-font-size: 12px;
+  }
+  
+  .family-data-grid-toolbar {
+    padding: 8px;
+  }
+  
+  .family-data-grid-toolbar .ant-btn {
+    margin-bottom: 8px;
+    margin-right: 4px;
+  }
+}
+
+/* 固定列样式 */
+.family-data-grid .ag-pinned-right-cols-container {
+  border-left: 2px solid #1890ff;
+}
+
+/* 编辑器弹窗样式 */
+.family-data-grid .ag-large-text-input {
+  height: 100px;
+  resize: vertical;
+}
+
+/* 自定义滚动条 */
+.family-data-grid .ag-body-horizontal-scroll::-webkit-scrollbar,
+.family-data-grid .ag-body-vertical-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.family-data-grid .ag-body-horizontal-scroll::-webkit-scrollbar-track,
+.family-data-grid .ag-body-vertical-scroll::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.family-data-grid .ag-body-horizontal-scroll::-webkit-scrollbar-thumb,
+.family-data-grid .ag-body-vertical-scroll::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.family-data-grid .ag-body-horizontal-scroll::-webkit-scrollbar-thumb:hover,
+.family-data-grid .ag-body-vertical-scroll::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* 数据验证错误样式 */
+.family-data-grid .ag-cell.cell-error {
+  background-color: #fff2f0 !important;
+  border: 1px solid #ff4d4f !important;
+}
+
+.family-data-grid .ag-cell.cell-warning {
+  background-color: #fffbe6 !important;
+  border: 1px solid #faad14 !important;
+}
+
+/* 必填字段样式 */
+.family-data-grid .ag-header-cell.required::after {
+  content: ' *';
+  color: #ff4d4f;
+  font-weight: bold;
+}

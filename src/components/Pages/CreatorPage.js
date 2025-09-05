@@ -4,6 +4,8 @@ import { InfoCircleOutlined, CheckCircleOutlined, ExclamationCircleOutlined } fr
 import AppLayout from '../Layout/AppLayout';
 import TenantSelector from '../TenantSelector';
 import OSSTestPanel from '../OSSTestPanel';
+import OSSConfigTester from '../OSSConfigTester';
+import FamilyDataGrid from '../FamilyDataGrid';
 import ocrService from '../../services/ocrService';
 import uploadService from '../../services/uploadService';
 import tenantService from '../../services/tenantService';
@@ -26,7 +28,32 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
   const [files, setFiles] = useState([]); // File[]
   const [previews, setPreviews] = useState([]); // local preview urls
   const [ossUrls, setOssUrls] = useState([]); // uploaded urls
-  const [rows, setRows] = useState([emptyRow()]);
+  const [rows, setRows] = useState([
+    {
+      id: 1,
+      name: '张三',
+      g_rank: 1,
+      rank_index: 1,
+      g_father_id: 0,
+      official_position: '知县',
+      summary: '为官清廉，深受百姓爱戴',
+      adoption: 'none',
+      sex: 'MAN',
+      g_mother_id: 0,
+      birth_date: '1850-01-01',
+      id_card: '',
+      face_img: '',
+      photos: '',
+      household_info: '',
+      spouse: '李氏',
+      home_page: '',
+      dealth: null,
+      formal_name: '张文三',
+      location: '北京',
+      childrens: '张四、张五'
+    },
+    emptyRow()
+  ]);
   const [jsonOutput, setJsonOutput] = useState('');
   const [busy, setBusy] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -35,6 +62,7 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
   const [uploadConfig, setUploadConfig] = useState(null);
   const [ocrConfig, setOcrConfig] = useState(null);
   const [showOSSTest, setShowOSSTest] = useState(false);
+  const [showOSSConfig, setShowOSSConfig] = useState(false);
 
   // 初始化配置
   useEffect(() => {
@@ -204,16 +232,10 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
     }
   };
 
-  // 表格编辑
-  const updateCell = (ri, key, val) => {
-    setRows((prev) => {
-      const next = prev.slice();
-      next[ri] = { ...next[ri], [key]: val };
-      return next;
-    });
+  // 数据变化处理
+  const handleDataChange = (newData) => {
+    setRows(newData);
   };
-  const addRow = () => setRows((prev) => [...prev, emptyRow()]);
-  const removeRow = (ri) => setRows((prev) => prev.filter((_, i) => i !== ri));
 
   // 两份“Excel”占位：先提供 CSV 导出（后续可引入 SheetJS/xlsx）
   const downloadCSV = (cols, data, filename) => {
@@ -369,13 +391,22 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
               )}
 
               {process.env.REACT_APP_DEBUG === 'true' && (
-                <Button
-                  type={showOSSTest ? 'primary' : 'default'}
-                  onClick={() => setShowOSSTest(!showOSSTest)}
-                  size="small"
-                >
-                  {showOSSTest ? '隐藏OSS测试' : '显示OSS测试'}
-                </Button>
+                <Space>
+                  <Button
+                    type={showOSSTest ? 'primary' : 'default'}
+                    onClick={() => setShowOSSTest(!showOSSTest)}
+                    size="small"
+                  >
+                    {showOSSTest ? '隐藏OSS测试' : 'OSS测试'}
+                  </Button>
+                  <Button
+                    type={showOSSConfig ? 'primary' : 'default'}
+                    onClick={() => setShowOSSConfig(!showOSSConfig)}
+                    size="small"
+                  >
+                    {showOSSConfig ? '隐藏OSS诊断' : 'OSS诊断'}
+                  </Button>
+                </Space>
               )}
             </Space>
           </div>
@@ -453,8 +484,6 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
               >
                 {busy && ocrProgress > 0 ? 'OCR识别中...' : '开始识别'}
               </Button>
-              <Button onClick={addRow}>新增一行</Button>
-              <Button onClick={exportExcels}>导出Excel</Button>
             </Space>
           </div>
 
@@ -472,33 +501,14 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
             </div>
           )}
 
-          <div className="grid">
-            <table>
-              <thead>
-                <tr>
-                  {DEFAULT_COLUMNS.map((c) => <th key={c}>{c}</th>)}
-                  <th>操作</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((r, ri) => (
-                  <tr key={ri}>
-                    {DEFAULT_COLUMNS.map((c) => (
-                      <td key={c}>
-                        <input
-                          value={r[c] ?? ''}
-                          onChange={(e) => updateCell(ri, c, e.target.value)}
-                        />
-                      </td>
-                    ))}
-                    <td>
-                      <button className="link" onClick={() => removeRow(ri)}>删除</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          {/* AG Grid 数据表格 */}
+          <FamilyDataGrid
+            data={rows}
+            onDataChange={handleDataChange}
+            onExport={exportExcels}
+            onSave={saveToCurrentTenant}
+            loading={busy}
+          />
         </section>
 
         {/* Step 3 */}
@@ -530,7 +540,7 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
           <ul>
             <li>上传到 OSS：推荐通过后端网关签名后直传，前端仅提交 FormData。</li>
             <li>火山引擎 OCR：出于安全与密钥保护，建议后端代理调用。</li>
-            <li>多维表：当前为轻量输入表。若需 Airtable 体验，可授权后集成 react-data-grid 或 Handsontable。</li>
+            <li>数据编辑：使用AG Grid专业表格组件，支持排序、筛选、多选等高级功能。</li>
             <li>“两份 Excel”：当前以 CSV 下载占位，后续可接入 SheetJS(xlsx) 输出 .xlsx。</li>
             <li>JSON 字段含 dealth：null 表示去世，只有 'alive' 表示在世（遵循你的规则）。</li>
           </ul>
@@ -539,6 +549,11 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
         {/* OSS测试面板 */}
         {showOSSTest && (
           <OSSTestPanel />
+        )}
+
+        {/* OSS配置诊断面板 */}
+        {showOSSConfig && (
+          <OSSConfigTester />
         )}
       </div>
     </AppLayout>

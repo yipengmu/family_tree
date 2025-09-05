@@ -3,6 +3,7 @@
  */
 
 import OSS from 'ali-oss';
+import OSSConfigValidator from '../utils/ossConfigValidator';
 
 class UploadService {
   constructor() {
@@ -31,10 +32,35 @@ class UploadService {
   /**
    * 初始化OSS客户端
    */
-  initOSSClient() {
+  async initOSSClient() {
     try {
       if (this.isOSSConfigured()) {
-        console.log('初始化OSS客户端...');
+        console.log('🔧 初始化OSS客户端...');
+
+        // 验证配置
+        const validation = OSSConfigValidator.validateConfig(this.ossConfig);
+
+        if (!validation.isValid) {
+          console.error('❌ OSS配置验证失败:');
+          validation.errors.forEach(error => console.error(`  - ${error}`));
+          this.ossClient = null;
+          return;
+        }
+
+        if (validation.warnings.length > 0) {
+          console.warn('⚠️ OSS配置警告:');
+          validation.warnings.forEach(warning => console.warn(`  - ${warning}`));
+        }
+
+        // 打印配置信息用于调试（隐藏敏感信息）
+        console.log('OSS配置信息:', {
+          region: this.ossConfig.region,
+          bucket: this.ossConfig.bucket,
+          endpoint: this.ossConfig.endpoint,
+          accessKeyId: this.ossConfig.accessKeyId ? `${this.ossConfig.accessKeyId.substring(0, 8)}...` : 'undefined',
+          hasSecret: !!this.ossConfig.accessKeySecret
+        });
+
         const ossConfig = {
           region: this.ossConfig.region,
           bucket: this.ossConfig.bucket,
@@ -42,15 +68,43 @@ class UploadService {
           accessKeySecret: this.ossConfig.accessKeySecret,
           endpoint: this.ossConfig.endpoint,
           secure: this.ossConfig.secure,
+          timeout: 60000, // 60秒超时
         };
+
         this.ossClient = new OSS(ossConfig);
-        console.log('✅ OSS客户端初始化成功', this.ossClient);
+        console.log('✅ OSS客户端初始化成功');
+
+        // 测试连接
+        await this.testOSSConnection();
       } else {
         console.log('⚠️ OSS配置不完整，将使用模拟上传');
+        console.log('缺失的配置项:', {
+          region: !this.ossConfig.region,
+          bucket: !this.ossConfig.bucket,
+          accessKeyId: !this.ossConfig.accessKeyId,
+          accessKeySecret: !this.ossConfig.accessKeySecret,
+        });
       }
     } catch (error) {
       console.error('❌ OSS客户端初始化失败:', error);
       this.ossClient = null;
+    }
+  }
+
+  /**
+   * 测试OSS连接
+   */
+  async testOSSConnection() {
+    try {
+      if (this.ossClient) {
+        console.log('🔍 测试OSS连接...');
+        // 尝试列出bucket信息来测试连接
+        const result = await this.ossClient.getBucketInfo();
+        console.log('✅ OSS连接测试成功:', result.bucket);
+      }
+    } catch (error) {
+      console.warn('⚠️ OSS连接测试失败:', error.message);
+      // 连接测试失败不影响后续使用，只是警告
     }
   }
 
