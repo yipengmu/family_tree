@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Button, Space, Alert, Descriptions, Tag, message } from 'antd';
+import { Card, Button, Space, Alert, Descriptions, Tag, message, Tabs } from 'antd';
 import { CheckCircleOutlined, ExclamationCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import uploadService from '../services/uploadService';
+import OSSConnectionDiagnostic from '../Debug/OSSConnectionDiagnostic';
 
 const OSSConfigTester = () => {
   const [testResults, setTestResults] = useState(null);
@@ -163,8 +164,14 @@ const OSSConfigTester = () => {
   const config = getOSSConfig();
 
   return (
-    <Card title="OSS 配置诊断" style={{ margin: '20px', maxWidth: '800px' }}>
-      <Space direction="vertical" style={{ width: '100%' }} size="large">
+    <div style={{ margin: '20px', maxWidth: '1200px' }}>
+      <Tabs defaultActiveKey="1" items={[
+        {
+          key: '1',
+          label: '基础测试',
+          children: (
+            <Card title="OSS 配置诊断">
+              <Space direction="vertical" style={{ width: '100%' }} size="large">
         
         {/* 配置信息 */}
         <div>
@@ -298,8 +305,17 @@ const OSSConfigTester = () => {
             }
           />
         )}
-      </Space>
-    </Card>
+              </Space>
+            </Card>
+          )
+        },
+        {
+          key: '2',
+          label: '高级诊断',
+          children: <OSSConnectionDiagnostic />
+        }
+      ]} />
+    </div>
   );
 };
 

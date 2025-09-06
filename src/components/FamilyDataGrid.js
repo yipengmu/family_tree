@@ -381,7 +381,21 @@ const FamilyDataGrid = ({
 
   // 同步外部数据变化
   React.useEffect(() => {
+    console.log('📊 FamilyDataGrid 接收到新数据:', data);
+    console.log('📊 数据长度:', data?.length || 0);
+    if (data && data.length > 0) {
+      console.log('📊 第一条数据示例:', data[0]);
+      console.log('📊 所有数据字段检查:', Object.keys(data[0]));
+    }
     setRowData(data);
+
+    // 强制刷新表格
+    if (gridRef.current && gridRef.current.api) {
+      setTimeout(() => {
+        gridRef.current.api.setRowData(data);
+        console.log('🔄 强制刷新AG Grid数据');
+      }, 100);
+    }
   }, [data]);
 
   return (

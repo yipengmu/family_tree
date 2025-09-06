@@ -68,7 +68,20 @@ class UploadService {
           accessKeySecret: this.ossConfig.accessKeySecret,
           endpoint: this.ossConfig.endpoint,
           secure: this.ossConfig.secure,
-          timeout: 60000, // 60秒超时
+          timeout: 120000, // 增加到120秒超时
+          // 添加连接池配置
+          agent: {
+            keepAlive: true,
+            keepAliveMsecs: 30000,
+            maxSockets: 10,
+            maxFreeSockets: 10,
+            timeout: 120000,
+            freeSocketTimeout: 30000,
+          },
+          // 添加重试配置
+          retryDelayOptions: {
+            base: 300, // 基础延迟300ms
+          },
         };
 
         this.ossClient = new OSS(ossConfig);
@@ -98,14 +111,87 @@ class UploadService {
     try {
       if (this.ossClient) {
         console.log('🔍 测试OSS连接...');
+
+        // 设置较短的超时时间进行快速测试
+        const testStartTime = Date.now();
+
         // 尝试列出bucket信息来测试连接
-        const result = await this.ossClient.getBucketInfo();
-        console.log('✅ OSS连接测试成功:', result.bucket);
+        const result = await Promise.race([
+          this.ossClient.getBucketInfo(),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('连接测试超时')), 10000)
+          )
+        ]);
+
+        const testDuration = Date.now() - testStartTime;
+        console.log(`✅ OSS连接测试成功 (耗时: ${testDuration}ms):`, result.bucket);
+
+        // 如果连接时间过长，给出警告
+        if (testDuration > 5000) {
+          console.warn('⚠️ OSS连接较慢，上传可能会受到影响');
+        }
+
+        return { success: true, duration: testDuration };
       }
     } catch (error) {
       console.warn('⚠️ OSS连接测试失败:', error.message);
-      // 连接测试失败不影响后续使用，只是警告
+
+      // 提供连接失败的具体建议
+      if (error.message.includes('timeout') || error.message.includes('连接测试超时')) {
+        console.warn('💡 建议: 检查网络连接或尝试更换网络环境');
+      }
+
+      return { success: false, error: error.message };
     }
+  }
+
+  /**
+   * 检查网络连接和OSS可达性
+   * @returns {Promise<Object>} - 连接检查结果
+   */
+  async checkNetworkAndOSS() {
+    const results = {
+      networkOk: false,
+      ossReachable: false,
+      suggestions: []
+    };
+
+    try {
+      // 检查基本网络连接
+      console.log('🌐 检查网络连接...');
+      const networkTest = await Promise.race([
+        fetch('https://www.aliyun.com', { method: 'HEAD', mode: 'no-cors' }),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('网络测试超时')), 5000)
+        )
+      ]);
+      results.networkOk = true;
+      console.log('✅ 网络连接正常');
+    } catch (error) {
+      console.warn('❌ 网络连接异常:', error.message);
+      results.suggestions.push('检查网络连接是否正常');
+    }
+
+    try {
+      // 检查OSS endpoint可达性
+      console.log('🔍 检查OSS服务可达性...');
+      const ossEndpoint = this.ossConfig.endpoint || `https://${this.ossConfig.region}.aliyuncs.com`;
+
+      const ossTest = await Promise.race([
+        fetch(ossEndpoint, { method: 'HEAD', mode: 'no-cors' }),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('OSS测试超时')), 8000)
+        )
+      ]);
+      results.ossReachable = true;
+      console.log('✅ OSS服务可达');
+    } catch (error) {
+      console.warn('❌ OSS服务不可达:', error.message);
+      results.suggestions.push('OSS服务可能暂时不可用，建议稍后重试');
+      results.suggestions.push('检查是否有防火墙或代理阻止访问');
+    }
+
+    return results;
   }
 
   /**
@@ -127,6 +213,21 @@ class UploadService {
 
       // 如果配置了OSS，优先使用OSS上传
       if (this.isOSSConfigured()) {
+        // 在上传前进行快速连接检查（仅在首次上传或上次检查失败时）
+        if (!this._lastConnectivityCheck ||
+            Date.now() - this._lastConnectivityCheck > 300000) { // 5分钟缓存
+          console.log('🔍 执行连接性检查...');
+          const connectivityResult = await this.checkNetworkAndOSS();
+          this._lastConnectivityCheck = Date.now();
+
+          if (!connectivityResult.networkOk || !connectivityResult.ossReachable) {
+            console.warn('⚠️ 连接性检查发现问题，但仍将尝试上传');
+            if (connectivityResult.suggestions.length > 0) {
+              console.warn('💡 建议:', connectivityResult.suggestions.join('; '));
+            }
+          }
+        }
+
         return await this.uploadToOSS(files, tenantId, options);
       } else {
         // 否则上传到后端服务器
@@ -158,8 +259,8 @@ class UploadService {
 
         console.log(`📤 开始上传文件: ${file.name} -> ${objectKey}`);
 
-        // 使用OSS SDK上传文件
-        const result = await this.ossClient.put(objectKey, file, {
+        // 使用OSS SDK上传文件，带重试机制
+        const result = await this.uploadWithRetry(objectKey, file, {
           headers: {
             'Content-Type': file.type,
             'Cache-Control': 'public, max-age=31536000', // 缓存1年
@@ -174,7 +275,7 @@ class UploadService {
               options.onProgress(index, percent, file.name);
             }
           },
-        });
+        }, index, file.name);
 
         // 获取文件的公网访问URL
         const fileUrl = this.ossClient.generateObjectUrl(objectKey);
@@ -186,12 +287,51 @@ class UploadService {
       } catch (error) {
         console.error(`❌ 文件上传失败 (${file.name}):`, error);
 
-        // 如果是OSS错误，提供更详细的错误信息
+        // 提供更详细的错误信息和解决建议
+        let errorMessage = `OSS上传失败`;
+        let suggestions = [];
+
         if (error.code) {
-          throw new Error(`OSS上传失败 [${error.code}]: ${error.message}`);
+          errorMessage += ` [${error.code}]: ${error.message}`;
+
+          // 根据错误类型提供具体建议
+          switch (error.code) {
+            case 'ConnectionTimeoutError':
+              suggestions.push('网络连接超时，请检查网络连接');
+              suggestions.push('可能是文件过大或网络不稳定');
+              suggestions.push('建议稍后重试或使用更稳定的网络');
+              break;
+            case 'RequestTimeoutError':
+              suggestions.push('请求超时，可能是服务器响应慢');
+              suggestions.push('建议稍后重试');
+              break;
+            case 'AccessDenied':
+              suggestions.push('访问被拒绝，请检查OSS权限配置');
+              suggestions.push('确认AccessKey有上传权限');
+              break;
+            case 'NoSuchBucket':
+              suggestions.push('存储桶不存在，请检查bucket配置');
+              break;
+            case 'InvalidAccessKeyId':
+              suggestions.push('AccessKey ID无效，请检查配置');
+              break;
+            default:
+              suggestions.push('请检查OSS配置和网络连接');
+          }
+        } else if (error.message) {
+          errorMessage += `: ${error.message}`;
+
+          if (error.message.includes('timeout')) {
+            suggestions.push('连接超时，请检查网络连接');
+            suggestions.push('可能需要使用更稳定的网络环境');
+          }
         }
 
-        throw error;
+        if (suggestions.length > 0) {
+          errorMessage += '\n建议解决方案:\n' + suggestions.map(s => `• ${s}`).join('\n');
+        }
+
+        throw new Error(errorMessage);
       }
     });
 
@@ -203,6 +343,74 @@ class UploadService {
       console.error('❌ 批量上传失败:', error);
       throw error;
     }
+  }
+
+  /**
+   * 带重试机制的OSS上传
+   * @param {string} objectKey - OSS对象键
+   * @param {File} file - 文件对象
+   * @param {Object} options - 上传选项
+   * @param {number} fileIndex - 文件索引
+   * @param {string} fileName - 文件名
+   * @param {number} maxRetries - 最大重试次数
+   * @returns {Promise<Object>} - 上传结果
+   */
+  async uploadWithRetry(objectKey, file, options, fileIndex, fileName, maxRetries = 3) {
+    let lastError = null;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`📤 尝试上传 ${fileName} (第 ${attempt}/${maxRetries} 次)`);
+
+        // 如果不是第一次尝试，添加延迟
+        if (attempt > 1) {
+          const delay = Math.min(1000 * Math.pow(2, attempt - 1), 10000); // 指数退避，最大10秒
+          console.log(`⏳ 等待 ${delay}ms 后重试...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+
+        const result = await this.ossClient.put(objectKey, file, options);
+
+        if (attempt > 1) {
+          console.log(`✅ ${fileName} 重试上传成功 (第 ${attempt} 次尝试)`);
+        }
+
+        return result;
+      } catch (error) {
+        lastError = error;
+        console.warn(`❌ ${fileName} 上传失败 (第 ${attempt}/${maxRetries} 次):`, error.message);
+
+        // 如果是最后一次尝试，或者是不可重试的错误，直接抛出
+        if (attempt === maxRetries || this.isNonRetryableError(error)) {
+          break;
+        }
+      }
+    }
+
+    // 所有重试都失败了，抛出最后一个错误
+    throw lastError;
+  }
+
+  /**
+   * 判断是否为不可重试的错误
+   * @param {Error} error - 错误对象
+   * @returns {boolean} - 是否为不可重试的错误
+   */
+  isNonRetryableError(error) {
+    // 权限错误、文件格式错误等不应该重试
+    const nonRetryableCodes = [
+      'AccessDenied',
+      'InvalidAccessKeyId',
+      'SignatureDoesNotMatch',
+      'NoSuchBucket',
+      'InvalidArgument',
+      'EntityTooLarge',
+      'InvalidObjectName'
+    ];
+
+    return nonRetryableCodes.includes(error.code) ||
+           error.status === 403 ||
+           error.status === 400;
   }
 
   /**

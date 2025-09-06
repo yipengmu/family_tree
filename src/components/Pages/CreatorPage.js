@@ -5,6 +5,8 @@ import AppLayout from '../Layout/AppLayout';
 import TenantSelector from '../TenantSelector';
 import OSSTestPanel from '../OSSTestPanel';
 import FamilyDataGrid from '../FamilyDataGrid';
+import OCRDebugPanel from '../Debug/OCRDebugPanel';
+import DataStateMonitor from '../Debug/DataStateMonitor';
 import ocrService from '../../services/ocrService';
 import uploadService from '../../services/uploadService';
 import tenantService from '../../services/tenantService';
@@ -61,6 +63,7 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
   const [uploadConfig, setUploadConfig] = useState(null);
   const [ocrConfig, setOcrConfig] = useState(null);
   const [showOSSTest, setShowOSSTest] = useState(false);
+  const [showOCRDebug, setShowOCRDebug] = useState(process.env.REACT_APP_DEBUG === 'true');
 
   // 初始化配置
   useEffect(() => {
@@ -205,25 +208,71 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
       return;
     }
 
+    console.log('🚀 开始OCR识别流程...');
+    console.log('📸 待识别图片URLs:', ossUrls);
+    console.log('🏢 当前租户:', currentTenant);
+
     setBusy(true);
     try {
       message.loading('正在识别图片中的家谱信息...', 0);
       const parsed = await runVolcengineOCR(ossUrls);
       message.destroy();
 
-      if (parsed.length > 0) {
-        setRows(parsed);
+      console.log('🎯 OCR识别结果:', parsed);
+      console.log('📊 识别到的记录数量:', parsed?.length || 0);
+
+      if (parsed && parsed.length > 0) {
+        console.log('✅ 设置识别数据到表格...');
+
+        // 确保数据格式正确
+        const validatedData = parsed.map((item, index) => ({
+          ...item,
+          // 确保必需字段存在
+          id: item.id || `temp_${Date.now()}_${index}`,
+          name: item.name || `未知姓名${index + 1}`,
+          g_rank: item.g_rank || 1,
+          rank_index: item.rank_index || (index + 1),
+          sex: item.sex || 'MAN',
+          adoption: item.adoption || 'none',
+          g_father_id: item.g_father_id || 0,
+          official_position: item.official_position || '',
+          summary: item.summary || null,
+          g_mother_id: item.g_mother_id || null,
+          birth_date: item.birth_date || null,
+          id_card: item.id_card || null,
+          face_img: item.face_img || null,
+          photos: item.photos || null,
+          household_info: item.household_info || null,
+          spouse: item.spouse || null,
+          home_page: item.home_page || null,
+          dealth: item.dealth || null,
+          formal_name: item.formal_name || null,
+          location: item.location || null,
+          childrens: item.childrens || null
+        }));
+
+        console.log('🔄 验证后的数据:', validatedData);
+
+        setRows(validatedData);
         setStep(3);
-        message.success(`成功识别 ${parsed.length} 条家谱记录`);
+        message.success(`成功识别 ${validatedData.length} 条家谱记录`);
+
+        // 额外验证：确保状态更新
+        setTimeout(() => {
+          console.log('🔍 验证：当前rows状态应该是:', validatedData);
+        }, 100);
       } else {
-        setRows([emptyRow()]);
+        console.log('⚠️ 未识别到数据，使用空行');
+        const emptyRowData = [emptyRow()];
+        setRows(emptyRowData);
         setStep(3);
         message.warning('未识别到家谱信息，请手动添加或检查图片质量');
       }
     } catch (error) {
       message.destroy();
       message.error(`OCR识别失败: ${error.message}`);
-      console.error('OCR识别失败:', error);
+      console.error('❌ OCR识别失败:', error);
+      console.error('❌ 错误堆栈:', error.stack);
     } finally {
       setBusy(false);
       setOcrProgress(0);
@@ -232,7 +281,99 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
 
   // 数据变化处理
   const handleDataChange = (newData) => {
+    console.log('📝 数据变化:', newData);
     setRows(newData);
+  };
+
+  // OCR调试数据生成回调
+  const handleDebugDataGenerated = (debugData) => {
+    console.log('🔧 调试数据生成:', debugData);
+    if (debugData && debugData.length > 0) {
+      setRows(debugData);
+      setStep(3);
+      message.success(`调试生成 ${debugData.length} 条家谱记录`);
+    }
+  };
+
+  // 快速测试：直接生成测试数据
+  const generateTestData = () => {
+    console.log('🧪 生成测试数据...');
+    const testData = [
+      {
+        id: `test_${Date.now()}_1`,
+        name: '张明华',
+        g_rank: 1,
+        rank_index: 1,
+        g_father_id: 0,
+        official_position: '知县',
+        summary: '知县，为官清廉，深受百姓爱戴。',
+        adoption: 'none',
+        sex: 'MAN',
+        g_mother_id: null,
+        birth_date: '1850-01-01',
+        id_card: null,
+        face_img: null,
+        photos: null,
+        household_info: null,
+        spouse: '李氏',
+        home_page: null,
+        dealth: 'dealth',
+        formal_name: '张明华',
+        location: '江苏苏州',
+        childrens: '张伟强, 张丽娟'
+      },
+      {
+        id: `test_${Date.now()}_2`,
+        name: '张伟强',
+        g_rank: 2,
+        rank_index: 1,
+        g_father_id: `test_${Date.now()}_1`,
+        official_position: '举人',
+        summary: '举人，博学多才，著有诗集。',
+        adoption: 'none',
+        sex: 'MAN',
+        g_mother_id: null,
+        birth_date: '1875-03-15',
+        id_card: null,
+        face_img: null,
+        photos: null,
+        household_info: null,
+        spouse: '王氏',
+        home_page: null,
+        dealth: null,
+        formal_name: '张伟强',
+        location: '江苏苏州',
+        childrens: '张静敏'
+      },
+      {
+        id: `test_${Date.now()}_3`,
+        name: '张丽娟',
+        g_rank: 2,
+        rank_index: 2,
+        g_father_id: `test_${Date.now()}_1`,
+        official_position: '',
+        summary: '贤良淑德，善于持家。',
+        adoption: 'none',
+        sex: 'WOMAN',
+        g_mother_id: null,
+        birth_date: '1878-07-20',
+        id_card: null,
+        face_img: null,
+        photos: null,
+        household_info: null,
+        spouse: '陈氏',
+        home_page: null,
+        dealth: null,
+        formal_name: '张丽娟',
+        location: '江苏苏州',
+        childrens: null
+      }
+    ];
+
+    console.log('📊 生成的测试数据:', testData);
+    setRows(testData);
+    setStep(3);
+    message.success(`生成了 ${testData.length} 条测试家谱记录`);
   };
 
   // 两份“Excel”占位：先提供 CSV 导出（后续可引入 SheetJS/xlsx）
@@ -473,6 +614,23 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
               >
                 {busy && ocrProgress > 0 ? 'OCR识别中...' : '开始识别'}
               </Button>
+              {process.env.REACT_APP_DEBUG === 'true' && (
+                <>
+                  <Button
+                    type="dashed"
+                    onClick={() => setShowOCRDebug(!showOCRDebug)}
+                  >
+                    {showOCRDebug ? '隐藏调试' : '显示调试'}
+                  </Button>
+                  <Button
+                    type="dashed"
+                    onClick={generateTestData}
+                    style={{ backgroundColor: '#f0f0f0' }}
+                  >
+                    生成测试数据
+                  </Button>
+                </>
+              )}
             </Space>
           </div>
 
@@ -486,6 +644,27 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
                   '0%': '#722ed1',
                   '100%': '#52c41a',
                 }}
+              />
+            </div>
+          )}
+
+          {/* OCR调试面板 */}
+          {showOCRDebug && (
+            <div style={{ marginTop: '16px' }}>
+              <OCRDebugPanel
+                imageUrls={ossUrls}
+                tenantId={currentTenant?.id || 'default'}
+                onDataGenerated={handleDebugDataGenerated}
+              />
+            </div>
+          )}
+
+          {/* 数据状态监控 (调试模式) */}
+          {showOCRDebug && (
+            <div style={{ marginTop: '16px' }}>
+              <DataStateMonitor
+                data={rows}
+                title="当前表格数据状态"
               />
             </div>
           )}

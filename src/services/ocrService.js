@@ -21,11 +21,15 @@ class OCRService {
   async recognizeFamilyTree(imageUrls, tenantId = 'default') {
     try {
       console.log('🔍 开始OCR识别，图片数量:', imageUrls.length);
-      
+      console.log('📋 图片URLs:', imageUrls);
+      console.log('🏢 租户ID:', tenantId);
+
       // 如果是开发环境且没有配置真实的API密钥，返回模拟数据
       if (process.env.REACT_APP_ENV === 'development' && !this.accessKeyId) {
         console.log('🧪 开发环境，使用模拟OCR数据');
-        return this.getMockOCRData(imageUrls.length, tenantId);
+        const mockData = this.getMockOCRData(imageUrls.length, tenantId);
+        console.log('📊 生成的模拟数据:', mockData);
+        return mockData;
       }
 
       const response = await fetch(`${this.baseURL}${this.ocrEndpoint}`, {
@@ -52,14 +56,19 @@ class OCRService {
 
       const result = await response.json();
       console.log('✅ OCR识别完成，解析到', result.data?.length || 0, '条记录');
-      
-      return this.processOCRResult(result.data || [], tenantId);
+      console.log('📄 原始OCR结果:', result);
+
+      const processedData = this.processOCRResult(result.data || [], tenantId);
+      console.log('🔄 处理后的数据:', processedData);
+      return processedData;
     } catch (error) {
       console.error('❌ OCR识别失败:', error);
-      
+
       // 如果API调用失败，返回模拟数据以便开发测试
       console.log('🔄 API调用失败，使用模拟数据');
-      return this.getMockOCRData(imageUrls.length, tenantId);
+      const fallbackData = this.getMockOCRData(imageUrls.length, tenantId);
+      console.log('📊 回退模拟数据:', fallbackData);
+      return fallbackData;
     }
   }
 
