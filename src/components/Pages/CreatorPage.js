@@ -4,7 +4,6 @@ import { InfoCircleOutlined, CheckCircleOutlined, ExclamationCircleOutlined } fr
 import AppLayout from '../Layout/AppLayout';
 import TenantSelector from '../TenantSelector';
 import OSSTestPanel from '../OSSTestPanel';
-import OSSConfigTester from '../OSSConfigTester';
 import FamilyDataGrid from '../FamilyDataGrid';
 import ocrService from '../../services/ocrService';
 import uploadService from '../../services/uploadService';
@@ -62,7 +61,6 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
   const [uploadConfig, setUploadConfig] = useState(null);
   const [ocrConfig, setOcrConfig] = useState(null);
   const [showOSSTest, setShowOSSTest] = useState(false);
-  const [showOSSConfig, setShowOSSConfig] = useState(false);
 
   // 初始化配置
   useEffect(() => {
@@ -391,22 +389,13 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
               )}
 
               {process.env.REACT_APP_DEBUG === 'true' && (
-                <Space>
-                  <Button
-                    type={showOSSTest ? 'primary' : 'default'}
-                    onClick={() => setShowOSSTest(!showOSSTest)}
-                    size="small"
-                  >
-                    {showOSSTest ? '隐藏OSS测试' : 'OSS测试'}
-                  </Button>
-                  <Button
-                    type={showOSSConfig ? 'primary' : 'default'}
-                    onClick={() => setShowOSSConfig(!showOSSConfig)}
-                    size="small"
-                  >
-                    {showOSSConfig ? '隐藏OSS诊断' : 'OSS诊断'}
-                  </Button>
-                </Space>
+                <Button
+                  type={showOSSTest ? 'primary' : 'default'}
+                  onClick={() => setShowOSSTest(!showOSSTest)}
+                  size="small"
+                >
+                  {showOSSTest ? '隐藏OSS测试' : '显示OSS测试'}
+                </Button>
               )}
             </Space>
           </div>
@@ -549,11 +538,6 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
         {/* OSS测试面板 */}
         {showOSSTest && (
           <OSSTestPanel />
-        )}
-
-        {/* OSS配置诊断面板 */}
-        {showOSSConfig && (
-          <OSSConfigTester />
         )}
       </div>
     </AppLayout>
