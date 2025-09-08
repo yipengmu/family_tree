@@ -7,10 +7,13 @@ import OSSTestPanel from '../OSSTestPanel';
 import FamilyDataGrid from '../FamilyDataGrid';
 import OCRDebugPanel from '../Debug/OCRDebugPanel';
 import DataStateMonitor from '../Debug/DataStateMonitor';
+import QwenAPITester from '../Debug/QwenAPITester';
+import ServiceStatusChecker from '../Debug/ServiceStatusChecker';
 import ocrService from '../../services/ocrService';
 import uploadService from '../../services/uploadService';
 import tenantService from '../../services/tenantService';
 import familyDataService from '../../services/familyDataService';
+import familyDataGenerator from '../../services/familyDataGenerator';
 import './CreatorPage.css';
 
 // 轻量创作向导（不新增外部依赖）
@@ -144,8 +147,8 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
     }
   };
 
-  // 调用火山引擎 OCR 识别家谱信息
-  const runVolcengineOCR = async (imageUrls) => {
+  // 调用通义千问 OCR 识别家谱信息
+  const runQwenOCR = async (imageUrls) => {
     try {
       setOcrProgress(0);
       const tenantId = currentTenant?.id || 'default';
@@ -215,7 +218,7 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
     setBusy(true);
     try {
       message.loading('正在识别图片中的家谱信息...', 0);
-      const parsed = await runVolcengineOCR(ossUrls);
+      const parsed = await runQwenOCR(ossUrls);
       message.destroy();
 
       console.log('🎯 OCR识别结果:', parsed);
@@ -270,9 +273,20 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
       }
     } catch (error) {
       message.destroy();
-      message.error(`OCR识别失败: ${error.message}`);
+
+      // 显示详细的错误信息
+      const errorMessage = error.message || '未知错误';
+      message.error(`OCR识别失败: ${errorMessage}`, 10); // 显示10秒
+
       console.error('❌ OCR识别失败:', error);
       console.error('❌ 错误堆栈:', error.stack);
+
+      // 如果是配置问题，给出具体建议
+      if (errorMessage.includes('API Key')) {
+        message.warning('请检查通义千问API Key配置', 8);
+      } else if (errorMessage.includes('网络') || errorMessage.includes('timeout')) {
+        message.warning('网络连接问题，请检查网络或稍后重试', 8);
+      }
     } finally {
       setBusy(false);
       setOcrProgress(0);
@@ -374,6 +388,45 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
     setRows(testData);
     setStep(3);
     message.success(`生成了 ${testData.length} 条测试家谱记录`);
+  };
+
+  // 生成并下载familyData文件
+  const generateFamilyDataFile = async () => {
+    if (!rows || rows.length === 0) {
+      message.warning('请先进行OCR识别或添加家谱数据');
+      return;
+    }
+
+    try {
+      console.log('📝 开始生成familyData文件...');
+      message.loading('正在生成familyData文件...', 0);
+
+      const tenantId = currentTenant?.id || 'default';
+      const result = await familyDataGenerator.generateFamilyDataFile(
+        rows,
+        tenantId,
+        {
+          suffix: 'qwen-ocr',
+          autoDownload: true,
+          includeStats: true
+        }
+      );
+
+      message.destroy();
+
+      if (result.success) {
+        message.success(`文件生成成功: ${result.fileName}`);
+        console.log('✅ 文件生成结果:', result);
+        console.log('📊 文件统计:', result.stats);
+      } else {
+        message.error(`文件生成失败: ${result.error}`);
+        console.error('❌ 文件生成失败:', result.error);
+      }
+    } catch (error) {
+      message.destroy();
+      message.error(`生成文件时发生错误: ${error.message}`);
+      console.error('❌ 生成文件异常:', error);
+    }
   };
 
   // 两份“Excel”占位：先提供 CSV 导出（后续可引入 SheetJS/xlsx）
@@ -629,6 +682,14 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
                   >
                     生成测试数据
                   </Button>
+                  <Button
+                    type="primary"
+                    onClick={generateFamilyDataFile}
+                    style={{ backgroundColor: '#722ed1', borderColor: '#722ed1' }}
+                    disabled={!rows || rows.length === 0}
+                  >
+                    生成familyData文件
+                  </Button>
                 </>
               )}
             </Space>
@@ -651,11 +712,20 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
           {/* OCR调试面板 */}
           {showOCRDebug && (
             <div style={{ marginTop: '16px' }}>
-              <OCRDebugPanel
-                imageUrls={ossUrls}
-                tenantId={currentTenant?.id || 'default'}
-                onDataGenerated={handleDebugDataGenerated}
-              />
+              <Space direction="vertical" style={{ width: '100%' }} size="large">
+                {/* 服务状态检查 */}
+                <ServiceStatusChecker />
+
+                {/* 通义千问API测试 */}
+                <QwenAPITester />
+
+                {/* OCR调试面板 */}
+                <OCRDebugPanel
+                  imageUrls={ossUrls}
+                  tenantId={currentTenant?.id || 'default'}
+                  onDataGenerated={handleDebugDataGenerated}
+                />
+              </Space>
             </div>
           )}
 
@@ -707,7 +777,7 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
           <p>实现说明：</p>
           <ul>
             <li>上传到 OSS：推荐通过后端网关签名后直传，前端仅提交 FormData。</li>
-            <li>火山引擎 OCR：出于安全与密钥保护，建议后端代理调用。</li>
+            <li>通义千问 OCR：使用阿里云通义千问VL-Max模型进行家谱识别，通过代理服务器调用。</li>
             <li>数据编辑：使用AG Grid专业表格组件，支持排序、筛选、多选等高级功能。</li>
             <li>“两份 Excel”：当前以 CSV 下载占位，后续可接入 SheetJS(xlsx) 输出 .xlsx。</li>
             <li>JSON 字段含 dealth：null 表示去世，只有 'alive' 表示在世（遵循你的规则）。</li>

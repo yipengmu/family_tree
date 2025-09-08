@@ -13,6 +13,8 @@ import {
   InfoCircleOutlined
 } from '@ant-design/icons';
 import ocrService from '../../services/ocrService';
+import qwenOcrService from '../../services/qwenOcrService';
+import familyDataGenerator from '../../services/familyDataGenerator';
 
 const { Title, Text, Paragraph } = Typography;
 const { Panel } = Collapse;
@@ -55,6 +57,7 @@ const OCRDebugPanel = ({ imageUrls = [], tenantId = 'default', onDataGenerated }
       addLog('info', '检查OCR配置...');
       const configValidation = ocrService.validateConfig();
       addLog('info', 'OCR配置验证结果', configValidation);
+      addLog('info', `当前使用服务: ${configValidation.preferredService}`);
 
       // 2. 执行OCR识别
       addLog('info', '执行OCR识别...');
@@ -95,7 +98,28 @@ const OCRDebugPanel = ({ imageUrls = [], tenantId = 'default', onDataGenerated }
         dataValid: result && result.length > 0
       });
 
-      // 5. 回调通知父组件
+      // 5. 生成familyData文件
+      if (result && result.length > 0) {
+        addLog('info', '生成familyData文件...');
+        try {
+          const fileResult = await familyDataGenerator.generateFamilyDataFile(
+            result,
+            tenantId,
+            { suffix: 'debug-test', autoDownload: false }
+          );
+
+          if (fileResult.success) {
+            addLog('success', `familyData文件生成成功: ${fileResult.fileName}`);
+            addLog('info', '文件统计信息', fileResult.stats);
+          } else {
+            addLog('error', `文件生成失败: ${fileResult.error}`);
+          }
+        } catch (error) {
+          addLog('error', `文件生成异常: ${error.message}`);
+        }
+      }
+
+      // 6. 回调通知父组件
       if (onDataGenerated && result) {
         addLog('info', '通知父组件数据已生成');
         onDataGenerated(result);
@@ -113,14 +137,43 @@ const OCRDebugPanel = ({ imageUrls = [], tenantId = 'default', onDataGenerated }
   const generateTestData = async () => {
     try {
       addLog('info', '生成测试数据...');
-      const testData = ocrService.getMockOCRData(3, tenantId);
+      const testData = qwenOcrService.getMockOCRData(3, tenantId);
       addLog('success', `生成了 ${testData.length} 条测试数据`, testData);
-      
+
       if (onDataGenerated) {
         onDataGenerated(testData);
       }
     } catch (error) {
       addLog('error', `生成测试数据失败: ${error.message}`, error);
+    }
+  };
+
+  // 生成并下载familyData文件
+  const generateAndDownloadFile = async () => {
+    try {
+      addLog('info', '开始生成familyData文件...');
+
+      // 先生成测试数据
+      const testData = qwenOcrService.getMockOCRData(5, tenantId);
+      addLog('info', `使用 ${testData.length} 条测试数据生成文件`);
+
+      const fileResult = await familyDataGenerator.generateFamilyDataFile(
+        testData,
+        tenantId,
+        {
+          suffix: 'qwen-demo',
+          autoDownload: true // 自动下载
+        }
+      );
+
+      if (fileResult.success) {
+        addLog('success', `文件生成并下载成功: ${fileResult.fileName}`);
+        addLog('info', '文件统计', fileResult.stats);
+      } else {
+        addLog('error', `文件生成失败: ${fileResult.error}`);
+      }
+    } catch (error) {
+      addLog('error', `生成文件异常: ${error.message}`, error);
     }
   };
 
@@ -174,6 +227,13 @@ const OCRDebugPanel = ({ imageUrls = [], tenantId = 'default', onDataGenerated }
           </Button>
           <Button onClick={generateTestData}>
             生成测试数据
+          </Button>
+          <Button
+            type="default"
+            onClick={generateAndDownloadFile}
+            style={{ backgroundColor: '#52c41a', color: 'white', borderColor: '#52c41a' }}
+          >
+            生成文件并下载
           </Button>
           <Button onClick={clearLogs}>
             清空日志
