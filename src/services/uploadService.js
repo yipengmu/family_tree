@@ -3,7 +3,8 @@
  */
 
 import OSS from 'ali-oss';
-import OSSConfigValidator from '../utils/ossConfigValidator';
+import OSSConfigChecker from '../utils/ossConfigChecker';
+
 
 class UploadService {
   constructor() {
@@ -34,70 +35,49 @@ class UploadService {
    */
   async initOSSClient() {
     try {
-      if (this.isOSSConfigured()) {
-        console.log('🔧 初始化OSS客户端...');
+      // 使用配置检查器进行详细检查
+      const configCheck = OSSConfigChecker.printConfigStatus();
 
-        // 验证配置
-        const validation = OSSConfigValidator.validateConfig(this.ossConfig);
-
-        if (!validation.isValid) {
-          console.error('❌ OSS配置验证失败:');
-          validation.errors.forEach(error => console.error(`  - ${error}`));
-          this.ossClient = null;
-          return;
-        }
-
-        if (validation.warnings.length > 0) {
-          console.warn('⚠️ OSS配置警告:');
-          validation.warnings.forEach(warning => console.warn(`  - ${warning}`));
-        }
-
-        // 打印配置信息用于调试（隐藏敏感信息）
-        console.log('OSS配置信息:', {
-          region: this.ossConfig.region,
-          bucket: this.ossConfig.bucket,
-          endpoint: this.ossConfig.endpoint,
-          accessKeyId: this.ossConfig.accessKeyId ? `${this.ossConfig.accessKeyId.substring(0, 8)}...` : 'undefined',
-          hasSecret: !!this.ossConfig.accessKeySecret
-        });
-
-        const ossConfig = {
-          region: this.ossConfig.region,
-          bucket: this.ossConfig.bucket,
-          accessKeyId: this.ossConfig.accessKeyId,
-          accessKeySecret: this.ossConfig.accessKeySecret,
-          endpoint: this.ossConfig.endpoint,
-          secure: this.ossConfig.secure,
-          timeout: 120000, // 增加到120秒超时
-          // 添加连接池配置
-          agent: {
-            keepAlive: true,
-            keepAliveMsecs: 30000,
-            maxSockets: 10,
-            maxFreeSockets: 10,
-            timeout: 120000,
-            freeSocketTimeout: 30000,
-          },
-          // 添加重试配置
-          retryDelayOptions: {
-            base: 300, // 基础延迟300ms
-          },
-        };
-
-        this.ossClient = new OSS(ossConfig);
-        console.log('✅ OSS客户端初始化成功');
-
-        // 测试连接
-        await this.testOSSConnection();
-      } else {
-        console.log('⚠️ OSS配置不完整，将使用模拟上传');
-        console.log('缺失的配置项:', {
-          region: !this.ossConfig.region,
-          bucket: !this.ossConfig.bucket,
-          accessKeyId: !this.ossConfig.accessKeyId,
-          accessKeySecret: !this.ossConfig.accessKeySecret,
-        });
+      if (!configCheck.isValid) {
+        console.error('❌ OSS配置验证失败，无法初始化OSS客户端');
+        this.ossClient = null;
+        return;
       }
+
+      // 打印配置信息用于调试（隐藏敏感信息）
+      console.log('OSS配置信息:', {
+        region: this.ossConfig.region,
+        bucket: this.ossConfig.bucket,
+        endpoint: this.ossConfig.endpoint,
+        accessKeyId: this.ossConfig.accessKeyId ? `${this.ossConfig.accessKeyId.substring(0, 8)}...` : 'undefined',
+        hasSecret: !!this.ossConfig.accessKeySecret
+      });
+
+      const ossConfig = {
+        region: this.ossConfig.region,
+        bucket: this.ossConfig.bucket,
+        accessKeyId: this.ossConfig.accessKeyId,
+        accessKeySecret: this.ossConfig.accessKeySecret,
+        endpoint: this.ossConfig.endpoint,
+        secure: this.ossConfig.secure,
+        timeout: 120000,
+        agent: {
+          keepAlive: true,
+          keepAliveMsecs: 30000,
+          maxSockets: 10,
+          maxFreeSockets: 10,
+          timeout: 120000,
+          freeSocketTimeout: 30000,
+        },
+        retryDelayOptions: {
+          base: 300,
+        },
+      };
+
+      this.ossClient = new OSS(ossConfig);
+      console.log('✅ OSS客户端初始化成功');
+
+      await this.testOSSConnection();
     } catch (error) {
       console.error('❌ OSS客户端初始化失败:', error);
       this.ossClient = null;
@@ -525,14 +505,24 @@ class UploadService {
    */
   isOSSConfigured() {
     // 检查所有必需的OSS配置项是否已提供
-    console.log('OSS配置:', this.ossConfig);
-    return !!(
+    console.log('🔍 检查OSS配置:', {
+      region: this.ossConfig.region || 'undefined',
+      bucket: this.ossConfig.bucket || 'undefined',
+      accessKeyId: this.ossConfig.accessKeyId ? `${this.ossConfig.accessKeyId.substring(0, 8)}...` : 'undefined',
+      hasSecret: !!this.ossConfig.accessKeySecret,
+      endpoint: this.ossConfig.endpoint || 'default'
+    });
+
+    const isConfigured = !!(
       this.ossConfig.region &&
       this.ossConfig.bucket &&
       this.ossConfig.accessKeyId &&
-      this.ossConfig.accessKeySecret &&
-      this.ossConfig.endpoint
+      this.ossConfig.accessKeySecret
+      // endpoint是可选的，OSS SDK会自动生成
     );
+
+    console.log('✅ OSS配置状态:', isConfigured ? '已配置' : '未配置');
+    return isConfigured;
   }
 
   /**

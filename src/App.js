@@ -10,7 +10,10 @@ import DiscoverPage from './components/Pages/DiscoverPage';
 import TenantSelector from './components/TenantSelector';
 import familyDataService from './services/familyDataService';
 import tenantService from './services/tenantService';
-import './utils/testServices'; // 导入测试工具（开发环境自动运行）
+ // 导入测试工具（开发环境自动运行）
+
+
+
 import './App.css';
 
 const { Content } = Layout;
@@ -63,8 +66,28 @@ function App() {
         setLoading(true);
         setError(null);
 
-        // 使用familyDataService加载数据
-        const data = await familyDataService.getFamilyData(false, tenantId);
+        const currentTenantId = tenantId || tenantService.getCurrentTenant().id;
+        console.log(`📖 [App] 加载家谱数据 - 租户: ${currentTenantId}`);
+
+        // 优先从数据库加载数据
+        let data = [];
+        try {
+          const response = await fetch(`http://localhost:3003/api/family-data/${currentTenantId}`);
+          const result = await response.json();
+
+          if (response.ok && result.success) {
+            data = result.data || [];
+            console.log(`✅ [App] 从数据库加载 ${data.length} 条记录`);
+          } else {
+            console.log(`📝 [App] 数据库无数据，使用本地服务`);
+            // 如果数据库没有数据，使用原有的familyDataService
+            data = await familyDataService.getFamilyData(false, currentTenantId);
+          }
+        } catch (dbError) {
+          console.log(`📝 [App] 数据库连接失败，使用本地服务:`, dbError.message);
+          // 如果数据库连接失败，使用原有的familyDataService
+          data = await familyDataService.getFamilyData(false, currentTenantId);
+        }
 
         // 验证数据
         const result = validateFamilyData(data);
@@ -103,8 +126,23 @@ function App() {
       await loadFamilyData(tenant.id);
     });
 
+    // 监听家谱数据更新事件
+    const handleFamilyDataUpdated = async (event) => {
+      const { tenantId } = event.detail;
+      const currentTenantId = tenantService.getCurrentTenant().id;
+
+      // 如果更新的是当前租户的数据，重新加载
+      if (tenantId === currentTenantId) {
+        console.log('🔄 [App] 检测到家谱数据更新，重新加载...');
+        await loadFamilyData(tenantId);
+      }
+    };
+
+    window.addEventListener('familyDataUpdated', handleFamilyDataUpdated);
+
     return () => {
       window.removeEventListener('error', handleResizeObserverError);
+      window.removeEventListener('familyDataUpdated', handleFamilyDataUpdated);
       unsubscribe();
     };
   }, []);

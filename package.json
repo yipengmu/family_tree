@@ -4,8 +4,6 @@
   "private": true,
   "dependencies": {
     "@ant-design/icons": "^5.2.6",
-    "ag-grid-community": "^34.1.2",
-    "ag-grid-react": "^34.1.2",
     "ajv": "^8.17.1",
     "ali-oss": "^6.23.0",
     "antd": "^5.12.8",
@@ -15,14 +13,19 @@
     "express": "^5.1.0",
     "lodash": "^4.17.21",
     "moment": "^2.30.1",
-    "node-fetch": "^3.3.2",
+    "node-fetch": "^2.7.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-scripts": "5.0.1",
-    "reactflow": "^11.10.1"
+    "reactflow": "^11.10.1",
+    "sqlite3": "^5.1.7"
   },
   "scripts": {
     "start": "react-scripts start",
+    "server": "node server/app.js",
+    "dev": "concurrently \"npm run server\" \"npm start\"",
+    "start:proxy": "node start-with-proxy.js",
+    "cors-proxy": "node cors-proxy-server.js",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
@@ -33,7 +36,6 @@
     "verify-qwen": "node scripts/verify-qwen-config.js",
     "proxy": "node server/qwen-proxy.js",
     "proxy-simple": "node start-proxy-only.js",
-    "dev": "concurrently \"npm run proxy\" \"npm start\"",
     "quick-start": "node quick-start.js",
     "test-proxy": "node test-proxy-startup.js",
     "lint": "eslint src --ext .js,.jsx",

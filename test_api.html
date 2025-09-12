@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API测试</title>
+</head>
+<body>
+    <h1>家谱API测试</h1>
+    <button onclick="testSaveAPI()">测试保存API</button>
+    <button onclick="testGetAPI()">测试获取API</button>
+    <div id="result"></div>
+
+    <script>
+        async function testSaveAPI() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '测试保存API...';
+            
+            try {
+                const response = await fetch('http://localhost:3003/api/family-data/save', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        tenantId: 'default',
+                        familyData: [
+                            {
+                                id: 1,
+                                name: '测试人员',
+                                g_rank: 1,
+                                rank_index: 1,
+                                sex: 'MAN'
+                            }
+                        ]
+                    })
+                });
+
+                console.log('响应状态:', response.status);
+                console.log('响应头:', Object.fromEntries(response.headers.entries()));
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+
+                const result = await response.json();
+                resultDiv.innerHTML = `<h3>保存成功:</h3><pre>${JSON.stringify(result, null, 2)}</pre>`;
+            } catch (error) {
+                console.error('保存失败:', error);
+                resultDiv.innerHTML = `<h3>保存失败:</h3><p style="color: red;">${error.message}</p>`;
+            }
+        }
+
+        async function testGetAPI() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '测试获取API...';
+            
+            try {
+                const response = await fetch('http://localhost:3003/api/family-data/default');
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+
+                const result = await response.json();
+                resultDiv.innerHTML = `<h3>获取成功:</h3><pre>${JSON.stringify(result, null, 2)}</pre>`;
+            } catch (error) {
+                console.error('获取失败:', error);
+                resultDiv.innerHTML = `<h3>获取失败:</h3><p style="color: red;">${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

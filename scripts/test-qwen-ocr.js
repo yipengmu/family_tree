@@ -141,7 +141,7 @@ async function testQwenOCR() {
     {
       "family_members": [
         {
-          "name": "张明华",
+          "name": "",
           "generation": 1,
           "order": 1,
           "father_name": null,
@@ -152,21 +152,6 @@ async function testQwenOCR() {
           "death_date": "1920-12-31",
           "spouse": "李氏",
           "location": "江苏苏州",
-          "children": ["张伟强", "张丽娟"]
-        },
-        {
-          "name": "张伟强",
-          "generation": 2,
-          "order": 1,
-          "father_name": "张明华",
-          "position": "举人",
-          "description": "举人，博学多才",
-          "gender": "男",
-          "birth_date": "1875-03-15",
-          "death_date": null,
-          "spouse": "王氏",
-          "location": "江苏苏州",
-          "children": ["张静敏"]
         }
       ]
     }

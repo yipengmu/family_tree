@@ -189,13 +189,21 @@ class CacheManager {
    */
   delete(key) {
     this.memoryCache.delete(key);
-    
+
     try {
       const cacheKey = this.getCacheKey(key);
       localStorage.removeItem(cacheKey);
     } catch (error) {
       console.warn('删除LocalStorage缓存失败:', error);
     }
+  }
+
+  /**
+   * 删除缓存（remove方法，与delete方法功能相同）
+   * @param {string} key - 缓存键
+   */
+  remove(key) {
+    return this.delete(key);
   }
 
   /**

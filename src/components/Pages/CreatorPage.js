@@ -1,15 +1,12 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { message, Progress, Alert, Button, Space, Tooltip } from 'antd';
-import { InfoCircleOutlined, CheckCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { message, Progress, Alert, Button, Space, Tooltip, Steps, Upload, Card } from 'antd';
+import { InfoCircleOutlined, CheckCircleOutlined, ExclamationCircleOutlined, FileImageOutlined, TableOutlined, CodeOutlined, InboxOutlined, CloudUploadOutlined, EyeOutlined, DownloadOutlined } from '@ant-design/icons';
 import AppLayout from '../Layout/AppLayout';
 import TenantSelector from '../TenantSelector';
-import OSSTestPanel from '../OSSTestPanel';
-import FamilyDataGrid from '../FamilyDataGrid';
-import OCRDebugPanel from '../Debug/OCRDebugPanel';
-import DataStateMonitor from '../Debug/DataStateMonitor';
-import QwenAPITester from '../Debug/QwenAPITester';
-import ServiceStatusChecker from '../Debug/ServiceStatusChecker';
-import ocrService from '../../services/ocrService';
+
+import AntdFamilyTable from '../AntdFamilyTable';
+import DataSyncStatus from '../DataSyncStatus';
+import qwenOcrService from '../../services/qwenOcrService';
 import uploadService from '../../services/uploadService';
 import tenantService from '../../services/tenantService';
 import familyDataService from '../../services/familyDataService';
@@ -33,30 +30,7 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
   const [previews, setPreviews] = useState([]); // local preview urls
   const [ossUrls, setOssUrls] = useState([]); // uploaded urls
   const [rows, setRows] = useState([
-    {
-      id: 1,
-      name: '张三',
-      g_rank: 1,
-      rank_index: 1,
-      g_father_id: 0,
-      official_position: '知县',
-      summary: '为官清廉，深受百姓爱戴',
-      adoption: 'none',
-      sex: 'MAN',
-      g_mother_id: 0,
-      birth_date: '1850-01-01',
-      id_card: '',
-      face_img: '',
-      photos: '',
-      household_info: '',
-      spouse: '李氏',
-      home_page: '',
-      dealth: null,
-      formal_name: '张文三',
-      location: '北京',
-      childrens: '张四、张五'
-    },
-    emptyRow()
+    emptyRow(),emptyRow(),emptyRow()
   ]);
   const [jsonOutput, setJsonOutput] = useState('');
   const [busy, setBusy] = useState(false);
@@ -65,8 +39,34 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
   const [currentTenant, setCurrentTenant] = useState(null);
   const [uploadConfig, setUploadConfig] = useState(null);
   const [ocrConfig, setOcrConfig] = useState(null);
-  const [showOSSTest, setShowOSSTest] = useState(false);
-  const [showOCRDebug, setShowOCRDebug] = useState(process.env.REACT_APP_DEBUG === 'true');
+
+  const [appendMode] = useState(true); // 默认使用追加模式
+
+  // 数据持久化key
+  const getStorageKey = (key) => {
+    const tenantId = currentTenant?.id || 'default';
+    return `creator_${tenantId}_${key}`;
+  };
+
+  // 保存数据到localStorage
+  const saveToStorage = (key, data) => {
+    try {
+      localStorage.setItem(getStorageKey(key), JSON.stringify(data));
+    } catch (error) {
+      console.warn('保存数据到localStorage失败:', error);
+    }
+  };
+
+  // 从localStorage读取数据
+  const loadFromStorage = (key, defaultValue = null) => {
+    try {
+      const stored = localStorage.getItem(getStorageKey(key));
+      return stored ? JSON.parse(stored) : defaultValue;
+    } catch (error) {
+      console.warn('从localStorage读取数据失败:', error);
+      return defaultValue;
+    }
+  };
 
   // 初始化配置
   useEffect(() => {
@@ -78,26 +78,85 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
 
     setUploadConfig(uploadConf);
 
-    const ocrConf = ocrService.validateConfig();
-    setOcrConfig(ocrConf);
+    // 检查通义千问API Key配置
+    const hasQwenKey = !!process.env.REACT_APP_QWEN_API_KEY;
+    setOcrConfig({ configured: hasQwenKey });
   }, []);
+
+  // 恢复保存的数据
+  useEffect(() => {
+    if (currentTenant) {
+      const savedStep = loadFromStorage('step', 1);
+      const savedFiles = loadFromStorage('files', []);
+      const savedPreviews = loadFromStorage('previews', []);
+      const savedOssUrls = loadFromStorage('ossUrls', []);
+      const savedRows = loadFromStorage('rows', [emptyRow()]);
+      const savedJsonOutput = loadFromStorage('jsonOutput', '');
+
+      setStep(savedStep);
+      setFiles(savedFiles);
+      setPreviews(savedPreviews);
+      setOssUrls(savedOssUrls);
+      setRows(savedRows);
+      setJsonOutput(savedJsonOutput);
+
+      console.log('已恢复保存的数据:', {
+        step: savedStep,
+        filesCount: savedFiles.length,
+        previewsCount: savedPreviews.length,
+        ossUrlsCount: savedOssUrls.length,
+        rowsCount: savedRows.length
+      });
+    }
+  }, [currentTenant]);
 
   // 监听租户切换
   useEffect(() => {
     const unsubscribe = tenantService.onTenantChange((tenant) => {
       setCurrentTenant(tenant);
-      // 租户切换时重置状态
-      setStep(1);
-      setFiles([]);
-      setPreviews([]);
-      setOssUrls([]);
-      setRows([emptyRow()]);
-      setJsonOutput('');
-      message.info(`已切换到 ${tenant.name}，请重新开始创作流程`);
+      // 租户切换时保持当前数据状态，不重置
+      message.info(`已切换到 ${tenant.name}，当前数据已保留`);
     });
 
     return unsubscribe;
   }, []);
+
+  // 自动保存数据
+  useEffect(() => {
+    if (currentTenant) {
+      saveToStorage('step', step);
+    }
+  }, [step, currentTenant]);
+
+  useEffect(() => {
+    if (currentTenant) {
+      saveToStorage('files', files);
+    }
+  }, [files, currentTenant]);
+
+  useEffect(() => {
+    if (currentTenant) {
+      saveToStorage('previews', previews);
+    }
+  }, [previews, currentTenant]);
+
+  useEffect(() => {
+    if (currentTenant) {
+      saveToStorage('ossUrls', ossUrls);
+    }
+  }, [ossUrls, currentTenant]);
+
+  useEffect(() => {
+    if (currentTenant) {
+      saveToStorage('rows', rows);
+    }
+  }, [rows, currentTenant]);
+
+  useEffect(() => {
+    if (currentTenant) {
+      saveToStorage('jsonOutput', jsonOutput);
+    }
+  }, [jsonOutput, currentTenant]);
 
   // 选择文件，限制最多 10 张
   const onPickFiles = (e) => {
@@ -153,6 +212,23 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
       setOcrProgress(0);
       const tenantId = currentTenant?.id || 'default';
 
+      console.log('🔍 开始OCR识别详细流程:');
+      console.log('📸 图片URLs:', imageUrls);
+      console.log('🏢 租户ID:', tenantId);
+      console.log('🔑 API Key状态:', process.env.REACT_APP_QWEN_API_KEY ? '已配置' : '未配置');
+
+      // 验证图片URL可访问性
+      for (let i = 0; i < imageUrls.length; i++) {
+        const url = imageUrls[i];
+        console.log(`🌐 验证图片 ${i + 1} 可访问性: ${url}`);
+        try {
+          const response = await fetch(url, { method: 'HEAD' });
+          console.log(`✅ 图片 ${i + 1} 可访问，状态: ${response.status}`);
+        } catch (error) {
+          console.error(`❌ 图片 ${i + 1} 无法访问:`, error.message);
+        }
+      }
+
       // 模拟OCR进度
       const progressInterval = setInterval(() => {
         setOcrProgress(prev => {
@@ -164,14 +240,37 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
         });
       }, 300);
 
-      const result = await ocrService.recognizeFamilyTree(imageUrls, tenantId);
+      console.log('📤 调用qwenOcrService.recognizeFamilyTree...');
+
+      // 设置前端超时控制（比后端稍长一些）
+      const frontendTimeoutMs = 100000; // 100秒超时，给后端足够时间调用千问API
+      console.log(`⏰ 设置前端超时时间: ${frontendTimeoutMs}ms (${frontendTimeoutMs / 1000}秒)`);
+
+      const ocrPromise = qwenOcrService.recognizeFamilyTree(imageUrls, tenantId);
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => {
+          reject(new Error(`OCR识别超时 (${frontendTimeoutMs / 1000}秒)，请检查网络连接或减少图片数量`));
+        }, frontendTimeoutMs);
+      });
+
+      const result = await Promise.race([ocrPromise, timeoutPromise]);
 
       clearInterval(progressInterval);
       setOcrProgress(100);
 
+      console.log('📥 OCR服务返回结果:');
+      console.log('📊 结果类型:', typeof result);
+      console.log('📊 是否为数组:', Array.isArray(result));
+      console.log('📊 数组长度:', result?.length || 0);
+      console.log('📊 完整结果:', result);
+
       return result;
     } catch (error) {
       setOcrProgress(0);
+      console.error('❌ runQwenOCR 执行失败:', error);
+      console.error('❌ 错误类型:', error.constructor.name);
+      console.error('❌ 错误消息:', error.message);
+      console.error('❌ 错误堆栈:', error.stack);
       throw error;
     }
   };
@@ -256,20 +355,36 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
 
         console.log('🔄 验证后的数据:', validatedData);
 
-        setRows(validatedData);
+        // 根据是否为追加模式决定如何处理数据
+        if (appendMode && rows.length > 0) {
+          // 追加模式：合并到现有数据
+          console.log('📝 追加模式：合并新识别的数据到现有数据');
+          const mergedData = [...rows, ...validatedData];
+          setRows(mergedData);
+          message.success(`成功追加识别 ${validatedData.length} 个人物信息，当前共 ${mergedData.length} 条记录`);
+        } else {
+          // 普通模式：替换现有数据
+          console.log('📝 普通模式：替换现有数据');
+          setRows(validatedData);
+          message.success(`成功识别 ${validatedData.length} 条家谱记录`);
+        }
+
         setStep(3);
-        message.success(`成功识别 ${validatedData.length} 条家谱记录`);
 
         // 额外验证：确保状态更新
         setTimeout(() => {
-          console.log('🔍 验证：当前rows状态应该是:', validatedData);
+          console.log('🔍 验证：当前rows状态长度:', rows.length);
         }, 100);
       } else {
-        console.log('⚠️ 未识别到数据，使用空行');
-        const emptyRowData = [emptyRow()];
+        console.log('⚠️ 未识别到数据，创建10行空白占位');
+        // 创建10行空白占位，方便手动编辑
+        const emptyRowData = Array.from({ length: 10 }, (_, index) => ({
+          ...emptyRow(),
+          id: index + 1
+        }));
         setRows(emptyRowData);
         setStep(3);
-        message.warning('未识别到家谱信息，请手动添加或检查图片质量');
+        message.warning('未识别到家谱信息，已创建10行空白表格供手动编辑');
       }
     } catch (error) {
       message.destroy();
@@ -299,96 +414,9 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
     setRows(newData);
   };
 
-  // OCR调试数据生成回调
-  const handleDebugDataGenerated = (debugData) => {
-    console.log('🔧 调试数据生成:', debugData);
-    if (debugData && debugData.length > 0) {
-      setRows(debugData);
-      setStep(3);
-      message.success(`调试生成 ${debugData.length} 条家谱记录`);
-    }
-  };
 
-  // 快速测试：直接生成测试数据
-  const generateTestData = () => {
-    console.log('🧪 生成测试数据...');
-    const testData = [
-      {
-        id: `test_${Date.now()}_1`,
-        name: '张明华',
-        g_rank: 1,
-        rank_index: 1,
-        g_father_id: 0,
-        official_position: '知县',
-        summary: '知县，为官清廉，深受百姓爱戴。',
-        adoption: 'none',
-        sex: 'MAN',
-        g_mother_id: null,
-        birth_date: '1850-01-01',
-        id_card: null,
-        face_img: null,
-        photos: null,
-        household_info: null,
-        spouse: '李氏',
-        home_page: null,
-        dealth: 'dealth',
-        formal_name: '张明华',
-        location: '江苏苏州',
-        childrens: '张伟强, 张丽娟'
-      },
-      {
-        id: `test_${Date.now()}_2`,
-        name: '张伟强',
-        g_rank: 2,
-        rank_index: 1,
-        g_father_id: `test_${Date.now()}_1`,
-        official_position: '举人',
-        summary: '举人，博学多才，著有诗集。',
-        adoption: 'none',
-        sex: 'MAN',
-        g_mother_id: null,
-        birth_date: '1875-03-15',
-        id_card: null,
-        face_img: null,
-        photos: null,
-        household_info: null,
-        spouse: '王氏',
-        home_page: null,
-        dealth: null,
-        formal_name: '张伟强',
-        location: '江苏苏州',
-        childrens: '张静敏'
-      },
-      {
-        id: `test_${Date.now()}_3`,
-        name: '张丽娟',
-        g_rank: 2,
-        rank_index: 2,
-        g_father_id: `test_${Date.now()}_1`,
-        official_position: '',
-        summary: '贤良淑德，善于持家。',
-        adoption: 'none',
-        sex: 'WOMAN',
-        g_mother_id: null,
-        birth_date: '1878-07-20',
-        id_card: null,
-        face_img: null,
-        photos: null,
-        household_info: null,
-        spouse: '陈氏',
-        home_page: null,
-        dealth: null,
-        formal_name: '张丽娟',
-        location: '江苏苏州',
-        childrens: null
-      }
-    ];
 
-    console.log('📊 生成的测试数据:', testData);
-    setRows(testData);
-    setStep(3);
-    message.success(`生成了 ${testData.length} 条测试家谱记录`);
-  };
+
 
   // 生成并下载familyData文件
   const generateFamilyDataFile = async () => {
@@ -484,10 +512,18 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
   };
 
   // 保存家谱数据到当前租户
-  const saveToCurrentTenant = async () => {
+  const saveToCurrentTenant = async (tableData = null) => {
     try {
-      if (!rows.length || rows.every(row => !row.name)) {
+      // 使用传入的tableData或当前的rows状态
+      const dataToSave = tableData || rows;
+
+      if (!dataToSave.length || dataToSave.every(row => !row.name)) {
         message.warning('请先添加家谱数据');
+        return;
+      }
+
+      if (!currentTenant?.id) {
+        message.error('请先选择族谱');
         return;
       }
 
@@ -495,14 +531,87 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
       message.loading('正在保存家谱数据...', 0);
 
       // 过滤掉空行
-      const validRows = rows.filter(row => row.name && row.name.trim());
+      const validRows = dataToSave.filter(row => row.name && row.name.trim());
 
-      await familyDataService.saveFamilyData(validRows, currentTenant?.id);
-      message.destroy();
-      message.success(`成功保存 ${validRows.length} 条家谱记录到 ${currentTenant?.name}`);
+      console.log('💾 保存家谱数据到数据库:', {
+        tenantId: currentTenant.id,
+        dataCount: validRows.length,
+        operation: '全量覆盖更新'
+      });
 
-      // 生成JSON用于预览
-      convertToJSON();
+      // 调用后端API保存数据到数据库（全量覆盖）
+      console.log('🌐 发送保存请求到:', 'http://localhost:3003/api/family-data/save');
+      console.log('📤 请求数据:', {
+        tenantId: currentTenant.id,
+        dataCount: validRows.length
+      });
+
+      const response = await fetch('http://localhost:3003/api/family-data/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          tenantId: currentTenant.id,
+          familyData: validRows
+        })
+      });
+
+      console.log('📥 响应状态:', response.status, response.statusText);
+      console.log('📥 响应头:', Object.fromEntries(response.headers.entries()));
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ 响应错误内容:', errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText || '保存失败'}`);
+      }
+
+      const result = await response.json();
+      console.log('✅ 响应结果:', result);
+
+      if (result.success) {
+        message.destroy();
+        message.success(`${result.message} 到 ${currentTenant.name}`);
+        console.log('✅ 家谱数据保存成功:', result);
+
+        // 清除所有相关缓存，确保族谱页面能获取到最新数据
+        try {
+          // 清除前端服务的缓存
+          const familyDataService = (await import('../../services/familyDataService')).default;
+          familyDataService.clearAllCache();
+
+          // 清除本地缓存管理器的缓存
+          const cacheManager = (await import('../../utils/cacheManager')).default;
+          cacheManager.remove(`family_data_${currentTenant.id}`);
+          cacheManager.remove(`tenant_${currentTenant.id}_family_data`);
+
+          console.log('🗑️ 已清除所有相关缓存，族谱页面将显示最新数据');
+        } catch (cacheError) {
+          console.warn('清除缓存时出现警告:', cacheError);
+        }
+
+        // 触发全局数据刷新事件（如果存在）
+        if (window.dispatchEvent) {
+          window.dispatchEvent(new CustomEvent('familyDataUpdated', {
+            detail: {
+              tenantId: currentTenant.id,
+              dataCount: validRows.length,
+              timestamp: new Date().toISOString()
+            }
+          }));
+        }
+
+        // 生成JSON用于预览
+        convertToJSON();
+
+        // 提示用户切换到族谱页面查看
+        setTimeout(() => {
+          message.info('数据已保存，可切换到族谱页面查看最新内容', 3);
+        }, 1000);
+
+      } else {
+        throw new Error(result.message || '保存失败');
+      }
     } catch (error) {
       message.destroy();
       message.error(`保存失败: ${error.message}`);
@@ -512,23 +621,6 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
     }
   };
 
-  // 一键生成家谱网站
-  const generateWebsite = async () => {
-    try {
-      if (!rows.length || rows.every(row => !row.name)) {
-        message.warning('请先添加家谱数据');
-        return;
-      }
-
-      // 先保存数据
-      await saveToCurrentTenant();
-
-      // TODO: 集成Vercel自动部署或其他部署服务
-      message.info('网站生成功能开发中，敬请期待！');
-    } catch (error) {
-      message.error(`生成网站失败: ${error.message}`);
-    }
-  };
 
   const canNextFromStep1 = files.length > 0;
   const canUpload = files.length > 0 && !busy;
@@ -538,68 +630,39 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
     <AppLayout activeMenuItem={activeMenuItem} onMenuClick={onMenuClick}>
       <div className="creator-page">
         <div className="creator-header">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
             <div>
-              <h1>家谱不会丢，数据永流传</h1>
-              <p>2分钟将纸质家谱数字化</p>
+              <h1>家谱不会丢，家族永流传</h1>
+              <p>公益电子家谱，1分钟搞定</p>
             </div>
             <TenantSelector onTenantChange={setCurrentTenant} />
           </div>
 
-          {/* 配置状态提示 */}
-          <div style={{ marginBottom: '16px' }}>
-            <Space>
-              {uploadConfig && (
-                <Tooltip title={`上传方式: ${uploadConfig.uploadMethod}, 最大文件: ${uploadConfig.maxFileSize / 1024 / 1024}MB`}>
-                  <Alert
-                    message={`上传: ${uploadConfig.uploadMethod}`}
-                    type={uploadConfig.isOSSEnabled ? 'success' : 'warning'}
-                    showIcon
-                    icon={uploadConfig.isOSSEnabled ? <CheckCircleOutlined /> : <ExclamationCircleOutlined />}
-                    style={{ cursor: 'pointer' }}
-                  />
-                </Tooltip>
-              )}
-
-              {ocrConfig && (
-                <Tooltip title={ocrConfig.isDevMode ? 'OCR: 开发模式 (使用模拟数据)' : 'OCR: 生产模式'}>
-                  <Alert
-                    message={`OCR: ${ocrConfig.isDevMode ? '开发模式' : '生产模式'}`}
-                    type={ocrConfig.isValid ? 'success' : 'info'}
-                    showIcon
-                    icon={ocrConfig.isValid ? <CheckCircleOutlined /> : <InfoCircleOutlined />}
-                    style={{ cursor: 'pointer' }}
-                  />
-                </Tooltip>
-              )}
-
-              {currentTenant && (
-                <Alert
-                  message={`当前家谱: ${currentTenant.name}`}
-                  type="info"
-                  showIcon
-                  icon={<InfoCircleOutlined />}
-                />
-              )}
-
-              {process.env.REACT_APP_DEBUG === 'true' && (
-                <Button
-                  type={showOSSTest ? 'primary' : 'default'}
-                  onClick={() => setShowOSSTest(!showOSSTest)}
-                  size="small"
-                >
-                  {showOSSTest ? '隐藏OSS测试' : '显示OSS测试'}
-                </Button>
-              )}
-            </Space>
+          {/* 步骤进度条 */}
+          <div style={{ marginBottom: '32px' }}>
+            <Steps
+              current={step - 1}
+              items={[
+                {
+                  title: '上传图片',
+                  description: '选择家谱图片文件',
+                  icon: <FileImageOutlined />,
+                },
+                {
+                  title: 'OCR识别',
+                  description: '智能识别家谱信息',
+                  icon: <TableOutlined />,
+                },
+                {
+                  title: 'JSON导出',
+                  description: '生成标准数据格式',
+                  icon: <CodeOutlined />,
+                },
+              ]}
+            />
           </div>
         </div>
 
-        <div className="creator-steps">
-          <div className={`step ${step>=1?'active':''}`}>1 上传图片</div>
-          <div className={`step ${step>=2?'active':''}`}>2 OCR 多维表</div>
-          <div className={`step ${step>=3?'active':''}`}>3 JSON & 发布</div>
-        </div>
 
         {/* Step 1 */}
         <section className="card card-padding">
@@ -657,6 +720,7 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
         {/* Step 2 */}
         <section className="card card-padding">
           <h3>Step 2 · OCR识别家谱信息并校对</h3>
+
           <div className="uploader">
             <Space>
               <Button
@@ -667,31 +731,7 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
               >
                 {busy && ocrProgress > 0 ? 'OCR识别中...' : '开始识别'}
               </Button>
-              {process.env.REACT_APP_DEBUG === 'true' && (
-                <>
-                  <Button
-                    type="dashed"
-                    onClick={() => setShowOCRDebug(!showOCRDebug)}
-                  >
-                    {showOCRDebug ? '隐藏调试' : '显示调试'}
-                  </Button>
-                  <Button
-                    type="dashed"
-                    onClick={generateTestData}
-                    style={{ backgroundColor: '#f0f0f0' }}
-                  >
-                    生成测试数据
-                  </Button>
-                  <Button
-                    type="primary"
-                    onClick={generateFamilyDataFile}
-                    style={{ backgroundColor: '#722ed1', borderColor: '#722ed1' }}
-                    disabled={!rows || rows.length === 0}
-                  >
-                    生成familyData文件
-                  </Button>
-                </>
-              )}
+
             </Space>
           </div>
 
@@ -709,44 +749,95 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
             </div>
           )}
 
-          {/* OCR调试面板 */}
-          {showOCRDebug && (
-            <div style={{ marginTop: '16px' }}>
-              <Space direction="vertical" style={{ width: '100%' }} size="large">
-                {/* 服务状态检查 */}
-                <ServiceStatusChecker />
 
-                {/* 通义千问API测试 */}
-                <QwenAPITester />
 
-                {/* OCR调试面板 */}
-                <OCRDebugPanel
-                  imageUrls={ossUrls}
-                  tenantId={currentTenant?.id || 'default'}
-                  onDataGenerated={handleDebugDataGenerated}
-                />
-              </Space>
-            </div>
-          )}
-
-          {/* 数据状态监控 (调试模式) */}
-          {showOCRDebug && (
-            <div style={{ marginTop: '16px' }}>
-              <DataStateMonitor
-                data={rows}
-                title="当前表格数据状态"
-              />
-            </div>
-          )}
-
-          {/* AG Grid 数据表格 */}
-          <FamilyDataGrid
+          {/* AntdFamilyTable 数据表格 */}
+          <AntdFamilyTable
             data={rows}
             onDataChange={handleDataChange}
             onExport={exportExcels}
             onSave={saveToCurrentTenant}
             loading={busy}
           />
+
+          {/* 数据同步状态 */}
+          {process.env.NODE_ENV === 'development' && (
+            <>
+              <DataSyncStatus
+                currentTenant={currentTenant}
+                onRefresh={() => {
+                  // 可以在这里添加刷新逻辑
+                  console.log('🔄 数据同步状态刷新');
+                }}
+              />
+
+              {/* API测试按钮 */}
+              <div style={{ marginTop: '16px', padding: '16px', border: '1px dashed #d9d9d9', borderRadius: '6px' }}>
+                <h4>🔧 开发调试工具</h4>
+                <Space>
+                  <Button
+                    size="small"
+                    onClick={async () => {
+                      try {
+                        console.log('🧪 测试API连接...');
+                        const response = await fetch('http://localhost:3003/health');
+                        const result = await response.text();
+                        console.log('✅ 健康检查成功:', result);
+                        message.success('API连接正常');
+                      } catch (error) {
+                        console.error('❌ 健康检查失败:', error);
+                        message.error(`API连接失败: ${error.message}`);
+                      }
+                    }}
+                  >
+                    测试API连接
+                  </Button>
+
+                  <Button
+                    size="small"
+                    type="primary"
+                    onClick={async () => {
+                      try {
+                        console.log('🧪 测试保存API...');
+                        const testData = [{
+                          id: 999,
+                          name: '测试人员',
+                          g_rank: 1,
+                          rank_index: 1,
+                          sex: 'MAN'
+                        }];
+
+                        const response = await fetch('http://localhost:3003/api/family-data/save', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            tenantId: currentTenant?.id || 'default',
+                            familyData: testData
+                          })
+                        });
+
+                        if (!response.ok) {
+                          const errorText = await response.text();
+                          throw new Error(`HTTP ${response.status}: ${errorText}`);
+                        }
+
+                        const result = await response.json();
+                        console.log('✅ 保存API测试成功:', result);
+                        message.success('保存API测试成功');
+                      } catch (error) {
+                        console.error('❌ 保存API测试失败:', error);
+                        message.error(`保存API测试失败: ${error.message}`);
+                      }
+                    }}
+                  >
+                    测试保存API
+                  </Button>
+                </Space>
+              </div>
+            </>
+          )}
+
+
         </section>
 
         {/* Step 3 */}
@@ -763,12 +854,6 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
             >
               保存到当前家谱
             </Button>
-            <Button
-              onClick={generateWebsite}
-              style={{ backgroundColor: '#722ed1', borderColor: '#722ed1', color: 'white' }}
-            >
-              一键生成网站
-            </Button>
           </div>
           <textarea className="json-output" rows={12} readOnly value={jsonOutput} placeholder="点击“生成 JSON”查看输出" />
         </section>
@@ -778,16 +863,13 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
           <ul>
             <li>上传到 OSS：推荐通过后端网关签名后直传，前端仅提交 FormData。</li>
             <li>通义千问 OCR：使用阿里云通义千问VL-Max模型进行家谱识别，通过代理服务器调用。</li>
-            <li>数据编辑：使用AG Grid专业表格组件，支持排序、筛选、多选等高级功能。</li>
+            <li>数据编辑：使用Ant Design Table组件，支持在线编辑、排序、分页等功能。</li>
             <li>“两份 Excel”：当前以 CSV 下载占位，后续可接入 SheetJS(xlsx) 输出 .xlsx。</li>
             <li>JSON 字段含 dealth：null 表示去世，只有 'alive' 表示在世（遵循你的规则）。</li>
           </ul>
         </div>
 
-        {/* OSS测试面板 */}
-        {showOSSTest && (
-          <OSSTestPanel />
-        )}
+
       </div>
     </AppLayout>
   );
