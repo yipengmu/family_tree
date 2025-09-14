@@ -53,7 +53,8 @@ class TenantService {
   // 获取租户信息
   async getTenant(tenantId) {
     try {
-      const tenant = await this.db.get(
+      const db = await this.getDB();
+      const tenant = await db.get(
         'SELECT * FROM tenants WHERE id = ?',
         [tenantId]
       );
@@ -76,7 +77,8 @@ class TenantService {
   // 获取所有租户列表
   async getAllTenants() {
     try {
-      const tenants = await this.db.query(
+      const db = await this.getDB();
+      const tenants = await db.query(
         'SELECT id, name, description, created_at, updated_at, status FROM tenants ORDER BY updated_at DESC'
       );
 
@@ -128,8 +130,9 @@ class TenantService {
     try {
       console.log(`⚙️ 保存租户配置: ${tenantId} - ${configKey}`);
 
+      const db = await this.getDB();
       // 使用 UPSERT 语法（SQLite 3.24+）
-      await this.db.run(`
+      await db.run(`
         INSERT INTO family_config (tenant_id, config_key, config_value) 
         VALUES (?, ?, ?)
         ON CONFLICT(tenant_id, config_key) 
@@ -148,16 +151,17 @@ class TenantService {
   // 获取租户配置
   async getTenantConfig(tenantId, configKey = null) {
     try {
+      const db = await this.getDB();
       if (configKey) {
         // 获取特定配置
-        const config = await this.db.get(
+        const config = await db.get(
           'SELECT config_value FROM family_config WHERE tenant_id = ? AND config_key = ?',
           [tenantId, configKey]
         );
         return config ? config.config_value : null;
       } else {
         // 获取所有配置
-        const configs = await this.db.query(
+        const configs = await db.query(
           'SELECT config_key, config_value FROM family_config WHERE tenant_id = ?',
           [tenantId]
         );
@@ -180,31 +184,32 @@ class TenantService {
   // 获取租户统计信息
   async getTenantStats(tenantId) {
     try {
+      const db = await this.getDB();
       const stats = {};
 
       // 家谱数据统计
-      const familyDataCount = await this.db.get(
+      const familyDataCount = await db.get(
         'SELECT COUNT(*) as count FROM family_data WHERE tenant_id = ?',
         [tenantId]
       );
       stats.familyDataCount = familyDataCount.count;
 
       // 配置项统计
-      const configCount = await this.db.get(
+      const configCount = await db.get(
         'SELECT COUNT(*) as count FROM family_config WHERE tenant_id = ?',
         [tenantId]
       );
       stats.configCount = configCount.count;
 
       // 数据版本统计
-      const versionCount = await this.db.get(
+      const versionCount = await db.get(
         'SELECT COUNT(*) as count FROM data_versions WHERE tenant_id = ?',
         [tenantId]
       );
       stats.versionCount = versionCount.count;
 
       // 最后更新时间
-      const lastUpdate = await this.db.get(`
+      const lastUpdate = await db.get(`
         SELECT MAX(updated_at) as last_update 
         FROM (
           SELECT updated_at FROM family_data WHERE tenant_id = ?

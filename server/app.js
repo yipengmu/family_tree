@@ -535,21 +535,157 @@ function extractBasicInfo(content, requestId) {
   return people;
 }
 
-// 错误处理中间件
-app.use((error, req, res, next) => {
-  console.error(`[${getTimestamp()}] ❌ 服务器错误:`, error);
-  res.status(500).json({
-    error: '服务器内部错误',
-    message: error.message
-  });
+// ==================== 租户管理API ====================
+
+// 获取所有租户
+app.get('/api/tenants', async (req, res) => {
+  try {
+    console.log(`🏢 [${getTimestamp()}] 获取租户列表请求`);
+
+    const tenants = await tenantService.getAllTenants();
+
+    res.json({
+      success: true,
+      data: tenants,
+      count: tenants.length,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error(`❌ [${getTimestamp()}] 获取租户列表失败:`, error);
+    res.status(500).json({
+      error: '获取租户列表失败',
+      message: error.message
+    });
+  }
 });
 
-// 404处理
-app.use((req, res) => {
-  res.status(404).json({
-    error: '接口不存在',
-    message: `路径 ${req.path} 不存在`
-  });
+// 获取指定租户信息
+app.get('/api/tenants/:tenantId', async (req, res) => {
+  try {
+    const { tenantId } = req.params;
+    console.log(`🏢 [${getTimestamp()}] 获取租户信息请求 - 租户: ${tenantId}`);
+
+    const tenant = await tenantService.getTenant(tenantId);
+    
+    if (!tenant) {
+      return res.status(404).json({
+        success: false,
+        error: '租户不存在',
+        message: `租户 ${tenantId} 不存在`
+      });
+    }
+
+    res.json({
+      success: true,
+      tenant: tenant,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error(`❌ [${getTimestamp()}] 获取租户信息失败:`, error);
+    res.status(500).json({
+      error: '获取租户信息失败',
+      message: error.message
+    });
+  }
+});
+
+// 创建或更新租户
+app.post('/api/tenants', async (req, res) => {
+  try {
+    const tenantData = req.body;
+    console.log(`🏢 [${getTimestamp()}] 创建租户请求:`, {
+      id: tenantData.id,
+      name: tenantData.name
+    });
+
+    if (!tenantData.name) {
+      return res.status(400).json({
+        success: false,
+        error: '缺少租户名称',
+        message: '租户名称是必填项'
+      });
+    }
+
+    // 如果没有提供ID，生成一个
+    if (!tenantData.id) {
+      const timestamp = Date.now().toString(36);
+      const random = Math.random().toString(36).substring(2, 8);
+      tenantData.id = `tenant_${timestamp}_${random}`;
+    }
+
+    const tenant = await tenantService.createOrUpdateTenant(tenantData.id, tenantData);
+
+    res.json({
+      success: true,
+      tenant: tenant,
+      message: '租户创建成功',
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error(`❌ [${getTimestamp()}] 创建租户失败:`, error);
+    res.status(500).json({
+      success: false,
+      error: '创建租户失败',
+      message: error.message
+    });
+  }
+});
+
+// 删除租户
+app.delete('/api/tenants/:tenantId', async (req, res) => {
+  try {
+    const { tenantId } = req.params;
+    console.log(`🗑️ [${getTimestamp()}] 删除租户请求 - 租户: ${tenantId}`);
+
+    if (tenantId === 'default') {
+      return res.status(400).json({
+        success: false,
+        error: '不能删除默认租户',
+        message: '默认租户不能被删除'
+      });
+    }
+
+    const result = await tenantService.deleteTenant(tenantId);
+
+    res.json({
+      success: true,
+      message: result.message,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error(`❌ [${getTimestamp()}] 删除租户失败:`, error);
+    res.status(500).json({
+      error: '删除租户失败',
+      message: error.message
+    });
+  }
+});
+
+// 获取租户统计信息
+app.get('/api/tenants/:tenantId/stats', async (req, res) => {
+  try {
+    const { tenantId } = req.params;
+    console.log(`📊 [${getTimestamp()}] 获取租户统计请求 - 租户: ${tenantId}`);
+
+    const stats = await tenantService.getTenantStats(tenantId);
+
+    res.json({
+      success: true,
+      stats: stats,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error(`❌ [${getTimestamp()}] 获取租户统计失败:`, error);
+    res.status(500).json({
+      error: '获取租户统计失败',
+      message: error.message
+    });
+  }
 });
 
 // ==================== 家谱数据管理API ====================
@@ -620,6 +756,23 @@ app.get('/api/family-data/:tenantId', async (req, res) => {
       message: error.message
     });
   }
+});
+
+// 错误处理中间件
+app.use((error, req, res, next) => {
+  console.error(`[${getTimestamp()}] ❌ 服务器错误:`, error);
+  res.status(500).json({
+    error: '服务器内部错误',
+    message: error.message
+  });
+});
+
+// 404处理
+app.use((req, res) => {
+  res.status(404).json({
+    error: '接口不存在',
+    message: `路径 ${req.path} 不存在`
+  });
 });
 
 // 启动服务器

@@ -75,18 +75,26 @@ function App() {
           const response = await fetch(`http://localhost:3003/api/family-data/${currentTenantId}`);
           const result = await response.json();
 
-          if (response.ok && result.success) {
-            data = result.data || [];
+          if (response.ok && result.success && result.data && result.data.length > 0) {
+            data = result.data;
             console.log(`✅ [App] 从数据库加载 ${data.length} 条记录`);
           } else {
             console.log(`📝 [App] 数据库无数据，使用本地服务`);
             // 如果数据库没有数据，使用原有的familyDataService
-            data = await familyDataService.getFamilyData(false, currentTenantId);
+            // 对默认租户强制刷新，确保加载最新数据
+            const forceRefresh = currentTenantId === 'default' || 
+                               currentTenantId === process.env.REACT_APP_DEFAULT_TENANT_ID;
+            console.log(`🔄 [App] ${forceRefresh ? '强制刷新' : '常规加载'}家谱数据`);
+            data = await familyDataService.getFamilyData(forceRefresh, currentTenantId);
           }
         } catch (dbError) {
           console.log(`📝 [App] 数据库连接失败，使用本地服务:`, dbError.message);
           // 如果数据库连接失败，使用原有的familyDataService
-          data = await familyDataService.getFamilyData(false, currentTenantId);
+          // 对默认租户强制刷新，确保加载最新数据
+          const forceRefresh = currentTenantId === 'default' || 
+                             currentTenantId === process.env.REACT_APP_DEFAULT_TENANT_ID;
+          console.log(`🔄 [App] ${forceRefresh ? '强制刷新' : '常规加载'}家谱数据`);
+          data = await familyDataService.getFamilyData(forceRefresh, currentTenantId);
         }
 
         // 验证数据

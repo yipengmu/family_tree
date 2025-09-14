@@ -13,7 +13,7 @@ const CACHE_KEYS = {
 
 class TenantService {
   constructor() {
-    this.baseURL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:3001';
+    this.baseURL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:3003';
     this.isMultiTenantEnabled = process.env.REACT_APP_ENABLE_MULTI_TENANT === 'true';
     this.defaultTenantId = process.env.REACT_APP_DEFAULT_TENANT_ID || 'default';
     this.CACHE_KEYS = CACHE_KEYS;

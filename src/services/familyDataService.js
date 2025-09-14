@@ -40,6 +40,19 @@ class FamilyDataService {
   async getFamilyData(forceRefresh = false, tenantId = null) {
     const currentTenantId = tenantId || tenantService.getCurrentTenant().id;
     const cacheKey = getTenantCacheKey(CACHE_KEYS.FAMILY_DATA, currentTenantId);
+    
+    console.log(`🔍 获取家谱数据 (租户: ${currentTenantId}, 强制刷新: ${forceRefresh})`);
+    
+    // 强制刷新时清除缓存
+    if (forceRefresh) {
+      console.log(`🔄 强制刷新数据，清除缓存... (租户: ${currentTenantId})`);
+      cacheManager.delete(cacheKey);
+      // 清除localStorage中的数据
+      const localKey = `family_data_${currentTenantId}`;
+      localStorage.removeItem(localKey);
+      // 清除正在进行的请求
+      this.loadingPromise = null;
+    }
 
     // 如果不强制刷新，先检查缓存
     if (!forceRefresh) {
@@ -62,6 +75,17 @@ class FamilyDataService {
 
     try {
       const data = await this.loadingPromise;
+      
+      // 检查数据是否有效
+      if (!data || data.length === 0) {
+        console.warn(`⚠️ 从服务器获取的数据为空，尝试使用本地数据... (租户: ${currentTenantId})`);
+        const localData = this.getLocalFamilyData(currentTenantId);
+        if (localData && localData.length > 0) {
+          // 缓存本地数据
+          cacheManager.set(cacheKey, localData, CACHE_EXPIRY.FAMILY_DATA);
+          return localData;
+        }
+      }
 
       // 缓存数据
       cacheManager.set(cacheKey, data, CACHE_EXPIRY.FAMILY_DATA);
@@ -85,7 +109,13 @@ class FamilyDataService {
       const startTime = Date.now();
 
       const baseURL = process.env.REACT_APP_API_BASE_URL || '';
-      const url = `${baseURL}/api/family-data?tenantId=${tenantId}`;
+      // 修正API请求URL格式，确保正确处理默认租户
+      const url = tenantId === 'default' || tenantId === process.env.REACT_APP_DEFAULT_TENANT_ID
+        ? `${baseURL}/api/family-data/default`
+        : `${baseURL}/api/family-data?tenantId=${tenantId}`;
+      
+      console.log(`🔗 请求URL: ${url}`);
+      
 
       const response = await fetch(url, {
         headers: {
@@ -122,7 +152,20 @@ class FamilyDataService {
 
       // 如果没有缓存数据，使用本地数据
       console.log(`📝 使用本地数据 (租户: ${tenantId})`);
-      return this.getLocalFamilyData(tenantId);
+      const localData = this.getLocalFamilyData(tenantId);
+      
+      // 如果是默认租户且没有获取到数据，尝试清除缓存并重新加载
+      if ((tenantId === 'default' || tenantId === process.env.REACT_APP_DEFAULT_TENANT_ID) && 
+          (!localData || localData.length === 0)) {
+        console.log(`⚠️ 默认租户未获取到本地数据，尝试清除缓存并重新加载... (租户: ${tenantId})`);
+        // 清除localStorage中可能存在的错误数据
+        const localKey = `family_data_${tenantId}`;
+        localStorage.removeItem(localKey);
+        // 重新尝试加载本地数据
+        return this.getLocalFamilyData(tenantId);
+      }
+      
+      return localData;
     }
   }
 
@@ -133,6 +176,7 @@ class FamilyDataService {
    */
   getLocalFamilyData(tenantId = null) {
     const currentTenantId = tenantId || tenantService.getCurrentTenant().id;
+    console.log(`🔍 尝试获取租户 ${currentTenantId} 的本地家谱数据`);
 
     // 首先尝试从localStorage获取租户数据
     const localKey = `family_data_${currentTenantId}`;
@@ -141,34 +185,73 @@ class FamilyDataService {
     if (storedData) {
       try {
         const data = JSON.parse(storedData);
-        console.log(`📊 从本地存储加载家谱数据: ${data.length} 条记录 (租户: ${currentTenantId})`);
-        return data;
+        if (data && data.length > 0) {
+          console.log(`📊 从本地存储加载家谱数据: ${data.length} 条记录 (租户: ${currentTenantId})`);
+          return data;
+        } else {
+          console.warn(`⚠️ 本地存储中的数据为空 (租户: ${currentTenantId})`);
+          localStorage.removeItem(localKey); // 清除无效数据
+        }
       } catch (error) {
         console.error('解析本地存储数据失败:', error);
+        localStorage.removeItem(localKey); // 清除无效数据
       }
     }
 
     // 如果是默认租户且没有本地数据，使用内置数据
     if (currentTenantId === 'default' || currentTenantId === process.env.REACT_APP_DEFAULT_TENANT_ID) {
-      const dbJson = require('../data/familyData.js');
-      const data = dbJson.default || dbJson;
+      console.log(`🔄 加载默认家谱数据文件 (租户: ${currentTenantId})`);
+      try {
+        // 直接导入数据文件
+        const dbJson = require('../data/familyData.js');
+        console.log(`📋 数据文件类型: ${typeof dbJson}, 是否数组: ${Array.isArray(dbJson)}`);
+        
+        // 确保正确处理导出格式
+        let data;
+        if (Array.isArray(dbJson)) {
+          data = dbJson;
+          console.log(`✅ 数据文件是数组格式，包含 ${data.length} 条记录`);
+        } else if (dbJson && typeof dbJson === 'object' && dbJson.default) {
+          data = dbJson.default;
+          console.log(`✅ 数据文件包含default导出，包含 ${data.length} 条记录`);
+        } else {
+          console.error('❌ 数据文件格式不正确，无法获取家谱数据');
+          return [];
+        }
 
-      // 为默认数据添加租户信息
-      const dataWithTenant = data.map(item => ({
-        ...item,
-        tenant_id: currentTenantId,
-      }));
+        if (!data || data.length === 0) {
+          console.error('❌ 默认家谱数据为空');
+          return [];
+        }
 
-      // 数据校验
-      const validationResult = this.validateFamilyData(dataWithTenant);
-      if (!validationResult.isValid) {
-        console.warn('⚠️ 家谱数据校验发现问题:', validationResult.issues);
-      } else {
-        console.log('✅ 家谱数据校验通过');
+        // 为默认数据添加租户信息
+        const dataWithTenant = data.map(item => ({
+          ...item,
+          tenant_id: currentTenantId,
+        }));
+
+        // 数据校验
+        const validationResult = this.validateFamilyData(dataWithTenant);
+        if (!validationResult.isValid) {
+          console.warn('⚠️ 家谱数据校验发现问题:', validationResult.issues);
+        } else {
+          console.log('✅ 家谱数据校验通过');
+        }
+
+        // 将数据保存到localStorage，以便下次使用
+        try {
+          localStorage.setItem(localKey, JSON.stringify(dataWithTenant));
+          console.log(`💾 默认家谱数据已保存到本地存储 (租户: ${currentTenantId})`);
+        } catch (e) {
+          console.warn('保存数据到localStorage失败:', e);
+        }
+
+        console.log(`📊 加载默认家谱数据: ${dataWithTenant.length} 条记录 (租户: ${currentTenantId})`);
+        return dataWithTenant;
+      } catch (error) {
+        console.error('❌ 加载默认家谱数据失败:', error);
+        return [];
       }
-
-      console.log(`📊 加载默认家谱数据: ${dataWithTenant.length} 条记录 (租户: ${currentTenantId})`);
-      return dataWithTenant;
     }
 
     // 其他租户返回空数组
