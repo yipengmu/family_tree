@@ -174,7 +174,7 @@ const FamilySearchBar = ({
           placeholder={placeholder}
           style={{ width: 200 }}
           allowClear
-          dropdownClassName="family-search-dropdown"
+          classNames={{ popup: { root: "family-search-dropdown" } }}
         >
           <Input
             prefix={<SearchOutlined />}

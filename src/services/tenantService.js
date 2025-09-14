@@ -350,7 +350,8 @@ class TenantService {
   getTenantHeaders() {
     return {
       'X-Tenant-ID': this.currentTenant.id,
-      'X-Tenant-Name': this.currentTenant.name,
+      // 使用encodeURIComponent确保非ASCII字符被正确编码
+      'X-Tenant-Name': encodeURIComponent(this.currentTenant.name),
     };
   }
 

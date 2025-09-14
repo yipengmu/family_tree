@@ -548,26 +548,36 @@ const FamilyTreeFlow = forwardRef(({ familyData, loading = false, error = null, 
   const onNodeClick = useCallback((_, node) => {
     console.log('节点点击:', node.data.name);
 
-    // 检查是否是智能折叠模式下的被折叠节点
-    if (isShowingAll && isSmartCollapseEnabled) {
-      const nodeId = node.data.id;
-      const visibleData = nodes.map(n => n.data);
-      const hasHiddenChildren = hasCollapsedChildren(nodeId, familyData, visibleData);
+    const nodeId = node.data.id;
+    const visibleData = nodes.map(n => n.data);
+    const hasHiddenChildren = hasCollapsedChildren(nodeId, familyData, visibleData);
 
-      if (hasHiddenChildren) {
-        // 展开节点时清除之前选中的节点
+    // 检查节点是否已经展开
+    const isExpanded = expandedNodes.has(nodeId);
+
+    if (hasHiddenChildren) {
+      if (!isExpanded) {
+        // 展开节点
         setSelectedNode(null);
         const newExpandedNodes = new Set(expandedNodes);
         newExpandedNodes.add(nodeId);
         setExpandedNodes(newExpandedNodes);
         console.log(`🔓 展开节点: ${node.data.name} (ID: ${nodeId})`);
         return;
+      } else {
+        // 折叠节点
+        setSelectedNode(null);
+        const newExpandedNodes = new Set(expandedNodes);
+        newExpandedNodes.delete(nodeId);
+        setExpandedNodes(newExpandedNodes);
+        console.log(`🔒 折叠节点: ${node.data.name} (ID: ${nodeId})`);
+        return;
       }
     }
 
     // 显示节点详情
     setSelectedNode(node);
-  }, [isShowingAll, isSmartCollapseEnabled, familyData, nodes, expandedNodes]);
+  }, [familyData, nodes, expandedNodes]);
 
   // 移除重置视图功能
 
@@ -951,13 +961,13 @@ const FamilyTreeFlow = forwardRef(({ familyData, loading = false, error = null, 
             minZoom: isMobile ? 0.4 : 0.5,
             maxZoom: isMobile ? 1.5 : 1.2
           }}
-          // 移动端优化配置
+          // 交互配置
           panOnDrag={true}
           panOnScroll={!isMobile} // 移动端禁用滚轮平移
           panOnScrollMode={isMobile ? 'free' : 'vertical'}
-          zoomOnScroll={!isMobile} // 移动端禁用滚轮缩放
-          zoomOnPinch={isMobile} // 移动端启用双指缩放
-          zoomOnDoubleClick={true}
+          zoomOnScroll={false} // 禁用滚轮缩放，避免与节点点击冲突
+          zoomOnPinch={isMobile} // 仅移动端启用双指缩放
+          zoomOnDoubleClick={false} // 禁用双击缩放，避免与节点点击冲突
           preventScrolling={isMobile} // 移动端防止页面滚动
           selectNodesOnDrag={false}
         >

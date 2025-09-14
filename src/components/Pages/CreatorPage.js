@@ -29,9 +29,7 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
   const [files, setFiles] = useState([]); // File[]
   const [previews, setPreviews] = useState([]); // local preview urls
   const [ossUrls, setOssUrls] = useState([]); // uploaded urls
-  const [rows, setRows] = useState([
-    emptyRow(),emptyRow(),emptyRow()
-  ]);
+  const [rows, setRows] = useState([]);
   const [jsonOutput, setJsonOutput] = useState('');
   const [busy, setBusy] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -40,7 +38,7 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
   const [uploadConfig, setUploadConfig] = useState(null);
   const [ocrConfig, setOcrConfig] = useState(null);
 
-  const [appendMode] = useState(true); // 默认使用追加模式
+  const [appendMode, setAppendMode] = useState(true); // 默认使用追加模式
 
   // 数据持久化key
   const getStorageKey = (key) => {
@@ -90,7 +88,7 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
       const savedFiles = loadFromStorage('files', []);
       const savedPreviews = loadFromStorage('previews', []);
       const savedOssUrls = loadFromStorage('ossUrls', []);
-      const savedRows = loadFromStorage('rows', [emptyRow()]);
+      const savedRows = loadFromStorage('rows', []);
       const savedJsonOutput = loadFromStorage('jsonOutput', '');
 
       setStep(savedStep);
@@ -355,36 +353,73 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
 
         console.log('🔄 验证后的数据:', validatedData);
 
-        // 根据是否为追加模式决定如何处理数据
-        if (appendMode && rows.length > 0) {
-          // 追加模式：合并到现有数据
-          console.log('📝 追加模式：合并新识别的数据到现有数据');
-          const mergedData = [...rows, ...validatedData];
-          setRows(mergedData);
-          message.success(`成功追加识别 ${validatedData.length} 个人物信息，当前共 ${mergedData.length} 条记录`);
-        } else {
-          // 普通模式：替换现有数据
-          console.log('📝 普通模式：替换现有数据');
-          setRows(validatedData);
-          message.success(`成功识别 ${validatedData.length} 条家谱记录`);
-        }
+        // 检查表格是否已有数据
+        if (rows.length > 0) {
+          // 表格已有数据，提示用户选择模式
+          const handleAppendMode = () => {
+            // 追加模式：合并到现有数据
+            console.log('📝 追加模式：合并新识别的数据到现有数据');
+            const mergedData = [...rows, ...validatedData];
+            setRows(mergedData);
+            message.success(`成功追加识别 ${validatedData.length} 个人物信息，当前共 ${mergedData.length} 条记录`);
+            setStep(3);
+            setAppendMode(true); // 记住用户选择
+          };
 
-        setStep(3);
+          const handleReplaceMode = () => {
+            // 替换模式：替换现有数据
+            console.log('📝 替换模式：替换现有数据');
+            // 确保完全清空现有数据，然后设置新数据
+            setRows([]);
+            setTimeout(() => {
+              setRows(validatedData);
+              message.success(`成功识别 ${validatedData.length} 条家谱记录`);
+            }, 10);
+            setStep(3);
+            setAppendMode(false); // 记住用户选择
+          };
+
+          // 显示模式选择确认框
+          message.info({
+            content: (
+              <div>
+                <p>表格中已有 {rows.length} 条数据，OCR识别到 {validatedData.length} 条新数据</p>
+                <Space>
+                  <Button type="primary" onClick={handleAppendMode}>追加数据</Button>
+                  <Button danger onClick={handleReplaceMode}>覆盖数据</Button>
+                </Space>
+              </div>
+            ),
+            duration: 0, // 不自动关闭
+            icon: <InfoCircleOutlined />,
+            key: 'data-mode-selection'
+          });
+        } else {
+          // 表格无数据，直接设置
+          console.log('📝 表格无数据，直接设置识别结果');
+          // 确保完全清空现有数据，然后设置新数据
+          setRows([]);
+          setTimeout(() => {
+            setRows(validatedData);
+            message.success(`成功识别 ${validatedData.length} 条家谱记录`);
+            setStep(3);
+          }, 10);
+        }
 
         // 额外验证：确保状态更新
         setTimeout(() => {
           console.log('🔍 验证：当前rows状态长度:', rows.length);
         }, 100);
       } else {
-        console.log('⚠️ 未识别到数据，创建10行空白占位');
-        // 创建10行空白占位，方便手动编辑
-        const emptyRowData = Array.from({ length: 10 }, (_, index) => ({
+        console.log('⚠️ 未识别到数据，创建1行空白供手动编辑');
+        // 创建1行空白，方便手动编辑
+        const emptyRowData = [{
           ...emptyRow(),
-          id: index + 1
-        }));
+          id: 1
+        }];
         setRows(emptyRowData);
         setStep(3);
-        message.warning('未识别到家谱信息，已创建10行空白表格供手动编辑');
+        message.warning('未识别到家谱信息，已创建空白表格供手动编辑');
       }
     } catch (error) {
       message.destroy();
@@ -412,6 +447,21 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
   const handleDataChange = (newData) => {
     console.log('📝 数据变化:', newData);
     setRows(newData);
+    // 保存到localStorage
+    saveToStorage('rows', newData);
+  };
+  
+  // 添加新行
+  const addNewRow = () => {
+    const newId = rows.length > 0 ? Math.max(...rows.map(r => parseInt(r.id) || 0)) + 1 : 1;
+    const newRow = {
+      ...emptyRow(),
+      id: newId
+    };
+    const newData = [...rows, newRow];
+    setRows(newData);
+    saveToStorage('rows', newData);
+    message.success('已添加新行');
   };
 
 
@@ -731,7 +781,25 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
               >
                 {busy && ocrProgress > 0 ? 'OCR识别中...' : '开始识别'}
               </Button>
-
+              
+              <Button 
+                type="default"
+                onClick={() => {
+                  // 如果表格为空，添加一行空数据
+                  if (rows.length === 0) {
+                    const emptyRowData = [{
+                      ...emptyRow(),
+                      id: 1
+                    }];
+                    setRows(emptyRowData);
+                  }
+                  // 进入表格编辑模式
+                  setStep(3);
+                  message.info('已进入手动编辑模式');
+                }}
+              >
+                手动编辑
+              </Button>
             </Space>
           </div>
 
@@ -752,6 +820,33 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
 
 
           {/* AntdFamilyTable 数据表格 */}
+          <div style={{ marginTop: '16px', marginBottom: '16px' }}>
+            <Space>
+              <Button 
+                type="primary" 
+                icon={<PlusOutlined />} 
+                onClick={addNewRow}
+                disabled={busy}
+              >
+                添加新行
+              </Button>
+              {rows.length > 0 && (
+                <Button 
+                  danger 
+                  onClick={() => {
+                    if (window.confirm('确定要清空所有数据吗？')) {
+                      setRows([]);
+                      saveToStorage('rows', []);
+                      message.warning('已清空所有数据');
+                    }
+                  }}
+                >
+                  清空数据
+                </Button>
+              )}
+            </Space>
+          </div>
+          
           <AntdFamilyTable
             data={rows}
             onDataChange={handleDataChange}
