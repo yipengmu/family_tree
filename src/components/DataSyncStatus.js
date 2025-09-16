@@ -20,7 +20,7 @@ const DataSyncStatus = ({ currentTenant, onRefresh }) => {
   // 检查数据同步状态
   const checkSyncStatus = async () => {
     if (!currentTenant?.id) {
-      setSyncStatus(prev => ({ ...prev, error: '未选择租户' }));
+      setSyncStatus(prev => ({ ...prev, error: '' }));
       return;
     }
 

@@ -1,11 +1,9 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { message, Progress, Alert, Button, Space, Tooltip, Steps, Upload, Card } from 'antd';
-import { InfoCircleOutlined, CheckCircleOutlined, ExclamationCircleOutlined, FileImageOutlined, TableOutlined, CodeOutlined, InboxOutlined, CloudUploadOutlined, EyeOutlined, DownloadOutlined, PlusOutlined } from '@ant-design/icons';
+import { message, Progress, Button, Space, Card, Row, Col, Divider, Typography } from 'antd';
+import { PlusOutlined, CloudUploadOutlined, TableOutlined, SaveOutlined, DownloadOutlined, ScanOutlined } from '@ant-design/icons';
 import AppLayout from '../Layout/AppLayout';
 import TenantSelector from '../TenantSelector';
-
 import AntdFamilyTable from '../AntdFamilyTable';
-import DataSyncStatus from '../DataSyncStatus';
 import qwenOcrService from '../../services/qwenOcrService';
 import uploadService from '../../services/uploadService';
 import tenantService from '../../services/tenantService';
@@ -13,8 +11,9 @@ import familyDataService from '../../services/familyDataService';
 import familyDataGenerator from '../../services/familyDataGenerator';
 import './CreatorPage.css';
 
-// 轻量创作向导（不新增外部依赖）
-// 步骤：上传 -> OCR -> 表格编辑 -> JSON 导出/发布
+const { Title } = Typography;
+
+// 数据管理页面 - 以表格数据为核心
 
 const DEFAULT_COLUMNS = [
   'id','name','g_rank','rank_index','g_father_id','official_position','summary','adoption','sex','g_mother_id','birth_date','id_card','face_img','photos','household_info','spouse','home_page','dealth','formal_name','location','childrens'
@@ -25,10 +24,10 @@ const emptyRow = () => ({
 });
 
 function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
-  const [step, setStep] = useState(1);
-  const [files, setFiles] = useState([]); // File[]
-  const [previews, setPreviews] = useState([]); // local preview urls
-  const [ossUrls, setOssUrls] = useState([]); // uploaded urls
+  // 状态管理
+  const [files, setFiles] = useState([]);
+  const [previews, setPreviews] = useState([]);
+  const [ossUrls, setOssUrls] = useState([]);
   const [rows, setRows] = useState([]);
   const [jsonOutput, setJsonOutput] = useState('');
   const [busy, setBusy] = useState(false);
@@ -37,8 +36,6 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
   const [currentTenant, setCurrentTenant] = useState(null);
   const [uploadConfig, setUploadConfig] = useState(null);
   const [ocrConfig, setOcrConfig] = useState(null);
-
-  const [appendMode, setAppendMode] = useState(true); // 默认使用追加模式
 
   // 数据持久化key
   const getStorageKey = (key) => {
@@ -120,7 +117,6 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
   // 恢复保存的数据
   useEffect(() => {
     if (currentTenant) {
-      const savedStep = loadFromStorage('step', 1);
       const savedFiles = loadFromStorage('files', []);
       const savedPreviews = loadFromStorage('previews', []);
       const savedOssUrls = loadFromStorage('ossUrls', []);
@@ -144,14 +140,12 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
         setRows(savedRows);
       }
 
-      setStep(savedStep);
       setFiles(savedFiles);
       setPreviews(savedPreviews);
       setOssUrls(savedOssUrls);
       setJsonOutput(savedJsonOutput);
 
       console.log('已恢复保存的数据:', {
-        step: savedStep,
         filesCount: savedFiles.length,
         previewsCount: savedPreviews.length,
         ossUrlsCount: savedOssUrls.length,
@@ -195,12 +189,6 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
   }, [currentTenant]);
 
   // 自动保存数据
-  useEffect(() => {
-    if (currentTenant) {
-      saveToStorage('step', step);
-    }
-  }, [step, currentTenant]);
-
   useEffect(() => {
     if (currentTenant) {
       saveToStorage('files', files);
@@ -428,57 +416,17 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
 
         console.log('🔄 验证后的数据:', validatedData);
 
-        // 检查表格是否已有数据
         if (rows.length > 0) {
-          // 表格已有数据，提示用户选择模式
-          const handleAppendMode = () => {
-            // 追加模式：合并到现有数据
-            console.log('📝 追加模式：合并新识别的数据到现有数据');
-            const mergedData = [...rows, ...validatedData];
-            setRows(mergedData);
-            message.success(`成功追加识别 ${validatedData.length} 个人物信息，当前共 ${mergedData.length} 条记录`);
-            setStep(3);
-            setAppendMode(true); // 记住用户选择
-          };
-
-          const handleReplaceMode = () => {
-            // 替换模式：替换现有数据
-            console.log('📝 替换模式：替换现有数据');
-            // 确保完全清空现有数据，然后设置新数据
-            setRows([]);
-            setTimeout(() => {
-              setRows(validatedData);
-              message.success(`成功识别 ${validatedData.length} 条家谱记录`);
-            }, 10);
-            setStep(3);
-            setAppendMode(false); // 记住用户选择
-          };
-
-          // 显示模式选择确认框
-          message.info({
-            content: (
-              <div>
-                <p>表格中已有 {rows.length} 条数据，OCR识别到 {validatedData.length} 条新数据</p>
-                <Space>
-                  <Button type="primary" onClick={handleAppendMode}>追加数据</Button>
-                  <Button danger onClick={handleReplaceMode}>覆盖数据</Button>
-                </Space>
-              </div>
-            ),
-            duration: 0, // 不自动关闭
-            icon: <InfoCircleOutlined />,
-            key: 'data-mode-selection'
-          });
+          // 表格已有数据，自动追加模式
+          console.log('📝 追加模式：合并新识别的数据到现有数据');
+          const mergedData = [...rows, ...validatedData];
+          setRows(mergedData);
+          message.success(`成功追加识别 ${validatedData.length} 个人物信息，当前共 ${mergedData.length} 条记录`);
         } else {
           // 表格无数据，直接设置
           console.log('📝 表格无数据，直接设置识别结果');
-          // 确保完全清空现有数据，然后设置新数据
-          setRows([]);
-          setTimeout(() => {
-            setRows(validatedData);
-            message.success(`成功识别 ${validatedData.length} 条家谱记录`);
-            setStep(3);
-          }, 10);
+          setRows(validatedData);
+          message.success(`成功识别 ${validatedData.length} 条家谱记录`);
         }
 
         // 额外验证：确保状态更新
@@ -493,7 +441,6 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
           id: 1
         }];
         setRows(emptyRowData);
-        setStep(3);
         message.warning('未识别到家谱信息，已创建空白表格供手动编辑');
       }
     } catch (error) {
@@ -747,190 +694,202 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
   };
 
 
-  const canNextFromStep1 = files.length > 0;
-  const canUpload = files.length > 0 && !busy;
-  const canOCR = ossUrls.length > 0 && !busy;
-
   return (
     <AppLayout activeMenuItem={activeMenuItem} onMenuClick={onMenuClick}>
-      <div className="creator-page">
-        <div className="creator-header">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-            <div>
-              <h1>家谱不会丢，家族永流传</h1>
-              <p>公益电子家谱，1分钟搞定</p>
-            </div>
-            <TenantSelector onTenantChange={setCurrentTenant} />
-          </div>
-
-          {/* 步骤进度条 */}
-          <div style={{ marginBottom: '32px' }}>
-            <Steps
-              current={step - 1}
-              items={[
-                {
-                  title: '上传图片',
-                  description: '选择家谱图片文件',
-                  icon: <FileImageOutlined />,
-                },
-                {
-                  title: 'OCR识别',
-                  description: '智能识别家谱信息',
-                  icon: <TableOutlined />,
-                },
-                {
-                  title: 'JSON导出',
-                  description: '生成标准数据格式',
-                  icon: <CodeOutlined />,
-                },
-              ]}
-            />
-          </div>
+      <div className="data-management-page">
+        {/* 页面头部 */}
+        <div className="page-header">
+          <Row justify="space-between" align="middle" style={{ marginBottom: '24px' }}>
+            <Col>
+              <Title level={2} style={{ margin: 0, color: '#1e1e2d' }}>
+                📋 家谱数据管理
+              </Title>
+              <p style={{ margin: '8px 0 0 0', color: '#6b7280', fontSize: '16px' }}>
+                智能识别、在线编辑、一键发布家谱数据
+              </p>
+            </Col>
+            <Col>
+              <TenantSelector onTenantChange={setCurrentTenant} />
+            </Col>
+          </Row>
         </div>
 
-
-        {/* Step 1 */}
-        <section className="card card-padding">
-          <h3>Step 1 · 上传族谱图片 (最多10张)</h3>
-          <div className="uploader">
-            <input
-              type="file"
-              multiple
-              accept="image/*"
-              onChange={onPickFiles}
-              disabled={busy}
-            />
-            <Space>
-              <Button
-                type="primary"
-                disabled={!canUpload}
-                loading={busy && uploadProgress > 0}
-                onClick={handleUpload}
-              >
-                {busy && uploadProgress > 0 ? '上传中...' : '上传图片'}
-              </Button>
-              {uploadConfig && (
-                <Tooltip title={`支持格式: ${uploadConfig.allowedTypes.join(', ')}`}>
-                  <Button icon={<InfoCircleOutlined />} type="text" />
-                </Tooltip>
-              )}
-            </Space>
-          </div>
-
-          {/* 上传进度 */}
-          {uploadProgress > 0 && uploadProgress < 100 && (
-            <div style={{ marginTop: '16px' }}>
-              <Progress
-                percent={Math.round(uploadProgress)}
-                status="active"
-                strokeColor={{
-                  '0%': '#108ee9',
-                  '100%': '#87d068',
-                }}
-              />
-            </div>
-          )}
-          {files.length>0 && (
-            <div className="preview-grid">
-              {previews.map((src, i) => (
-                <div className="preview" key={i}>
-                  <img src={src} alt={`预览${i+1}`} />
+        {/* 功能区域 */}
+        <Row gutter={[24, 24]}>
+          {/* 上传和OCR功能 */}
+          <Col xs={24} lg={12}>
+            <Card title="拍一拍家谱照片OCR" size="small">
+              <Space direction="vertical" style={{ width: '100%' }} size="middle">
+                {/* 文件选择 */}
+                <div>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={onPickFiles}
+                    disabled={busy}
+                    style={{ marginBottom: '12px' }}
+                  />
+                  {/* {files.length > 0 && (
+                    <div style={{ fontSize: '12px', color: '#666' }}>
+                      已选择 {files.length} 个文件
+                    </div>
+                  )} */}
                 </div>
-              ))}
-            </div>
-          )}
-          {ossUrls.length>0 && <div className="hint">已上传 {ossUrls.length} 张到 OSS</div>}
-        </section>
 
-        {/* Step 2 */}
-        <section className="card card-padding">
-          <h3>Step 2 · OCR识别家谱信息并校对</h3>
+                {/* 操作按钮 */}
+                <Space>
+                  <Button
+                    type="primary"
+                    icon={<CloudUploadOutlined />}
+                    disabled={!files.length || busy}
+                    loading={busy && uploadProgress > 0}
+                    onClick={handleUpload}
+                  >
+                    {busy && uploadProgress > 0 ? '上传中...' : '上传图片'}
+                  </Button>
+                  
+                  <Button
+                    type="primary"
+                    icon={<ScanOutlined />}
+                    disabled={!ossUrls.length || busy}
+                    loading={busy && ocrProgress > 0}
+                    onClick={handleOCR}
+                  >
+                    {busy && ocrProgress > 0 ? 'OCR识别中...' : '开始OCR识别'}
+                  </Button>
+                  
+                  <Button 
+                    type="default"
+                    onClick={() => {
+                      // 如果表格为空，添加一行空数据
+                      if (rows.length === 0) {
+                        const emptyRowData = [{
+                          ...emptyRow(),
+                          id: 1
+                        }];
+                        setRows(emptyRowData);
+                      }
+                      message.info('已进入手动编辑模式');
+                    }}
+                  >
+                    手动编辑
+                  </Button>
+                </Space>
 
-          <div className="uploader">
-            <Space>
-              <Button
-                type="primary"
-                disabled={!canOCR}
-                loading={busy && ocrProgress > 0}
-                onClick={handleOCR}
-              >
-                {busy && ocrProgress > 0 ? 'OCR识别中...' : '开始识别'}
-              </Button>
-              
-              <Button 
-                type="default"
-                onClick={() => {
-                  // 如果表格为空，添加一行空数据
-                  if (rows.length === 0) {
-                    const emptyRowData = [{
-                      ...emptyRow(),
-                      id: 1
-                    }];
-                    setRows(emptyRowData);
-                  }
-                  // 进入表格编辑模式
-                  setStep(3);
-                  message.info('已进入手动编辑模式');
-                }}
-              >
-                手动编辑
-              </Button>
-            </Space>
-          </div>
+                {/* 进度条 */}
+                {uploadProgress > 0 && uploadProgress < 100 && (
+                  <Progress
+                    percent={Math.round(uploadProgress)}
+                    status="active"
+                    strokeColor={{ '0%': '#108ee9', '100%': '#87d068' }}
+                  />
+                )}
+                {ocrProgress > 0 && ocrProgress < 100 && (
+                  <Progress
+                    percent={Math.round(ocrProgress)}
+                    status="active"
+                    strokeColor={{ '0%': '#722ed1', '100%': '#52c41a' }}
+                  />
+                )}
+              </Space>
+            </Card>
+          </Col>
 
-          {/* OCR进度 */}
-          {ocrProgress > 0 && ocrProgress < 100 && (
-            <div style={{ marginTop: '16px' }}>
-              <Progress
-                percent={Math.round(ocrProgress)}
-                status="active"
-                strokeColor={{
-                  '0%': '#722ed1',
-                  '100%': '#52c41a',
-                }}
-              />
-            </div>
-          )}
+          {/* 家谱管理功能 */}
+          <Col xs={24} lg={12}>
+            <Card title="⚙️ 家谱管理功能" size="small">
+              <Space direction="vertical" style={{ width: '100%' }} size="middle">
+                {/* 数据操作 */}
+                <Space wrap>
+                  <Button 
+                    type="primary" 
+                    icon={<PlusOutlined />} 
+                    onClick={addNewRow}
+                    disabled={busy}
+                  >
+                    添加新行
+                  </Button>
+                  
+                  {/* <Button
+                    icon={<TableOutlined />}
+                    onClick={convertToJSON}
+                  >
+                    生成JSON
+                  </Button>
+                  
+                  <Button
+                    icon={<DownloadOutlined />}
+                    onClick={downloadJSON}
+                  >
+                    下载JSON
+                  </Button> */}
+                  
+                  <Button
+                    type="primary"
+                    icon={<SaveOutlined />}
+                    loading={busy}
+                    onClick={saveToCurrentTenant}
+                    style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
+                  >
+                    保存家谱
+                  </Button>
+                </Space>
 
+                {/* 数据统计 */}
+                {/* {rows.length > 0 && currentTenant && (
+                  <div style={{ padding: '12px', background: '#f8fafc', borderRadius: '6px', fontSize: '14px' }}>
+                    <div style={{ color: '#374151', fontWeight: '500' }}>
+                      📊 数据统计
+                    </div>
+                    <div style={{ color: '#6b7280', marginTop: '4px' }}>
+                      {currentTenant.id === 'default' || currentTenant.id === process.env.REACT_APP_DEFAULT_TENANT_ID 
+                        ? `默认穆氏族谱数据: ${rows.length}条记录` 
+                        : `${currentTenant.name}: ${rows.length}条记录`
+                      }
+                    </div>
+                  </div>
+                )} */}
 
+                {/* 其他功能 */}
+                <Space wrap>
+                  <Button
+                    onClick={generateFamilyDataFile}
+                    loading={busy}
+                  >
+                    生成数据文件
+                  </Button>
+                  
+                  <Button
+                    onClick={exportExcels}
+                  >
+                    导出CSV
+                  </Button>
+                  
+                  {rows.length > 0 && (
+                    <Button 
+                      danger 
+                      onClick={() => {
+                        if (window.confirm('确定要清空所有数据吗？')) {
+                          setRows([]);
+                          saveToStorage('rows', []);
+                          message.warning('已清空所有数据');
+                        }
+                      }}
+                    >
+                      清空数据
+                    </Button>
+                  )}
+                </Space>
+              </Space>
+            </Card>
+          </Col>
+        </Row>
 
-          {/* AntdFamilyTable 数据表格 */}
-          <div style={{ marginTop: '16px', marginBottom: '16px' }}>
-            <Space>
-              <Button 
-                type="primary" 
-                icon={<PlusOutlined />} 
-                onClick={addNewRow}
-                disabled={busy}
-              >
-                添加新行
-              </Button>
-              {rows.length > 0 && (
-                <Button 
-                  danger 
-                  onClick={() => {
-                    if (window.confirm('确定要清空所有数据吗？')) {
-                      setRows([]);
-                      saveToStorage('rows', []);
-                      message.warning('已清空所有数据');
-                    }
-                  }}
-                >
-                  清空数据
-                </Button>
-              )}
-              {/* 显示数据来源信息 */}
-              {rows.length > 0 && currentTenant && (
-                <span style={{ marginLeft: '16px', color: '#666', fontSize: '14px' }}>
-                  {currentTenant.id === 'default' || currentTenant.id === process.env.REACT_APP_DEFAULT_TENANT_ID 
-                    ? `当前显示: 默认穆氏族谱数据 (${rows.length}条记录)` 
-                    : `当前显示: ${currentTenant.name} (${rows.length}条记录)`
-                  }
-                </span>
-              )}
-            </Space>
-          </div>
-          
+        <Divider />
+
+        {/* 表格数据区域（核心内容） */}
+        <Card title="📋 家谱数据表格" size="small">
           <AntdFamilyTable
             data={rows}
             onDataChange={handleDataChange}
@@ -938,117 +897,7 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
             onSave={saveToCurrentTenant}
             loading={busy}
           />
-
-          {/* 数据同步状态 */}
-          {process.env.NODE_ENV === 'development' && (
-            <>
-              <DataSyncStatus
-                currentTenant={currentTenant}
-                onRefresh={() => {
-                  // 可以在这里添加刷新逻辑
-                  console.log('🔄 数据同步状态刷新');
-                }}
-              />
-
-              {/* API测试按钮 */}
-              <div style={{ marginTop: '16px', padding: '16px', border: '1px dashed #d9d9d9', borderRadius: '6px' }}>
-                <h4>🔧 开发调试工具</h4>
-                <Space>
-                  <Button
-                    size="small"
-                    onClick={async () => {
-                      try {
-                        console.log('🧪 测试API连接...');
-                        const response = await fetch('http://localhost:3003/health');
-                        const result = await response.text();
-                        console.log('✅ 健康检查成功:', result);
-                        message.success('API连接正常');
-                      } catch (error) {
-                        console.error('❌ 健康检查失败:', error);
-                        message.error(`API连接失败: ${error.message}`);
-                      }
-                    }}
-                  >
-                    测试API连接
-                  </Button>
-
-                  <Button
-                    size="small"
-                    type="primary"
-                    onClick={async () => {
-                      try {
-                        console.log('🧪 测试保存API...');
-                        const testData = [{
-                          id: 999,
-                          name: '测试人员',
-                          g_rank: 1,
-                          rank_index: 1,
-                          sex: 'MAN'
-                        }];
-
-                        const response = await fetch('http://localhost:3003/api/family-data/save', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({
-                            tenantId: currentTenant?.id || 'default',
-                            familyData: testData
-                          })
-                        });
-
-                        if (!response.ok) {
-                          const errorText = await response.text();
-                          throw new Error(`HTTP ${response.status}: ${errorText}`);
-                        }
-
-                        const result = await response.json();
-                        console.log('✅ 保存API测试成功:', result);
-                        message.success('保存API测试成功');
-                      } catch (error) {
-                        console.error('❌ 保存API测试失败:', error);
-                        message.error(`保存API测试失败: ${error.message}`);
-                      }
-                    }}
-                  >
-                    测试保存API
-                  </Button>
-                </Space>
-              </div>
-            </>
-          )}
-
-
-        </section>
-
-        {/* Step 3 */}
-        <section className="card card-padding">
-          <h3>Step 3 · JSON 转换与一键发布</h3>
-          <div className="uploader">
-            <button className="btn primary" onClick={convertToJSON}>生成 JSON</button>
-            <button className="btn" onClick={downloadJSON}>下载 JSON</button>
-            <Button
-              type="primary"
-              loading={busy}
-              onClick={saveToCurrentTenant}
-              style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
-            >
-              保存到当前家谱
-            </Button>
-          </div>
-          <textarea className="json-output" rows={12} readOnly value={jsonOutput} placeholder="点击“生成 JSON”查看输出" />
-        </section>
-
-        <div className="creator-notes">
-          <p>实现说明：</p>
-          <ul>
-            <li>上传到 OSS：推荐通过后端网关签名后直传，前端仅提交 FormData。</li>
-            <li>通义千问 OCR：使用阿里云通义千问VL-Max模型进行家谱识别，通过代理服务器调用。</li>
-            <li>数据编辑：使用Ant Design Table组件，支持在线编辑、排序、分页等功能。</li>
-            <li>“两份 Excel”：当前以 CSV 下载占位，后续可接入 SheetJS(xlsx) 输出 .xlsx。</li>
-            <li>JSON 字段含 dealth：null 表示去世，只有 'alive' 表示在世（遵循你的规则）。</li>
-          </ul>
-        </div>
-
-
+        </Card>
       </div>
     </AppLayout>
   );

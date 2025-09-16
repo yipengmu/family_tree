@@ -6,17 +6,18 @@
   position: relative;
 }
 
-/* 顶部搜索栏 */
+/* 顶部搜索栏 - 简化版本 */
 .header {
   background: white;
-  padding: 16px 32px;
+  padding: 8px 24px; /* 减小垂直内边距 */
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
   position: sticky;
   top: 0;
   z-index: 100;
+  min-height: 48px; /* 设置最小高度 */
 }
 
 /* 搜索框样式已移动到 FamilySearchBar.css */

@@ -20,27 +20,27 @@ const Sidebar = ({ activeItem = 'tree', onMenuClick }) => {
     {
       key: 'create',
       icon: <EditOutlined />,
-      label: '创作',
+      label: '数据管理',
       path: '/create'
     },
-    {
-      key: 'discover',
-      icon: <TeamOutlined />,
-      label: '发现',
-      path: '/discover'
-    },
-    {
-      key: 'events',
-      icon: <FolderOutlined />,
-      label: '大事',
-      path: '/'
-    },
-    {
-      key: 'analytics',
-      icon: <BarChartOutlined />,
-      label: '数据',
-      path: '/'
-    },
+    // {
+    //   key: 'discover',
+    //   icon: <TeamOutlined />,
+    //   label: '发现',
+    //   path: '/discover'
+    // },
+    // {
+    //   key: 'events',
+    //   icon: <FolderOutlined />,
+    //   label: '大事',
+    //   path: '/'
+    // },
+    // {
+    //   key: 'analytics',
+    //   icon: <BarChartOutlined />,
+    //   label: '数据',
+    //   path: '/'
+    // },
     {
       key: 'settings',
       icon: <SettingOutlined />,

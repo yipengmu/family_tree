@@ -20,35 +20,10 @@ const FamilySearchBar = ({
   const [searchOptions, setSearchOptions] = useState([]);
   const searchTimeoutRef = useRef(null);
 
-  // 加载搜索历史
-  useEffect(() => {
-    const loadSearchHistory = async () => {
-      try {
-        const history = await searchHistoryManager.getSearchHistory();
-        if (history && history.length > 0) {
-          const historyOptions = history.map(item => ({
-            value: item.query,
-            label: (
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>{item.query}</span>
-                <Text type="secondary" style={{ fontSize: '11px' }}>
-                  {new Date(item.timestamp).toLocaleDateString()}
-                </Text>
-              </div>
-            ),
-            type: 'history'
-          }));
-          setSearchOptions(historyOptions);
-        }
-      } catch (error) {
-        console.error('加载搜索历史失败:', error);
-      }
-    };
+  // 简化初始化，不预加载搜索历史
+  // useEffect 移除，清空我们不需要的初始化逻辑
 
-    loadSearchHistory();
-  }, []);
-
-  // 生成搜索建议
+  // 生成搜索建议 - 简化版本
   const generateSearchSuggestions = useCallback((query) => {
     if (!query || !familyData || familyData.length === 0) {
       return [];
@@ -57,16 +32,21 @@ const FamilySearchBar = ({
     const suggestions = [];
     const queryLower = query.toLowerCase();
 
-    // 搜索匹配的家族成员
+    // 搜索匹配的家族成员 - 只显示前5个最相关的
     familyData.forEach(member => {
       if (member.name && member.name.toLowerCase().includes(queryLower)) {
         suggestions.push({
           value: member.name,
           label: (
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span>{member.name}</span>
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center',
+              padding: '2px 0'
+            }}>
+              <span style={{ fontSize: '13px', fontWeight: '500' }}>{member.name}</span>
               <Text type="secondary" style={{ fontSize: '11px' }}>
-                第{member.g_rank}代
+                {member.g_rank}代
               </Text>
             </div>
           ),
@@ -76,11 +56,11 @@ const FamilySearchBar = ({
       }
     });
 
-    // 限制建议数量
-    return suggestions.slice(0, 8);
+    // 限制建议数量为5个，提高性能
+    return suggestions.slice(0, 5);
   }, [familyData]);
 
-  // 处理搜索输入
+  // 处理搜索输入 - 简化版本
   const handleSearchInput = useCallback((value) => {
     setSearchInputValue(value);
 
@@ -95,26 +75,10 @@ const FamilySearchBar = ({
         const suggestions = generateSearchSuggestions(value);
         setSearchOptions(suggestions);
       } else {
-        // 如果输入为空，显示搜索历史
-        searchHistoryManager.getSearchHistory().then(history => {
-          if (history && history.length > 0) {
-            const historyOptions = history.map(item => ({
-              value: item.query,
-              label: (
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span>{item.query}</span>
-                  <Text type="secondary" style={{ fontSize: '11px' }}>
-                    {new Date(item.timestamp).toLocaleDateString()}
-                  </Text>
-                </div>
-              ),
-              type: 'history'
-            }));
-            setSearchOptions(historyOptions);
-          }
-        });
+        // 如果输入为空，清空建议列表
+        setSearchOptions([]);
       }
-    }, 300);
+    }, 200); // 减少延迟时间提高响应速度
   }, [generateSearchSuggestions]);
 
   // 处理搜索选择
@@ -164,7 +128,7 @@ const FamilySearchBar = ({
   return (
     <div className="family-search-bar" style={style}>
 
-      {/* 搜索功能 */}
+      {/* 搜索功能 - 简化版本 */}
       <div className="search-section">
         <AutoComplete
           value={searchInputValue}
@@ -172,25 +136,28 @@ const FamilySearchBar = ({
           onSelect={handleSearchSelect}
           onSearch={handleSearchInput}
           placeholder={placeholder}
-          style={{ width: 200 }}
+          style={{ width: 180 }} // 减小宽度
           allowClear
+          size="small" // 使用小尺寸
+          dropdownStyle={{ maxHeight: 200 }} // 限制下拉框高度
           classNames={{ popup: { root: "family-search-dropdown" } }}
         >
           <Input
             prefix={<SearchOutlined />}
             onPressEnter={handleSearchSubmit}
             className="family-search-input"
+            size="small"
           />
         </AutoComplete>
       </div>
 
 
-      {/* 状态信息 */}
+      {/* 状态信息 - 简化显示 */}
       {showStatus && (
         <div className="status-info">
           <div className="count-info">
-            <Text type="secondary" style={{ fontSize: '12px' }}>
-              {nodes.length}/{statistics?.totalMembers || familyData.length}人
+            <Text type="secondary" style={{ fontSize: '11px' }}>
+              {nodes.length}/{statistics?.totalMembers || familyData.length}
             </Text>
           </div>
         </div>

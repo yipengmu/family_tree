@@ -146,6 +146,36 @@ export const applySmartCollapse = (familyData, options = {}, expandedNodes = new
     });
   });
 
+  // 如果在搜索模式下，确保搜索路径树的核心人员都被包含
+  if (searchTargetPerson) {
+    // 获取搜索目标到根节点的路径
+    const pathPersons = getPathToRoot(familyData, searchTargetPerson.id);
+    pathPersons.forEach(person => {
+      allExpandedIds.add(person.id);
+    });
+
+    // 添加路径上每个节点的兄弟姐妹
+    pathPersons.forEach(pathPerson => {
+      const siblings = familyData.filter(person =>
+        person.g_father_id === pathPerson.g_father_id &&
+        person.g_father_id !== 0
+      );
+      siblings.forEach(sibling => {
+        allExpandedIds.add(sibling.id);
+      });
+
+      // 添加该路径节点的所有直接子节点
+      const children = familyData.filter(person =>
+        person.g_father_id === pathPerson.id
+      );
+      children.forEach(child => {
+        allExpandedIds.add(child.id);
+      });
+    });
+
+    console.log(`🔍 搜索模式路径处理: 目标${searchTargetPerson.name}，路径${pathPersons.length}人，总展开${allExpandedIds.size}人`);
+  }
+
   // 筛选数据：前三代全部显示，之后只显示展开路径
   const filteredData = familyData.filter(person => {
     // 前三代全部显示
@@ -162,6 +192,12 @@ export const applySmartCollapse = (familyData, options = {}, expandedNodes = new
   console.log(`- 折叠后: ${filteredData.length} 人`);
   console.log(`- 当前用户: ${currentUser.name} (第${currentUser.g_rank}代)`);
   console.log(`- 展开路径: ${expandedIds.size} 人`);
+  console.log(`- 手动展开: ${expandedNodes.size} 人`);
+  console.log(`- 总展开: ${allExpandedIds.size} 人`);
+  
+  if (searchTargetPerson) {
+    console.log(`- 搜索目标: ${searchTargetPerson.name} (第${searchTargetPerson.g_rank}代)`);
+  }
 
   return filteredData;
 };

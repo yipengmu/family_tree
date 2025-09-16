@@ -50,6 +50,9 @@ const FamilyTreeFlow = forwardRef(({ familyData, loading = false, error = null, 
   const [selectedNode, setSelectedNode] = useState(null);
   const [isShowingAll, setIsShowingAll] = useState(true); // 默认显示全部
   const [searchTargetPerson, setSearchTargetPerson] = useState(null); // 搜索的目标人员
+  const [showSearchAlert, setShowSearchAlert] = useState(true); // 控制搜索提示显示
+  const [isSearchAlertFading, setIsSearchAlertFading] = useState(false); // 控制搜索提示淡出动画
+  const searchAlertTimerRef = useRef(null); // 搜索提示定时器引用
 
   const [showAlert, setShowAlert] = useState(true); // 控制提示显示
   const reactFlowInstanceRef = useRef(null); // ReactFlow实例引用
@@ -92,6 +95,63 @@ const FamilyTreeFlow = forwardRef(({ familyData, loading = false, error = null, 
     window.addEventListener('error', handleResizeObserverError);
     return () => window.removeEventListener('error', handleResizeObserverError);
   }, []);
+
+  // 当搜索目标人员变化时，启动自动隐藏倒计时
+  useEffect(() => {
+    // 清理之前的定时器
+    if (searchAlertTimerRef.current) {
+      clearTimeout(searchAlertTimerRef.current);
+    }
+    
+    if (searchTargetPerson) {
+      // 显示搜索提示，重置动画状态
+      setShowSearchAlert(true);
+      setIsSearchAlertFading(false);
+      
+      // 3秒后开始淡出动画
+      searchAlertTimerRef.current = setTimeout(() => {
+        setIsSearchAlertFading(true);
+        
+        // 动画结束后隐藏提示（0.5秒动画时间）
+        setTimeout(() => {
+          setShowSearchAlert(false);
+          setIsSearchAlertFading(false);
+        }, 500);
+      }, 3000);
+    } else {
+      // 没有搜索目标时隐藏提示
+      setShowSearchAlert(false);
+      setIsSearchAlertFading(false);
+    }
+    
+    // 清理函数
+    return () => {
+      if (searchAlertTimerRef.current) {
+        clearTimeout(searchAlertTimerRef.current);
+      }
+    };
+  }, [searchTargetPerson]);
+  
+  // 处理鼠标悬停暂停自动隐藏
+  const handleSearchAlertMouseEnter = useCallback(() => {
+    if (searchAlertTimerRef.current) {
+      clearTimeout(searchAlertTimerRef.current);
+    }
+    setIsSearchAlertFading(false);
+  }, []);
+  
+  const handleSearchAlertMouseLeave = useCallback(() => {
+    if (searchTargetPerson && showSearchAlert) {
+      // 重新启动倒计时，只给1秒
+      searchAlertTimerRef.current = setTimeout(() => {
+        setIsSearchAlertFading(true);
+        setTimeout(() => {
+          setShowSearchAlert(false);
+          setIsSearchAlertFading(false);
+        }, 500);
+      }, 1000);
+    }
+  }, [searchTargetPerson, showSearchAlert]);
 
   // 当数据变化时更新当前用户
   useEffect(() => {
@@ -265,36 +325,35 @@ const FamilyTreeFlow = forwardRef(({ familyData, loading = false, error = null, 
     // 应用搜索（优先处理搜索逻辑）
     if (searchTerm && typeof searchTerm === 'string' && searchTerm.trim()) {
       const searchResult = searchWithPathTree(familyData, searchTerm);
-      filteredData = searchResult.pathTreeData;
       targetPerson = searchResult.targetPerson;
       setSearchTargetPerson(targetPerson);
 
-      // 聚焦模式下，如果搜索目标是最后3代人员，应用智能折叠展开最后3代
-      if (!isShowingAll && targetPerson && isSmartCollapseEnabled) {
-        const maxGeneration = Math.max(...familyData.map(p => p.g_rank));
-        const lastThreeGenerations = [maxGeneration - 2, maxGeneration - 1, maxGeneration];
+      // 搜索模式下，优先使用智能折叠逻辑来处理数据，确保展开节点功能正常
+      if (isSmartCollapseEnabled && targetPerson) {
+        // 使用智能折叠逻辑，包含搜索目标和展开节点信息
+        filteredData = applySmartCollapse(familyData, {
+          currentUser,
+          collapseAfterGeneration: 3,
+          showAllGenerations: false,
+          isFocusMode: true,
+          searchTargetPerson: targetPerson
+        }, expandedNodes);
 
-        if (lastThreeGenerations.includes(targetPerson.g_rank)) {
-          console.log(`🎯 聚焦模式搜索：目标在第${targetPerson.g_rank}代（最后3代），应用智能折叠`);
-
-          filteredData = applySmartCollapse(familyData, {
-            currentUser,
-            collapseAfterGeneration: 3,
-            showAllGenerations: false,
-            isFocusMode: true,
-            searchTargetPerson: targetPerson
-          }, expandedNodes);
-        }
+        console.log('🔍 搜索模式智能折叠应用:', {
+          searchTerm,
+          targetPerson: targetPerson.name,
+          targetGeneration: targetPerson.g_rank,
+          expandedNodesCount: expandedNodes.size,
+          filteredDataCount: filteredData.length
+        });
+      } else {
+        // 回退到原始搜索路径树逻辑
+        filteredData = searchResult.pathTreeData;
+        console.log('🔍 搜索结果（路径树模式）:', {
+          searchTerm,
+          pathTreeDataCount: filteredData.length
+        });
       }
-
-      console.log('🔍 搜索结果:', {
-        searchTerm,
-        searchResults: searchResult.searchResults,
-        targetPerson,
-        pathTreeDataCount: filteredData.length,
-        isFocusMode: !isShowingAll,
-        appliedSmartCollapse: !isShowingAll && targetPerson && isSmartCollapseEnabled
-      });
     } else {
       // 没有搜索时，根据模式处理数据
       if (isShowingAll) {
@@ -669,26 +728,39 @@ const FamilyTreeFlow = forwardRef(({ familyData, loading = false, error = null, 
 
   return (
     <div className="family-tree-container">
-      {/* 智能提示 */}
-      {searchTargetPerson && (
-        <Alert
-          message={`🔍 搜索路径模式 - ${searchTargetPerson.name}`}
-          description={
-            <span>
-              当前显示从 <strong>{searchTargetPerson.name}</strong> 到祖上 <strong>穆茂</strong> 的完整路径树，
-              包含路径上的所有祖先和相关家族成员。清空搜索可返回完整家谱。
-            </span>
-          }
-          type="success"
-          showIcon
-          closable
-          style={{
-            margin: '16px 24px 0 24px',
-            borderRadius: '12px',
-            border: '1px solid hsl(142.1 76.2% 36.3%)',
-            background: 'hsl(142.1 76.2% 96%)'
-          }}
-        />
+      {/* 搜索结果提示 - 3秒后自动隐藏，支持鼠标悬停暂停 */}
+      {searchTargetPerson && showSearchAlert && (
+        <div 
+          onMouseEnter={handleSearchAlertMouseEnter}
+          onMouseLeave={handleSearchAlertMouseLeave}
+        >
+          <Alert
+            message={`🔍 ${searchTargetPerson.name}`}
+            description="显示到祖上的路径树"
+            type="success"
+            showIcon={false}
+            closable
+            onClose={() => {
+              if (searchAlertTimerRef.current) {
+                clearTimeout(searchAlertTimerRef.current);
+              }
+              setIsSearchAlertFading(true);
+              setTimeout(() => {
+                setShowSearchAlert(false);
+                setIsSearchAlertFading(false);
+              }, 500);
+            }}
+            style={{
+              margin: '8px 16px 0 16px',
+              borderRadius: '6px',
+              border: '1px solid #52c41a',
+              background: '#f6ffed',
+              fontSize: '12px',
+              padding: '4px 12px'
+            }}
+            className={`compact-search-alert ${isSearchAlertFading ? 'fade-out' : ''}`}
+          />
+        </div>
       )}
 
       {!isShowingAll && !searchTargetPerson && generationRange[0] === 1 && generationRange[1] === 1 && !searchTerm && showAlert && (
