@@ -520,28 +520,46 @@ class FamilyDataService {
       }));
 
       // 如果有后端API，保存到服务器
-      const baseURL = process.env.REACT_APP_API_BASE_URL;
+      const baseURL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:3003';
       if (baseURL) {
         try {
-          const response = await fetch(`${baseURL}/api/family-data`, {
+          const response = await fetch(`${baseURL}/api/family-data/save`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               ...tenantService.getTenantHeaders(),
             },
             body: JSON.stringify({
-              data: dataWithTenant,
               tenantId: currentTenantId,
+              familyData: familyData, // 使用原始数据，不带tenant_id
             }),
           });
 
           if (!response.ok) {
-            throw new Error(`服务器保存失败: ${response.status}`);
+            const errorText = await response.text();
+            throw new Error(`服务器保存失败: ${response.status} - ${errorText}`);
           }
 
-          console.log('✅ 数据已保存到服务器');
+          const result = await response.json();
+          console.log('✅ 数据已保存到服务器:', result.message);
+          
+          // 清除缓存，强制从服务器重新加载
+          this.clearAllCache();
+          
+          // 触发数据更新事件
+          if (window.dispatchEvent) {
+            window.dispatchEvent(new CustomEvent('familyDataUpdated', {
+              detail: {
+                tenantId: currentTenantId,
+                dataCount: familyData.length,
+                timestamp: new Date().toISOString()
+              }
+            }));
+          }
+          
         } catch (error) {
           console.warn('⚠️ 服务器保存失败，保存到本地:', error);
+          throw error; // 重新抛出错误，让上层处理
         }
       }
 

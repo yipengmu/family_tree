@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { message, Progress, Alert, Button, Space, Tooltip, Steps, Upload, Card } from 'antd';
-import { InfoCircleOutlined, CheckCircleOutlined, ExclamationCircleOutlined, FileImageOutlined, TableOutlined, CodeOutlined, InboxOutlined, CloudUploadOutlined, EyeOutlined, DownloadOutlined } from '@ant-design/icons';
+import { InfoCircleOutlined, CheckCircleOutlined, ExclamationCircleOutlined, FileImageOutlined, TableOutlined, CodeOutlined, InboxOutlined, CloudUploadOutlined, EyeOutlined, DownloadOutlined, PlusOutlined } from '@ant-design/icons';
 import AppLayout from '../Layout/AppLayout';
 import TenantSelector from '../TenantSelector';
 
@@ -46,6 +46,42 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
     return `creator_${tenantId}_${key}`;
   };
 
+  // 加载默认族谱数据
+  const loadDefaultFamilyData = async () => {
+    try {
+      console.log('🔄 开始加载默认穆氏族谱数据...');
+      
+      // 优先从后端数据库加载
+      try {
+        const response = await fetch('http://localhost:3003/api/family-data/default');
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success && result.data && result.data.length > 0) {
+            console.log(`✅ 从后端数据库加载默认数据: ${result.data.length} 条记录`);
+            return result.data;
+          }
+        }
+      } catch (dbError) {
+        console.warn('⚠️ 从后端数据库加载失败:', dbError.message);
+      }
+      
+      // 如果后端没有数据，使用 familyDataService 加载
+      console.log('📋 使用 familyDataService 加载默认数据...');
+      const data = await familyDataService.getFamilyData(true, 'default');
+      
+      if (data && data.length > 0) {
+        console.log(`✅ 从 familyDataService 加载默认数据: ${data.length} 条记录`);
+        return data;
+      }
+      
+      console.log('⚠️ 无法加载任何默认数据');
+      return [];
+    } catch (error) {
+      console.error('❌ 加载默认族谱数据失败:', error);
+      return [];
+    }
+  };
+
   // 保存数据到localStorage
   const saveToStorage = (key, data) => {
     try {
@@ -88,14 +124,30 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
       const savedFiles = loadFromStorage('files', []);
       const savedPreviews = loadFromStorage('previews', []);
       const savedOssUrls = loadFromStorage('ossUrls', []);
-      const savedRows = loadFromStorage('rows', []);
+      let savedRows = loadFromStorage('rows', []);
       const savedJsonOutput = loadFromStorage('jsonOutput', '');
+
+      // 如果是默认租户且没有保存的数据，自动加载默认穆氏族谱数据
+      if ((currentTenant.id === 'default' || currentTenant.id === process.env.REACT_APP_DEFAULT_TENANT_ID) && 
+          (!savedRows || savedRows.length === 0)) {
+        console.log('🔄 默认租户无保存数据，尝试加载默认穆氏族谱数据...');
+        loadDefaultFamilyData().then(defaultData => {
+          if (defaultData && defaultData.length > 0) {
+            console.log(`✅ 加载到默认穆氏族谱数据: ${defaultData.length} 条记录`);
+            setRows(defaultData);
+            saveToStorage('rows', defaultData);
+          }
+        }).catch(error => {
+          console.warn('⚠️ 加载默认族谱数据失败:', error);
+        });
+      } else {
+        setRows(savedRows);
+      }
 
       setStep(savedStep);
       setFiles(savedFiles);
       setPreviews(savedPreviews);
       setOssUrls(savedOssUrls);
-      setRows(savedRows);
       setJsonOutput(savedJsonOutput);
 
       console.log('已恢复保存的数据:', {
@@ -110,14 +162,37 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
 
   // 监听租户切换
   useEffect(() => {
-    const unsubscribe = tenantService.onTenantChange((tenant) => {
+    const unsubscribe = tenantService.onTenantChange(async (tenant) => {
+      const previousTenant = currentTenant;
       setCurrentTenant(tenant);
-      // 租户切换时保持当前数据状态，不重置
-      message.info(`已切换到 ${tenant.name}，当前数据已保留`);
+      
+      // 如果切换到默认租户且之前不是默认租户，尝试加载默认数据
+      if ((tenant.id === 'default' || tenant.id === process.env.REACT_APP_DEFAULT_TENANT_ID) && 
+          previousTenant && previousTenant.id !== tenant.id) {
+        console.log('🔄 切换到默认租户，检查是否需要加载默认数据...');
+        
+        // 检查当前是否有数据
+        const currentRows = loadFromStorage('rows', []);
+        if (!currentRows || currentRows.length === 0) {
+          try {
+            const defaultData = await loadDefaultFamilyData();
+            if (defaultData && defaultData.length > 0) {
+              console.log(`✅ 为默认租户加载默认数据: ${defaultData.length} 条记录`);
+              setRows(defaultData);
+              saveToStorage('rows', defaultData);
+              message.success(`已加载默认穆氏族谱数据（${defaultData.length}条记录）`);
+            }
+          } catch (error) {
+            console.warn('⚠️ 加载默认数据失败:', error);
+          }
+        }
+      }
+      
+      message.info(`已切换到 ${tenant.name}`);
     });
 
     return unsubscribe;
-  }, []);
+  }, [currentTenant]);
 
   // 自动保存数据
   useEffect(() => {
@@ -843,6 +918,15 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
                 >
                   清空数据
                 </Button>
+              )}
+              {/* 显示数据来源信息 */}
+              {rows.length > 0 && currentTenant && (
+                <span style={{ marginLeft: '16px', color: '#666', fontSize: '14px' }}>
+                  {currentTenant.id === 'default' || currentTenant.id === process.env.REACT_APP_DEFAULT_TENANT_ID 
+                    ? `当前显示: 默认穆氏族谱数据 (${rows.length}条记录)` 
+                    : `当前显示: ${currentTenant.name} (${rows.length}条记录)`
+                  }
+                </span>
               )}
             </Space>
           </div>

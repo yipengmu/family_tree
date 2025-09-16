@@ -249,11 +249,57 @@ class TenantService {
         await this.createOrUpdateTenant(tenant.id, tenant);
       }
 
+      // 初始化默认租户的穆氏族谱数据
+      await this.initializeDefaultFamilyData();
+
       console.log('✅ 默认租户初始化完成');
 
     } catch (error) {
       console.error('❌ 初始化默认租户失败:', error);
       throw error;
+    }
+  }
+
+  // 初始化默认家谱数据
+  async initializeDefaultFamilyData() {
+    try {
+      console.log('📊 检查默认租户家谱数据...');
+      
+      const familyDataService = require('./familyDataService');
+      const existingData = await familyDataService.getFamilyData('default');
+      
+      if (existingData && existingData.length > 0) {
+        console.log(`📋 默认租户已有 ${existingData.length} 条家谱数据，跳过初始化`);
+        return;
+      }
+
+      console.log('📥 加载默认穆氏族谱数据...');
+      // 导入穆氏族谱默认数据
+      const familyDataPath = require('path').join(__dirname, '../../src/data/familyData.js');
+      const fs = require('fs');
+      
+      if (fs.existsSync(familyDataPath)) {
+        // 读取并解析家谱数据文件
+        const dataContent = fs.readFileSync(familyDataPath, 'utf-8');
+        // 提取数组数据（跳过export语句）
+        const arrayMatch = dataContent.match(/const dbJson = (\[[\s\S]*?\]);/);
+        
+        if (arrayMatch) {
+          const familyData = JSON.parse(arrayMatch[1]);
+          console.log(`📋 解析到 ${familyData.length} 条穆氏族谱记录`);
+          
+          // 保存到默认租户
+          await familyDataService.saveFamilyData('default', familyData);
+          console.log('✅ 默认穆氏族谱数据初始化完成');
+        } else {
+          console.warn('⚠️ 无法解析家谱数据文件格式');
+        }
+      } else {
+        console.warn('⚠️ 家谱数据文件不存在:', familyDataPath);
+      }
+    } catch (error) {
+      console.error('❌ 初始化默认家谱数据失败:', error);
+      // 不抛出错误，因为这不是致命错误
     }
   }
 }
