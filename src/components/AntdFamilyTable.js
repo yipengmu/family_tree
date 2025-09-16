@@ -605,30 +605,6 @@ const AntdFamilyTable = ({ data = [], onDataChange, onExport, onSave, loading = 
           }
         `}
       </style>
-      {/* 数据状态信息 - 简化显示 */}
-      <div style={{
-        padding: '6px 12px',
-        backgroundColor: '#f8f9fa',
-        border: '1px solid #e9ecef',
-        borderRadius: '4px',
-        marginBottom: '12px',
-        fontSize: '12px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-      }}>
-        <div>
-          <span style={{ fontWeight: '500', color: '#495057' }}>📊 共 {tableData?.length || 0} 条记录</span>
-          {editingKey && (
-            <span style={{ marginLeft: '12px', color: '#007bff' }}>✏️ 编辑中</span>
-          )}
-        </div>
-        {tableData && tableData.length > 0 && (
-          <div style={{ fontSize: '11px', color: '#6c757d' }}>
-            世代范围: {Math.min(...tableData.map(item => item.g_rank || 1))} - {Math.max(...tableData.map(item => item.g_rank || 1))}
-          </div>
-        )}
-      </div>
       
       {/* 工具栏 - 紧凑布局 */}
       <div className="antd-family-table-toolbar" style={{ marginBottom: '12px' }}>

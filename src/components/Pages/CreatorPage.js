@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { message, Progress, Button, Space, Card, Row, Col, Divider, Typography } from 'antd';
-import { PlusOutlined, CloudUploadOutlined, TableOutlined, SaveOutlined, DownloadOutlined, ScanOutlined } from '@ant-design/icons';
+import { message, Progress, Button, Space, Card, Row, Col, Divider, Typography, Modal, Tooltip } from 'antd';
+import { PlusOutlined, CloudUploadOutlined, TableOutlined, SaveOutlined, DownloadOutlined, ScanOutlined, CameraOutlined, SettingOutlined } from '@ant-design/icons';
 import AppLayout from '../Layout/AppLayout';
 import TenantSelector from '../TenantSelector';
 import AntdFamilyTable from '../AntdFamilyTable';
@@ -36,6 +36,10 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
   const [currentTenant, setCurrentTenant] = useState(null);
   const [uploadConfig, setUploadConfig] = useState(null);
   const [ocrConfig, setOcrConfig] = useState(null);
+  
+  // 弹框状态管理
+  const [ocrModalVisible, setOcrModalVisible] = useState(false);
+  const [managementModalVisible, setManagementModalVisible] = useState(false);
 
   // 数据持久化key
   const getStorageKey = (key) => {
@@ -702,11 +706,8 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
           <Row justify="space-between" align="middle" style={{ marginBottom: '24px' }}>
             <Col>
               <Title level={2} style={{ margin: 0, color: '#1e1e2d' }}>
-                📋 家谱数据管理
+                📋 族谱数据管理
               </Title>
-              <p style={{ margin: '8px 0 0 0', color: '#6b7280', fontSize: '16px' }}>
-                智能识别、在线编辑、一键发布家谱数据
-              </p>
             </Col>
             <Col>
               <TenantSelector onTenantChange={setCurrentTenant} />
@@ -714,30 +715,123 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
           </Row>
         </div>
 
-        {/* 功能区域 */}
-        <Row gutter={[24, 24]}>
-          {/* 上传和OCR功能 */}
-          <Col xs={24} lg={12}>
-            <Card title="拍一拍家谱照片OCR" size="small">
-              <Space direction="vertical" style={{ width: '100%' }} size="middle">
-                {/* 文件选择 */}
-                <div>
-                  <input
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    onChange={onPickFiles}
+        {/* 核心数据表格区域（带内置功能入口） */}
+        <Card 
+          title={
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+              <span> {rows.length > 0 && currentTenant && (
+                  <span style={{ marginRight: '16px', color: '#6b7280', fontSize: '14px' }}>
+                    {currentTenant.id === 'default' || currentTenant.id === process.env.REACT_APP_DEFAULT_TENANT_ID 
+                      ? `默认穆氏族谱: ${rows.length}条` 
+                      : `${currentTenant.name}: ${rows.length}条`
+                    }
+                    {/* 世代范围信息 */}
+                    <span style={{ marginLeft: '8px', fontSize: '12px', color: '#6c757d' }}>
+                      | 世代范围: {Math.min(...rows.map(item => item.g_rank || 1))} - {Math.max(...rows.map(item => item.g_rank || 1))}
+                    </span>
+                  </span>
+                )}</span>
+              <div className="table-toolbar">
+                {/* 数据统计 */}
+               
+                
+                {/* 功能入口按钮 */}
+                <Space size="small">
+                  <Tooltip title="拍一拍家谱照片OCR识别">
+                    <Button 
+                      type="primary" 
+                      icon={<CameraOutlined />} 
+                      onClick={() => setOcrModalVisible(true)}
+                      size="small"
+                    >
+                      OCR识别
+                    </Button>
+                  </Tooltip>
+                  
+                  <Tooltip title="家谱数据管理与发布">
+                    <Button 
+                      type="primary" 
+                      icon={<SettingOutlined />} 
+                      onClick={() => setManagementModalVisible(true)}
+                      size="small"
+                    >
+                      数据管理
+                    </Button>
+                  </Tooltip>
+                  
+                  <Button 
+                    type="primary" 
+                    icon={<PlusOutlined />} 
+                    onClick={addNewRow}
                     disabled={busy}
-                    style={{ marginBottom: '12px' }}
-                  />
-                  {/* {files.length > 0 && (
-                    <div style={{ fontSize: '12px', color: '#666' }}>
-                      已选择 {files.length} 个文件
-                    </div>
-                  )} */}
-                </div>
+                    size="small"
+                  >
+                    添加新行
+                  </Button>
+                </Space>
+              </div>
+            </div>
+          }
+          size="small"
+        >
+          <AntdFamilyTable
+            data={rows}
+            onDataChange={handleDataChange}
+            onExport={exportExcels}
+            onSave={saveToCurrentTenant}
+            loading={busy}
+          />
+        </Card>
 
-                {/* 操作按钮 */}
+        {/* OCR识别功能弹框 */}
+        <Modal
+          title="📄 拍一拍家谱照片OCR识别"
+          open={ocrModalVisible}
+          onCancel={() => setOcrModalVisible(false)}
+          footer={null}
+          width={600}
+          destroyOnClose
+        >
+          <div style={{ padding: '16px 0' }}>
+            <Space direction="vertical" style={{ width: '100%' }} size="large">
+              {/* 文件选择区域 */}
+              <div>
+                <h4>📁 选择家谱图片</h4>
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={onPickFiles}
+                  disabled={busy}
+                  style={{ marginBottom: '12px', width: '100%' }}
+                />
+                {files.length > 0 && (
+                  <div style={{ fontSize: '12px', color: '#666', marginBottom: '12px' }}>
+                    已选择 {files.length} 个文件
+                  </div>
+                )}
+                
+                {/* 预览区域 */}
+                {files.length > 0 && (
+                  <div className="preview-grid">
+                    {previews.map((src, i) => (
+                      <div className="preview" key={i}>
+                        <img src={src} alt={`预览${i+1}`} />
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                {ossUrls.length > 0 && (
+                  <div style={{ color: '#52c41a', fontSize: '12px', marginTop: '8px' }}>
+                    ✓ 已上传 {ossUrls.length} 张图片到云端
+                  </div>
+                )}
+              </div>
+
+              {/* 操作按钮区域 */}
+              <div>
+                <h4>🚀 开始识别</h4>
                 <Space>
                   <Button
                     type="primary"
@@ -754,13 +848,17 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
                     icon={<ScanOutlined />}
                     disabled={!ossUrls.length || busy}
                     loading={busy && ocrProgress > 0}
-                    onClick={handleOCR}
+                    onClick={() => {
+                      handleOCR().then(() => {
+                        setOcrModalVisible(false);
+                        message.success('识别完成，请查看表格数据');
+                      });
+                    }}
                   >
                     {busy && ocrProgress > 0 ? 'OCR识别中...' : '开始OCR识别'}
                   </Button>
                   
                   <Button 
-                    type="default"
                     onClick={() => {
                       // 如果表格为空，添加一行空数据
                       if (rows.length === 0) {
@@ -770,48 +868,57 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
                         }];
                         setRows(emptyRowData);
                       }
+                      setOcrModalVisible(false);
                       message.info('已进入手动编辑模式');
                     }}
                   >
                     手动编辑
                   </Button>
                 </Space>
+              </div>
 
-                {/* 进度条 */}
-                {uploadProgress > 0 && uploadProgress < 100 && (
+              {/* 进度显示 */}
+              {uploadProgress > 0 && uploadProgress < 100 && (
+                <div>
+                  <h4>📄 上传进度</h4>
                   <Progress
                     percent={Math.round(uploadProgress)}
                     status="active"
                     strokeColor={{ '0%': '#108ee9', '100%': '#87d068' }}
                   />
-                )}
-                {ocrProgress > 0 && ocrProgress < 100 && (
+                </div>
+              )}
+              
+              {ocrProgress > 0 && ocrProgress < 100 && (
+                <div>
+                  <h4>🤖 OCR识别进度</h4>
                   <Progress
                     percent={Math.round(ocrProgress)}
                     status="active"
                     strokeColor={{ '0%': '#722ed1', '100%': '#52c41a' }}
                   />
-                )}
-              </Space>
-            </Card>
-          </Col>
+                </div>
+              )}
+            </Space>
+          </div>
+        </Modal>
 
-          {/* 家谱管理功能 */}
-          <Col xs={24} lg={12}>
-            <Card title="⚙️ 家谱管理功能" size="small">
-              <Space direction="vertical" style={{ width: '100%' }} size="middle">
-                {/* 数据操作 */}
+        {/* 数据管理功能弹框 */}
+        <Modal
+          title="⚙️ 家谱数据管理与发布"
+          open={managementModalVisible}
+          onCancel={() => setManagementModalVisible(false)}
+          footer={null}
+          width={700}
+          destroyOnClose
+        >
+          <div style={{ padding: '16px 0' }}>
+            <Space direction="vertical" style={{ width: '100%' }} size="large">
+              {/* 数据操作区域 */}
+              <div>
+                <h4>📦 数据操作</h4>
                 <Space wrap>
-                  <Button 
-                    type="primary" 
-                    icon={<PlusOutlined />} 
-                    onClick={addNewRow}
-                    disabled={busy}
-                  >
-                    添加新行
-                  </Button>
-                  
-                  {/* <Button
+                  <Button
                     icon={<TableOutlined />}
                     onClick={convertToJSON}
                   >
@@ -823,36 +930,8 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
                     onClick={downloadJSON}
                   >
                     下载JSON
-                  </Button> */}
-                  
-                  <Button
-                    type="primary"
-                    icon={<SaveOutlined />}
-                    loading={busy}
-                    onClick={saveToCurrentTenant}
-                    style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
-                  >
-                    保存家谱
                   </Button>
-                </Space>
-
-                {/* 数据统计 */}
-                {/* {rows.length > 0 && currentTenant && (
-                  <div style={{ padding: '12px', background: '#f8fafc', borderRadius: '6px', fontSize: '14px' }}>
-                    <div style={{ color: '#374151', fontWeight: '500' }}>
-                      📊 数据统计
-                    </div>
-                    <div style={{ color: '#6b7280', marginTop: '4px' }}>
-                      {currentTenant.id === 'default' || currentTenant.id === process.env.REACT_APP_DEFAULT_TENANT_ID 
-                        ? `默认穆氏族谱数据: ${rows.length}条记录` 
-                        : `${currentTenant.name}: ${rows.length}条记录`
-                      }
-                    </div>
-                  </div>
-                )} */}
-
-                {/* 其他功能 */}
-                <Space wrap>
+                  
                   <Button
                     onClick={generateFamilyDataFile}
                     loading={busy}
@@ -865,6 +944,26 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
                   >
                     导出CSV
                   </Button>
+                </Space>
+              </div>
+
+              {/* 发布保存区域 */}
+              <div>
+                <h4>🚀 数据发布</h4>
+                <Space wrap>
+                  <Button
+                    type="primary"
+                    icon={<SaveOutlined />}
+                    loading={busy}
+                    onClick={() => {
+                      saveToCurrentTenant().then(() => {
+                        setManagementModalVisible(false);
+                      });
+                    }}
+                    style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
+                  >
+                    保存到当前家谱
+                  </Button>
                   
                   {rows.length > 0 && (
                     <Button 
@@ -874,6 +973,7 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
                           setRows([]);
                           saveToStorage('rows', []);
                           message.warning('已清空所有数据');
+                          setManagementModalVisible(false);
                         }
                       }}
                     >
@@ -881,23 +981,59 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
                     </Button>
                   )}
                 </Space>
-              </Space>
-            </Card>
-          </Col>
-        </Row>
+              </div>
 
-        <Divider />
+              {/* 数据统计显示 */}
+              {rows.length > 0 && currentTenant && (
+                <div>
+                  <h4>📊 数据统计</h4>
+                  <div style={{ padding: '16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                    <Row gutter={[16, 8]}>
+                      <Col span={12}>
+                        <div style={{ color: '#374151', fontWeight: '500' }}>当前家谱:</div>
+                        <div style={{ color: '#6b7280', fontSize: '14px' }}>
+                          {currentTenant.id === 'default' || currentTenant.id === process.env.REACT_APP_DEFAULT_TENANT_ID 
+                            ? '默认穆氏族谱' 
+                            : currentTenant.name
+                          }
 
-        {/* 表格数据区域（核心内容） */}
-        <Card title="📋 家谱数据表格" size="small">
-          <AntdFamilyTable
-            data={rows}
-            onDataChange={handleDataChange}
-            onExport={exportExcels}
-            onSave={saveToCurrentTenant}
-            loading={busy}
-          />
-        </Card>
+                          
+                        </div>
+                      </Col>
+                      <Col span={12}>
+                        <div style={{ color: '#374151', fontWeight: '500' }}>数据条数:</div>
+                        <div style={{ color: '#16a34a', fontSize: '18px', fontWeight: '600' }}>
+                          {rows.length} 条记录
+                        </div>
+                      </Col>
+                    </Row>
+                  </div>
+                </div>
+              )}
+
+              {/* JSON预览区域 */}
+              {jsonOutput && (
+                <div>
+                  <h4>📝 JSON预览</h4>
+                  <textarea 
+                    className="json-output" 
+                    rows={8} 
+                    readOnly 
+                    value={jsonOutput} 
+                    style={{ 
+                      width: '100%', 
+                      fontFamily: 'Monaco, Consolas, monospace',
+                      fontSize: '12px',
+                      border: '1px solid #d9d9d9',
+                      borderRadius: '6px',
+                      padding: '12px'
+                    }}
+                  />
+                </div>
+              )}
+            </Space>
+          </div>
+        </Modal>
       </div>
     </AppLayout>
   );
