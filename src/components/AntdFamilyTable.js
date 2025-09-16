@@ -7,6 +7,7 @@ const { Option } = Select;
 const AntdFamilyTable = ({ data = [], onDataChange, onExport, onSave, loading = false }) => {
   const [tableData, setTableData] = useState([]);
   const [editingKey, setEditingKey] = useState('');
+  const [pageSize, setPageSize] = useState(50); // 添加分页大小状态
 
   // 合并和去重家谱数据
   const mergeAndDeduplicateData = (newData) => {
@@ -69,47 +70,93 @@ const AntdFamilyTable = ({ data = [], onDataChange, onExport, onSave, loading = 
     return finalData;
   };
 
-  // 同步外部数据变化
+  // 同步外部数据变化 - 优化数据排序
   useEffect(() => {
     if (data && data.length > 0) {
       const mergedData = mergeAndDeduplicateData(data);
-      setTableData(mergedData);
-      console.log(`📊 家谱数据已更新: ${mergedData.length} 条记录`);
+      
+      // 按世代和排行排序，确保穆茂在第一行
+      const sortedData = mergedData.sort((a, b) => {
+        // 首先按世代排序
+        if (a.g_rank !== b.g_rank) {
+          return a.g_rank - b.g_rank;
+        }
+        // 同世代内按排行排序
+        return (a.rank_index || 0) - (b.rank_index || 0);
+      });
+      
+      // 确保穆茂在第一位（特殊处理）
+      const muMaoIndex = sortedData.findIndex(item => 
+        item.name && item.name.includes('穆茂') && item.g_rank === 1
+      );
+      
+      if (muMaoIndex > 0) {
+        const muMao = sortedData.splice(muMaoIndex, 1)[0];
+        sortedData.unshift(muMao);
+        console.log('👑 穆茂已调整为第一行');
+      }
+      
+      setTableData(sortedData);
+      console.log(`📊 家谱数据已更新: ${sortedData.length} 条记录，第一行: ${sortedData[0]?.name || '未知'}`);
     } else if (data && data.length === 0) {
       // 如果传入空数组，清空数据
       setTableData([]);
     }
   }, [data]);
 
-  // 列定义
+  // 列定义 - 优化表格显示密度和网格效果
   const columns = [
     {
       title: 'ID',
       dataIndex: 'id',
       key: 'id',
-      width: 60,
+      width: 50,
       sorter: (a, b) => a.id - b.id,
+      align: 'center',
+      render: (text) => (
+        <span style={{ 
+          fontSize: '12px', 
+          fontWeight: '500',
+          color: '#666'
+        }}>
+          {text}
+        </span>
+      )
     },
     {
       title: '姓名',
       dataIndex: 'name',
       key: 'name',
-      width: 100,
+      width: 90,
       render: (text, record) => {
         if (editingKey === record.key) {
           return (
             <Input
+              size="small"
               defaultValue={text}
               onPressEnter={(e) => handleSave(record.key, 'name', e.target.value)}
               onBlur={(e) => handleSave(record.key, 'name', e.target.value)}
               autoFocus
+              style={{ fontSize: '12px' }}
             />
           );
         }
         return (
           <div 
             onClick={() => setEditingKey(record.key)}
-            style={{ cursor: 'pointer', minHeight: '22px' }}
+            style={{ 
+              cursor: 'pointer', 
+              height: '24px',
+              lineHeight: '24px',
+              fontSize: '12px',
+              fontWeight: '500',
+              color: '#1890ff',
+              padding: '0 4px',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap'
+            }}
+            title={text}
           >
             {text || '点击编辑'}
           </div>
@@ -120,26 +167,41 @@ const AntdFamilyTable = ({ data = [], onDataChange, onExport, onSave, loading = 
       title: '世代',
       dataIndex: 'g_rank',
       key: 'g_rank',
-      width: 60,
+      width: 50,
       sorter: (a, b) => a.g_rank - b.g_rank,
+      align: 'center',
       render: (text, record) => {
         if (editingKey === record.key) {
           return (
             <Input
+              size="small"
               type="number"
               defaultValue={text}
               onPressEnter={(e) => handleSave(record.key, 'g_rank', parseInt(e.target.value))}
               onBlur={(e) => handleSave(record.key, 'g_rank', parseInt(e.target.value))}
+              style={{ fontSize: '12px' }}
             />
           );
         }
         return (
-          <div 
+          <span 
             onClick={() => setEditingKey(record.key)}
-            style={{ cursor: 'pointer', minHeight: '22px' }}
+            style={{ 
+              cursor: 'pointer',
+              display: 'inline-block',
+              width: '100%',
+              height: '24px',
+              lineHeight: '24px',
+              fontSize: '12px',
+              fontWeight: '500',
+              color: '#52c41a',
+              backgroundColor: '#f6ffed',
+              borderRadius: '4px',
+              textAlign: 'center'
+            }}
           >
             {text}
-          </div>
+          </span>
         );
       },
     },
@@ -147,25 +209,46 @@ const AntdFamilyTable = ({ data = [], onDataChange, onExport, onSave, loading = 
       title: '排行',
       dataIndex: 'rank_index',
       key: 'rank_index',
-      width: 60,
+      width: 50,
+      align: 'center',
+      render: (text) => (
+        <span style={{ 
+          fontSize: '12px',
+          color: '#666'
+        }}>
+          {text}
+        </span>
+      )
     },
     {
       title: '父亲ID',
       dataIndex: 'g_father_id',
       key: 'g_father_id',
-      width: 80,
+      width: 60,
+      align: 'center',
+      render: (text) => (
+        <span style={{ 
+          fontSize: '12px',
+          color: text === 0 ? '#999' : '#722ed1',
+          fontWeight: text === 0 ? 'normal' : '500'
+        }}>
+          {text === 0 ? '-' : text}
+        </span>
+      )
     },
     {
       title: '性别',
       dataIndex: 'sex',
       key: 'sex',
-      width: 80,
+      width: 50,
+      align: 'center',
       render: (text, record) => {
         if (editingKey === record.key) {
           return (
             <Select
+              size="small"
               defaultValue={text}
-              style={{ width: '100%' }}
+              style={{ width: '100%', fontSize: '12px' }}
               onChange={(value) => handleSave(record.key, 'sex', value)}
             >
               <Option value="MAN">男</Option>
@@ -173,27 +256,43 @@ const AntdFamilyTable = ({ data = [], onDataChange, onExport, onSave, loading = 
             </Select>
           );
         }
+        const isMale = text === 'MAN';
         return (
-          <div 
+          <span 
             onClick={() => setEditingKey(record.key)}
-            style={{ cursor: 'pointer', minHeight: '22px' }}
+            style={{ 
+              cursor: 'pointer',
+              display: 'inline-block',
+              width: '20px',
+              height: '20px',
+              lineHeight: '20px',
+              fontSize: '11px',
+              fontWeight: '500',
+              color: isMale ? '#1890ff' : '#eb2f96',
+              backgroundColor: isMale ? '#e6f7ff' : '#fff0f6',
+              borderRadius: '50%',
+              textAlign: 'center',
+              border: `1px solid ${isMale ? '#1890ff' : '#eb2f96'}`
+            }}
           >
-            {text === 'MAN' ? '男' : text === 'WOMAN' ? '女' : text}
-          </div>
+            {isMale ? '男' : '女'}
+          </span>
         );
       },
     },
     {
-      title: '收养状态',
+      title: '收养',
       dataIndex: 'adoption',
       key: 'adoption',
-      width: 100,
+      width: 60,
+      align: 'center',
       render: (text, record) => {
         if (editingKey === record.key) {
           return (
             <Select
+              size="small"
               defaultValue={text}
-              style={{ width: '100%' }}
+              style={{ width: '100%', fontSize: '12px' }}
               onChange={(value) => handleSave(record.key, 'adoption', value)}
             >
               <Option value="none">无</Option>
@@ -202,13 +301,20 @@ const AntdFamilyTable = ({ data = [], onDataChange, onExport, onSave, loading = 
             </Select>
           );
         }
+        const displayText = text === 'none' ? '-' : text === 'adopted' ? '收养' : text === 'foster' ? '寄养' : text;
+        const color = text === 'none' ? '#999' : '#fa8c16';
         return (
-          <div 
+          <span 
             onClick={() => setEditingKey(record.key)}
-            style={{ cursor: 'pointer', minHeight: '22px' }}
+            style={{ 
+              cursor: 'pointer',
+              fontSize: '11px',
+              color: color,
+              fontWeight: text === 'none' ? 'normal' : '500'
+            }}
           >
-            {text === 'none' ? '无' : text === 'adopted' ? '收养' : text === 'foster' ? '寄养' : text}
-          </div>
+            {displayText}
+          </span>
         );
       },
     },
@@ -221,18 +327,31 @@ const AntdFamilyTable = ({ data = [], onDataChange, onExport, onSave, loading = 
         if (editingKey === record.key) {
           return (
             <Input
+              size="small"
               defaultValue={text}
               onPressEnter={(e) => handleSave(record.key, 'official_position', e.target.value)}
               onBlur={(e) => handleSave(record.key, 'official_position', e.target.value)}
+              style={{ fontSize: '12px' }}
             />
           );
         }
         return (
           <div 
             onClick={() => setEditingKey(record.key)}
-            style={{ cursor: 'pointer', minHeight: '22px' }}
+            style={{ 
+              cursor: 'pointer',
+              height: '24px',
+              lineHeight: '24px',
+              fontSize: '12px',
+              color: text ? '#13c2c2' : '#d9d9d9',
+              padding: '0 4px',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap'
+            }}
+            title={text}
           >
-            {text || '点击编辑'}
+            {text || '无'}
           </div>
         );
       },
@@ -241,23 +360,36 @@ const AntdFamilyTable = ({ data = [], onDataChange, onExport, onSave, loading = 
       title: '配偶',
       dataIndex: 'spouse',
       key: 'spouse',
-      width: 100,
+      width: 80,
       render: (text, record) => {
         if (editingKey === record.key) {
           return (
             <Input
+              size="small"
               defaultValue={text}
               onPressEnter={(e) => handleSave(record.key, 'spouse', e.target.value)}
               onBlur={(e) => handleSave(record.key, 'spouse', e.target.value)}
+              style={{ fontSize: '12px' }}
             />
           );
         }
         return (
           <div 
             onClick={() => setEditingKey(record.key)}
-            style={{ cursor: 'pointer', minHeight: '22px' }}
+            style={{ 
+              cursor: 'pointer',
+              height: '24px',
+              lineHeight: '24px',
+              fontSize: '12px',
+              color: text ? '#722ed1' : '#d9d9d9',
+              padding: '0 4px',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap'
+            }}
+            title={text}
           >
-            {text || '点击编辑'}
+            {text || '无'}
           </div>
         );
       },
@@ -266,23 +398,44 @@ const AntdFamilyTable = ({ data = [], onDataChange, onExport, onSave, loading = 
       title: '备注',
       dataIndex: 'summary',
       key: 'summary',
-      width: 150,
+      width: 140,
       render: (text, record) => {
         if (editingKey === record.key) {
           return (
-            <Input
+            <Input.TextArea
+              size="small"
               defaultValue={text}
-              onPressEnter={(e) => handleSave(record.key, 'summary', e.target.value)}
+              autoSize={{ minRows: 1, maxRows: 3 }}
+              onPressEnter={(e) => {
+                if (!e.shiftKey) {
+                  handleSave(record.key, 'summary', e.target.value)
+                }
+              }}
               onBlur={(e) => handleSave(record.key, 'summary', e.target.value)}
+              style={{ fontSize: '12px' }}
             />
           );
         }
         return (
           <div 
             onClick={() => setEditingKey(record.key)}
-            style={{ cursor: 'pointer', minHeight: '22px' }}
+            style={{ 
+              cursor: 'pointer',
+              minHeight: '24px',
+              maxHeight: '72px',
+              lineHeight: '16px',
+              fontSize: '11px',
+              color: text ? '#595959' : '#d9d9d9',
+              padding: '4px',
+              overflow: 'hidden',
+              display: '-webkit-box',
+              WebkitLineClamp: 3,
+              WebkitBoxOrient: 'vertical',
+              wordBreak: 'break-all'
+            }}
+            title={text}
           >
-            {text || '点击编辑'}
+            {text || '无备注'}
           </div>
         );
       },
@@ -367,41 +520,138 @@ const AntdFamilyTable = ({ data = [], onDataChange, onExport, onSave, loading = 
 
   return (
     <div className="antd-family-table" style={{ width: '100%' }}>
-      {/* 数据状态信息 */}
-      {process.env.NODE_ENV === 'development' && (
-        <div style={{
-          padding: '8px',
-          backgroundColor: '#f6ffed',
-          border: '1px solid #b7eb8f',
-          marginBottom: '8px',
-          fontSize: '12px'
-        }}>
-          <strong>📊 数据状态:</strong>
-          共 {tableData?.length || 0} 条记录
-          {tableData && tableData.length > 0 && ` | 最新: ${tableData[0].name}`}
-          {editingKey && ` | 编辑中: ${editingKey}`}
+      <style>
+        {`
+          .compact-family-table .ant-table-thead > tr > th {
+            padding: 8px 6px !important;
+            font-size: 12px !important;
+            font-weight: 600 !important;
+            background-color: #fafafa !important;
+            border-bottom: 2px solid #e8e8e8 !important;
+            text-align: center;
+          }
+          
+          .compact-family-table .ant-table-tbody > tr > td {
+            padding: 4px 6px !important;
+            font-size: 12px !important;
+            vertical-align: middle !important;
+            border-right: 1px solid #f0f0f0 !important;
+            height: 32px !important;
+          }
+          
+          .compact-family-table .ant-table-tbody > tr:nth-child(even) {
+            background-color: #fafafa;
+          }
+          
+          .compact-family-table .ant-table-tbody > tr:hover {
+            background-color: #f0f9ff !important;
+          }
+          
+          .compact-family-table .ant-table-pagination {
+            margin: 16px 0 0 0 !important;
+            text-align: center;
+          }
+          
+          .compact-family-table .ant-pagination {
+            font-size: 12px;
+          }
+          
+          .compact-family-table .ant-pagination-options {
+            font-size: 12px;
+          }
+          
+          .compact-family-table .ant-pagination-total-text {
+            font-size: 12px;
+            color: #666;
+          }
+          
+          .compact-family-table .ant-pagination-item {
+            min-width: 28px;
+            height: 28px;
+            line-height: 26px;
+            font-size: 12px;
+          }
+          
+          .compact-family-table .ant-pagination-prev,
+          .compact-family-table .ant-pagination-next {
+            min-width: 28px;
+            height: 28px;
+            line-height: 26px;
+          }
+          
+          .compact-family-table .ant-select-selector {
+            font-size: 12px !important;
+            height: 24px !important;
+            min-height: 24px !important;
+          }
+          
+          .compact-family-table .ant-input {
+            font-size: 12px !important;
+            height: 24px !important;
+            padding: 2px 6px !important;
+          }
+          
+          .compact-family-table .ant-input-number {
+            font-size: 12px !important;
+            height: 24px !important;
+          }
+          
+          .compact-family-table .ant-table-filter-column {
+            font-size: 12px !important;
+          }
+          
+          .compact-family-table .ant-table-column-sorter {
+            font-size: 10px !important;
+          }
+        `}
+      </style>
+      {/* 数据状态信息 - 简化显示 */}
+      <div style={{
+        padding: '6px 12px',
+        backgroundColor: '#f8f9fa',
+        border: '1px solid #e9ecef',
+        borderRadius: '4px',
+        marginBottom: '12px',
+        fontSize: '12px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+      }}>
+        <div>
+          <span style={{ fontWeight: '500', color: '#495057' }}>📊 共 {tableData?.length || 0} 条记录</span>
+          {editingKey && (
+            <span style={{ marginLeft: '12px', color: '#007bff' }}>✏️ 编辑中</span>
+          )}
         </div>
-      )}
+        {tableData && tableData.length > 0 && (
+          <div style={{ fontSize: '11px', color: '#6c757d' }}>
+            世代范围: {Math.min(...tableData.map(item => item.g_rank || 1))} - {Math.max(...tableData.map(item => item.g_rank || 1))}
+          </div>
+        )}
+      </div>
       
-      {/* 工具栏 */}
-      <div className="antd-family-table-toolbar" style={{ marginBottom: '8px' }}>
+      {/* 工具栏 - 紧凑布局 */}
+      <div className="antd-family-table-toolbar" style={{ marginBottom: '12px' }}>
         <Space>
           <Button
             type="primary"
             icon={<PlusOutlined />}
             onClick={addRow}
+            size="small"
           >
             添加行
           </Button>
           <Button
             icon={<DownloadOutlined />}
             onClick={exportCSV}
+            size="small"
           >
             导出CSV
           </Button>
           {onExport && (
             <Button
               onClick={() => onExport(tableData)}
+              size="small"
             >
               导出Excel
             </Button>
@@ -412,39 +662,110 @@ const AntdFamilyTable = ({ data = [], onDataChange, onExport, onSave, loading = 
               icon={<SaveOutlined />}
               loading={loading}
               onClick={() => onSave(tableData)}
+              size="small"
               style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
             >
               保存数据
             </Button>
           )}
 
-          <Tooltip title="点击单元格编辑，支持排序和筛选">
-            <Button type="text" icon={<InfoCircleOutlined />} />
+          <Tooltip title="💡 点击单元格编辑，支持排序和筛选">
+            <Button type="text" icon={<InfoCircleOutlined />} size="small" />
           </Tooltip>
         </Space>
       </div>
 
-      {/* Ant Design Table */}
+      {/* Ant Design Table - 优化显示密度和网格效果 */}
       <Table
         columns={columns}
         dataSource={tableData}
         pagination={{
-          defaultPageSize: 20,
-          pageSize: 20,
+          pageSize: pageSize,
           showSizeChanger: true,
-          showQuickJumper: true,
-          pageSizeOptions: ['20', '100', '300', '500'],
-          showTotal: (total, range) => `第 ${range[0]}-${range[1]} 条，共 ${total} 条`,
+          showQuickJumper: false, // 取消goto功能
+          pageSizeOptions: ['25', '50', '100', '200'],
+          showTotal: (total, range) => (
+            <span style={{ fontSize: '12px', color: '#666' }}>
+              共 {total} 条
+            </span>
+          ),
+          size: 'small',
+          simple: false,
           onShowSizeChange: (current, size) => {
-            console.log(`分页大小变更: 当前页=${current}, 每页显示=${size}`);
+            console.log(`🔄 分页大小变更: ${pageSize} → ${size}`);
+            setPageSize(size);
           },
+          onChange: (page, size) => {
+            console.log(`📊 切换到第 ${page} 页，每页 ${size} 条`);
+          }
         }}
-        scroll={{ x: 1200, y: 400 }}
+        scroll={{ x: 800, y: 500 }}
         size="small"
         bordered
         rowKey="key"
         locale={{
-          emptyText: '暂无数据，请上传图片进行OCR识别'
+          emptyText: (
+            <div style={{
+              padding: '40px 20px',
+              color: '#999',
+              fontSize: '14px',
+              textAlign: 'center'
+            }}>
+              <div style={{ marginBottom: '8px' }}>📝 暂无数据</div>
+              <div style={{ fontSize: '12px' }}>请上传图片进行OCR识别或手动添加</div>
+            </div>
+          )
+        }}
+        className="compact-family-table"
+        style={{
+          fontSize: '12px',
+          '--table-row-height': '32px'
+        }}
+        components={{
+          header: {
+            cell: (props) => (
+              <th 
+                {...props} 
+                style={{
+                  ...props.style,
+                  backgroundColor: '#fafafa',
+                  fontWeight: '600',
+                  fontSize: '12px',
+                  padding: '8px 6px',
+                  lineHeight: '1.2',
+                  borderBottom: '2px solid #e8e8e8'
+                }}
+              />
+            )
+          },
+          body: {
+            row: (props) => (
+              <tr 
+                {...props} 
+                style={{
+                  ...props.style,
+                  height: '32px'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#f5f5f5';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '';
+                }}
+              />
+            ),
+            cell: (props) => (
+              <td 
+                {...props} 
+                style={{
+                  ...props.style,
+                  padding: '4px 6px',
+                  verticalAlign: 'middle',
+                  borderRight: '1px solid #f0f0f0'
+                }}
+              />
+            )
+          }
         }}
       />
     </div>

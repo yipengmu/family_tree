@@ -758,6 +758,52 @@ app.get('/api/family-data/:tenantId', async (req, res) => {
   }
 });
 
+// 获取默认家谱数据（特殊接口）
+app.get('/api/family-data/default', async (req, res) => {
+  try {
+    console.log(`📖 [${new Date().toISOString()}] 获取默认家谱数据请求`);
+
+    const familyData = await familyDataService.getFamilyData('default');
+
+    res.json({
+      success: true,
+      data: familyData,
+      count: familyData.length,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error(`❌ [${new Date().toISOString()}] 获取默认家谱数据失败:`, error);
+    res.status(500).json({
+      error: '获取默认家谱数据失败',
+      message: error.message
+    });
+  }
+});
+
+// 重新初始化默认家谱数据
+app.post('/api/reinit-default-data', async (req, res) => {
+  try {
+    console.log(`🔄 [${new Date().toISOString()}] 重新初始化默认家谱数据请求`);
+
+    // 强制重新加载默认穆氏族谱数据
+    await tenantService.forceInitializeDefaultFamilyData();
+
+    res.json({
+      success: true,
+      message: '默认家谱数据重新初始化完成',
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error(`❌ [${new Date().toISOString()}] 重新初始化默认家谱数据失败:`, error);
+    res.status(500).json({
+      error: '重新初始化失败',
+      message: error.message
+    });
+  }
+});
+
 // 错误处理中间件
 app.use((error, req, res, next) => {
   console.error(`[${getTimestamp()}] ❌ 服务器错误:`, error);
