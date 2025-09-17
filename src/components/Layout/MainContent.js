@@ -1,5 +1,6 @@
 import React from 'react';
 import FamilySearchBar from '../UI/FamilySearchBar';
+import TenantSelector from '../TenantSelector';
 import './MainContent.css';
 
 const MainContent = ({
@@ -14,25 +15,25 @@ const MainContent = ({
 }) => {
   return (
     <main className={`main-content ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
-      {/* 顶部搜索栏 */}
+      {/* 顶部导航栏 - 租户选择器移至右上角 */}
       <header className="header">
-        <FamilySearchBar
-          familyData={familyData}
-          nodes={nodes}
-          statistics={statistics}
-          onSearch={onSearch}
-          onSelect={onSearchSelect}
-          placeholder="搜索族谱成员..."
-          showStatus={true}
-          style={{ flex: 1, maxWidth: 400 }}
-        />
+        {/* 左侧：搜索栏 */}
+        <div className="header-left">
+          <FamilySearchBar
+            familyData={familyData}
+            nodes={nodes}
+            statistics={statistics}
+            onSearch={onSearch}
+            onSelect={onSearchSelect}
+            placeholder="搜索族谱成员..."
+            showStatus={true}
+            style={{ flex: 1, maxWidth: 400 }}
+          />
+        </div>
 
-        <div className="user-profile">
-          <div className="user-info">
-            <div className="user-name">{user.name}</div>
-            <div className="user-logout">Log out</div>
-          </div>
-          <div className="user-avatar">{user.avatar}</div>
+        {/* 右侧：租户选择器 */}
+        <div className="header-right">
+          <TenantSelector />
         </div>
       </header>
 

@@ -54,6 +54,7 @@ const AppLayout = ({
           onMenuClick={handleMenuClick}
           collapsed={sidebarCollapsed}
           onToggleCollapse={toggleSidebarCollapse}
+          user={currentUser}
         />
       </div>
 

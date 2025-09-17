@@ -374,8 +374,6 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
       setPreviews([]);
       setOssUrls([]);
       setJsonOutput('');
-      
-      message.info(`已切换到 ${tenant.name}`);
     });
 
     return unsubscribe;
@@ -956,9 +954,7 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
                 智能识别、在线编辑、一键发布家谱数据
               </p>
             </Col>
-            <Col>
-              <TenantSelector onTenantChange={setCurrentTenant} />
-            </Col>
+            {/* 租户选择器已移至顶部全局导航栏 */}
           </Row>
         </div>
 

@@ -11,7 +11,7 @@ import {
 } from '@ant-design/icons';
 import './Sidebar.css';
 
-const Sidebar = ({ activeItem = 'tree', onMenuClick, collapsed = false, onToggleCollapse }) => {
+const Sidebar = ({ activeItem = 'tree', onMenuClick, collapsed = false, onToggleCollapse, user = { name: '穆塔爸', avatar: '穆' } }) => {
   const menuItems = [
     {
       key: 'tree',
@@ -84,6 +84,19 @@ const Sidebar = ({ activeItem = 'tree', onMenuClick, collapsed = false, onToggle
           ))}
         </ul>
       </nav>
+      
+      {/* 用户信息 - 移至侧边栏底部 */}
+      <div className="user-section">
+        <div className={`user-profile-sidebar ${collapsed ? 'collapsed' : ''}`}>
+          <div className="user-avatar-sidebar">{user.avatar}</div>
+          {!collapsed && (
+            <div className="user-info-sidebar">
+              <div className="user-name-sidebar">{user.name}</div>
+              <div className="user-logout-sidebar">Log out</div>
+            </div>
+          )}
+        </div>
+      </div>
       
       {/* 精巧的收起按钮 - 位于侧边栏右边缘 */}
       <div className="collapse-toggle">

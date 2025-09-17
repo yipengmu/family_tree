@@ -24,57 +24,23 @@
   top: 0;
   z-index: 100;
   min-height: 48px; /* 设置最小高度 */
+  gap: 16px; /* 为租户选择器和搜索栏之间添加间距 */
+}
+
+/* 左侧区域（搜索栏） */
+.header .header-left {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+/* 右侧区域（租户选择器） */
+.header .header-right {
+  display: flex;
+  align-items: center;
 }
 
 /* 搜索框样式已移动到 FamilySearchBar.css */
-
-/* 用户资料区域 */
-.user-profile {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.user-info {
-  text-align: right;
-}
-
-.user-name {
-  font-size: 16px;
-  font-weight: 600;
-  color: #1e293b;
-  margin-bottom: 2px;
-}
-
-.user-logout {
-  font-size: 14px;
-  color: #64748b;
-  cursor: pointer;
-  transition: color 0.2s ease;
-}
-
-.user-logout:hover {
-  color: #8b5cf6;
-}
-
-.user-avatar {
-  width: 48px;
-  height: 48px;
-  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: 600;
-  font-size: 18px;
-  cursor: pointer;
-  transition: transform 0.2s ease;
-}
-
-.user-avatar:hover {
-  transform: scale(1.05);
-}
 
 /* 封面图片 */
 .cover-image {
