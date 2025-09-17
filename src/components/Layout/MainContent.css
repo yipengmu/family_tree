@@ -1,9 +1,15 @@
 /* 主要内容区域 */
 .main-content {
-  margin-left: 280px;
+  margin-left: 140px;
   min-height: 100vh;
   background: #f8fafc;
   position: relative;
+  transition: margin-left 0.3s ease;
+}
+
+/* 侧边栏收起状态 */
+.main-content.sidebar-collapsed {
+  margin-left: 60px;
 }
 
 /* 顶部搜索栏 - 简化版本 */
@@ -103,7 +109,11 @@
 /* 响应式设计 */
 @media (max-width: 1024px) {
   .main-content {
-    margin-left: 240px;
+    margin-left: 120px;
+  }
+  
+  .main-content.sidebar-collapsed {
+    margin-left: 60px;
   }
   
   .header {

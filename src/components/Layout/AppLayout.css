@@ -12,6 +12,11 @@
   left: 0;
   z-index: 1000;
   height: 100vh;
+  transition: width 0.3s ease;
+}
+
+.sidebar-wrapper.collapsed {
+  width: 60px;
 }
 
 /* 移动端遮罩 */

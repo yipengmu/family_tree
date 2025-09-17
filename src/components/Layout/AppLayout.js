@@ -13,7 +13,8 @@ const AppLayout = ({
   onSearch,
   onSearchSelect
 }) => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false); // 移动端侧边栏状态
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false); // 桌面端侧边栏收起状态
   const [currentUser] = useState({
     name: '穆塔爸',
     avatar: '穆'
@@ -31,6 +32,11 @@ const AppLayout = ({
     setSidebarOpen(!sidebarOpen);
   };
 
+  // 桌面端侧边栏收起切换
+  const toggleSidebarCollapse = () => {
+    setSidebarCollapsed(!sidebarCollapsed);
+  };
+
   return (
     <div className="app-layout">
       {/* 移动端遮罩 */}
@@ -42,10 +48,12 @@ const AppLayout = ({
       )}
 
       {/* 侧边栏 */}
-      <div className={`sidebar-wrapper ${sidebarOpen ? 'open' : ''}`}>
+      <div className={`sidebar-wrapper ${sidebarOpen ? 'open' : ''} ${sidebarCollapsed ? 'collapsed' : ''}`}>
         <Sidebar
           activeItem={activeMenuItem}
           onMenuClick={handleMenuClick}
+          collapsed={sidebarCollapsed}
+          onToggleCollapse={toggleSidebarCollapse}
         />
       </div>
 
@@ -57,6 +65,7 @@ const AppLayout = ({
         statistics={statistics}
         onSearch={onSearch}
         onSearchSelect={onSearchSelect}
+        sidebarCollapsed={sidebarCollapsed}
       >
         {/* 移动端菜单按钮 */}
         <button

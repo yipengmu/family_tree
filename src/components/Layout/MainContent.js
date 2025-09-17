@@ -9,10 +9,11 @@ const MainContent = ({
   nodes = [],
   statistics = null,
   onSearch,
-  onSearchSelect
+  onSearchSelect,
+  sidebarCollapsed = false
 }) => {
   return (
-    <main className="main-content">
+    <main className={`main-content ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
       {/* 顶部搜索栏 */}
       <header className="header">
         <FamilySearchBar
