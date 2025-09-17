@@ -84,6 +84,27 @@
   box-shadow: 0 4px 12px rgba(139, 92, 246, 0.15);
 }
 
+/* 危险操作按钮样式 */
+.control-button.ant-btn-dangerous {
+  border-color: #ff7875;
+  background: #fff2f0;
+}
+
+.control-button.ant-btn-dangerous:hover {
+  border-color: #ff4d4f;
+  background: #ffebe6;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(255, 77, 79, 0.2);
+}
+
+.control-button.ant-btn-dangerous .control-title {
+  color: #cf1322;
+}
+
+.control-button.ant-btn-dangerous .control-description {
+  color: #a8071a;
+}
+
 .control-title {
   font-weight: 600;
   color: #1e293b;

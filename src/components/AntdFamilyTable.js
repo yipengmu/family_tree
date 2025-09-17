@@ -1,13 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Space, Tooltip, message, Input, Select } from 'antd';
-import { PlusOutlined, DownloadOutlined, SaveOutlined, InfoCircleOutlined, EditOutlined } from '@ant-design/icons';
+import { Table, Button, Space, Tooltip, message, Input, Select, Modal } from 'antd';
+import { PlusOutlined, SaveOutlined, InfoCircleOutlined, EditOutlined } from '@ant-design/icons';
 
 const { Option } = Select;
 
-const AntdFamilyTable = ({ data = [], onDataChange, onExport, onSave, loading = false }) => {
+const AntdFamilyTable = ({ 
+  data = [], 
+  onDataChange, 
+  onSave, 
+  loading = false,
+  selectedRowKeys: externalSelectedRowKeys,
+  onSelectedRowKeysChange,
+  onSelectedRowsChange
+}) => {
   const [tableData, setTableData] = useState([]);
   const [editingKey, setEditingKey] = useState('');
   const [pageSize, setPageSize] = useState(50); // 添加分页大小状态
+  
+  // 使用父组件传递的多选状态，如果没有则使用内部状态
+  const [internalSelectedRowKeys, setInternalSelectedRowKeys] = useState([]);
+  const [internalSelectedRows, setInternalSelectedRows] = useState([]);
+  
+  const selectedRowKeys = externalSelectedRowKeys !== undefined ? externalSelectedRowKeys : internalSelectedRowKeys;
+  const setSelectedRowKeys = onSelectedRowKeysChange || setInternalSelectedRowKeys;
+  const setSelectedRows = onSelectedRowsChange || setInternalSelectedRows;
 
   // 合并和去重家谱数据
   const mergeAndDeduplicateData = (newData) => {
@@ -440,13 +456,97 @@ const AntdFamilyTable = ({ data = [], onDataChange, onExport, onSave, loading = 
         );
       },
     },
+    {
+      title: '更新时间',
+      dataIndex: 'updated_at',
+      key: 'updated_at',
+      width: 150,
+      align: 'center',
+      sorter: (a, b) => {
+        const timeA = new Date(a.updated_at || a.created_at || 0).getTime();
+        const timeB = new Date(b.updated_at || b.created_at || 0).getTime();
+        return timeA - timeB;
+      },
+      render: (text, record) => {
+        // 优先使用 updated_at，如果没有则使用 created_at
+        const displayTime = text || record.created_at;
+        
+        if (!displayTime) {
+          return (
+            <span style={{ 
+              fontSize: '11px',
+              color: '#999',
+              fontStyle: 'italic'
+            }}>
+              无记录
+            </span>
+          );
+        }
+        
+        // 格式化时间显示
+        const formatTime = (timeStr) => {
+          try {
+            const date = new Date(timeStr);
+            if (isNaN(date.getTime())) {
+              return '无效时间';
+            }
+            
+            // 格式: 2024-02-32 21:11:21
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const seconds = String(date.getSeconds()).padStart(2, '0');
+            
+            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+          } catch (error) {
+            return '格式错误';
+          }
+        };
+        
+        return (
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ 
+              fontSize: '11px',
+              color: '#666',
+              fontWeight: '500',
+              lineHeight: '16px'
+            }}>
+              {formatTime(displayTime)}
+            </div>
+            {record.created_at && record.updated_at && record.created_at !== record.updated_at && (
+              <div style={{ 
+                fontSize: '10px',
+                color: '#999',
+                marginTop: '2px'
+              }}>
+                📝 已更新
+              </div>
+            )}
+          </div>
+        );
+      },
+    },
   ];
 
   // 保存编辑
   const handleSave = (key, field, value) => {
     const newData = tableData.map(item => {
       if (item.key === key) {
-        return { ...item, [field]: value };
+        // 如果数据发生变化，更新 updated_at 时间戳
+        const updatedItem = { ...item, [field]: value };
+        
+        // 检查是否有实际变化
+        const hasChanged = item[field] !== value;
+        
+        if (hasChanged) {
+          // 添加更新时间戳
+          updatedItem.updated_at = new Date().toISOString();
+          console.log(`📝 字段更新: ${field} = ${value}, 更新时间: ${updatedItem.updated_at}`);
+        }
+        
+        return updatedItem;
       }
       return item;
     });
@@ -462,6 +562,7 @@ const AntdFamilyTable = ({ data = [], onDataChange, onExport, onSave, loading = 
   // 添加新行
   const addRow = () => {
     const newId = Math.max(...tableData.map(row => parseInt(row.id) || 0), 0) + 1;
+    const currentTime = new Date().toISOString();
     const newRow = {
       key: `new_${newId}`,
       id: newId,
@@ -476,7 +577,9 @@ const AntdFamilyTable = ({ data = [], onDataChange, onExport, onSave, loading = 
       birth_date: '',
       dealth: '',
       spouse: '',
-      location: ''
+      location: '',
+      created_at: currentTime,
+      updated_at: currentTime
     };
 
     const newData = [...tableData, newRow];
@@ -489,33 +592,23 @@ const AntdFamilyTable = ({ data = [], onDataChange, onExport, onSave, loading = 
     message.success('已添加新行');
   };
 
-  // 导出CSV
-  const exportCSV = () => {
-    try {
-      const headers = columns.map(col => col.title).join(',');
-      const rows = tableData.map(row => 
-        columns.map(col => {
-          const value = row[col.dataIndex] || '';
-          return typeof value === 'string' && value.includes(',') ? `"${value}"` : value;
-        }).join(',')
-      );
-      
-      const csvContent = [headers, ...rows].join('\n');
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', `family_tree_${new Date().toISOString().split('T')[0]}.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      message.success('CSV文件已导出');
-    } catch (error) {
-      console.error('导出CSV失败:', error);
-      message.error('导出CSV失败');
-    }
+  // 导出Excel功能已迁移到CreatorPage的管理与发布弹框中
+  // const exportToExcel = () => { ... }
+
+  // 批量删除功能已迁移到CreatorPage中
+  // const handleBatchDelete = () => { ... }
+
+  // 行选择配置
+  const rowSelection = {
+    selectedRowKeys,
+    onChange: (newSelectedRowKeys, newSelectedRows) => {
+      setSelectedRowKeys(newSelectedRowKeys);
+      setSelectedRows(newSelectedRows);
+    },
+    getCheckboxProps: (record) => ({
+      disabled: false, // 可以根据需要设置禁用条件
+      name: record.name,
+    }),
   };
 
   return (
@@ -606,55 +699,13 @@ const AntdFamilyTable = ({ data = [], onDataChange, onExport, onSave, loading = 
         `}
       </style>
       
-      {/* 工具栏 - 紧凑布局 */}
-      <div className="antd-family-table-toolbar" style={{ marginBottom: '12px' }}>
-        <Space>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={addRow}
-            size="small"
-          >
-            添加行
-          </Button>
-          <Button
-            icon={<DownloadOutlined />}
-            onClick={exportCSV}
-            size="small"
-          >
-            导出CSV
-          </Button>
-          {onExport && (
-            <Button
-              onClick={() => onExport(tableData)}
-              size="small"
-            >
-              导出Excel
-            </Button>
-          )}
-          {onSave && (
-            <Button
-              type="primary"
-              icon={<SaveOutlined />}
-              loading={loading}
-              onClick={() => onSave(tableData)}
-              size="small"
-              style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
-            >
-              保存数据
-            </Button>
-          )}
-
-          <Tooltip title="💡 点击单元格编辑，支持排序和筛选">
-            <Button type="text" icon={<InfoCircleOutlined />} size="small" />
-          </Tooltip>
-        </Space>
-      </div>
+      {/* 工具栏已移除，批量删除功能在CreatorPage中处理 */}
 
       {/* Ant Design Table - 优化显示密度和网格效果 */}
       <Table
         columns={columns}
         dataSource={tableData}
+        rowSelection={rowSelection}
         pagination={{
           pageSize: pageSize,
           showSizeChanger: true,
@@ -675,7 +726,7 @@ const AntdFamilyTable = ({ data = [], onDataChange, onExport, onSave, loading = 
             console.log(`📊 切换到第 ${page} 页，每页 ${size} 条`);
           }
         }}
-        scroll={{ x: 800, y: 500 }}
+        scroll={{ x: 950, y: 500 }}
         size="small"
         bordered
         rowKey="key"

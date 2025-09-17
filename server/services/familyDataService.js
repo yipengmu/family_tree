@@ -31,8 +31,8 @@ class FamilyDataService {
             tenant_id, person_id, name, g_rank, rank_index, g_father_id, g_mother_id,
             sex, adoption, official_position, summary, birth_date, death_date,
             spouse, location, formal_name, id_card, face_img, photos,
-            household_info, home_page, childrens
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            household_info, home_page, childrens, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
         `;
 
         let savedCount = 0;

@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { message, Progress, Button, Space, Card, Row, Col, Divider, Typography, Modal, Tooltip } from 'antd';
-import { PlusOutlined, CloudUploadOutlined, TableOutlined, SaveOutlined, DownloadOutlined, ScanOutlined, CameraOutlined, SettingOutlined } from '@ant-design/icons';
+import { PlusOutlined, CloudUploadOutlined, TableOutlined, SaveOutlined, DownloadOutlined, ScanOutlined, CameraOutlined, SettingOutlined, ExclamationCircleOutlined, DeleteOutlined } from '@ant-design/icons';
+import * as XLSX from 'xlsx';
 import AppLayout from '../Layout/AppLayout';
 import TenantSelector from '../TenantSelector';
 import AntdFamilyTable from '../AntdFamilyTable';
@@ -40,38 +41,249 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
   // 弹框状态管理
   const [ocrModalVisible, setOcrModalVisible] = useState(false);
   const [managementModalVisible, setManagementModalVisible] = useState(false);
+  
+  // 重名检测相关状态
+  const [duplicateModalVisible, setDuplicateModalVisible] = useState(false);
+  const [duplicateData, setDuplicateData] = useState({ newData: [], duplicates: [] });
+  const [pendingOcrData, setPendingOcrData] = useState(null);
+  
+  // 表格多选状态管理
+  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+  const [selectedRows, setSelectedRows] = useState([]);
 
-  // 数据持久化key
-  const getStorageKey = (key) => {
-    const tenantId = currentTenant?.id || 'default';
-    return `creator_${tenantId}_${key}`;
+  // 数据持久化key (已删除localStorage逻辑)
+  // const getStorageKey = (key) => {
+  //   const tenantId = currentTenant?.id || 'default';
+  //   return `creator_${tenantId}_${key}`;
+  // };
+
+  // 重名检测函数
+  const detectDuplicateNames = (newData, existingData = rows) => {
+    const duplicates = [];
+    const existingNames = new Set(existingData.map(person => person.name?.trim().toLowerCase()));
+    
+    newData.forEach((person, index) => {
+      const name = person.name?.trim().toLowerCase();
+      if (name && existingNames.has(name)) {
+        // 找到重复的原有人员
+        const existingPerson = existingData.find(p => p.name?.trim().toLowerCase() === name);
+        duplicates.push({
+          newPerson: person,
+          existingPerson: existingPerson,
+          index: index
+        });
+      }
+    });
+    
+    return duplicates;
   };
+  
+  // 处理OCR识别的数据（加入重名检测）
+  const processOcrData = (validatedData) => {
+    if (rows.length > 0) {
+      // 检测重名
+      const duplicates = detectDuplicateNames(validatedData);
+      
+      if (duplicates.length > 0) {
+        console.log('🔍 发现重名人员:', duplicates);
+        
+        // 显示重名确认对话框
+        setDuplicateData({ newData: validatedData, duplicates });
+        setDuplicateModalVisible(true);
+        setPendingOcrData(validatedData);
+        
+        message.warning(`发现 ${duplicates.length} 个重名人员，请确认是否继续添加`);
+        return false; // 停止自动添加
+      }
+    }
+    
+    // 没有重名，直接添加
+    addOcrDataToTable(validatedData);
+    return true;
+  };
+  
+  // 将OCR数据添加到表格（不保存到数据库）
+  const addOcrDataToTable = (validatedData) => {
+    if (rows.length > 0) {
+      // 表格已有数据，追加模式
+      console.log('📝 追加模式：合并新识别的数据到现有数据');
+      const mergedData = [...rows, ...validatedData];
+      setRows(mergedData);
+      message.success(
+        `成功追加识别 ${validatedData.length} 个人物信息，当前共 ${mergedData.length} 条记录（仅在内存中，未保存到数据库）`
+      );
+    } else {
+      // 表格无数据，直接设置
+      console.log('📝 表格无数据，直接设置识别结果');
+      setRows(validatedData);
+      message.success(`成功识别 ${validatedData.length} 条家谱记录（仅在内存中，未保存到数据库）`);
+    }
+    
+    // 数据仅保存在内存中（不保存到localStorage）
+    console.log('✅ OCR数据已添加到内存缓存，等待用户保存到数据库');
+  };
+  
+  // 确认添加重名数据
+  const confirmAddDuplicates = () => {
+    if (pendingOcrData) {
+      addOcrDataToTable(pendingOcrData);
+      setDuplicateModalVisible(false);
+      setPendingOcrData(null);
+      setDuplicateData({ newData: [], duplicates: [] });
+    }
+  };
+  
+  // 批量删除脉数据函数
+  const deleteDataAfterID = (afterId) => {
+    const filteredRows = rows.filter(row => {
+      const rowId = parseInt(row.id) || 0;
+      return rowId <= afterId;
+    });
+    
+    const deletedCount = rows.length - filteredRows.length;
+    
+    if (deletedCount > 0) {
+      setRows(filteredRows);
+      message.success(`已删除 ${deletedCount} 条ID大于 ${afterId} 的脉数据，当前剩余 ${filteredRows.length} 条记录`);
+      console.log(`🗑️ 批量删除完成: 删除${deletedCount}条，保留${filteredRows.length}条`);
+    } else {
+      message.info(`没有找到ID大于 ${afterId} 的数据`);
+    }
+  };
+  
+  // 处理删除脉数据的确认
+  const handleDeleteDirtyData = () => {
+    const afterId = 625;
+    const dataToDelete = rows.filter(row => {
+      const rowId = parseInt(row.id) || 0;
+      return rowId > afterId;
+    });
+    
+    if (dataToDelete.length === 0) {
+      message.info(`没有找到ID大于 ${afterId} 的数据`);
+      return;
+    }
+    
+    Modal.confirm({
+      title: '确认删除脉数据',
+      icon: <ExclamationCircleOutlined />,
+      content: (
+        <div>
+          <p>将删除 <strong style={{ color: '#f5222d' }}>{dataToDelete.length}</strong> 条ID大于 {afterId} 的数据。</p>
+          <p style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>
+            删除范围：ID {afterId + 1} - {Math.max(...dataToDelete.map(row => parseInt(row.id) || 0))}
+          </p>
+          <div style={{ 
+            maxHeight: '200px', 
+            overflowY: 'auto', 
+            border: '1px solid #f0f0f0', 
+            borderRadius: '4px', 
+            padding: '8px',
+            marginTop: '8px',
+            backgroundColor: '#fafafa'
+          }}>
+            <div style={{ fontSize: '12px', fontWeight: '500', marginBottom: '4px', color: '#666' }}>
+              将被删除的数据预览：
+            </div>
+            {dataToDelete.slice(0, 10).map((row, index) => (
+              <div key={index} style={{ fontSize: '11px', color: '#888', padding: '2px 0' }}>
+                ID: {row.id} - {row.name} (第{row.g_rank}代)
+              </div>
+            ))}
+            {dataToDelete.length > 10 && (
+              <div style={{ fontSize: '11px', color: '#999', padding: '2px 0' }}>
+                ...还有 {dataToDelete.length - 10} 条数据
+              </div>
+            )}
+          </div>
+          <p style={{ fontSize: '12px', color: '#f5222d', marginTop: '12px' }}>
+            ⚠️ 此操作不可逆，请确认后再操作。
+          </p>
+        </div>
+      ),
+      okText: '确认删除',
+      cancelText: '取消',
+      okType: 'danger',
+      onOk() {
+        deleteDataAfterID(afterId);
+      }
+    });
+  };
+  const cancelAddDuplicates = () => {
+    setDuplicateModalVisible(false);
+    setPendingOcrData(null);
+    setDuplicateData({ newData: [], duplicates: [] });
+    message.info('已取消添加重名数据');
+  };
+  
+  // 批量删除选中的行
+  const handleBatchDelete = () => {
+    if (selectedRowKeys.length === 0) {
+      message.warning('请先选择要删除的数据');
+      return;
+    }
 
-  // 加载默认族谱数据
+    Modal.confirm({
+      title: '确认批量删除',
+      icon: <ExclamationCircleOutlined />,
+      content: (
+        <div>
+          <p>将删除 <strong style={{ color: '#f5222d' }}>{selectedRowKeys.length}</strong> 条数据。</p>
+          <div style={{ 
+            maxHeight: '200px', 
+            overflowY: 'auto', 
+            border: '1px solid #f0f0f0', 
+            borderRadius: '4px', 
+            padding: '8px',
+            marginTop: '8px',
+            backgroundColor: '#fafafa'
+          }}>
+            <div style={{ fontSize: '12px', fontWeight: '500', marginBottom: '4px', color: '#666' }}>
+              将被删除的数据预览：
+            </div>
+            {selectedRows.slice(0, 10).map((row, index) => (
+              <div key={index} style={{ fontSize: '11px', color: '#888', padding: '2px 0' }}>
+                ID: {row.id} - {row.name} (第{row.g_rank}代)
+              </div>
+            ))}
+            {selectedRows.length > 10 && (
+              <div style={{ fontSize: '11px', color: '#999', padding: '2px 0' }}>
+                ...还有 {selectedRows.length - 10} 条数据
+              </div>
+            )}
+          </div>
+          <p style={{ fontSize: '12px', color: '#f5222d', marginTop: '12px' }}>
+            ⚠️ 此操作不可逆，请确认后再操作。
+          </p>
+        </div>
+      ),
+      okText: '确认删除',
+      cancelText: '取消',
+      okType: 'danger',
+      onOk() {
+        // 删除选中的行（根据ID匹配）
+        const selectedIds = selectedRows.map(row => row.id);
+        const newData = rows.filter(row => !selectedIds.includes(row.id));
+        setRows(newData);
+        
+        // 清空选择
+        setSelectedRowKeys([]);
+        setSelectedRows([]);
+        
+        message.success(`已删除 ${selectedRowKeys.length} 条数据`);
+      }
+    });
+  };
+  // 使用familyDataService的3层架构加载默认数据
   const loadDefaultFamilyData = async () => {
     try {
-      console.log('🔄 开始加载默认穆氏族谱数据...');
+      console.log('🔄 使用familyDataService的3层架构加载默认数据...');
       
-      // 优先从后端数据库加载
-      try {
-        const response = await fetch('http://localhost:3003/api/family-data/default');
-        if (response.ok) {
-          const result = await response.json();
-          if (result.success && result.data && result.data.length > 0) {
-            console.log(`✅ 从后端数据库加载默认数据: ${result.data.length} 条记录`);
-            return result.data;
-          }
-        }
-      } catch (dbError) {
-        console.warn('⚠️ 从后端数据库加载失败:', dbError.message);
-      }
-      
-      // 如果后端没有数据，使用 familyDataService 加载
-      console.log('📋 使用 familyDataService 加载默认数据...');
+      // 使用 familyDataService 的 3层架构加载数据
       const data = await familyDataService.getFamilyData(true, 'default');
       
       if (data && data.length > 0) {
-        console.log(`✅ 从 familyDataService 加载默认数据: ${data.length} 条记录`);
+        console.log(`✅ 从3层架构加载默认数据: ${data.length} 条记录`);
         return data;
       }
       
@@ -83,25 +295,24 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
     }
   };
 
-  // 保存数据到localStorage
-  const saveToStorage = (key, data) => {
-    try {
-      localStorage.setItem(getStorageKey(key), JSON.stringify(data));
-    } catch (error) {
-      console.warn('保存数据到localStorage失败:', error);
-    }
-  };
+  // 已删除localStorage逻辑，改为纯内存管理
+  // const saveToStorage = (key, data) => {
+  //   try {
+  //     localStorage.setItem(getStorageKey(key), JSON.stringify(data));
+  //   } catch (error) {
+  //     console.warn('保存数据到localStorage失败:', error);
+  //   }
+  // };
 
-  // 从localStorage读取数据
-  const loadFromStorage = (key, defaultValue = null) => {
-    try {
-      const stored = localStorage.getItem(getStorageKey(key));
-      return stored ? JSON.parse(stored) : defaultValue;
-    } catch (error) {
-      console.warn('从localStorage读取数据失败:', error);
-      return defaultValue;
-    }
-  };
+  // const loadFromStorage = (key, defaultValue = null) => {
+  //   try {
+  //     const stored = localStorage.getItem(getStorageKey(key));
+  //     return stored ? JSON.parse(stored) : defaultValue;
+  //   } catch (error) {
+  //     console.warn('从localStorage读取数据失败:', error);
+  //     return defaultValue;
+  //   }
+  // };
 
   // 初始化配置
   useEffect(() => {
@@ -118,73 +329,51 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
     setOcrConfig({ configured: hasQwenKey });
   }, []);
 
-  // 恢复保存的数据
+  // 修改为使用familyDataService的3层架构加载数据
   useEffect(() => {
     if (currentTenant) {
-      const savedFiles = loadFromStorage('files', []);
-      const savedPreviews = loadFromStorage('previews', []);
-      const savedOssUrls = loadFromStorage('ossUrls', []);
-      let savedRows = loadFromStorage('rows', []);
-      const savedJsonOutput = loadFromStorage('jsonOutput', '');
-
-      // 如果是默认租户且没有保存的数据，自动加载默认穆氏族谱数据
-      if ((currentTenant.id === 'default' || currentTenant.id === process.env.REACT_APP_DEFAULT_TENANT_ID) && 
-          (!savedRows || savedRows.length === 0)) {
-        console.log('🔄 默认租户无保存数据，尝试加载默认穆氏族谱数据...');
-        loadDefaultFamilyData().then(defaultData => {
-          if (defaultData && defaultData.length > 0) {
-            console.log(`✅ 加载到默认穆氏族谱数据: ${defaultData.length} 条记录`);
-            setRows(defaultData);
-            saveToStorage('rows', defaultData);
+      // 使用familyDataService的3层架构加载数据：内存缓存 → 数据库 → 原始familyData.js
+      const loadDataFromService = async () => {
+        try {
+          console.log('🔄 使用familyDataService加载数据...', currentTenant.id);
+          const data = await familyDataService.getFamilyData(false, currentTenant.id);
+          
+          if (data && data.length > 0) {
+            console.log(`✅ 从3层架构加载数据: ${data.length} 条记录`);
+            setRows(data);
+          } else {
+            console.log('⚠️ 无数据，初始化为空状态');
+            setRows([]);
           }
-        }).catch(error => {
-          console.warn('⚠️ 加载默认族谱数据失败:', error);
-        });
-      } else {
-        setRows(savedRows);
-      }
-
-      setFiles(savedFiles);
-      setPreviews(savedPreviews);
-      setOssUrls(savedOssUrls);
-      setJsonOutput(savedJsonOutput);
-
-      console.log('已恢复保存的数据:', {
-        filesCount: savedFiles.length,
-        previewsCount: savedPreviews.length,
-        ossUrlsCount: savedOssUrls.length,
-        rowsCount: savedRows.length
-      });
+        } catch (error) {
+          console.warn('⚠️ 加载数据失败:', error);
+          setRows([]);
+        }
+      };
+      
+      loadDataFromService();
+      
+      // 初始化其他状态为空
+      setFiles([]);
+      setPreviews([]);
+      setOssUrls([]);
+      setJsonOutput('');
     }
   }, [currentTenant]);
 
-  // 监听租户切换
+  // 监听租户切换（已删除localStorage逻辑）
   useEffect(() => {
     const unsubscribe = tenantService.onTenantChange(async (tenant) => {
       const previousTenant = currentTenant;
       setCurrentTenant(tenant);
       
-      // 如果切换到默认租户且之前不是默认租户，尝试加载默认数据
-      if ((tenant.id === 'default' || tenant.id === process.env.REACT_APP_DEFAULT_TENANT_ID) && 
-          previousTenant && previousTenant.id !== tenant.id) {
-        console.log('🔄 切换到默认租户，检查是否需要加载默认数据...');
-        
-        // 检查当前是否有数据
-        const currentRows = loadFromStorage('rows', []);
-        if (!currentRows || currentRows.length === 0) {
-          try {
-            const defaultData = await loadDefaultFamilyData();
-            if (defaultData && defaultData.length > 0) {
-              console.log(`✅ 为默认租户加载默认数据: ${defaultData.length} 条记录`);
-              setRows(defaultData);
-              saveToStorage('rows', defaultData);
-              message.success(`已加载默认穆氏族谱数据（${defaultData.length}条记录）`);
-            }
-          } catch (error) {
-            console.warn('⚠️ 加载默认数据失败:', error);
-          }
-        }
-      }
+      // 租户切换时，清空当前状态，等待上面的useEffect重新加载数据
+      console.log('🔄 租户切换，清空当前状态...');
+      setRows([]);
+      setFiles([]);
+      setPreviews([]);
+      setOssUrls([]);
+      setJsonOutput('');
       
       message.info(`已切换到 ${tenant.name}`);
     });
@@ -192,36 +381,38 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
     return unsubscribe;
   }, [currentTenant]);
 
-  // 自动保存数据
-  useEffect(() => {
-    if (currentTenant) {
-      saveToStorage('files', files);
-    }
-  }, [files, currentTenant]);
+  // 已删除localStorage自动保存逻辑，数据仅存在于内存中
+  // 用户需要手动点击“保存到数据库”按钮来持久化数据
+  
+  // useEffect(() => {
+  //   if (currentTenant) {
+  //     saveToStorage('files', files);
+  //   }
+  // }, [files, currentTenant]);
 
-  useEffect(() => {
-    if (currentTenant) {
-      saveToStorage('previews', previews);
-    }
-  }, [previews, currentTenant]);
+  // useEffect(() => {
+  //   if (currentTenant) {
+  //     saveToStorage('previews', previews);
+  //   }
+  // }, [previews, currentTenant]);
 
-  useEffect(() => {
-    if (currentTenant) {
-      saveToStorage('ossUrls', ossUrls);
-    }
-  }, [ossUrls, currentTenant]);
+  // useEffect(() => {
+  //   if (currentTenant) {
+  //     saveToStorage('ossUrls', ossUrls);
+  //   }
+  // }, [ossUrls, currentTenant]);
 
-  useEffect(() => {
-    if (currentTenant) {
-      saveToStorage('rows', rows);
-    }
-  }, [rows, currentTenant]);
+  // useEffect(() => {
+  //   if (currentTenant) {
+  //     saveToStorage('rows', rows);
+  //   }
+  // }, [rows, currentTenant]);
 
-  useEffect(() => {
-    if (currentTenant) {
-      saveToStorage('jsonOutput', jsonOutput);
-    }
-  }, [jsonOutput, currentTenant]);
+  // useEffect(() => {
+  //   if (currentTenant) {
+  //     saveToStorage('jsonOutput', jsonOutput);
+  //   }
+  // }, [jsonOutput, currentTenant]);
 
   // 选择文件，限制最多 10 张
   const onPickFiles = (e) => {
@@ -354,8 +545,8 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
 
       setOssUrls(urls);
       if (urls.length) {
-        setStep(2);
         message.success(`成功上传 ${urls.length} 张图片`);
+        console.log('✅ 图片上传成功，可以进行OCR识别');
       } else {
         message.error('图片上传失败，请重试');
       }
@@ -392,6 +583,7 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
         console.log('✅ 设置识别数据到表格...');
 
         // 确保数据格式正确
+        const currentTime = new Date().toISOString();
         const validatedData = parsed.map((item, index) => ({
           ...item,
           // 确保必需字段存在
@@ -415,34 +607,25 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
           dealth: item.dealth || null,
           formal_name: item.formal_name || null,
           location: item.location || null,
-          childrens: item.childrens || null
+          childrens: item.childrens || null,
+          // 添加时间戳
+          created_at: currentTime,
+          updated_at: currentTime
         }));
 
         console.log('🔄 验证后的数据:', validatedData);
 
-        if (rows.length > 0) {
-          // 表格已有数据，自动追加模式
-          console.log('📝 追加模式：合并新识别的数据到现有数据');
-          const mergedData = [...rows, ...validatedData];
-          setRows(mergedData);
-          message.success(`成功追加识别 ${validatedData.length} 个人物信息，当前共 ${mergedData.length} 条记录`);
-        } else {
-          // 表格无数据，直接设置
-          console.log('📝 表格无数据，直接设置识别结果');
-          setRows(validatedData);
-          message.success(`成功识别 ${validatedData.length} 条家谱记录`);
-        }
-
-        // 额外验证：确保状态更新
-        setTimeout(() => {
-          console.log('🔍 验证：当前rows状态长度:', rows.length);
-        }, 100);
+        // 使用新的重名检测逻辑处理数据
+        processOcrData(validatedData);
       } else {
         console.log('⚠️ 未识别到数据，创建1行空白供手动编辑');
-        // 创建1行空白，方便手动编辑
+        // 创建1行空登，方便手动编辑
+        const currentTime = new Date().toISOString();
         const emptyRowData = [{
           ...emptyRow(),
-          id: 1
+          id: 1,
+          created_at: currentTime,
+          updated_at: currentTime
         }];
         setRows(emptyRowData);
         message.warning('未识别到家谱信息，已创建空白表格供手动编辑');
@@ -469,25 +652,27 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
     }
   };
 
-  // 数据变化处理
+  // 数据变化处理（已删除localStorage保存）
   const handleDataChange = (newData) => {
     console.log('📝 数据变化:', newData);
     setRows(newData);
-    // 保存到localStorage
-    saveToStorage('rows', newData);
+    // 数据仅保存在内存中，等待用户手动保存到数据库
   };
   
-  // 添加新行
+  // 添加新行（已删除localStorage保存）
   const addNewRow = () => {
     const newId = rows.length > 0 ? Math.max(...rows.map(r => parseInt(r.id) || 0)) + 1 : 1;
+    const currentTime = new Date().toISOString();
     const newRow = {
       ...emptyRow(),
-      id: newId
+      id: newId,
+      created_at: currentTime,
+      updated_at: currentTime
     };
     const newData = [...rows, newRow];
     setRows(newData);
-    saveToStorage('rows', newData);
-    message.success('已添加新行');
+    // 数据仅保存在内存中，等待用户手动保存到数据库
+    message.success('已添加新行（仅在内存中）');
   };
 
 
@@ -533,25 +718,11 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
     }
   };
 
-  // 两份“Excel”占位：先提供 CSV 导出（后续可引入 SheetJS/xlsx）
-  const downloadCSV = (cols, data, filename) => {
-    const header = cols.join(',');
-    const lines = data.map((r) => cols.map((c) => JSON.stringify(r[c] ?? '')).join(','));
-    const csv = [header, ...lines].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = filename; a.click();
-    URL.revokeObjectURL(url);
-  };
+  // 旧的CSV导出功能已被Excel导出替代
+  // const downloadCSV = (cols, data, filename) => { ... }
 
-  const exportExcels = () => {
-    // 拆为“人物基本信息表”和“关系表”两个 CSV
-    const personCols = ['id','name','sex','birth_date','formal_name','official_position','summary','location'];
-    const relationCols = ['id','g_rank','rank_index','g_father_id','g_mother_id','spouse','childrens','adoption'];
-    downloadCSV(personCols, rows, '人物基本信息.csv');
-    downloadCSV(relationCols, rows, '亲属关系.csv');
-  };
+  // 旧的exportExcels功能已被更完善的exportToExcel替代
+  // const exportExcels = () => { ... }
 
   // JSON 转换
   const convertToJSON = () => {
@@ -585,6 +756,79 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
     a.click();
     URL.revokeObjectURL(url);
     message.success('JSON文件下载成功');
+  };
+
+  // 导出Excel功能（从AntdFamilyTable迁移）
+  const exportToExcel = () => {
+    try {
+      if (!rows || rows.length === 0) {
+        message.warning('暂无数据可导出');
+        return;
+      }
+
+      // 准备数据
+      const exportData = rows.map(row => ({
+        'ID': row.id,
+        '姓名': row.name,
+        '世代': row.g_rank,
+        '排行': row.rank_index,
+        '父亲ID': row.g_father_id,
+        '性别': row.sex === 'MAN' ? '男' : '女',
+        '收养': row.adoption === 'none' ? '无' : (row.adoption === 'adopted' ? '收养' : '寄养'),
+        '官职': row.official_position || '',
+        '配偶': row.spouse || '',
+        '备注': row.summary || '',
+        '更新时间': (() => {
+          const displayTime = row.updated_at || row.created_at;
+          if (!displayTime) return '无记录';
+          try {
+            const date = new Date(displayTime);
+            if (isNaN(date.getTime())) return '无效时间';
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const seconds = String(date.getSeconds()).padStart(2, '0');
+            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+          } catch (error) {
+            return '格式错误';
+          }
+        })()
+      }));
+      
+      // 创建工作簿
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(exportData);
+      
+      // 设置列宽
+      const colWidths = [
+        { wch: 8 },  // ID
+        { wch: 12 }, // 姓名
+        { wch: 8 },  // 世代
+        { wch: 8 },  // 排行
+        { wch: 10 }, // 父亲ID
+        { wch: 8 },  // 性别
+        { wch: 8 },  // 收养
+        { wch: 15 }, // 官职
+        { wch: 12 }, // 配偶
+        { wch: 20 }, // 备注
+        { wch: 20 }  // 更新时间
+      ];
+      ws['!cols'] = colWidths;
+      
+      XLSX.utils.book_append_sheet(wb, ws, '家谱数据');
+      
+      // 下载文件
+      const tenantName = currentTenant?.name || 'genealogy';
+      const fileName = `${tenantName}_家谱数据_${new Date().toISOString().split('T')[0]}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+      
+      message.success('Excel文件已导出');
+    } catch (error) {
+      console.error('导出Excel失败:', error);
+      message.error('导出Excel失败');
+    }
   };
 
   // 保存家谱数据到当前租户
@@ -708,6 +952,9 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
               <Title level={2} style={{ margin: 0, color: '#1e1e2d' }}>
                 📋 族谱数据管理
               </Title>
+              <p style={{ margin: '8px 0 0 0', color: '#6b7280', fontSize: '16px' }}>
+                智能识别、在线编辑、一键发布家谱数据
+              </p>
             </Col>
             <Col>
               <TenantSelector onTenantChange={setCurrentTenant} />
@@ -737,6 +984,28 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
                 
                 {/* 功能入口按钮 */}
                 <Space size="small">
+                  {/* 批量删除按钮 - 放在新建一行的左边 */}
+                  {selectedRowKeys.length > 0 && (
+                    <Button
+                      danger
+                      icon={<DeleteOutlined />}
+                      onClick={handleBatchDelete}
+                      size="small"
+                    >
+                      批量删除 ({selectedRowKeys.length})
+                    </Button>
+                  )}
+                  
+                  <Button 
+                    type="primary" 
+                    icon={<PlusOutlined />} 
+                    onClick={addNewRow}
+                    disabled={busy}
+                    size="small"
+                  >
+                    添加新行
+                  </Button>
+                  
                   <Tooltip title="拍一拍家谱照片OCR识别">
                     <Button 
                       type="primary" 
@@ -755,19 +1024,9 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
                       onClick={() => setManagementModalVisible(true)}
                       size="small"
                     >
-                      数据管理
+                      管理与发布
                     </Button>
                   </Tooltip>
-                  
-                  <Button 
-                    type="primary" 
-                    icon={<PlusOutlined />} 
-                    onClick={addNewRow}
-                    disabled={busy}
-                    size="small"
-                  >
-                    添加新行
-                  </Button>
                 </Space>
               </div>
             </div>
@@ -777,9 +1036,11 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
           <AntdFamilyTable
             data={rows}
             onDataChange={handleDataChange}
-            onExport={exportExcels}
             onSave={saveToCurrentTenant}
             loading={busy}
+            selectedRowKeys={selectedRowKeys}
+            onSelectedRowKeysChange={setSelectedRowKeys}
+            onSelectedRowsChange={setSelectedRows}
           />
         </Card>
 
@@ -905,133 +1166,131 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
 
         {/* 数据管理功能弹框 */}
         <Modal
-          title="⚙️ 家谱数据管理与发布"
+          title="🔧 家谱数据管理与发布"
           open={managementModalVisible}
           onCancel={() => setManagementModalVisible(false)}
           footer={null}
-          width={700}
+          width={500}
           destroyOnClose
         >
           <div style={{ padding: '16px 0' }}>
             <Space direction="vertical" style={{ width: '100%' }} size="large">
-              {/* 数据操作区域 */}
+              {/* 数据保存与发布 */}
               <div>
-                <h4>📦 数据操作</h4>
-                <Space wrap>
+                <h4>💾 数据保存与发布</h4>
+                <Space direction="vertical" style={{ width: '100%' }} size="small">
                   <Button
-                    icon={<TableOutlined />}
-                    onClick={convertToJSON}
+                    type="primary"
+                    icon={<SaveOutlined />}
+                    loading={busy}
+                    onClick={() => saveToCurrentTenant()}
+                    disabled={!rows.length || rows.every(row => !row.name)}
+                    block
                   >
-                    生成JSON
+                    保存到数据库 ({rows.filter(row => row.name && row.name.trim()).length}条有效数据)
+                  </Button>
+                  
+                  <div style={{ fontSize: '12px', color: '#666', textAlign: 'center' }}>
+                    💡 保存后数据将发布到族谱页面，可被其他用户查看
+                  </div>
+                </Space>
+              </div>
+
+              {/* 数据导出 */}
+              <div>
+                <h4>📋 数据导出</h4>
+                <Space style={{ width: '100%' }} size="small">
+                  <Button
+                    icon={<DownloadOutlined />}
+                    onClick={exportToExcel}
+                    disabled={!rows.length}
+                  >
+                    导出Excel
                   </Button>
                   
                   <Button
                     icon={<DownloadOutlined />}
                     onClick={downloadJSON}
+                    disabled={!rows.length}
                   >
-                    下载JSON
+                    导出JSON
                   </Button>
                   
                   <Button
+                    icon={<DownloadOutlined />}
                     onClick={generateFamilyDataFile}
-                    loading={busy}
+                    disabled={!rows.length}
                   >
-                    生成数据文件
-                  </Button>
-                  
-                  <Button
-                    onClick={exportExcels}
-                  >
-                    导出CSV
+                    生成FamilyData
                   </Button>
                 </Space>
               </div>
 
-              {/* 发布保存区域 */}
-              <div>
-                <h4>🚀 数据发布</h4>
-                <Space wrap>
-                  <Button
-                    type="primary"
-                    icon={<SaveOutlined />}
-                    loading={busy}
-                    onClick={() => {
-                      saveToCurrentTenant().then(() => {
-                        setManagementModalVisible(false);
-                      });
-                    }}
-                    style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
-                  >
-                    保存到当前家谱
-                  </Button>
-                  
-                  {rows.length > 0 && (
-                    <Button 
-                      danger 
-                      onClick={() => {
-                        if (window.confirm('确定要清空所有数据吗？')) {
-                          setRows([]);
-                          saveToStorage('rows', []);
-                          message.warning('已清空所有数据');
-                          setManagementModalVisible(false);
-                        }
-                      }}
-                    >
-                      清空数据
-                    </Button>
-                  )}
-                </Space>
-              </div>
-
-              {/* 数据统计显示 */}
-              {rows.length > 0 && currentTenant && (
+              {/* 数据统计 */}
+              {rows.length > 0 && (
                 <div>
                   <h4>📊 数据统计</h4>
-                  <div style={{ padding: '16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
-                    <Row gutter={[16, 8]}>
-                      <Col span={12}>
-                        <div style={{ color: '#374151', fontWeight: '500' }}>当前家谱:</div>
-                        <div style={{ color: '#6b7280', fontSize: '14px' }}>
-                          {currentTenant.id === 'default' || currentTenant.id === process.env.REACT_APP_DEFAULT_TENANT_ID 
-                            ? '默认穆氏族谱' 
-                            : currentTenant.name
-                          }
-
-                          
-                        </div>
-                      </Col>
-                      <Col span={12}>
-                        <div style={{ color: '#374151', fontWeight: '500' }}>数据条数:</div>
-                        <div style={{ color: '#16a34a', fontSize: '18px', fontWeight: '600' }}>
-                          {rows.length} 条记录
-                        </div>
-                      </Col>
-                    </Row>
+                  <div style={{ 
+                    backgroundColor: '#f8f9fa', 
+                    padding: '12px', 
+                    borderRadius: '6px',
+                    fontSize: '12px'
+                  }}>
+                    <div>总记录数: <strong>{rows.length}</strong></div>
+                    <div>有效记录: <strong>{rows.filter(row => row.name && row.name.trim()).length}</strong></div>
+                    <div>世代范围: <strong>{Math.min(...rows.map(item => item.g_rank || 1))} - {Math.max(...rows.map(item => item.g_rank || 1))}</strong></div>
+                    <div>男性: <strong>{rows.filter(row => row.sex === 'MAN').length}</strong> | 女性: <strong>{rows.filter(row => row.sex === 'WOMAN').length}</strong></div>
                   </div>
                 </div>
               )}
-
-              {/* JSON预览区域 */}
-              {jsonOutput && (
-                <div>
-                  <h4>📝 JSON预览</h4>
-                  <textarea 
-                    className="json-output" 
-                    rows={8} 
-                    readOnly 
-                    value={jsonOutput} 
-                    style={{ 
-                      width: '100%', 
-                      fontFamily: 'Monaco, Consolas, monospace',
-                      fontSize: '12px',
-                      border: '1px solid #d9d9d9',
-                      borderRadius: '6px',
-                      padding: '12px'
-                    }}
-                  />
-                </div>
-              )}
             </Space>
+          </div>
+        </Modal>
+
+        {/* 重名确认弹框 */}
+        <Modal
+          title="⚠️ 发现重名数据"
+          open={duplicateModalVisible}
+          onOk={confirmAddDuplicates}
+          onCancel={cancelAddDuplicates}
+          okText="确认添加"
+          cancelText="取消"
+          width={600}
+        >
+          <div style={{ padding: '16px 0' }}>
+            <div style={{ marginBottom: '16px', color: '#fa8c16' }}>
+              检测到 <strong>{duplicateData.duplicates.length}</strong> 个重名人员，请确认是否继续添加：
+            </div>
+            
+            <div style={{ 
+              maxHeight: '300px', 
+              overflowY: 'auto',
+              border: '1px solid #f0f0f0',
+              borderRadius: '6px',
+              padding: '12px'
+            }}>
+              {duplicateData.duplicates.map((dup, index) => (
+                <div key={index} style={{ 
+                  marginBottom: '12px', 
+                  padding: '8px',
+                  backgroundColor: '#fff7e6',
+                  borderRadius: '4px',
+                  border: '1px solid #ffd591'
+                }}>
+                  <div style={{ fontWeight: '500', color: '#d46b08' }}>
+                    重名人员: {dup.newPerson.name}
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+                    新数据: 第{dup.newPerson.g_rank}代 | 
+                    现有数据: 第{dup.existingPerson.g_rank}代
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            <div style={{ marginTop: '12px', fontSize: '12px', color: '#666' }}>
+              💡 确认添加将保留重名数据，您可以稍后在表格中手动调整
+            </div>
           </div>
         </Modal>
       </div>

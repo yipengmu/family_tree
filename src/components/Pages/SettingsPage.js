@@ -6,7 +6,9 @@ import {
   InfoCircleOutlined, 
   SearchOutlined, 
   EyeOutlined, 
-  MobileOutlined 
+  MobileOutlined,
+  ReloadOutlined,
+  ExclamationCircleOutlined 
 } from '@ant-design/icons';
 import AppLayout from '../Layout/AppLayout';
 import './SettingsPage.css';
@@ -22,6 +24,7 @@ const SettingsPage = ({ activeMenuItem = 'settings', onMenuClick }) => {
     showNodeDetails: true
   });
   const [aboutVisible, setAboutVisible] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
 
   // 更新设置
   const updateSetting = (key, value) => {
@@ -30,6 +33,93 @@ const SettingsPage = ({ activeMenuItem = 'settings', onMenuClick }) => {
       [key]: value
     }));
     message.success('设置已更新');
+  };
+
+  // 重置家谱数据
+  const resetFamilyData = async () => {
+    Modal.confirm({
+      title: '确认重置家谱数据',
+      icon: <ExclamationCircleOutlined />,
+      content: (
+        <div>
+          <p>此操作将：</p>
+          <ul style={{ paddingLeft: 20, margin: '8px 0' }}>
+            <li>清除当前数据库中的所有家谱数据</li>
+            <li>基于原始 familyData.js 文件重新加载默认数据</li>
+            <li>清除所有前端缓存</li>
+            <li>重新初始化内存中的数据</li>
+          </ul>
+          <p style={{ color: '#f5222d', fontSize: '12px', marginTop: '12px' }}>
+            ⚠️ 此操作不可逆，请确认后再操作！
+          </p>
+        </div>
+      ),
+      okText: '确认重置',
+      cancelText: '取消',
+      okType: 'danger',
+      onOk: async () => {
+        await performDataReset();
+      }
+    });
+  };
+
+  // 执行数据重置
+  const performDataReset = async () => {
+    setResetLoading(true);
+    try {
+      console.log('🔄 开始重置家谱数据...');
+      
+      // 1. 调用后端API重置数据库数据
+      const response = await fetch('http://localhost:3003/api/reinit-default-data', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.message || `HTTP ${response.status}: 重置失败`);
+      }
+
+      console.log('✅ 后端数据重置成功:', result.message);
+
+      // 2. 清除前端所有相关缓存
+      try {
+        // 清除前端服务的内存缓存
+        const familyDataService = (await import('../../services/familyDataService')).default;
+        familyDataService.clearAllCache();
+
+        console.log('🗑️ 已清除所有前端内存缓存');
+      } catch (cacheError) {
+        console.warn('清除缓存时出现警告:', cacheError);
+      }
+
+      // 3. 触发全局数据刷新事件
+      if (window.dispatchEvent) {
+        window.dispatchEvent(new CustomEvent('familyDataUpdated', {
+          detail: {
+            tenantId: 'default',
+            action: 'reset',
+            timestamp: new Date().toISOString()
+          }
+        }));
+      }
+
+      message.success('家谱数据重置成功！页面将自动刷新以加载最新数据');
+      
+      // 4. 延迟刷新页面，确保用户看到成功消息
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+      
+    } catch (error) {
+      console.error('❌ 重置家谱数据失败:', error);
+      message.error(`重置失败: ${error.message}`);
+    } finally {
+      setResetLoading(false);
+    }
   };
 
   // 设置项配置
@@ -93,6 +183,17 @@ const SettingsPage = ({ activeMenuItem = 'settings', onMenuClick }) => {
       description: '导出家谱数据为JSON格式',
       type: 'button',
       action: () => message.info('数据导出功能')
+    }
+  ];
+
+  // 数据管理选项
+  const dataManagementItems = [
+    {
+      key: 'resetData',
+      title: '重置家谱数据',
+      description: '基于原始 familyData.js 重置所有数据',
+      type: 'danger',
+      action: resetFamilyData
     }
   ];
 
@@ -173,6 +274,34 @@ const SettingsPage = ({ activeMenuItem = 'settings', onMenuClick }) => {
                   icon={<SettingOutlined />}
                   onClick={item.action}
                   className="control-button"
+                >
+                  <div>
+                    <div className="control-title">{item.title}</div>
+                    <div className="control-description">
+                      {item.description}
+                    </div>
+                  </div>
+                </Button>
+              ))}
+            </Space>
+          </Card>
+
+          {/* 数据管理 */}
+          <Card title="数据管理" className="settings-card">
+            <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+              {dataManagementItems.map((item) => (
+                <Button
+                  key={item.key}
+                  block
+                  icon={<ReloadOutlined />}
+                  onClick={item.action}
+                  loading={resetLoading}
+                  danger={item.type === 'danger'}
+                  className="control-button"
+                  style={{
+                    borderColor: item.type === 'danger' ? '#ff4d4f' : undefined,
+                    backgroundColor: item.type === 'danger' ? '#fff2f0' : undefined
+                  }}
                 >
                   <div>
                     <div className="control-title">{item.title}</div>
