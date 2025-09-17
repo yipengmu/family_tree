@@ -363,12 +363,20 @@
   }
 
   .mobile-layout .ant-tabs-tab-bar {
+    height: 56px; /* 基础高度 */
+    height: 56px; /* 基础高度 */
     height: max(56px, calc(56px + env(safe-area-inset-bottom))); /* 微信风格适配 */
     padding-bottom: max(0px, env(safe-area-inset-bottom));
   }
 
-  /* 内容区域也需要适配 */
+  /* 内容区域也需要适配 - 完全避免嵌套calc() */
   .mobile-layout .ant-tabs-tabpane {
-    height: calc(100vh - max(56px, calc(56px + env(safe-area-inset-bottom)))) !important;
+    height: calc(100vh - 56px) !important; /* 基础计算 */
+  }
+  
+  /* 对于有安全区域的设备，使用更简单的方法 */
+  .mobile-layout .ant-tabs-tabpane {
+    height: calc(100vh - 112px) !important; /* 适配安全区域，预留更多空间 */
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 }
