@@ -50,6 +50,7 @@ const AntdFamilyTable = ({
       summary: item.summary || '',
       birth_date: item.birth_date || '',
       dealth: item.dealth || '',
+      alive: item.alive !== undefined ? item.alive : (item.dealth === 'alive'), // 根据dealth字段推导 alive
       spouse: item.spouse || '',
       location: item.location || '',
       // 保留所有原始字段
@@ -227,14 +228,36 @@ const AntdFamilyTable = ({
       key: 'rank_index',
       width: 50,
       align: 'center',
-      render: (text) => (
-        <span style={{ 
-          fontSize: '12px',
-          color: '#666'
-        }}>
-          {text}
-        </span>
-      )
+      render: (text, record) => {
+        if (editingKey === record.key) {
+          return (
+            <Input
+              size="small"
+              type="number"
+              defaultValue={text}
+              onPressEnter={(e) => handleSave(record.key, 'rank_index', parseInt(e.target.value))}
+              onBlur={(e) => handleSave(record.key, 'rank_index', parseInt(e.target.value))}
+              style={{ fontSize: '12px' }}
+            />
+          );
+        }
+        return (
+          <span 
+            onClick={() => setEditingKey(record.key)}
+            style={{ 
+              cursor: 'pointer',
+              display: 'inline-block',
+              width: '100%',
+              height: '24px',
+              lineHeight: '24px',
+              fontSize: '12px',
+              color: '#666'
+            }}
+          >
+            {text}
+          </span>
+        );
+      }
     },
     {
       title: '父亲ID',
@@ -242,15 +265,37 @@ const AntdFamilyTable = ({
       key: 'g_father_id',
       width: 60,
       align: 'center',
-      render: (text) => (
-        <span style={{ 
-          fontSize: '12px',
-          color: text === 0 ? '#999' : '#722ed1',
-          fontWeight: text === 0 ? 'normal' : '500'
-        }}>
-          {text === 0 ? '-' : text}
-        </span>
-      )
+      render: (text, record) => {
+        if (editingKey === record.key) {
+          return (
+            <Input
+              size="small"
+              type="number"
+              defaultValue={text}
+              onPressEnter={(e) => handleSave(record.key, 'g_father_id', parseInt(e.target.value) || 0)}
+              onBlur={(e) => handleSave(record.key, 'g_father_id', parseInt(e.target.value) || 0)}
+              style={{ fontSize: '12px' }}
+            />
+          );
+        }
+        return (
+          <span 
+            onClick={() => setEditingKey(record.key)}
+            style={{ 
+              cursor: 'pointer',
+              display: 'inline-block',
+              width: '100%',
+              height: '24px',
+              lineHeight: '24px',
+              fontSize: '12px',
+              color: text === 0 ? '#999' : '#722ed1',
+              fontWeight: text === 0 ? 'normal' : '500'
+            }}
+          >
+            {text === 0 ? '-' : text}
+          </span>
+        );
+      }
     },
     {
       title: '性别',
@@ -369,6 +414,58 @@ const AntdFamilyTable = ({
           >
             {text || '无'}
           </div>
+        );
+      },
+    },
+    {
+      title: '是否在世',
+      dataIndex: 'alive',
+      key: 'alive',
+      width: 70,
+      align: 'center',
+      filters: [
+        { text: '在世', value: true },
+        { text: '已故', value: false },
+      ],
+      onFilter: (value, record) => record.alive === value,
+      render: (text, record) => {
+        if (editingKey === record.key) {
+          return (
+            <Select
+              size="small"
+              defaultValue={text}
+              style={{ width: '100%', fontSize: '12px' }}
+              onChange={(value) => handleSave(record.key, 'alive', value)}
+            >
+              <Option value={true}>在世</Option>
+              <Option value={false}>已故</Option>
+            </Select>
+          );
+        }
+        
+        // 如果 alive 字段未定义，根据 dealth 字段推断
+        const isAlive = text !== undefined ? text : (record.dealth === 'alive');
+        
+        return (
+          <span 
+            onClick={() => setEditingKey(record.key)}
+            style={{ 
+              cursor: 'pointer',
+              display: 'inline-block',
+              width: '40px',
+              height: '20px',
+              lineHeight: '20px',
+              fontSize: '11px',
+              fontWeight: '500',
+              color: isAlive ? '#52c41a' : '#8c8c8c',
+              backgroundColor: isAlive ? '#f6ffed' : '#f5f5f5',
+              borderRadius: '10px',
+              textAlign: 'center',
+              border: `1px solid ${isAlive ? '#52c41a' : '#d9d9d9'}`
+            }}
+          >
+            {isAlive ? '在世' : '已故'}
+          </span>
         );
       },
     },
@@ -576,6 +673,7 @@ const AntdFamilyTable = ({
       sex: 'MAN',
       birth_date: '',
       dealth: '',
+      alive: true, // 新加的人默认在世
       spouse: '',
       location: '',
       created_at: currentTime,

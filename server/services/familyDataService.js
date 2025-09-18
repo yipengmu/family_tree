@@ -50,7 +50,7 @@ class FamilyDataService {
             person.official_position || '',
             person.summary || '',
             person.birth_date || null,
-            person.dealth === 'alive' ? null : person.dealth, // 处理death_date字段
+            person.dealth === 'alive' || person.alive === true ? 'alive' : (person.dealth || null), // 处理death_date字段，支持alive字段
             person.spouse || null,
             person.location || '',
             person.formal_name || person.name,
@@ -133,6 +133,7 @@ class FamilyDataService {
         ...row,
         key: `person_${row.id}`,
         dealth: row.dealth || null, // null表示去世，'alive'表示在世
+        alive: row.dealth === 'alive', // 添加alive字段，根据dealth推导
         g_father_id: row.g_father_id || 0,
         g_mother_id: row.g_mother_id || null
       }));
