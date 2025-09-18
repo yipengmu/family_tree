@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { message, Progress, Button, Space, Card, Row, Col, Divider, Typography, Modal, Tooltip } from 'antd';
-import { PlusOutlined, CloudUploadOutlined, TableOutlined, SaveOutlined, DownloadOutlined, ScanOutlined, CameraOutlined, SettingOutlined, ExclamationCircleOutlined, DeleteOutlined } from '@ant-design/icons';
+import { message, Progress, Button, Space, Card, Row, Col, Divider, Typography, Modal, Tooltip, Input } from 'antd';
+import { PlusOutlined, CloudUploadOutlined, TableOutlined, SaveOutlined, DownloadOutlined, ScanOutlined, CameraOutlined, SettingOutlined, ExclamationCircleOutlined, DeleteOutlined, SearchOutlined, ClearOutlined } from '@ant-design/icons';
 import * as XLSX from 'xlsx';
 import AppLayout from '../Layout/AppLayout';
 import TenantSelector from '../TenantSelector';
@@ -50,6 +50,10 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
   // 表格多选状态管理
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [selectedRows, setSelectedRows] = useState([]);
+
+  // 搜索状态管理
+  const [searchText, setSearchText] = useState('');
+  const [filteredRows, setFilteredRows] = useState([]);
 
   // 数据持久化key (已删除localStorage逻辑)
   // const getStorageKey = (key) => {
@@ -341,9 +345,14 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
           if (data && data.length > 0) {
             console.log(`✅ 从3层架构加载数据: ${data.length} 条记录`);
             setRows(data);
+            // 数据重新加载时清除搜索状态
+            setSearchText('');
+            setFilteredRows([]);
           } else {
             console.log('⚠️ 无数据，初始化为空状态');
             setRows([]);
+            setSearchText('');
+            setFilteredRows([]);
           }
         } catch (error) {
           console.warn('⚠️ 加载数据失败:', error);
@@ -374,9 +383,72 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
       setPreviews([]);
       setOssUrls([]);
       setJsonOutput('');
+      // 清除搜索状态
+      setSearchText('');
+      setFilteredRows([]);
+      
+      message.info(`已切换到 ${tenant.name}`);
     });
 
     return unsubscribe;
+  }, [currentTenant]);
+
+  // 监听家谱数据更新事件，确保保存后数据管理页面能实时同步
+  useEffect(() => {
+    const handleDataUpdated = async (event) => {
+      const { tenantId } = event.detail;
+      const currentTenantId = currentTenant?.id;
+      
+      // 如果更新的是当前租户的数据，重新加载数据
+      if (tenantId === currentTenantId) {
+        console.log('🔄 [CreatorPage] 检测到家谱数据更新，重新加载数据管理页面数据...');
+        
+        try {
+          // 从数据库重新加载最新数据
+          const response = await fetch(`http://localhost:3003/api/family-data/${tenantId}`);
+          const result = await response.json();
+          
+          if (response.ok && result.success && result.data && result.data.length > 0) {
+            console.log(`✅ [CreatorPage] 从数据库重新加载 ${result.data.length} 条记录`);
+            setRows(result.data);
+            
+            // 数据重新加载时重新执行搜索（如果有搜索条件）
+            if (searchText) {
+              const searchTerm = searchText.toLowerCase().trim();
+              const filtered = result.data.filter(row => {
+                return (
+                  (row.name && row.name.toLowerCase().includes(searchTerm)) ||
+                  (row.official_position && row.official_position.toLowerCase().includes(searchTerm)) ||
+                  (row.summary && row.summary.toLowerCase().includes(searchTerm)) ||
+                  (row.spouse && row.spouse.toLowerCase().includes(searchTerm)) ||
+                  (row.location && row.location.toLowerCase().includes(searchTerm)) ||
+                  (row.g_rank && String(row.g_rank).includes(searchTerm)) ||
+                  (row.id && String(row.id).includes(searchTerm))
+                );
+              });
+              setFilteredRows(filtered);
+            }
+            
+            // 更新JSON输出
+            setTimeout(() => {
+              convertToJSON();
+            }, 100);
+            
+            message.success('数据已同步，表格已更新为最新内容');
+          } else {
+            console.log('📝 [CreatorPage] 数据库无数据或响应异常');
+          }
+        } catch (error) {
+          console.error('❌ [CreatorPage] 重新加载数据失败:', error);
+        }
+      }
+    };
+
+    window.addEventListener('familyDataUpdated', handleDataUpdated);
+    
+    return () => {
+      window.removeEventListener('familyDataUpdated', handleDataUpdated);
+    };
   }, [currentTenant]);
 
   // 已删除localStorage自动保存逻辑，数据仅存在于内存中
@@ -411,6 +483,42 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
   //     saveToStorage('jsonOutput', jsonOutput);
   //   }
   // }, [jsonOutput, currentTenant]);
+
+  // 搜索功能实现
+  const handleSearch = (value) => {
+    setSearchText(value);
+    
+    if (!value || !value.trim()) {
+      setFilteredRows([]);
+      return;
+    }
+    
+    const searchTerm = value.toLowerCase().trim();
+    const filtered = rows.filter(row => {
+      return (
+        (row.name && row.name.toLowerCase().includes(searchTerm)) ||
+        (row.official_position && row.official_position.toLowerCase().includes(searchTerm)) ||
+        (row.summary && row.summary.toLowerCase().includes(searchTerm)) ||
+        (row.spouse && row.spouse.toLowerCase().includes(searchTerm)) ||
+        (row.location && row.location.toLowerCase().includes(searchTerm)) ||
+        (row.g_rank && String(row.g_rank).includes(searchTerm)) ||
+        (row.id && String(row.id).includes(searchTerm))
+      );
+    });
+    
+    setFilteredRows(filtered);
+    console.log(`🔍 搜索结果: "${value}" 找到 ${filtered.length} 条记录`);
+  };
+  
+  const clearSearch = () => {
+    setSearchText('');
+    setFilteredRows([]);
+  };
+  
+  // 获取当前显示的数据（搜索结果或全部数据）
+  const getCurrentDisplayData = () => {
+    return searchText ? filteredRows : rows;
+  };
 
   // 选择文件，限制最多 10 张
   const onPickFiles = (e) => {
@@ -654,6 +762,24 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
   const handleDataChange = (newData) => {
     console.log('📝 数据变化:', newData);
     setRows(newData);
+    
+    // 如果当前有搜索，重新执行搜索
+    if (searchText) {
+      const searchTerm = searchText.toLowerCase().trim();
+      const filtered = newData.filter(row => {
+        return (
+          (row.name && row.name.toLowerCase().includes(searchTerm)) ||
+          (row.official_position && row.official_position.toLowerCase().includes(searchTerm)) ||
+          (row.summary && row.summary.toLowerCase().includes(searchTerm)) ||
+          (row.spouse && row.spouse.toLowerCase().includes(searchTerm)) ||
+          (row.location && row.location.toLowerCase().includes(searchTerm)) ||
+          (row.g_rank && String(row.g_rank).includes(searchTerm)) ||
+          (row.id && String(row.id).includes(searchTerm))
+        );
+      });
+      setFilteredRows(filtered);
+    }
+    
     // 数据仅保存在内存中，等待用户手动保存到数据库
   };
   
@@ -962,21 +1088,56 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
         <Card 
           title={
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-              <span> {rows.length > 0 && currentTenant && (
+              <span> {getCurrentDisplayData().length > 0 && currentTenant && (
                   <span style={{ marginRight: '16px', color: '#6b7280', fontSize: '14px' }}>
                     {currentTenant.id === 'default' || currentTenant.id === process.env.REACT_APP_DEFAULT_TENANT_ID 
-                      ? `默认穆氏族谱: ${rows.length}条` 
-                      : `${currentTenant.name}: ${rows.length}条`
+                      ? `默认穆氏族谱: ${getCurrentDisplayData().length}条` 
+                      : `${currentTenant.name}: ${getCurrentDisplayData().length}条`
                     }
+                    {searchText && (
+                      <span style={{ marginLeft: '8px', fontSize: '12px', color: '#f5222d' }}>
+                        | 搜索结果
+                      </span>
+                    )}
                     {/* 世代范围信息 */}
-                    <span style={{ marginLeft: '8px', fontSize: '12px', color: '#6c757d' }}>
-                      | 世代范围: {Math.min(...rows.map(item => item.g_rank || 1))} - {Math.max(...rows.map(item => item.g_rank || 1))}
-                    </span>
+                    {getCurrentDisplayData().length > 0 && (
+                      <span style={{ marginLeft: '8px', fontSize: '12px', color: '#6c757d' }}>
+                        | 世代范围: {Math.min(...getCurrentDisplayData().map(item => item.g_rank || 1))} - {Math.max(...getCurrentDisplayData().map(item => item.g_rank || 1))}
+                      </span>
+                    )}
                   </span>
                 )}</span>
               <div className="table-toolbar">
-                {/* 数据统计 */}
-               
+                {/* 搜索功能 */}
+                <div style={{ marginRight: '12px' }}>
+                  <Input
+                    placeholder="搜索姓名、职位、备注..."
+                    prefix={<SearchOutlined style={{ color: '#bfbfbf' }} />}
+                    suffix={
+                      searchText ? (
+                        <ClearOutlined 
+                          style={{ color: '#bfbfbf', cursor: 'pointer' }} 
+                          onClick={clearSearch}
+                        />
+                      ) : null
+                    }
+                    value={searchText}
+                    onChange={(e) => handleSearch(e.target.value)}
+                    size="small"
+                    style={{ width: '180px' }}
+                    allowClear
+                  />
+                  {searchText && (
+                    <div style={{ 
+                      fontSize: '11px', 
+                      color: '#666', 
+                      marginTop: '2px',
+                      textAlign: 'center'
+                    }}>
+                      找到 {filteredRows.length} 条结果
+                    </div>
+                  )}
+                </div>
                 
                 {/* 功能入口按钮 */}
                 <Space size="small">
@@ -1030,7 +1191,7 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
           size="small"
         >
           <AntdFamilyTable
-            data={rows}
+            data={getCurrentDisplayData()}
             onDataChange={handleDataChange}
             onSave={saveToCurrentTenant}
             loading={busy}
