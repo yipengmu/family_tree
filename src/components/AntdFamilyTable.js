@@ -163,8 +163,8 @@ const AntdFamilyTable = ({
             onClick={() => setEditingKey(record.key)}
             style={{ 
               cursor: 'pointer', 
-              height: '24px',
-              lineHeight: '24px',
+              height: '28px',
+              lineHeight: '28px',
               fontSize: '12px',
               fontWeight: '500',
               color: '#1890ff',
@@ -173,7 +173,7 @@ const AntdFamilyTable = ({
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap'
             }}
-            title={text}
+            title={text || '点击编辑'}
           >
             {text || '点击编辑'}
           </div>
@@ -207,8 +207,8 @@ const AntdFamilyTable = ({
               cursor: 'pointer',
               display: 'inline-block',
               width: '100%',
-              height: '24px',
-              lineHeight: '24px',
+              height: '28px',
+              lineHeight: '28px',
               fontSize: '12px',
               fontWeight: '500',
               color: '#52c41a',
@@ -216,6 +216,7 @@ const AntdFamilyTable = ({
               borderRadius: '4px',
               textAlign: 'center'
             }}
+            title={`世代${text}`}
           >
             {text}
           </span>
@@ -248,11 +249,12 @@ const AntdFamilyTable = ({
               cursor: 'pointer',
               display: 'inline-block',
               width: '100%',
-              height: '24px',
-              lineHeight: '24px',
+              height: '28px',
+              lineHeight: '28px',
               fontSize: '12px',
               color: '#666'
             }}
+            title={`排行${text}`}
           >
             {text}
           </span>
@@ -285,12 +287,13 @@ const AntdFamilyTable = ({
               cursor: 'pointer',
               display: 'inline-block',
               width: '100%',
-              height: '24px',
-              lineHeight: '24px',
+              height: '28px',
+              lineHeight: '28px',
               fontSize: '12px',
               color: text === 0 ? '#999' : '#722ed1',
               fontWeight: text === 0 ? 'normal' : '500'
             }}
+            title={text === 0 ? '无父亲' : `父亲ID: ${text}`}
           >
             {text === 0 ? '-' : text}
           </span>
@@ -335,6 +338,7 @@ const AntdFamilyTable = ({
               textAlign: 'center',
               border: `1px solid ${isMale ? '#1890ff' : '#eb2f96'}`
             }}
+            title={isMale ? '男性' : '女性'}
           >
             {isMale ? '男' : '女'}
           </span>
@@ -371,8 +375,12 @@ const AntdFamilyTable = ({
               cursor: 'pointer',
               fontSize: '11px',
               color: color,
-              fontWeight: text === 'none' ? 'normal' : '500'
+              fontWeight: text === 'none' ? 'normal' : '500',
+              height: '28px',
+              lineHeight: '28px',
+              display: 'inline-block'
             }}
+            title={displayText === '-' ? '无收养关系' : `收养关系: ${displayText}`}
           >
             {displayText}
           </span>
@@ -401,8 +409,8 @@ const AntdFamilyTable = ({
             onClick={() => setEditingKey(record.key)}
             style={{ 
               cursor: 'pointer',
-              height: '24px',
-              lineHeight: '24px',
+              height: '28px',
+              lineHeight: '28px',
               fontSize: '12px',
               color: text ? '#13c2c2' : '#d9d9d9',
               padding: '0 4px',
@@ -410,7 +418,7 @@ const AntdFamilyTable = ({
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap'
             }}
-            title={text}
+            title={text || '无官职'}
           >
             {text || '无'}
           </div>
@@ -463,6 +471,7 @@ const AntdFamilyTable = ({
               textAlign: 'center',
               border: `1px solid ${isAlive ? '#52c41a' : '#d9d9d9'}`
             }}
+            title={isAlive ? '在世' : '已故'}
           >
             {isAlive ? '在世' : '已故'}
           </span>
@@ -491,8 +500,8 @@ const AntdFamilyTable = ({
             onClick={() => setEditingKey(record.key)}
             style={{ 
               cursor: 'pointer',
-              height: '24px',
-              lineHeight: '24px',
+              height: '28px',
+              lineHeight: '28px',
               fontSize: '12px',
               color: text ? '#722ed1' : '#d9d9d9',
               padding: '0 4px',
@@ -500,7 +509,7 @@ const AntdFamilyTable = ({
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap'
             }}
-            title={text}
+            title={text || '无配偶'}
           >
             {text || '无'}
           </div>
@@ -518,14 +527,14 @@ const AntdFamilyTable = ({
             <Input.TextArea
               size="small"
               defaultValue={text}
-              autoSize={{ minRows: 1, maxRows: 3 }}
+              autoSize={{ minRows: 1, maxRows: 1 }}
               onPressEnter={(e) => {
                 if (!e.shiftKey) {
                   handleSave(record.key, 'summary', e.target.value)
                 }
               }}
               onBlur={(e) => handleSave(record.key, 'summary', e.target.value)}
-              style={{ fontSize: '12px' }}
+              style={{ fontSize: '12px', resize: 'none' }}
             />
           );
         }
@@ -534,19 +543,16 @@ const AntdFamilyTable = ({
             onClick={() => setEditingKey(record.key)}
             style={{ 
               cursor: 'pointer',
-              minHeight: '24px',
-              maxHeight: '72px',
-              lineHeight: '16px',
+              height: '28px',
+              lineHeight: '28px',
               fontSize: '11px',
               color: text ? '#595959' : '#d9d9d9',
-              padding: '4px',
+              padding: '0 4px',
               overflow: 'hidden',
-              display: '-webkit-box',
-              WebkitLineClamp: 3,
-              WebkitBoxOrient: 'vertical',
-              wordBreak: 'break-all'
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap'
             }}
-            title={text}
+            title={text || '无备注'}
           >
             {text || '无备注'}
           </div>
@@ -602,24 +608,27 @@ const AntdFamilyTable = ({
           }
         };
         
+        const formattedTime = formatTime(displayTime);
+        const hasUpdate = record.created_at && record.updated_at && record.created_at !== record.updated_at;
+        
         return (
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ 
+          <div 
+            style={{ 
+              height: '28px',
+              lineHeight: '28px',
+              textAlign: 'center',
               fontSize: '11px',
               color: '#666',
               fontWeight: '500',
-              lineHeight: '16px'
-            }}>
-              {formatTime(displayTime)}
-            </div>
-            {record.created_at && record.updated_at && record.created_at !== record.updated_at && (
-              <div style={{ 
-                fontSize: '10px',
-                color: '#999',
-                marginTop: '2px'
-              }}>
-                📝 已更新
-              </div>
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap'
+            }}
+            title={`${formattedTime}${hasUpdate ? ' (已更新)' : ''}`}
+          >
+            {formattedTime}
+            {hasUpdate && (
+              <span style={{ marginLeft: '4px', color: '#1890ff' }}>•</span>
             )}
           </div>
         );
@@ -727,7 +736,9 @@ const AntdFamilyTable = ({
             font-size: 12px !important;
             vertical-align: middle !important;
             border-right: 1px solid #f0f0f0 !important;
-            height: 32px !important;
+            height: 36px !important;
+            max-height: 36px !important;
+            line-height: 28px !important;
           }
           
           .compact-family-table .ant-table-tbody > tr:nth-child(even) {
@@ -844,7 +855,7 @@ const AntdFamilyTable = ({
         className="compact-family-table"
         style={{
           fontSize: '12px',
-          '--table-row-height': '32px'
+          '--table-row-height': '36px'
         }}
         components={{
           header: {
@@ -869,7 +880,8 @@ const AntdFamilyTable = ({
                 {...props} 
                 style={{
                   ...props.style,
-                  height: '32px'
+                  height: '36px',
+                  maxHeight: '36px'
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.backgroundColor = '#f5f5f5';
@@ -886,7 +898,10 @@ const AntdFamilyTable = ({
                   ...props.style,
                   padding: '4px 6px',
                   verticalAlign: 'middle',
-                  borderRight: '1px solid #f0f0f0'
+                  borderRight: '1px solid #f0f0f0',
+                  height: '36px',
+                  maxHeight: '36px',
+                  overflow: 'hidden'
                 }}
               />
             )
