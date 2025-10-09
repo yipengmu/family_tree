@@ -2,7 +2,7 @@
 .family-search-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between; /* 两端对齐：左侧显示数据统计，右侧显示搜索框 */
+  justify-content: flex-end; /* PC端默认右对齐 */
   gap: 12px; /* 减小间距 */
   width: 100%;
 }
@@ -85,7 +85,7 @@
 /* 响应式设计 */
 @media (max-width: 768px) {
   .family-search-bar {
-    justify-content: space-between; /* 保持两端对齐 */
+    justify-content: space-between; /* 移动端保持两端对齐 */
     gap: 8px; /* 移动端减小间距 */
     align-items: center;
     flex-direction: row; /* 保持水平布局 */

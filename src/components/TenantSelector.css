@@ -52,9 +52,66 @@
   box-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 9px 28px 8px rgba(0, 0, 0, 0.05);
 }
 
-/* 紧凑模式下拉菜单样式 */
-.tenant-selector.compact .ant-select-dropdown {
-  min-width: 200px;
+/* 侧边栏中的下拉菜单样式 - 透明质感风格 */
+.sidebar .tenant-selector .ant-select-dropdown {
+  background: rgba(139, 92, 246, 0.95) !important; /* 紫色主题透明背景 */
+  backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 8px 32px rgba(139, 92, 246, 0.3), 0 2px 8px rgba(0, 0, 0, 0.15) !important; /* 紫色阴影 */
+  min-width: 200px !important;
+  max-width: 280px !important; /* 限制最大宽度，防止超出侧边栏 */
+}
+
+.sidebar .tenant-selector .ant-select-item {
+  padding: 6px 12px !important;
+  border-radius: 4px !important;
+  margin: 2px 4px !important;
+  background: transparent !important;
+  transition: all 0.2s ease !important;
+  white-space: nowrap !important; /* 防止文字换行 */
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  color: rgba(255, 255, 255, 0.9) !important; /* 白色文字 */
+  font-size: 11px !important; /* 缩小字号 */
+  line-height: 1.2 !important;
+}
+
+.sidebar .tenant-selector .ant-select-item:hover {
+  background: rgba(255, 255, 255, 0.15) !important; /* 白色半透明悬停效果 */
+  color: white !important;
+}
+
+.sidebar .tenant-selector .ant-select-item-option-selected {
+  background: rgba(255, 255, 255, 0.2) !important; /* 白色半透明选中效果 */
+  color: white !important;
+  font-weight: 600 !important;
+}
+
+.sidebar .tenant-selector .ant-select-dropdown .ant-btn {
+  border: none !important;
+  box-shadow: none !important;
+  color: white !important; /* 白色按钮文字 */
+  font-weight: 500 !important;
+  background: transparent !important;
+  transition: all 0.2s ease !important;
+  font-size: 11px !important; /* 缩小字号 */
+}
+
+.sidebar .tenant-selector .ant-select-dropdown .ant-btn:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: white !important;
+}
+
+/* 侧边栏中的默认租户图标样式 */
+.sidebar .tenant-selector .anticon-home {
+  color: white !important; /* 白色图标 */
+}
+
+/* 侧边栏中的删除按钮样式 */
+.sidebar .tenant-selector .anticon-delete:hover {
+  color: #fecaca !important; /* 柔和的红色 */
+  transform: scale(1.1) !important;
 }
 
 .tenant-selector .ant-select-item {

@@ -36,6 +36,7 @@
   padding: 0 12px;
   margin-bottom: 24px;
   position: relative;
+  min-width: 0; /* 允许弹性布局 */
 }
 
 .logo-icon {
@@ -60,6 +61,10 @@
   font-weight: 600;
   letter-spacing: 0.5px;
   transition: opacity 0.3s ease;
+  white-space: nowrap; /* 防止换行 */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0; /* 防止被压缩 */
 }
 
 /* 收起按钮区域 - 精巧设计 */
@@ -198,6 +203,32 @@
     padding: 10px;
     font-size: 12px;
   }
+  
+  /* PC端租户选择器进一步优化 */
+  .sidebar .tenant-selector.compact .ant-select-selector {
+    padding: 2px 4px !important; /* 更紧凑的内边距 */
+    font-size: 9px !important; /* 进一步减小字体到9px */
+    min-height: 20px !important; /* 减小高度 */
+    line-height: 1.1 !important; /* 更紧凑的行高 */
+  }
+  
+  .sidebar .tenant-selector.compact .ant-select-selection-item {
+    font-size: 9px !important; /* 保持一致的字体大小 */
+    line-height: 1.1 !important;
+    max-width: calc(100% - 16px) !important; /* 减少箭头占用空间 */
+  }
+  
+  .sidebar .tenant-selector.compact .ant-select-selection-placeholder {
+    font-size: 9px !important;
+    line-height: 1.1 !important;
+  }
+  
+  .sidebar .tenant-selector.compact .ant-select-arrow {
+    font-size: 7px !important;
+    width: 10px !important;
+    height: 10px !important;
+    margin-right: 1px !important;
+  }
 }
 
 @media (max-width: 768px) {
@@ -209,6 +240,19 @@
   
   .sidebar.open {
     transform: translateX(0);
+  }
+  
+  /* 移动端 Logo 区域优化 */
+  .logo {
+    padding: 0 16px; /* 增加左右内边距 */
+    gap: 12px; /* 增加间距 */
+  }
+  
+  .logo-text {
+    font-size: 15px; /* 移动端适当增大字体 */
+    font-weight: 600;
+    letter-spacing: 0.3px; /* 减小字间距以节省空间 */
+    min-width: max-content; /* 确保文字完整显示 */
   }
   
   /* 移动端不显示收起按钮 */
@@ -257,12 +301,18 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  width: 100%; /* 明确宽度 */
+  overflow: hidden; /* 防止内容溢出 */
+  box-sizing: border-box;
 }
 
 /* 租户管理区域样式 - 优化为顶部位置 */
 .tenant-section {
   transition: all 0.3s ease;
   order: 1; /* 确保租户选择器在上方 */
+  width: 100%; /* 明确宽度限制 */
+  overflow: hidden; /* 防止内容溢出 */
+  box-sizing: border-box; /* 包含内边距和边框在宽度计算内 */
 }
 
 .tenant-section.collapsed {
@@ -321,53 +371,147 @@
   line-height: 1.2;
 }
 
-/* 侧边栏中的租户选择器样式覆盖 */
+/* 侧边栏中的租户选择器样式覆盖 - 透明质感风格 */
 .sidebar .tenant-selector {
   width: 100%;
+  max-width: 100%; /* 不超出容器宽度 */
+  overflow: hidden; /* 防止内容溢出 */
+  box-sizing: border-box;
 }
 
 .sidebar .tenant-selector.compact {
   width: 100%;
+  max-width: 100%;
 }
 
 .sidebar .tenant-selector.compact .ant-select {
   width: 100%;
   min-width: auto;
+  max-width: 100%; /* 不超出容器宽度 */
 }
 
 .sidebar .tenant-selector.compact .ant-select-selector {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: rgba(255, 255, 255, 0.9);
-  border-radius: 6px;
-  padding: 4px 8px;
-  font-size: 12px;
+  background: rgba(255, 255, 255, 0.08) !important; /* 与用户信息区域相同的透明背景 */
+  border: 1px solid rgba(255, 255, 255, 0.15) !important; /* 更柔和的边框 */
+  color: rgba(255, 255, 255, 0.9) !important;
+  border-radius: 6px !important;
+  padding: 3px 5px !important; /* 进一步减小内边距 */
+  font-size: 10px !important; /* 基础字体大小 */
+  transition: all 0.3s ease !important;
+  box-shadow: none !important;
+  min-height: 22px !important; /* 减小最小高度 */
+  height: auto !important;
+  display: flex !important;
+  align-items: center !important;
+  overflow: hidden !important; /* 确保内容不溢出 */
 }
 
 .sidebar .tenant-selector.compact .ant-select-selector:hover {
-  border-color: rgba(255, 255, 255, 0.4);
-  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3) !important;
+  background: rgba(255, 255, 255, 0.12) !important; /* 与用户信息区域相同的悬停效果 */
+  box-shadow: none !important;
+}
+
+.sidebar .tenant-selector.compact .ant-select-selector:focus,
+.sidebar .tenant-selector.compact .ant-select-focused .ant-select-selector {
+  border-color: rgba(255, 255, 255, 0.4) !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1) !important; /* 柔和的聚焦效果 */
 }
 
 .sidebar .tenant-selector.compact .ant-select-selection-item {
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 12px;
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-size: 10px !important; /* 基础字体大小 */
+  font-weight: 500 !important;
+  line-height: 1.1 !important; /* 更紧凑的行高 */
+  padding: 0 !important; /* 移除额外内边距 */
+  margin: 0 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  max-width: calc(100% - 18px) !important; /* 减少箭头占用空间 */
 }
 
 .sidebar .tenant-selector.compact .ant-select-selection-placeholder {
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5) !important;
+  font-size: 10px !important; /* 与选择器字体保持一致 */
+  font-weight: 400 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
 }
 
 .sidebar .tenant-selector.compact .ant-select-arrow {
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.6) !important;
+  font-size: 8px !important; /* 基础箭头大小 */
+  width: 12px !important;
+  height: 12px !important;
+  margin-right: 1px !important; /* 减小右边距 */
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important; /* 防止箭头被压缩 */
 }
 
 .sidebar .tenant-selector.compact .ant-select-arrow:hover {
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 0.9) !important;
 }
 
-/* 移动端样式优化 */
+.sidebar .tenant-selector.compact .ant-select-clear {
+  color: rgba(255, 255, 255, 0.6) !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-radius: 2px !important; /* 更小的圆角 */
+  width: 12px !important;
+  height: 12px !important;
+  font-size: 8px !important;
+  margin-right: 2px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.sidebar .tenant-selector.compact .ant-select-clear:hover {
+  color: rgba(255, 255, 255, 0.9) !important;
+  background: rgba(255, 255, 255, 0.15) !important;
+}
+
+/* 收起状态下的特殊优化 */
+.sidebar.collapsed .tenant-selector.compact .ant-select-selector {
+  padding: 1px 3px !important; /* 收起状态下更紧凑的内边距 */
+  min-height: 18px !important; /* 收起状态下更小的高度 */
+  font-size: 8px !important; /* 收起状态下更小的字体 */
+}
+
+.sidebar.collapsed .tenant-selector.compact .ant-select-selection-item {
+  font-size: 8px !important; /* 收起状态下更小的字体 */
+  max-width: 28px !important; /* 严格限制显示宽度 */
+  line-height: 1 !important; /* 最紧凑的行高 */
+}
+
+.sidebar.collapsed .tenant-selector.compact .ant-select-arrow {
+  font-size: 6px !important;
+  width: 8px !important;
+  height: 8px !important;
+  margin-right: 0px !important; /* 移除右边距以节省空间 */
+}
+
+/* 极小屏幕优化 - 针对120px及以下宽度 */
+@media (max-width: 1024px) {
+  .sidebar[style*="width: 120px"] .tenant-selector.compact .ant-select-selector,
+  .sidebar:not(.collapsed) .tenant-selector.compact .ant-select-selector {
+    padding: 2px 4px !important;
+    font-size: 9px !important;
+    min-height: 20px !important;
+  }
+  
+  .sidebar[style*="width: 120px"] .tenant-selector.compact .ant-select-selection-item,
+  .sidebar:not(.collapsed) .tenant-selector.compact .ant-select-selection-item {
+    font-size: 9px !important;
+    max-width: calc(100% - 14px) !important;
+  }
+}
+
+/* 移动端样式优化 - 保持透明质感 */
 @media (max-width: 768px) {
   .bottom-section {
     padding: 12px 16px 16px 16px; /* 移动端增加内边距 */
@@ -395,17 +539,23 @@
   }
   
   .sidebar .tenant-selector.compact .ant-select-selector {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    padding: 8px 12px;
-    font-size: 14px;
+    background: rgba(255, 255, 255, 0.08) !important; /* 保持透明质感 */
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    padding: 8px 12px !important;
+    font-size: 13px !important; /* 移动端适当增大字体 */
+  }
+  
+  .sidebar .tenant-selector.compact .ant-select-selector:hover {
+    background: rgba(255, 255, 255, 0.12) !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
   }
   
   .sidebar .tenant-selector.compact .ant-select-selection-item {
-    font-size: 14px;
+    font-size: 13px !important;
+    font-weight: 500 !important;
   }
   
   .sidebar .tenant-selector.compact .ant-select-selection-placeholder {
-    font-size: 14px;
+    font-size: 13px !important;
   }
 }
