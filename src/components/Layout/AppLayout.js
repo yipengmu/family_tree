@@ -29,6 +29,7 @@ const AppLayout = ({
   };
 
   const toggleSidebar = () => {
+    console.log('📱 移动端菜单切换:', !sidebarOpen);
     setSidebarOpen(!sidebarOpen);
   };
 
@@ -54,6 +55,7 @@ const AppLayout = ({
           onMenuClick={handleMenuClick}
           collapsed={sidebarCollapsed}
           onToggleCollapse={toggleSidebarCollapse}
+          open={sidebarOpen}
           user={currentUser}
         />
       </div>
@@ -72,9 +74,10 @@ const AppLayout = ({
         <button
           className="mobile-menu-btn"
           onClick={toggleSidebar}
+          aria-label="打开菜单"
         >
-          <span>1</span>
-          <span>2</span>
+          <span></span>
+          <span></span>
           <span></span>
         </button>
 

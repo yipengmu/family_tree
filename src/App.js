@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Layout, Alert, Tabs, message } from 'antd';
 import { TeamOutlined, SettingOutlined } from '@ant-design/icons';
 import { validateFamilyData } from './utils/familyTreeUtils';
@@ -10,9 +10,7 @@ import DiscoverPage from './components/Pages/DiscoverPage';
 import TenantSelector from './components/TenantSelector';
 import familyDataService from './services/familyDataService';
 import tenantService from './services/tenantService';
- // 导入测试工具（开发环境自动运行）
-
-
+// 导入测试工具（开发环境自动运行）
 
 import './App.css';
 
@@ -248,61 +246,11 @@ function App() {
     }
   };
 
-  // 移动端使用底部Tab导航
+  // 移动端也使用AppLayout组件，但简化菜单
   if (mobile) {
-    const tabItems = [
-      {
-        key: 'tree',
-        label: '家谱',
-        icon: <TeamOutlined />,
-        children: (
-          <FamilyTreePage
-            familyData={familyData}
-            loading={loading}
-            error={error}
-            validationResult={validationResult}
-          />
-        )
-      },
-      {
-        key: 'settings',
-        label: '设置',
-        icon: <SettingOutlined />,
-        children: <SettingsPage />
-      }
-    ];
-
     return (
       <div className="App mobile-layout">
-        <Layout style={{ height: '100vh', background: '#f8fafc' }}>
-          <Content style={{ height: '100%', padding: 0, overflow: 'hidden' }}>
-            <Tabs
-              activeKey={activeTab}
-              onChange={setActiveTab}
-              items={tabItems}
-              tabPosition="bottom"
-              size="large"
-              style={{
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column'
-              }}
-              tabBarStyle={{
-                backgroundColor: '#f7f7f7',
-                borderTop: '0.5px solid #e5e5e5',
-                margin: 0,
-                padding: 0,
-                position: 'fixed',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                zIndex: 1000,
-                height: '56px',
-                boxShadow: '0 -1px 3px rgba(0, 0, 0, 0.05)'
-              }}
-            />
-          </Content>
-        </Layout>
+        {renderCurrentPage()}
       </div>
     );
   }

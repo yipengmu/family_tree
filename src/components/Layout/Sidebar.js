@@ -11,7 +11,7 @@ import {
 } from '@ant-design/icons';
 import './Sidebar.css';
 
-const Sidebar = ({ activeItem = 'tree', onMenuClick, collapsed = false, onToggleCollapse, user = { name: '穆塔爸', avatar: '穆' } }) => {
+const Sidebar = ({ activeItem = 'tree', onMenuClick, collapsed = false, onToggleCollapse, open = false, user = { name: '穆塔爸', avatar: '穆' } }) => {
   const menuItems = [
     {
       key: 'tree',
@@ -52,7 +52,7 @@ const Sidebar = ({ activeItem = 'tree', onMenuClick, collapsed = false, onToggle
   ];
 
   return (
-    <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`} id="sidebar">
+    <aside className={`sidebar ${collapsed ? 'collapsed' : ''} ${open ? 'open' : ''}`} id="sidebar">
       {/* Logo */}
       <div className="logo">
         <div className="logo-icon">穆</div>

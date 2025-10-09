@@ -65,6 +65,7 @@
 }
 
 .mobile-menu-btn span {
+  display: block;
   width: 20px;
   height: 2px;
   background: #64748b;
@@ -74,6 +75,13 @@
 
 .mobile-menu-btn:hover span {
   background: #8b5cf6;
+}
+
+/* 移动端显示菜单按钮 */
+@media (max-width: 768px) {
+  .mobile-menu-btn {
+    display: flex;
+  }
 }
 
 /* 内容网格布局 */
@@ -120,10 +128,6 @@
   
   .sidebar-wrapper.open {
     transform: translateX(0);
-  }
-  
-  .mobile-menu-btn {
-    display: flex;
   }
   
   .content-grid {
