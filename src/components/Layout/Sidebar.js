@@ -9,6 +9,7 @@ import {
   MenuOutlined,
   MenuUnfoldOutlined
 } from '@ant-design/icons';
+import TenantSelector from '../TenantSelector';
 import './Sidebar.css';
 
 const Sidebar = ({ activeItem = 'tree', onMenuClick, collapsed = false, onToggleCollapse, open = false, user = { name: '穆塔爸', avatar: '穆' } }) => {
@@ -85,14 +86,19 @@ const Sidebar = ({ activeItem = 'tree', onMenuClick, collapsed = false, onToggle
         </ul>
       </nav>
       
-      {/* 用户信息 - 移至侧边栏底部 */}
-      <div className="user-section">
+      {/* 用户信息与租户管理 - 精简底部区域 */}
+      <div className="bottom-section">
+        {/* 租户管理区域 */}
+        <div className={`tenant-section ${collapsed ? 'collapsed' : ''}`}>
+          <TenantSelector compact={collapsed} />
+        </div>
+        
+        {/* 用户信息区域 */}
         <div className={`user-profile-sidebar ${collapsed ? 'collapsed' : ''}`}>
           <div className="user-avatar-sidebar">{user.avatar}</div>
           {!collapsed && (
             <div className="user-info-sidebar">
               <div className="user-name-sidebar">{user.name}</div>
-              <div className="user-logout-sidebar">Log out</div>
             </div>
           )}
         </div>

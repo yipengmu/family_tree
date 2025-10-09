@@ -6,7 +6,7 @@ import './TenantSelector.css';
 
 const { Option } = Select;
 
-const TenantSelector = ({ onTenantChange, style }) => {
+const TenantSelector = ({ onTenantChange, style, compact = false }) => {
   const [tenants, setTenants] = useState([]);
   const [currentTenant, setCurrentTenant] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -116,14 +116,16 @@ const TenantSelector = ({ onTenantChange, style }) => {
   }
 
   return (
-    <div className="tenant-selector" style={style}>
-      <Space>
+    <div className={`tenant-selector ${compact ? 'compact' : ''}`} style={style}>
+      {compact ? (
+        // 紧凑模式：仅显示一个选择框
         <Select
           value={currentTenant?.id}
           onChange={handleTenantChange}
           loading={loading}
-          style={{ minWidth: 200 }}
+          style={{ width: '100%' }}
           placeholder="选择家谱"
+          size="small"
           dropdownRender={(menu) => (
             <>
               {menu}
@@ -133,6 +135,7 @@ const TenantSelector = ({ onTenantChange, style }) => {
                   icon={<PlusOutlined />}
                   onClick={() => setModalVisible(true)}
                   style={{ width: '100%', textAlign: 'left' }}
+                  size="small"
                 >
                   创建新家谱
                 </Button>
@@ -143,14 +146,14 @@ const TenantSelector = ({ onTenantChange, style }) => {
           {tenants.map((tenant) => (
             <Option key={tenant.id} value={tenant.id}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span>
+                <span style={{ fontSize: '12px' }}>
                   {tenant.isDefault && <HomeOutlined style={{ marginRight: 4, color: '#1890ff' }} />}
                   {tenant.name}
                 </span>
                 {!tenant.isDefault && (
                   <Tooltip title="删除家谱">
                     <DeleteOutlined
-                      style={{ color: '#ff4d4f', fontSize: '12px' }}
+                      style={{ color: '#ff4d4f', fontSize: '10px' }}
                       onClick={(e) => {
                         e.stopPropagation();
                         handleDeleteTenant(tenant.id, tenant.name);
@@ -162,17 +165,65 @@ const TenantSelector = ({ onTenantChange, style }) => {
             </Option>
           ))}
         </Select>
+      ) : (
+        // 常规模式：显示选择框和设置按钮
+        <Space>
+          <Select
+            value={currentTenant?.id}
+            onChange={handleTenantChange}
+            loading={loading}
+            style={{ minWidth: 200 }}
+            placeholder="选择家谱"
+            dropdownRender={(menu) => (
+              <>
+                {menu}
+                <div style={{ padding: '8px 0', borderTop: '1px solid #f0f0f0' }}>
+                  <Button
+                    type="text"
+                    icon={<PlusOutlined />}
+                    onClick={() => setModalVisible(true)}
+                    style={{ width: '100%', textAlign: 'left' }}
+                  >
+                    创建新家谱
+                  </Button>
+                </div>
+              </>
+            )}
+          >
+            {tenants.map((tenant) => (
+              <Option key={tenant.id} value={tenant.id}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>
+                    {tenant.isDefault && <HomeOutlined style={{ marginRight: 4, color: '#1890ff' }} />}
+                    {tenant.name}
+                  </span>
+                  {!tenant.isDefault && (
+                    <Tooltip title="删除家谱">
+                      <DeleteOutlined
+                        style={{ color: '#ff4d4f', fontSize: '12px' }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteTenant(tenant.id, tenant.name);
+                        }}
+                      />
+                    </Tooltip>
+                  )}
+                </div>
+              </Option>
+            ))}
+          </Select>
 
-        <Tooltip title="租户设置">
-          <Button
-            icon={<SettingOutlined />}
-            onClick={() => {
-              // TODO: 打开租户设置对话框
-              message.info('租户设置功能开发中');
-            }}
-          />
-        </Tooltip>
-      </Space>
+          <Tooltip title="租户设置">
+            <Button
+              icon={<SettingOutlined />}
+              onClick={() => {
+                // TODO: 打开租户设置对话框
+                message.info('租户设置功能开发中');
+              }}
+            />
+          </Tooltip>
+        </Space>
+      )}
 
       {/* 创建租户对话框 */}
       <Modal

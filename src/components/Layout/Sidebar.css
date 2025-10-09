@@ -249,44 +249,59 @@
   background: rgba(255, 255, 255, 0.5);
 }
 
-/* 用户信息区域 - 位于侧边栏底部 */
-.user-section {
+/* 底部区域 - 精简优化布局 */
+.bottom-section {
   margin-top: auto;
-  padding: 12px 8px 0;
+  padding: 8px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
+/* 租户管理区域样式 - 优化为顶部位置 */
+.tenant-section {
+  transition: all 0.3s ease;
+  order: 1; /* 确保租户选择器在上方 */
+}
+
+.tenant-section.collapsed {
+  padding: 0;
+}
+
+/* 用户信息区域 - 精简样式 */
 .user-profile-sidebar {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
+  padding: 6px 8px; /* 减小内边距 */
+  background: rgba(255, 255, 255, 0.08); /* 降低背景透明度 */
+  border-radius: 6px; /* 减小圆角 */
   transition: all 0.3s ease;
   cursor: pointer;
+  order: 2; /* 确保用户信息在下方 */
 }
 
 .user-profile-sidebar:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .user-profile-sidebar.collapsed {
   justify-content: center;
-  padding: 8px;
+  padding: 6px;
 }
 
 .user-avatar-sidebar {
-  width: 32px;
-  height: 32px;
+  width: 28px; /* 减小头像尺寸 */
+  height: 28px;
   background: rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
+  border-radius: 6px; /* 减小圆角 */
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 12px; /* 减小字体 */
   flex-shrink: 0;
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
@@ -298,21 +313,99 @@
 
 .user-name-sidebar {
   color: white;
-  font-size: 12px;
-  font-weight: 600;
-  margin-bottom: 2px;
+  font-size: 11px; /* 减小字体 */
+  font-weight: 500; /* 降低字重 */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.2;
 }
 
-.user-logout-sidebar {
+/* 侧边栏中的租户选择器样式覆盖 */
+.sidebar .tenant-selector {
+  width: 100%;
+}
+
+.sidebar .tenant-selector.compact {
+  width: 100%;
+}
+
+.sidebar .tenant-selector.compact .ant-select {
+  width: 100%;
+  min-width: auto;
+}
+
+.sidebar .tenant-selector.compact .ant-select-selector {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.9);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+.sidebar .tenant-selector.compact .ant-select-selector:hover {
+  border-color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.sidebar .tenant-selector.compact .ant-select-selection-item {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 12px;
+}
+
+.sidebar .tenant-selector.compact .ant-select-selection-placeholder {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 12px;
+}
+
+.sidebar .tenant-selector.compact .ant-select-arrow {
   color: rgba(255, 255, 255, 0.7);
-  font-size: 11px;
-  cursor: pointer;
-  transition: color 0.2s ease;
 }
 
-.user-logout-sidebar:hover {
-  color: white;
+.sidebar .tenant-selector.compact .ant-select-arrow:hover {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* 移动端样式优化 */
+@media (max-width: 768px) {
+  .bottom-section {
+    padding: 12px 16px 16px 16px; /* 移动端增加内边距 */
+    gap: 12px;
+  }
+  
+  .tenant-section {
+    order: 1;
+  }
+  
+  .user-profile-sidebar {
+    order: 2;
+    padding: 8px 12px;
+  }
+  
+  .user-avatar-sidebar {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+  
+  .user-name-sidebar {
+    font-size: 13px;
+    font-weight: 500;
+  }
+  
+  .sidebar .tenant-selector.compact .ant-select-selector {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+  
+  .sidebar .tenant-selector.compact .ant-select-selection-item {
+    font-size: 14px;
+  }
+  
+  .sidebar .tenant-selector.compact .ant-select-selection-placeholder {
+    font-size: 14px;
+  }
 }

@@ -127,7 +127,17 @@ const FamilySearchBar = ({
 
   return (
     <div className="family-search-bar" style={style}>
-
+      {/* 移动端：家族数据总数与搜索框在同一行 */}
+      {showStatus && (
+        <div className="status-info">
+          <div className="count-info">
+            <Text type="secondary" style={{ fontSize: '11px' }}>
+              {nodes.length}/{statistics?.totalMembers || familyData.length}
+            </Text>
+          </div>
+        </div>
+      )}
+      
       {/* 搜索功能 - 简化版本 */}
       <div className="search-section">
         <AutoComplete
@@ -150,18 +160,6 @@ const FamilySearchBar = ({
           />
         </AutoComplete>
       </div>
-
-
-      {/* 状态信息 - 简化显示 */}
-      {showStatus && (
-        <div className="status-info">
-          <div className="count-info">
-            <Text type="secondary" style={{ fontSize: '11px' }}>
-              {nodes.length}/{statistics?.totalMembers || familyData.length}
-            </Text>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

@@ -2,7 +2,9 @@
 .family-search-bar {
   display: flex;
   align-items: center;
+  justify-content: space-between; /* 两端对齐：左侧显示数据统计，右侧显示搜索框 */
   gap: 12px; /* 减小间距 */
+  width: 100%;
 }
 
 /* 状态信息 - 简化 */
@@ -10,6 +12,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0; /* 防止被压缩 */
 }
 
 .count-info {
@@ -23,6 +26,7 @@
 /* 搜索区域 - 简化 */
 .search-section {
   position: relative;
+  flex-shrink: 0; /* 防止搜索框被压缩 */
 }
 
 .family-search-input {
@@ -81,25 +85,31 @@
 /* 响应式设计 */
 @media (max-width: 768px) {
   .family-search-bar {
-    flex-direction: column;
-    gap: 12px;
-    align-items: stretch;
+    justify-content: space-between; /* 保持两端对齐 */
+    gap: 8px; /* 移动端减小间距 */
+    align-items: center;
+    flex-direction: row; /* 保持水平布局 */
   }
   
   .search-section {
-    width: 100%;
+    width: auto; /* 自适应宽度 */
+    min-width: 160px; /* 最小宽度 */
   }
   
   .search-section .ant-select {
-    width: 100% !important;
+    width: 160px !important; /* 移动端减小搜索框宽度 */
   }
   
   .family-search-input {
-    font-size: 16px; /* 防止iOS缩放 */
+    font-size: 14px; /* 移动端适中字号 */
   }
   
   .status-info {
-    justify-content: center;
+    justify-content: flex-start;
+  }
+  
+  .count-info {
+    white-space: nowrap; /* 防止换行 */
   }
 }
 

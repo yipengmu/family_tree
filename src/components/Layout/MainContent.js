@@ -1,6 +1,5 @@
 import React from 'react';
 import FamilySearchBar from '../UI/FamilySearchBar';
-import TenantSelector from '../TenantSelector';
 import './MainContent.css';
 
 const MainContent = ({
@@ -15,10 +14,10 @@ const MainContent = ({
 }) => {
   return (
     <main className={`main-content ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
-      {/* 顶部导航栏 - 租户选择器移至右上角 */}
+      {/* 顶部导航栏 - 简化为仅搜索功能 */}
       <header className="header">
-        {/* 左侧：搜索栏 */}
-        <div className="header-left">
+        {/* 搜索栏 */}
+        <div className="header-search">
           <FamilySearchBar
             familyData={familyData}
             nodes={nodes}
@@ -29,11 +28,6 @@ const MainContent = ({
             showStatus={true}
             style={{ flex: 1, maxWidth: 400 }}
           />
-        </div>
-
-        {/* 右侧：租户选择器 */}
-        <div className="header-right">
-          <TenantSelector />
         </div>
       </header>
 
