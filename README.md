@@ -49,6 +49,24 @@ npm run build
 npx serve -s build
 ```
 
+## 📁 项目结构
+
+```
+family_tree/
+├── src/                    # 前端源代码
+├── server/                 # 后端服务
+├── public/                 # 静态资源
+├── tests/                  # 测试文件
+│   ├── unit/              # 单元测试
+│   ├── integration/       # 集成测试
+│   ├── e2e/              # 端到端测试
+│   ├── performance/       # 性能测试
+│   └── debug/            # 调试脚本
+├── docs/                   # 项目文档
+├── scripts/                # 构建和工具脚本
+└── README.md
+```
+
 ## 🌐 在线访问
 
 项目已部署到 Vercel，可直接访问：[穆氏家谱在线版](https://tatababa.top)
