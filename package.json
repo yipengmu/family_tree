@@ -7,17 +7,22 @@
     "ajv": "^8.17.1",
     "ali-oss": "^6.23.0",
     "antd": "^5.12.8",
+    "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "dagre": "^0.8.5",
     "dotenv": "^17.2.2",
     "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.3",
     "lodash": "^4.17.21",
     "moment": "^2.30.1",
     "node-fetch": "^2.7.0",
+    "nodemailer": "^7.0.12",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-router-dom": "^7.11.0",
     "react-scripts": "5.0.1",
     "reactflow": "^11.10.1",
+    "redis": "^5.10.0",
     "sqlite3": "^5.1.7",
     "xlsx": "^0.18.5"
   },
@@ -45,6 +50,7 @@
     "format:check": "prettier --check \"src/**/*.{js,jsx,css,md,json}\"",
     "code-quality": "npm run lint && npm run format:check"
   },
+  "proxy": "http://localhost:3003",
   "browserslist": {
     "production": [
       ">0.2%",

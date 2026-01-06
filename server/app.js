@@ -12,6 +12,10 @@ require('dotenv').config();
 const familyDataService = require('./services/familyDataService');
 const tenantService = require('./services/tenantService');
 
+// 导入用户认证相关模块
+const User = require('./models/user');
+const { sendVerificationCodeByEmail, registerUser, loginUser, generateToken } = require('./services/authService');
+
 const app = express();
 const PORT = process.env.PORT || 3003;
 
@@ -23,6 +27,25 @@ app.use(cors({
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+
+// JWT中间件
+const jwt = require('jsonwebtoken');
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+
+  if (!token) {
+    return res.status(401).json({ error: '访问令牌缺失' });
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret_key_for_development', (err, user) => {
+    if (err) {
+      return res.status(403).json({ error: '令牌无效或已过期' });
+    }
+    req.user = user;
+    next();
+  });
+};
 
 // 获取精简时间戳的工具函数
 function getTimestamp() {
@@ -40,6 +63,13 @@ app.use((req, res, next) => {
   next();
 });
 
+// 初始化用户表
+User.initializeTable().then(() => {
+  console.log('✅ 用户表初始化完成');
+}).catch((error) => {
+  console.error('❌ 用户表初始化失败:', error);
+});
+
 // 健康检查端点
 app.get('/health', (req, res) => {
   res.json({
@@ -50,7 +80,155 @@ app.get('/health', (req, res) => {
   });
 });
 
-// 千问API代理端点
+// ==================== 认证API ====================
+
+// 发送验证码
+app.post('/api/auth/send-code', async (req, res) => {
+  try {
+    const { email, purpose } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: '邮箱地址是必需的' });
+    }
+
+    if (!purpose || !['register', 'reset'].includes(purpose)) {
+      return res.status(400).json({ error: '验证码用途必须是 register 或 reset' });
+    }
+
+    const result = await sendVerificationCodeByEmail(email, purpose);
+
+    res.json({
+      success: true,
+      message: result.message,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error(`[${getTimestamp()}] 发送验证码失败:`, error);
+    res.status(500).json({
+      success: false,
+      error: error.message || '发送验证码失败',
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+// 用户注册
+app.post('/api/auth/register', async (req, res) => {
+  try {
+    const { name, email, password, code } = req.body;
+
+    if (!name || !email || !password || !code) {
+      return res.status(400).json({ 
+        success: false,
+        error: '姓名、邮箱、密码和验证码都是必需的' 
+      });
+    }
+
+    // 注册用户
+    const user = await registerUser({ name, email, password, code });
+
+    // 生成JWT令牌
+    const token = generateToken(user.id);
+
+    res.json({
+      success: true,
+      token: token,
+      user: {
+        id: user.id,
+        name: user.username,
+        email: user.email,
+        isActive: user.is_active,
+        createdAt: user.created_at
+      },
+      message: '注册成功'
+    });
+
+  } catch (error) {
+    console.error(`[${getTimestamp()}] 用户注册失败:`, error);
+    res.status(500).json({
+      success: false,
+      error: error.message || '注册失败',
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+// 用户登录
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ 
+        success: false,
+        error: '邮箱和密码都是必需的' 
+      });
+    }
+
+    // 登录用户
+    const user = await loginUser(email, password);
+
+    // 生成JWT令牌
+    const token = generateToken(user.id);
+
+    res.json({
+      success: true,
+      token: token,
+      user: {
+        id: user.id,
+        name: user.username,
+        email: user.email,
+        isActive: user.is_active,
+        createdAt: user.created_at,
+        lastLoginAt: user.last_login_at
+      },
+      message: '登录成功'
+    });
+
+  } catch (error) {
+    console.error(`[${getTimestamp()}] 用户登录失败:`, error);
+    res.status(401).json({
+      success: false,
+      error: error.message || '登录失败',
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+// 获取当前用户信息
+app.get('/api/user/profile', authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.userId);
+
+    if (!user) {
+      return res.status(404).json({ error: '用户不存在' });
+    }
+
+    res.json({
+      success: true,
+      user: {
+        id: user.id,
+        name: user.username,
+        email: user.email,
+        isActive: user.is_active,
+        createdAt: user.created_at,
+        lastLoginAt: user.last_login_at
+      },
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error(`[${getTimestamp()}] 获取用户信息失败:`, error);
+    res.status(500).json({
+      error: '获取用户信息失败',
+      message: error.message
+    });
+  }
+});
+
+// ==================== 千问API代理端点 ====================
+
 app.post('/api/qwen/ocr', async (req, res) => {
   const requestId = Date.now().toString(36);
   console.log(`\n[${getTimestamp()}] 🆔 [后端-${requestId}] ========== 新的OCR请求 ==========`);
@@ -326,11 +504,11 @@ async function processImageWithQwenSingle(imageUrl, apiKey, requestId, attempt =
   console.log(`[${getTimestamp()}] 📥 [后端-${requestId}] 返回结构体:`, JSON.stringify(result, null, 2));
 
   console.log(`[${getTimestamp()}] 📊 [后端-${requestId}] 千问API响应摘要:`, {
-    hasOutput: !!result.output,
-    hasChoices: !!result.output?.choices,
-    choicesLength: result.output?.choices?.length || 0,
-    usage: result.usage
-  });
+      hasOutput: !!result.output,
+      hasChoices: !!result.output?.choices,
+      choicesLength: result.output?.choices?.length || 0,
+      usage: result.usage
+    });
 
   if (result.output && result.output.choices && result.output.choices.length > 0) {
     const choice = result.output.choices[0];
@@ -828,6 +1006,7 @@ app.listen(PORT, async () => {
   console.log(`🔗 健康检查: http://localhost:${PORT}/health`);
   console.log(`🔄 OCR端点: http://localhost:${PORT}/api/qwen/ocr`);
   console.log(`💾 家谱数据API: http://localhost:${PORT}/api/family-data`);
+  console.log(`🔐 认证API: http://localhost:${PORT}/api/auth`);
   console.log(`⏰ 启动时间: ${new Date().toISOString()}`);
   console.log(`=====================================\n`);
 

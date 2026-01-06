@@ -10,6 +10,9 @@ import DiscoverPage from './components/Pages/DiscoverPage';
 import TenantSelector from './components/TenantSelector';
 import familyDataService from './services/familyDataService';
 import tenantService from './services/tenantService';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import LoginPage from './components/Pages/LoginPage';
+import RegisterPage from './components/Pages/RegisterPage';
 // 导入测试工具（开发环境自动运行）
 
 import './App.css';
@@ -21,7 +24,8 @@ const isMobile = () => {
   return window.innerWidth <= 768;
 };
 
-function App() {
+// 主应用组件
+function MainApp() {
   const [familyData, setFamilyData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -30,6 +34,12 @@ function App() {
   const [mobile, setMobile] = useState(isMobile());
   const [currentPage, setCurrentPage] = useState('tree'); // 新增页面状态
   const [currentTenant, setCurrentTenant] = useState(null);
+
+  // 检查用户是否已登录
+  const isAuthenticated = () => {
+    const token = localStorage.getItem('token');
+    return !!token;
+  };
 
   // 处理菜单点击
   const handleMenuClick = (menuKey) => {
@@ -260,6 +270,29 @@ function App() {
     <div className="App desktop-layout">
       {renderCurrentPage()}
     </div>
+  );
+}
+
+// 受保护的路由组件
+function ProtectedRoute({ children }) {
+  const isAuthenticated = !!localStorage.getItem('token');
+  return isAuthenticated ? children : <Navigate to="/login" />;
+}
+
+// 应用根组件
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/*" element={
+          <ProtectedRoute>
+            <MainApp />
+          </ProtectedRoute>
+        } />
+      </Routes>
+    </Router>
   );
 }
 

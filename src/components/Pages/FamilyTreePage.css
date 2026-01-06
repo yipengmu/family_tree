@@ -1,13 +1,16 @@
 /* 家谱页面样式 */
 .family-tree-page {
   height: 100%; /* 占满父容器 */
+  width: 100%; /* 占满父容器宽度 */
   display: flex;
   flex-direction: column;
   min-height: 600px; /* 最小高度保证 */
+  box-sizing: border-box;
 }
 
 .family-tree-wrapper {
   flex: 1;
+  width: 100%;
   position: relative;
   background: white;
   border-radius: 16px;
@@ -15,6 +18,7 @@
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   border: 1px solid #e2e8f0;
   min-height: 500px; /* 确保最小高度 */
+  box-sizing: border-box;
 }
 
 /* 覆盖FamilyTreeFlow的容器样式 */

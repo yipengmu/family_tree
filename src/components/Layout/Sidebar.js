@@ -7,12 +7,52 @@ import {
   BarChartOutlined, 
   SettingOutlined,
   MenuOutlined,
-  MenuUnfoldOutlined
+  MenuUnfoldOutlined,
+  UserOutlined, 
+  LoginOutlined, 
+  LogoutOutlined,
+  ProfileOutlined
 } from '@ant-design/icons';
+import { Button, Dropdown, Space } from 'antd';
 import TenantSelector from '../TenantSelector';
 import './Sidebar.css';
+import AuthService from '../../services/authService';
+import { useNavigate } from 'react-router-dom';
 
 const Sidebar = ({ activeItem = 'tree', onMenuClick, collapsed = false, onToggleCollapse, open = false, user = { name: '穆塔爸', avatar: '穆' } }) => {
+  const navigate = useNavigate();
+  const isAuthenticated = AuthService.isAuthenticated();
+  const currentUser = isAuthenticated ? JSON.parse(localStorage.getItem('user')) : null;
+
+  const handleLogout = () => {
+    AuthService.logout();
+    navigate('/login');
+  };
+
+  const userMenuItems = [
+    {
+      key: 'profile',
+      label: '个人资料',
+      icon: <ProfileOutlined />,
+      onClick: () => navigate('/profile')
+    },
+    {
+      key: 'settings',
+      label: '设置',
+      icon: <SettingOutlined />,
+      onClick: () => navigate('/settings')
+    },
+    {
+      type: 'divider',
+    },
+    {
+      key: 'logout',
+      label: '退出登录',
+      icon: <LogoutOutlined />,
+      onClick: handleLogout
+    }
+  ];
+
   const menuItems = [
     {
       key: 'tree',
@@ -93,12 +133,39 @@ const Sidebar = ({ activeItem = 'tree', onMenuClick, collapsed = false, onToggle
           <TenantSelector compact={collapsed} />
         </div>
         
-        {/* 用户信息区域 */}
+        {/* 用户信息区域 - 集成登录者信息 */}
         <div className={`user-profile-sidebar ${collapsed ? 'collapsed' : ''}`}>
-          <div className="user-avatar-sidebar">{user.avatar}</div>
-          {!collapsed && (
-            <div className="user-info-sidebar">
-              <div className="user-name-sidebar">{user.name}</div>
+          {isAuthenticated ? (
+            <Dropdown menu={{ items: userMenuItems }} trigger={['click']} placement="topRight">
+              <Button type="text" icon={<UserOutlined />} className="user-info-button">
+                <Space>
+                  <div className="user-avatar-sidebar">{currentUser?.name?.charAt(0) || currentUser?.email?.charAt(0) || 'U'}</div>
+                  {!collapsed && (
+                    <div className="user-info-sidebar">
+                      <div className="user-name-sidebar">{currentUser?.name || currentUser?.email}</div>
+                    </div>
+                  )}
+                </Space>
+              </Button>
+            </Dropdown>
+          ) : (
+            <div className="login-section">
+              <Space>
+                <Button 
+                  icon={<LoginOutlined />} 
+                  onClick={() => navigate('/login')}
+                  size="small"
+                >
+                  登录
+                </Button>
+                <Button 
+                  type="primary" 
+                  onClick={() => navigate('/register')}
+                  size="small"
+                >
+                  注册
+                </Button>
+              </Space>
             </div>
           )}
         </div>

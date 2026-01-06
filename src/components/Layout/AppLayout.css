@@ -3,6 +3,8 @@
   min-height: 100vh;
   background: #f8fafc;
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 /* 侧边栏包装器 */
@@ -12,6 +14,7 @@
   left: 0;
   z-index: 1000;
   height: 100vh;
+  width: 140px; /* 与Sidebar.css中的默认宽度保持一致 */
   transition: width 0.3s ease;
 }
 
@@ -124,6 +127,7 @@
   .sidebar-wrapper {
     transform: translateX(-100%);
     transition: transform 0.3s ease;
+    width: 280px;
   }
   
   .sidebar-wrapper.open {

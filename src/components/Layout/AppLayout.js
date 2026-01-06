@@ -40,49 +40,52 @@ const AppLayout = ({
 
   return (
     <div className="app-layout">
-      {/* 移动端遮罩 */}
-      {sidebarOpen && (
-        <div
-          className="sidebar-overlay show"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+      {/* 主体布局 */}
+      <div style={{ display: 'flex', flex: 1 }}>
+        {/* 移动端遮罩 */}
+        {sidebarOpen && (
+          <div
+            className="sidebar-overlay show"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
 
-      {/* 侧边栏 */}
-      <div className={`sidebar-wrapper ${sidebarOpen ? 'open' : ''} ${sidebarCollapsed ? 'collapsed' : ''}`}>
-        <Sidebar
-          activeItem={activeMenuItem}
-          onMenuClick={handleMenuClick}
-          collapsed={sidebarCollapsed}
-          onToggleCollapse={toggleSidebarCollapse}
-          open={sidebarOpen}
+        {/* 侧边栏 */}
+        <div className={`sidebar-wrapper ${sidebarOpen ? 'open' : ''} ${sidebarCollapsed ? 'collapsed' : ''}`}>
+          <Sidebar
+            activeItem={activeMenuItem}
+            onMenuClick={handleMenuClick}
+            collapsed={sidebarCollapsed}
+            onToggleCollapse={toggleSidebarCollapse}
+            open={sidebarOpen}
+            user={currentUser}
+          />
+        </div>
+
+        {/* 主要内容 */}
+        <MainContent
           user={currentUser}
-        />
-      </div>
-
-      {/* 主要内容 */}
-      <MainContent
-        user={currentUser}
-        familyData={familyData}
-        nodes={nodes}
-        statistics={statistics}
-        onSearch={onSearch}
-        onSearchSelect={onSearchSelect}
-        sidebarCollapsed={sidebarCollapsed}
-      >
-        {/* 移动端菜单按钮 */}
-        <button
-          className="mobile-menu-btn"
-          onClick={toggleSidebar}
-          aria-label="打开菜单"
+          familyData={familyData}
+          nodes={nodes}
+          statistics={statistics}
+          onSearch={onSearch}
+          onSearchSelect={onSearchSelect}
+          sidebarCollapsed={sidebarCollapsed}
         >
-          <span></span>
-          <span></span>
-          <span></span>
-        </button>
+          {/* 移动端菜单按钮 */}
+          <button
+            className="mobile-menu-btn"
+            onClick={toggleSidebar}
+            aria-label="打开菜单"
+          >
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
 
-        {children}
-      </MainContent>
+          {children}
+        </MainContent>
+      </div>
     </div>
   );
 };
