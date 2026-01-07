@@ -45,6 +45,24 @@ class TenantService {
       }
     }
 
+    // 检查是否为游客模式
+    const isGuestMode = !localStorage.getItem('token') && localStorage.getItem('guest_mode') === 'true';
+    
+    if (isGuestMode) {
+      // 游客模式下，始终返回默认的穆家家谱
+      const guestTenant = {
+        id: this.defaultTenantId,
+        name: '穆家家谱 (游客模式)',
+        description: '默认家谱数据 - 游客模式浏览',
+        createdAt: new Date().toISOString(),
+        isDefault: true,
+        isGuest: true, // 标记为游客模式
+      };
+
+      this.setCurrentTenant(guestTenant);
+      return guestTenant;
+    }
+
     // 返回默认租户
     const defaultTenant = {
       id: this.defaultTenantId,
@@ -84,6 +102,12 @@ class TenantService {
    */
   async createTenant(tenantData) {
     try {
+      // 检查用户是否已登录
+      const isAuthenticated = !!localStorage.getItem('token');
+      if (!isAuthenticated) {
+        throw new Error('需要登录才能创建新家谱');
+      }
+
       const tenant = {
         id: this.generateTenantId(),
         name: tenantData.name,
@@ -136,6 +160,13 @@ class TenantService {
    */
   async getTenantList() {
     try {
+      // 检查用户是否已登录
+      const isAuthenticated = !!localStorage.getItem('token');
+      if (!isAuthenticated) {
+        // 游客模式下，只返回默认的穆家家谱
+        return [this.getCurrentTenant()];
+      }
+
       // 先检查缓存
       const cachedList = cacheManager.get(this.CACHE_KEYS.TENANT_LIST);
       if (cachedList) {
@@ -185,6 +216,13 @@ class TenantService {
    */
   async switchTenant(tenantId) {
     try {
+      // 检查用户是否已登录
+      const isAuthenticated = !!localStorage.getItem('token');
+      if (!isAuthenticated) {
+        // 游客模式下，不允许切换租户
+        throw new Error('需要登录才能切换到其他家谱');
+      }
+
       const tenants = await this.getTenantList();
       const tenant = tenants.find(t => t.id === tenantId);
       
@@ -211,6 +249,12 @@ class TenantService {
    */
   async deleteTenant(tenantId) {
     try {
+      // 检查用户是否已登录
+      const isAuthenticated = !!localStorage.getItem('token');
+      if (!isAuthenticated) {
+        throw new Error('需要登录才能删除家谱');
+      }
+
       if (tenantId === this.defaultTenantId) {
         throw new Error('不能删除默认租户');
       }
@@ -361,6 +405,14 @@ class TenantService {
    */
   isMultiTenantMode() {
     return this.isMultiTenantEnabled;
+  }
+
+  /**
+   * 检查当前是否为游客模式
+   * @returns {boolean} - 是否为游客模式
+   */
+  isGuestMode() {
+    return !localStorage.getItem('token') && localStorage.getItem('guest_mode') === 'true';
   }
 }
 

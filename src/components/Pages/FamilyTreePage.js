@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback } from 'react';
 import { ReactFlowProvider } from 'reactflow';
 import FamilyTreeFlow from '../FamilyTreeFlow.js';
 import AppLayout from '../Layout/AppLayout.js';
+import { Button } from 'antd';
 import './FamilyTreePage.css';
 
 const FamilyTreePage = ({
@@ -15,6 +16,12 @@ const FamilyTreePage = ({
   const [nodes, setNodes] = useState([]);
   const [statistics, setStatistics] = useState(null);
   const familyTreeRef = useRef(null);
+
+  // 检查用户是否已登录
+  const isAuthenticated = () => {
+    const token = localStorage.getItem('token');
+    return !!token;
+  };
 
   // 从FamilyTreeFlow接收数据的回调
   const handleTreeDataUpdate = useCallback((treeNodes, treeStatistics) => {
@@ -39,6 +46,22 @@ const FamilyTreePage = ({
     }
   }, []);
 
+  // 处理创建家谱按钮点击
+  const handleCreateMyFamilyTree = () => {
+    // 检查用户是否已登录
+    if (!isAuthenticated()) {
+      // 如果未登录，触发菜单中的创建选项，这将引导用户到注册/登录页面
+      if (onMenuClick) {
+        onMenuClick('create');
+      }
+    } else {
+      // 如果已登录，直接进入创建页面
+      if (onMenuClick) {
+        onMenuClick('create');
+      }
+    }
+  };
+
   return (
     <AppLayout
       activeMenuItem={activeMenuItem}
@@ -50,6 +73,50 @@ const FamilyTreePage = ({
       onSearchSelect={handleSearchSelect}
     >
       <div className="family-tree-page">
+        {/* 游客模式提示 */}
+        {!localStorage.getItem('token') && (
+          <div style={{
+            position: 'absolute',
+            top: '10px',
+            right: '10px',
+            zIndex: 100,
+            backgroundColor: '#e6f7ff',
+            padding: '8px 12px',
+            borderRadius: '4px',
+            border: '1px solid #91d5ff',
+            fontSize: '12px',
+            color: '#1890ff'
+          }}>
+            🏃‍♂️ 游客模式 - 正在浏览穆家家谱
+            <Button 
+              type="link" 
+              size="small" 
+              onClick={handleCreateMyFamilyTree}
+              style={{ padding: 0, marginLeft: '8px', height: 'auto', lineHeight: 'inherit' }}
+            >
+              创建我的家谱
+            </Button>
+          </div>
+        )}
+        
+        {/* 显示当前用户状态 */}
+        {localStorage.getItem('token') && (
+          <div style={{
+            position: 'absolute',
+            top: '10px',
+            right: '10px',
+            zIndex: 100,
+            backgroundColor: '#f6ffed',
+            padding: '8px 12px',
+            borderRadius: '4px',
+            border: '1px solid #b7eb8f',
+            fontSize: '12px',
+            color: '#52c41a'
+          }}>
+            👤 已登录 - 可以管理您的家谱
+          </div>
+        )}
+
         {/* 显示加载状态 */}
         {loading && familyData.length === 0 && (
           <div style={{

@@ -41,8 +41,19 @@ function MainApp() {
     return !!token;
   };
 
+  // 检查是否为游客模式
+  const isGuestMode = () => {
+    return !isAuthenticated() && localStorage.getItem('guest_mode') === 'true';
+  };
+
   // 处理菜单点击
   const handleMenuClick = (menuKey) => {
+    // 如果用户未登录且不在游客模式，且点击的是需要登录的功能，则跳转到登录页
+    if (!isAuthenticated() && menuKey !== 'tree' && menuKey !== 'discover') {
+      setCurrentPage('login-required');
+      return;
+    }
+    
     setCurrentPage(menuKey);
   };
 
@@ -124,14 +135,33 @@ function MainApp() {
 
     // 初始化应用
     const initializeApp = async () => {
-      // 获取当前租户
-      const tenant = tenantService.getCurrentTenant();
-      setCurrentTenant(tenant);
+      // 如果用户未登录，设置为游客模式
+      if (!isAuthenticated()) {
+        localStorage.setItem('guest_mode', 'true');
+        
+        // 设置默认租户为穆家家谱
+        const defaultTenant = {
+          id: 'default',
+          name: '穆家家谱 (游客模式)',
+          description: '默认家谱数据 - 游客模式',
+          createdAt: new Date().toISOString(),
+          isDefault: true,
+        };
+        tenantService.setCurrentTenant(defaultTenant);
+        setCurrentTenant(defaultTenant);
+      } else {
+        // 用户已登录，移除游客模式标识
+        localStorage.removeItem('guest_mode');
+        
+        // 获取当前租户
+        const tenant = tenantService.getCurrentTenant();
+        setCurrentTenant(tenant);
+      }
 
       // 先快速加载本地数据，不阻塞UI
       try {
         // 使用默认数据快速填充，避免长时间loading
-        const defaultData = await familyDataService.loadOriginalFamilyData(tenant.id);
+        const defaultData = await familyDataService.loadOriginalFamilyData('default');
         if (defaultData && defaultData.length > 0) {
           setFamilyData(defaultData);
           const result = validateFamilyData(defaultData);
@@ -143,7 +173,7 @@ function MainApp() {
       }
 
       // 在后台加载最新数据
-      await loadFamilyData(tenant.id);
+      await loadFamilyData('default');
     };
 
     initializeApp();
@@ -240,11 +270,125 @@ function MainApp() {
           />
         );
       case 'settings':
+        // 如果用户未登录，显示登录提示
+        if (!isAuthenticated()) {
+          return (
+            <div style={{
+              padding: '40px',
+              textAlign: 'center',
+              color: '#64748b',
+              fontSize: '16px'
+            }}>
+              <h2 style={{ color: '#1e293b', marginBottom: '16px' }}>需要登录</h2>
+              <p>此功能需要登录才能使用</p>
+              <button 
+                onClick={() => setCurrentPage('login')}
+                style={{
+                  marginTop: '16px',
+                  padding: '8px 16px',
+                  backgroundColor: '#1890ff',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
+              >
+                前往登录
+              </button>
+            </div>
+          );
+        }
         return <SettingsPage {...commonProps} />;
       case 'create':
+        // 如果用户未登录，引导注册
+        if (!isAuthenticated()) {
+          return (
+            <div style={{
+              padding: '40px',
+              textAlign: 'center',
+              color: '#64748b',
+              fontSize: '16px'
+            }}>
+              <h2 style={{ color: '#1e293b', marginBottom: '16px' }}>创建您的家谱</h2>
+              <p>要创建您自己的家谱，请先注册账号</p>
+              <div style={{ marginTop: '16px', display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                <button 
+                  onClick={() => setCurrentPage('login')}
+                  style={{
+                    padding: '8px 16px',
+                    backgroundColor: '#1890ff',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  登录
+                </button>
+                <button 
+                  onClick={() => setCurrentPage('register')}
+                  style={{
+                    padding: '8px 16px',
+                    backgroundColor: '#52c41a',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  注册
+                </button>
+              </div>
+            </div>
+          );
+        }
         return <CreatorPage {...commonProps} />;
       case 'discover':
         return <DiscoverPage {...commonProps} />;
+      case 'login':
+        return <LoginPage />;
+      case 'register':
+        return <RegisterPage />;
+      case 'login-required':
+        return (
+          <div style={{
+            padding: '40px',
+            textAlign: 'center',
+            color: '#64748b',
+            fontSize: '16px'
+          }}>
+            <h2 style={{ color: '#1e293b', marginBottom: '16px' }}>需要登录</h2>
+            <p>此功能需要登录才能使用</p>
+            <div style={{ marginTop: '16px', display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button 
+                onClick={() => setCurrentPage('login')}
+                style={{
+                  padding: '8px 16px',
+                  backgroundColor: '#1890ff',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
+              >
+                登录
+              </button>
+              <button 
+                onClick={() => setCurrentPage('register')}
+                style={{
+                  padding: '8px 16px',
+                  backgroundColor: '#52c41a',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer'
+                }}
+              >
+                注册
+              </button>
+            </div>
+          </div>
+        );
       case 'events':
       case 'analytics':
         return (
@@ -288,10 +432,17 @@ function MainApp() {
   );
 }
 
-// 受保护的路由组件
-function ProtectedRoute({ children }) {
+// 受保护的路由组件 - 现在只对特定路由进行保护
+function ProtectedRoute({ children, requireAuth = true }) {
   const isAuthenticated = !!localStorage.getItem('token');
-  return isAuthenticated ? children : <Navigate to="/login" />;
+  
+  // 如果不需要认证或者已认证，直接显示内容
+  if (!requireAuth || isAuthenticated) {
+    return children;
+  }
+  
+  // 如果需要认证但未登录，重定向到主页（游客模式）
+  return <Navigate to="/" />;
 }
 
 // 应用根组件
@@ -302,7 +453,7 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/*" element={
-          <ProtectedRoute>
+          <ProtectedRoute requireAuth={false}>
             <MainApp />
           </ProtectedRoute>
         } />

@@ -149,6 +149,19 @@ class FamilyDataService {
    * @returns {Promise<Array>} - 家谱数据
    */
   async loadDataWithFallback(tenantId) {
+    // 对于游客模式或默认租户，优先使用原始数据文件
+    if (tenantId === 'default' || tenantService.isGuestMode()) {
+      console.log(`📁 [第3层] 游客模式或默认租户，优先加载原始familyData.js`);
+      try {
+        const originalData = this.loadOriginalFamilyData(tenantId);
+        if (originalData && originalData.length > 0) {
+          return originalData;
+        }
+      } catch (error) {
+        console.warn(`⚠️ [第3层] 加载原始数据失败:`, error.message);
+      }
+    }
+
     try {
       // 第2层：从数据库加载（带超时）
       console.log(`🗄️ [第2层] 尝试从数据库加载数据 (租户: ${tenantId})`);
@@ -187,7 +200,7 @@ class FamilyDataService {
       
       // 创建AbortController用于超时控制
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5秒超时
+      const timeoutId = setTimeout(() => controller.abort(), 3000); // 3秒超时（优化：减少超时时间以提高响应速度）
 
       const response = await fetch(url, {
         headers: {
@@ -529,6 +542,12 @@ class FamilyDataService {
    */
   async saveFamilyData(familyData, tenantId = null) {
     try {
+      // 检查用户是否已登录
+      const isAuthenticated = !!localStorage.getItem('token');
+      if (!isAuthenticated) {
+        throw new Error('需要登录才能保存家谱数据');
+      }
+
       const currentTenantId = tenantId || tenantService.getCurrentTenant().id;
       console.log(`💾 保存家谱数据 (租户: ${currentTenantId}, 记录数: ${familyData.length})`);
 
