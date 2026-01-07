@@ -3,7 +3,10 @@ class AuthService {
   // 登录
   static async login(email, password) {
     try {
-      const response = await fetch('/api/auth/login', {
+      // 在Vercel部署中，API端点可能需要调整
+      const apiUrl = process.env.NODE_ENV === 'development' ? '/api/auth/login' : '/api/auth/login';
+      
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -13,6 +16,37 @@ class AuthService {
           password,
         }),
       });
+
+      // 检查响应状态
+      if (!response.ok) {
+        // 处理非2xx状态码
+        let errorMessage = `HTTP ${response.status} ${response.statusText}`;
+        
+        try {
+          // 尝试解析错误响应体
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch (parseError) {
+          // 如果无法解析为JSON，使用文本形式
+          try {
+            const errorText = await response.text();
+            if (errorText) {
+              errorMessage = errorText;
+            }
+          } catch (textError) {
+            // 如果也无法获取文本，使用默认错误消息
+            errorMessage = `服务器错误: ${response.status} ${response.statusText}`;
+          }
+        }
+        
+        return { success: false, error: errorMessage };
+      }
+
+      // 检查响应内容类型
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        return { success: false, error: '服务器返回的数据格式不正确' };
+      }
 
       const data = await response.json();
 
@@ -26,14 +60,25 @@ class AuthService {
       }
     } catch (error) {
       console.error('登录失败:', error);
-      return { success: false, error: '登录失败，请检查网络连接' };
+      // 添加更详细的错误信息
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        // 检查是否是网络错误
+        if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+          // 非localhost环境使用HTTP而不是HTTPS
+          return { success: false, error: '安全连接错误：网站应通过HTTPS访问以确保API调用正常工作' };
+        }
+        return { success: false, error: '网络连接失败，请检查您的网络连接或联系管理员' };
+      }
+      return { success: false, error: `登录失败：${error.message}` };
     }
   }
 
   // 注册
   static async register(name, email, password, code) {
     try {
-      const response = await fetch('/api/auth/register', {
+      const apiUrl = process.env.NODE_ENV === 'development' ? '/api/auth/register' : '/api/auth/register';
+      
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -45,6 +90,37 @@ class AuthService {
           code,
         }),
       });
+
+      // 检查响应状态
+      if (!response.ok) {
+        // 处理非2xx状态码
+        let errorMessage = `HTTP ${response.status} ${response.statusText}`;
+        
+        try {
+          // 尝试解析错误响应体
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch (parseError) {
+          // 如果无法解析为JSON，使用文本形式
+          try {
+            const errorText = await response.text();
+            if (errorText) {
+              errorMessage = errorText;
+            }
+          } catch (textError) {
+            // 如果也无法获取文本，使用默认错误消息
+            errorMessage = `服务器错误: ${response.status} ${response.statusText}`;
+          }
+        }
+        
+        return { success: false, error: errorMessage };
+      }
+
+      // 检查响应内容类型
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        return { success: false, error: '服务器返回的数据格式不正确' };
+      }
 
       const data = await response.json();
 
@@ -65,7 +141,9 @@ class AuthService {
   // 发送验证码
   static async sendVerificationCode(email, purpose = 'register') {
     try {
-      const response = await fetch('/api/auth/send-code', {
+      const apiUrl = process.env.NODE_ENV === 'development' ? '/api/auth/send-code' : '/api/auth/send-code';
+      
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -75,6 +153,37 @@ class AuthService {
           purpose,
         }),
       });
+
+      // 检查响应状态
+      if (!response.ok) {
+        // 处理非2xx状态码
+        let errorMessage = `HTTP ${response.status} ${response.statusText}`;
+        
+        try {
+          // 尝试解析错误响应体
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch (parseError) {
+          // 如果无法解析为JSON，使用文本形式
+          try {
+            const errorText = await response.text();
+            if (errorText) {
+              errorMessage = errorText;
+            }
+          } catch (textError) {
+            // 如果也无法获取文本，使用默认错误消息
+            errorMessage = `服务器错误: ${response.status} ${response.statusText}`;
+          }
+        }
+        
+        return { success: false, error: errorMessage };
+      }
+
+      // 检查响应内容类型
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        return { success: false, error: '服务器返回的数据格式不正确' };
+      }
 
       const data = await response.json();
 
@@ -107,12 +216,53 @@ class AuthService {
     }
 
     try {
-      const response = await fetch('/api/user/profile', {
+      const apiUrl = process.env.NODE_ENV === 'development' ? '/api/user/profile' : '/api/user/profile';
+      
+      const response = await fetch(apiUrl, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
+
+      // 检查响应状态
+      if (!response.ok) {
+        // 处理非2xx状态码
+        if (response.status === 401 || response.status === 403) {
+          // 如果是认证失败，清除本地存储
+          this.logout();
+          return null;
+        }
+        
+        let errorMessage = `HTTP ${response.status} ${response.statusText}`;
+        
+        try {
+          // 尝试解析错误响应体
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch (parseError) {
+          // 如果无法解析为JSON，使用文本形式
+          try {
+            const errorText = await response.text();
+            if (errorText) {
+              errorMessage = errorText;
+            }
+          } catch (textError) {
+            // 如果也无法获取文本，使用默认错误消息
+            errorMessage = `服务器错误: ${response.status} ${response.statusText}`;
+          }
+        }
+        
+        console.error('获取用户信息失败:', errorMessage);
+        return null;
+      }
+
+      // 检查响应内容类型
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        console.error('服务器返回的数据格式不正确');
+        return null;
+      }
 
       const data = await response.json();
 

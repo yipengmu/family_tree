@@ -5,7 +5,7 @@
 
 const express = require('express');
 const cors = require('cors');
-const fetch = require('node-fetch');
+global.fetch = global.fetch || require('node-fetch');
 require('dotenv').config();
 
 // 导入数据库服务
@@ -21,7 +21,13 @@ const PORT = process.env.PORT || 3003;
 
 // 中间件配置
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002'],
+  origin: [
+    'http://localhost:3000', 
+    'http://localhost:3001', 
+    'http://localhost:3002',
+    'https://www.tatababa.top',  // 线上域名
+    'https://tatababa.top'      // 如果有非www版本
+  ],
   credentials: true
 }));
 
@@ -38,7 +44,14 @@ const authenticateToken = (req, res, next) => {
     return res.status(401).json({ error: '访问令牌缺失' });
   }
 
-  jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret_key_for_development', (err, user) => {
+  const jwtSecret = process.env.JWT_SECRET || 'fallback_secret_key_for_development';
+  
+  // 在生产环境中，如果JWT_SECRET未设置，记录警告
+  if (!process.env.JWT_SECRET && process.env.NODE_ENV !== 'development') {
+    console.warn('⚠️ 警告: JWT_SECRET 环境变量未设置，使用默认密钥。请在线上环境中设置JWT_SECRET环境变量。');
+  }
+
+  jwt.verify(token, jwtSecret, (err, user) => {
     if (err) {
       return res.status(403).json({ error: '令牌无效或已过期' });
     }
@@ -928,7 +941,7 @@ app.get('/api/family-data/:tenantId', async (req, res) => {
     });
 
   } catch (error) {
-    console.error(`❌ [${new Date().toISOString()}] 获取家谱数据失败:`, error);
+    console.error(`❌ [${getTimestamp()}] 获取家谱数据失败:`, error);
     res.status(500).json({
       error: '获取家谱数据失败',
       message: error.message
@@ -951,7 +964,7 @@ app.get('/api/family-data/default', async (req, res) => {
     });
 
   } catch (error) {
-    console.error(`❌ [${new Date().toISOString()}] 获取默认家谱数据失败:`, error);
+    console.error(`❌ [${getTimestamp()}] 获取默认家谱数据失败:`, error);
     res.status(500).json({
       error: '获取默认家谱数据失败',
       message: error.message
@@ -1000,34 +1013,16 @@ app.use((req, res) => {
 });
 
 // 启动服务器
-app.listen(PORT, async () => {
-  console.log(`\n🚀 ========== 家谱创作工具后端服务启动成功 ==========`);
-  console.log(`📡 服务地址: http://localhost:${PORT}`);
-  console.log(`🔗 健康检查: http://localhost:${PORT}/health`);
-  console.log(`🔄 OCR端点: http://localhost:${PORT}/api/qwen/ocr`);
-  console.log(`💾 家谱数据API: http://localhost:${PORT}/api/family-data`);
-  console.log(`🔐 认证API: http://localhost:${PORT}/api/auth`);
-  console.log(`⏰ 启动时间: ${new Date().toISOString()}`);
-  console.log(`=====================================\n`);
-
-  // 初始化数据库和默认租户
-  try {
-    await tenantService.initializeDefaultTenants();
-    console.log(`✅ 数据库初始化完成`);
-  } catch (error) {
-    console.error(`❌ 数据库初始化失败:`, error);
-  }
-});
-
-// 优雅关闭
-process.on('SIGINT', () => {
-  console.log('\n🛑 收到关闭信号，正在关闭后端服务器...');
-  process.exit(0);
-});
-
-process.on('SIGTERM', () => {
-  console.log('\n🛑 收到终止信号，正在关闭后端服务器...');
-  process.exit(0);
+app.listen(PORT, () => {
+  console.log(`
+🚀 ========== 家谱创作工具后端服务启动成功 ==========
+📡 服务地址: http://localhost:${PORT}
+🔗 健康检查: http://localhost:${PORT}/health
+🔄 OCR端点: http://localhost:${PORT}/api/qwen/ocr
+💾 家谱数据API: http://localhost:${PORT}/api/family-data
+🔐 认证API: http://localhost:${PORT}/api/auth
+⏰ 启动时间: ${new Date().toISOString()}
+=====================================`);
 });
 
 module.exports = app;

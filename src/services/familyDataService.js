@@ -4,7 +4,8 @@
  * 为云端SaaS部署优化，确保数据一致性
  */
 
-import tenantService from './tenantService';
+import tenantService from './tenantService.js';
+import dbJson from '../data/familyData.js';
 
 const CACHE_KEYS = {
   FAMILY_DATA: 'familyData',
@@ -232,22 +233,17 @@ class FamilyDataService {
     console.log(`📁 [第3层] 加载原始familyData.js文件 (租户: ${currentTenantId})`);
     
     try {
-      // 直接导入原始数据文件
-      const dbJson = require('../data/familyData.js');
-      console.log(`📋 数据文件类型: ${typeof dbJson}, 是否数组: ${Array.isArray(dbJson)}`);
+      // 使用顶部静态导入的数据
+      const data = dbJson;
+      console.log(`📋 静态导入数据文件类型: ${typeof data}, 是否数组: ${Array.isArray(data)}`);
       
-      // 处理不同的导出格式
-      let data;
-      if (Array.isArray(dbJson)) {
-        data = dbJson;
-        console.log(`✅ 数据文件是数组格式，包含 ${data.length} 条记录`);
-      } else if (dbJson && typeof dbJson === 'object' && dbJson.default) {
-        data = dbJson.default;
-        console.log(`✅ 数据文件包含default导出，包含 ${data.length} 条记录`);
-      } else {
-        console.error('❌ 数据文件格式不正确，无法获取家谱数据');
+      // 验证数据格式
+      if (!Array.isArray(data)) {
+        console.error('❌ 静态导入的数据不是数组格式，无法获取家谱数据');
         return [];
       }
+      
+      console.log(`✅ 静态导入数据格式正确，包含 ${data.length} 条记录`);
 
       if (!data || data.length === 0) {
         console.error('❌ 原始家谱数据为空');

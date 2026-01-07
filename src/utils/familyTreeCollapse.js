@@ -3,7 +3,7 @@
  * 实现前三代之后的自动折叠，但保留当前登录用户的路径展开
  */
 
-import { getPathToRoot } from './familyTreeUtils';
+import { getPathToRoot } from './familyTreeUtils.js';
 
 /**
  * 获取当前登录用户信息

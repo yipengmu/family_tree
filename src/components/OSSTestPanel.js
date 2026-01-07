@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Card, Button, Upload, message, Space, List, Typography, Tag, Progress } from 'antd';
 import { UploadOutlined, DeleteOutlined, InfoCircleOutlined, LinkOutlined } from '@ant-design/icons';
-import uploadService from '../services/uploadService';
-import tenantService from '../services/tenantService';
+import uploadService from '../services/uploadService.js';
+import tenantService from '../services/tenantService.js';
 
 const { Text, Paragraph } = Typography;
 

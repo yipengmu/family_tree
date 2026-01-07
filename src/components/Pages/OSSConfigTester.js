@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Button, Space, Alert, Descriptions, Tag, message, Tabs } from 'antd';
 import { CheckCircleOutlined, ExclamationCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
-import uploadService from '../services/uploadService';
-import OSSConnectionDiagnostic from '../Debug/OSSConnectionDiagnostic';
+import uploadService from '../services/uploadService.js';
 
 const OSSConfigTester = () => {
   const [testResults, setTestResults] = useState(null);
@@ -162,6 +161,17 @@ const OSSConfigTester = () => {
   };
 
   const config = getOSSConfig();
+
+  const OSSConnectionDiagnostic = () => (
+    <div>
+      <Alert
+        type="info"
+        message="高级诊断功能"
+        description="此功能需要创建Debug/OSSConnectionDiagnostic组件"
+        showIcon
+      />
+    </div>
+  );
 
   return (
     <div style={{ margin: '20px', maxWidth: '1200px' }}>

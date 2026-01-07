@@ -14,9 +14,9 @@ import {
   ProfileOutlined
 } from '@ant-design/icons';
 import { Button, Dropdown, Space } from 'antd';
-import TenantSelector from '../TenantSelector';
+import TenantSelector from '../TenantSelector.js';
 import './Sidebar.css';
-import AuthService from '../../services/authService';
+import AuthService from '../../services/authService.js';
 import { useNavigate } from 'react-router-dom';
 
 const Sidebar = ({ activeItem = 'tree', onMenuClick, collapsed = false, onToggleCollapse, open = false, user = { name: '穆塔爸', avatar: '穆' } }) => {

@@ -1,0 +1,103 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL_UNPOOLED")
+}
+
+model User {
+  id          Int      @id @default(autoincrement())
+  username    String
+  email       String   @unique
+  password_hash String
+  is_active   Boolean  @default(true)
+  created_at  DateTime @default(now())
+  last_login_at DateTime?
+  wechat_openid String? @unique // 根据项目规范，添加微信openid字段
+  
+  @@map("users")
+}
+
+model Tenant {
+  id          String   @id
+  name        String
+  description String?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  settings    Json     @default("{}")
+  status      String   @default("active")
+  
+  // 添加反向关系
+  familyData    FamilyData[]
+  familyConfig  FamilyConfig[]
+  dataVersions  DataVersion[]
+  
+  @@map("tenants")
+}
+
+model FamilyData {
+  id             Int      @id @default(autoincrement())
+  tenant_id      String
+  person_id      String   // 根据规范，保留业务person_id
+  name           String
+  g_rank         Int      // 世代数
+  rank_index     Int      // 同代排序
+  g_father_id    String?  // 父亲的person_id
+  g_mother_id    String?  // 母亲的person_id
+  sex            String?  @default("MAN")
+  adoption       String?  @default("none")
+  official_position String?
+  summary        String?
+  birth_date     String?
+  death_date     String?
+  spouse         String?
+  location       String?
+  formal_name    String?
+  id_card        String?
+  face_img       String?  @default("")
+  photos         String?
+  household_info String?
+  home_page      String?
+  childrens      String?
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+  
+  // 关联租户
+  tenant         Tenant   @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  
+  @@map("family_data")
+  @@unique([tenant_id, person_id]) // 确保在同一个租户内person_id唯一
+}
+
+model FamilyConfig {
+  id          Int      @id @default(autoincrement())
+  tenant_id   String
+  config_key  String
+  config_value String?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  
+  // 关联租户
+  tenant      Tenant   @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  
+  @@map("family_config")
+  @@unique([tenant_id, config_key]) // 确保在同一个租户内配置键唯一
+}
+
+model DataVersion {
+  id              Int      @id @default(autoincrement())
+  tenant_id       String
+  version_number  Int
+  data_snapshot   String   // JSON格式的数据快照
+  description     String?
+  created_at      DateTime @default(now())
+  
+  // 关联租户
+  tenant          Tenant   @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  
+  @@map("data_versions")
+}

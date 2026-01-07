@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import AppLayout from '../Layout/AppLayout';
+import AppLayout from '../Layout/AppLayout.js';
 import './DiscoverPage.css';
 
 const DiscoverPage = ({ activeMenuItem = 'discover', onMenuClick }) => {

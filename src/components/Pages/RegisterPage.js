@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, Form, Input, Button, message, Row, Col, Typography, Divider, Alert } from 'antd';
 import { UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import AuthService from '../../services/authService';
+import AuthService from '../../services/authService.js';
 
 const { Title, Text } = Typography;
 

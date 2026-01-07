@@ -10,7 +10,7 @@ import {
   ReloadOutlined,
   ExclamationCircleOutlined 
 } from '@ant-design/icons';
-import AppLayout from '../Layout/AppLayout';
+import AppLayout from '../Layout/AppLayout.js';
 import './SettingsPage.css';
 
 const { Title, Text, Paragraph } = Typography;

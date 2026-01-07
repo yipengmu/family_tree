@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { AutoComplete, Input, Typography } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
-import searchHistoryManager from '../../utils/searchHistory';
+import searchHistoryManager from '../../utils/searchHistory.js';
 import './FamilySearchBar.css';
 
 const { Text } = Typography;

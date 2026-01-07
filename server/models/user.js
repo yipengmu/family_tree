@@ -1,122 +1,113 @@
-const getDatabase = require('./database');
+// server/models/user.js
+// 用戶模型，適配Prisma + Neon數據庫
+const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+
+// 在開發環境中，使用全局變量避免熱重載時的重複實例
+let prisma;
+
+if (process.env.NODE_ENV === 'production') {
+  prisma = new PrismaClient();
+} else {
+  if (!global.prisma) {
+    global.prisma = new PrismaClient();
+  }
+  prisma = global.prisma;
+}
 
 const User = {
-  // 创建用户表
-  async initializeTable() {
-    const dbInstance = await getDatabase();
-    const db = dbInstance.getDB();
-    
-    return new Promise((resolve, reject) => {
-      const createUserTable = `
-        CREATE TABLE IF NOT EXISTS users (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          username TEXT NOT NULL,
-          email TEXT UNIQUE NOT NULL,
-          password_hash TEXT,
-          is_active BOOLEAN DEFAULT 1,
-          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          last_login_at DATETIME,
-          wechat_openid VARCHAR(64) UNIQUE
-        )
-      `;
-      
-      db.run(createUserTable, (err) => {
-        if (err) {
-          console.error('创建用户表失败:', err);
-          reject(err);
-        } else {
-          console.log('✅ 用户表创建成功或已存在');
-          resolve();
-        }
-      });
-    });
-  },
-
-  // 创建用户
+  // 創建用戶
   async create(userData) {
-    const dbInstance = await getDatabase();
-    const db = dbInstance.getDB();
     const { username, email, password } = userData;
     
-    // 对密码进行哈希加密
+    // 對密碼進行哈希加密
     const password_hash = await bcrypt.hash(password, 10);
     
-    const result = await new Promise((resolve, reject) => {
-      db.run(
-        'INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)',
-        [username, email, password_hash],
-        function(err) {
-          if (err) {
-            reject(err);
-          } else {
-            resolve({ id: this.lastID });
-          }
-        }
-      );
+    const newUser = await prisma.user.create({
+      data: {
+        username,
+        email,
+        password_hash,
+      },
     });
     
-    // 获取新创建的用户信息
-    const newUser = await this.findById(result.id);
-    return newUser;
+    // 返回用戶信息，但不包含密碼哈希
+    const { password_hash: _, ...userWithoutPassword } = newUser;
+    return userWithoutPassword;
   },
 
-  // 根据邮箱查找用户
+  // 根據郵箱查找用戶
   async findByEmail(email) {
-    const dbInstance = await getDatabase();
-    const db = dbInstance.getDB();
-    
-    const user = await new Promise((resolve, reject) => {
-      db.get('SELECT * FROM users WHERE email = ?', [email], (err, row) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(row);
-        }
-      });
+    const user = await prisma.user.findUnique({
+      where: {
+        email: email,
+      },
     });
     
     return user;
   },
 
-  // 根据ID查找用户
+  // 根據ID查找用戶
   async findById(id) {
-    const dbInstance = await getDatabase();
-    const db = dbInstance.getDB();
-    
-    const user = await new Promise((resolve, reject) => {
-      db.get('SELECT id, username, email, is_active, created_at, last_login_at FROM users WHERE id = ?', [id], (err, row) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(row);
-        }
-      });
+    const user = await prisma.user.findUnique({
+      where: {
+        id: Number(id),
+      },
     });
     
     return user;
   },
 
-  // 更新最后登录时间
+  // 更新最後登錄時間
   async updateLastLogin(userId) {
-    const dbInstance = await getDatabase();
-    const db = dbInstance.getDB();
-    
-    await new Promise((resolve, reject) => {
-      db.run('UPDATE users SET last_login_at = CURRENT_TIMESTAMP WHERE id = ?', [userId], (err) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve();
-        }
-      });
+    await prisma.user.update({
+      where: {
+        id: Number(userId),
+      },
+      data: {
+        last_login_at: new Date(),
+      },
     });
   },
 
-  // 验证密码
+  // 驗證密碼
   async validatePassword(user, password) {
+    if (!user || !user.password_hash) {
+      return false;
+    }
     return await bcrypt.compare(password, user.password_hash);
+  },
+  
+  // 更新微信OpenID
+  async updateWechatOpenid(userId, wechatOpenid) {
+    const updatedUser = await prisma.user.update({
+      where: {
+        id: Number(userId),
+      },
+      data: {
+        wechat_openid: wechatOpenid,
+      },
+    });
+    
+    return updatedUser;
+  },
+  
+  // 根據微信OpenID查找用戶
+  async findByWechatOpenid(wechatOpenid) {
+    const user = await prisma.user.findUnique({
+      where: {
+        wechat_openid: wechatOpenid,
+      },
+    });
+    
+    return user;
+  },
+  
+  // 初始化用戶表（為了與舊代碼兼容）
+  async initializeTable() {
+    // 在Prisma模式中，表結構由Prisma自動處理
+    console.log('✅ 使用Prisma，無需手動初始化表');
+    return Promise.resolve();
   }
 };
 

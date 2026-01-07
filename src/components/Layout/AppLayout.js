@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import Sidebar from './Sidebar';
-import MainContent from './MainContent';
+import Sidebar from './Sidebar.js';
+import MainContent from './MainContent.js';
 import './AppLayout.css';
 
 const AppLayout = ({

@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { Layout, Alert, Tabs, message } from 'antd';
 import { TeamOutlined, SettingOutlined } from '@ant-design/icons';
-import { validateFamilyData } from './utils/familyTreeUtils';
+import { validateFamilyData } from './utils/familyTreeUtils.js';
 import dbJson from './data/familyData.js';
-import FamilyTreePage from './components/Pages/FamilyTreePage';
-import SettingsPage from './components/Pages/SettingsPage';
-import CreatorPage from './components/Pages/CreatorPage';
-import DiscoverPage from './components/Pages/DiscoverPage';
-import TenantSelector from './components/TenantSelector';
-import familyDataService from './services/familyDataService';
-import tenantService from './services/tenantService';
+import FamilyTreePage from './components/Pages/FamilyTreePage.js';
+import SettingsPage from './components/Pages/SettingsPage.js';
+import CreatorPage from './components/Pages/CreatorPage.js';
+import DiscoverPage from './components/Pages/DiscoverPage.js';
+import TenantSelector from './components/TenantSelector.js';
+import familyDataService from './services/familyDataService.js';
+import tenantService from './services/tenantService.js';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import LoginPage from './components/Pages/LoginPage';
-import RegisterPage from './components/Pages/RegisterPage';
+import LoginPage from './components/Pages/LoginPage.js';
+import RegisterPage from './components/Pages/RegisterPage.js';
 // 导入测试工具（开发环境自动运行）
 
 import './App.css';

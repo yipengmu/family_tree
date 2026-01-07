@@ -1,9 +1,9 @@
-const User = require('../models/user');
+const User = require('../models/user'); // 更新为正确的文件名
 const { sendVerificationCode, validateEmailConfig } = require('./emailService');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 
-// 尝试连接Redis，如果失败则使用内存存储
+// 尝試連接Redis，如果失敗則使用內存存儲
 let redisClient;
 let useRedis = false;
 
@@ -17,15 +17,15 @@ try {
     console.error('Redis Client Error', err);
   });
 
-  // 连接Redis
+  // 連接Redis
   const connectRedis = async () => {
     if (redisClient && !redisClient.isOpen) {
       try {
         await redisClient.connect();
         useRedis = true;
-        console.log('✅ Redis连接成功');
+        console.log('✅ Redis連接成功');
       } catch (error) {
-        console.warn('⚠️ Redis连接失败，将使用内存存储:', error.message);
+        console.warn('⚠️ Redis連接失敗，將使用內存存儲:', error.message);
         useRedis = false;
       }
     }
@@ -33,84 +33,84 @@ try {
 
   connectRedis();
 } catch (error) {
-  console.warn('⚠️ Redis模块未安装，将使用内存存储:', error.message);
+  console.warn('⚠️ Redis模塊未安裝，將使用內存存儲:', error.message);
   useRedis = false;
 }
 
-// 内存存储验证码（Redis不可用时的降级方案）
+// 內存存儲驗證碼（Redis不可用時的降級方案）
 const inMemoryStore = new Map();
 const rateLimitStore = new Map();
 
-// 生成验证码
+// 生成驗證碼
 const generateVerificationCode = () => {
-  return crypto.randomInt(100000, 999999).toString(); // 6位数字验证码
+  return crypto.randomInt(100000, 999999).toString(); // 6位數字驗證碼
 };
 
-// 发送验证码
+// 發送驗證碼
 const sendVerificationCodeByEmail = async (email, purpose = 'register') => {
-  // 检查是否已在60秒内发送过验证码
+  // 檢查是否已在60秒內發送過驗證碼
   const now = Date.now();
   const rateLimitKey = `rate_limit:${email}`;
   const lastSendTime = useRedis ? await redisClient.get(rateLimitKey) : rateLimitStore.get(rateLimitKey);
   
-  if (lastSendTime && (now - parseInt(lastSendTime)) < 60000) { // 60秒内不能再次发送
-    throw new Error('请在60秒后重试');
+  if (lastSendTime && (now - parseInt(lastSendTime)) < 60000) { // 60秒內不能再次發送
+    throw new Error('請在60秒後重試');
   }
 
-  // 如果是注册，检查邮箱是否已存在
+  // 如果是註冊，檢查郵箱是否存在
   if (purpose === 'register') {
     const existingUser = await User.findByEmail(email);
     if (existingUser) {
-      throw new Error('该邮箱已被注册');
+      throw new Error('該郵箱已被註冊');
     }
   }
 
-  // 生成验证码
+  // 生成驗證碼
   const code = generateVerificationCode();
 
-  // 存储验证码
+  // 存儲驗證碼
   const codeKey = `verify_code:${email}`;
   if (useRedis) {
-    // 存储验证码到Redis，5分钟过期
-    await redisClient.setEx(codeKey, 300, code); // 300秒 = 5分钟
-    // 设置速率限制，60秒内不能再次发送
+    // 存儲驗證碼到Redis，5分鐘過期
+    await redisClient.setEx(codeKey, 300, code); // 300秒 = 5分鐘
+    // 設定速率限制，60秒內不能再次發送
     await redisClient.setEx(rateLimitKey, 60, now.toString());
   } else {
-    // 存储验证码到内存，5分钟过期
-    inMemoryStore.set(codeKey, { code, expiresAt: now + 300000 }); // 5分钟 = 300000毫秒
-    // 设置速率限制，60秒内不能再次发送
+    // 存儲驗證碼到內存，5分鐘過期
+    inMemoryStore.set(codeKey, { code, expiresAt: now + 300000 }); // 5分鐘 = 300000毫秒
+    // 設定速率限制，60秒內不能再次發送
     rateLimitStore.set(rateLimitKey, now.toString());
     
-    // 设置过期清理定时器
+    // 設定過期清理定時器
     setTimeout(() => {
       inMemoryStore.delete(codeKey);
       rateLimitStore.delete(rateLimitKey);
-    }, 300000); // 5分钟后清理
+    }, 300000); // 5分鐘後清理
   }
 
-  // 检查邮件服务是否配置
+  // 檢查郵件服務是否配置
   const isEmailConfigured = validateEmailConfig();
   
   if (isEmailConfigured) {
-    // 如果邮件服务已配置，尝试发送邮件
+    // 如果郵件服務已配置，嘗試發送郵件
     try {
       await sendVerificationCode(email, code, purpose);
-      console.log(`✅ 验证码已发送至 ${email}`);
-      return { success: true, message: '验证码已发送' };
+      console.log(`✅ 驗證碼已發送至 ${email}`);
+      return { success: true, message: '驗證碼已發送' };
     } catch (emailError) {
-      console.error(`❌ 邮件发送失败:`, emailError.message);
-      // 即使邮件发送失败，也要保留验证码，但返回包含错误信息的成功响应
-      console.log(`⚠️ 验证码已生成但邮件发送失败，验证码: ${code} (有效期5分钟) - 仅用于开发调试`);
-      return { success: true, message: '验证码已生成（邮件发送失败，验证码已保存供开发调试使用）', code: process.env.NODE_ENV === 'development' ? code : undefined };
+      console.error(`❌ 郵件發送失敗:`, emailError.message);
+      // 即使郵件發送失敗，也要保留驗證碼，但返回包含錯誤信息的成功響應
+      console.log(`⚠️ 驗證碼已生成但郵件發送失敗，驗證碼: ${code} (有效期5分鐘) - 僅用於開發調試`);
+      return { success: true, message: '驗證碼已生成（郵件發送失敗，驗證碼已保存供開發調試使用）', code: process.env.NODE_ENV === 'development' ? code : undefined };
     }
   } else {
-    // 在开发环境中，如果没有配置邮件服务，记录验证码到控制台以便调试
-    console.log(`⚠️ 邮件服务未配置，验证码: ${code} (有效期5分钟) - 仅用于开发调试`);
-    return { success: true, message: '验证码已生成（开发环境）', code: process.env.NODE_ENV === 'development' ? code : undefined };
+    // 在開發環境中，如果沒有配置郵件服務，記錄驗證碼到控制台以便調試
+    console.log(`⚠️ 郵件服務未配置，驗證碼: ${code} (有效期5分鐘) - 僅用於開發調試`);
+    return { success: true, message: '驗證碼已生成（開發環境）', code: process.env.NODE_ENV === 'development' ? code : undefined };
   }
 };
 
-// 验证验证码
+// 驗證驗證碼
 const verifyCode = async (email, code) => {
   const codeKey = `verify_code:${email}`;
   
@@ -122,7 +122,7 @@ const verifyCode = async (email, code) => {
     if (stored && stored.expiresAt > Date.now()) {
       storedCode = stored.code;
     } else {
-      // 清理过期的验证码
+      // 清理過期的驗證碼
       inMemoryStore.delete(codeKey);
     }
   }
@@ -131,7 +131,7 @@ const verifyCode = async (email, code) => {
     return false;
   }
 
-  // 验证成功后删除验证码
+  // 驗證成功後刪除驗證碼
   if (useRedis) {
     await redisClient.del(codeKey);
   } else {
@@ -141,17 +141,17 @@ const verifyCode = async (email, code) => {
   return true;
 };
 
-// 用户注册
+// 用戶註冊
 const registerUser = async (userData) => {
   const { name, email, password, code } = userData;
 
-  // 验证验证码
+  // 驗證驗證碼
   const isValidCode = await verifyCode(email, code);
   if (!isValidCode) {
-    throw new Error('验证码错误或已过期');
+    throw new Error('驗證碼錯誤或已過期');
   }
 
-  // 创建用户
+  // 創建用戶
   const newUser = await User.create({
     username: name,
     email,
@@ -161,21 +161,21 @@ const registerUser = async (userData) => {
   return newUser;
 };
 
-// 用户登录
+// 用戶登錄
 const loginUser = async (email, password) => {
-  // 查找用户
+  // 查找用戶
   const user = await User.findByEmail(email);
   if (!user) {
-    throw new Error('用户不存在');
+    throw new Error('用戶不存在');
   }
 
-  // 验证密码
+  // 驗證密碼
   const isValidPassword = await User.validatePassword(user, password);
   if (!isValidPassword) {
-    throw new Error('密码错误');
+    throw new Error('密碼錯誤');
   }
 
-  // 更新最后登录时间
+  // 更新最後登錄時間
   await User.updateLastLogin(user.id);
 
   return user;
@@ -184,6 +184,12 @@ const loginUser = async (email, password) => {
 // 生成JWT Token
 const generateToken = (userId) => {
   const jwtSecret = process.env.JWT_SECRET || 'fallback_secret_key_for_development';
+  
+  // 在生產環境中，如果JWT_SECRET未設置，記錄警告
+  if (!process.env.JWT_SECRET && process.env.NODE_ENV !== 'development') {
+    console.warn('⚠️ 警告: JWT_SECRET 環境變量未設置，使用默認密鑰。請在線上環境中設置JWT_SECRET環境變量。');
+  }
+  
   const token = jwt.sign({ userId }, jwtSecret, { expiresIn: '24h' });
   return token;
 };

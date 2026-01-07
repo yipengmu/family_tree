@@ -2,7 +2,7 @@ import React from 'react';
 import { Layout, Menu, Button, Dropdown, Space } from 'antd';
 import { UserOutlined, LoginOutlined, LogoutOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import AuthService from '../../services/authService';
+import AuthService from '../../services/authService.js';
 
 const { Header } = Layout;
 

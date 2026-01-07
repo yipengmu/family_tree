@@ -15,20 +15,20 @@ import {
   SettingOutlined
 } from '@ant-design/icons';
 
-import FamilyMemberNode from './FamilyMemberNode';
+import FamilyMemberNode from './FamilyMemberNode.js';
 import {
   convertToReactFlowData,
   getLayoutedElements,
   filterByRank,
   getFamilyStatistics,
   searchWithPathTree
-} from '../utils/familyTreeUtils';
+} from '../utils/familyTreeUtils.js';
 import {
   applySmartCollapse,
   getCurrentUser,
   getCollapseStats,
   hasCollapsedChildren
-} from '../utils/familyTreeCollapse';
+} from '../utils/familyTreeCollapse.js';
 
 import 'reactflow/dist/style.css';
 import './FamilyTreeFlow.css';

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Select, Button, Modal, Form, Input, Switch, message, Space, Tooltip } from 'antd';
 import { PlusOutlined, SettingOutlined, DeleteOutlined, HomeOutlined } from '@ant-design/icons';
-import tenantService from '../services/tenantService';
+import tenantService from '../services/tenantService.js';
 import './TenantSelector.css';
 
 const { Option } = Select;

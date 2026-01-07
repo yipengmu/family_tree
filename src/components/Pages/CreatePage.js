@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card, Form, Input, Select, Button, Upload, DatePicker, Radio, message } from 'antd';
 import { PlusOutlined, UserAddOutlined, FileTextOutlined, CameraOutlined } from '@ant-design/icons';
-import AppLayout from '../Layout/AppLayout';
+import AppLayout from '../Layout/AppLayout.js';
 import './CreatePage.css';
 
 const { TextArea } = Input;

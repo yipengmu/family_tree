@@ -2,7 +2,7 @@
  * 多租户服务 - 管理租户数据和权限
  */
 
-import cacheManager from '../utils/cacheManager';
+import cacheManager from '../utils/cacheManager.js';
 
 // 缓存键常量
 const CACHE_KEYS = {

@@ -1,5 +1,5 @@
 import React from 'react';
-import FamilySearchBar from '../UI/FamilySearchBar';
+import FamilySearchBar from '../UI/FamilySearchBar.js';
 import './MainContent.css';
 
 const MainContent = ({

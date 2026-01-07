@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { ReactFlowProvider } from 'reactflow';
-import FamilyTreeFlow from '../FamilyTreeFlow';
-import AppLayout from '../Layout/AppLayout';
+import FamilyTreeFlow from '../FamilyTreeFlow.js';
+import AppLayout from '../Layout/AppLayout.js';
 import './FamilyTreePage.css';
 
 const FamilyTreePage = ({

@@ -3,7 +3,7 @@
  */
 
 import OSS from 'ali-oss';
-import OSSConfigChecker from '../utils/ossConfigChecker';
+import OSSConfigChecker from '../utils/ossConfigChecker.js';
 
 
 class UploadService {
