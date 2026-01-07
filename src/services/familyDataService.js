@@ -150,7 +150,7 @@ class FamilyDataService {
    */
   async loadDataWithFallback(tenantId) {
     try {
-      // 第2层：从数据库加载
+      // 第2层：从数据库加载（带超时）
       console.log(`🗄️ [第2层] 尝试从数据库加载数据 (租户: ${tenantId})`);
       const dbData = await this.loadFamilyDataFromServer(tenantId);
       
@@ -168,7 +168,7 @@ class FamilyDataService {
   }
 
   /**
-   * 从服务器加载家谱数据
+   * 从服务器加载家谱数据（带超时控制）
    * @param {string} tenantId - 租户ID
    * @returns {Promise<Array>} - 家谱数据
    */
@@ -185,12 +185,18 @@ class FamilyDataService {
       
       console.log(`🔗 请求URL: ${url}`);
       
+      // 创建AbortController用于超时控制
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5秒超时
 
       const response = await fetch(url, {
         headers: {
           ...tenantService.getTenantHeaders(),
         },
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -210,6 +216,12 @@ class FamilyDataService {
       return data;
     } catch (error) {
       console.error(`❌ 加载家谱数据失败 (租户: ${tenantId}):`, error);
+
+      // 如果是超时错误，提供更友好的提示
+      if (error.name === 'AbortError') {
+        console.warn(`⏰ 数据库请求超时 (租户: ${tenantId})`);
+        throw new Error('数据库连接超时，请检查后端服务是否正常运行');
+      }
 
       // 数据库加载失败，抛出错误让上层处理回退逻辑
       throw error;

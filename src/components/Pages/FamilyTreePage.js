@@ -50,6 +50,28 @@ const FamilyTreePage = ({
       onSearchSelect={handleSearchSelect}
     >
       <div className="family-tree-page">
+        {/* 显示加载状态 */}
+        {loading && familyData.length === 0 && (
+          <div style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            zIndex: 1000,
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+            padding: '20px',
+            borderRadius: '8px',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
+          }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '24px', marginBottom: '10px' }}>🌳</div>
+              <div>正在加载家谱数据...</div>
+              <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+                （数据来自缓存，后台同步更新）
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* 家谱组件容器 */}
         <div className="family-tree-wrapper">

@@ -68,58 +68,56 @@ function MainApp() {
 
     window.addEventListener('error', handleResizeObserverError);
 
-    // 加载家谱数据
+    // 加载家谱数据 - 优化：优先使用缓存，后台异步更新
     const loadFamilyData = async (tenantId = null) => {
       try {
-        setLoading(true);
-        setError(null);
-
         const currentTenantId = tenantId || tenantService.getCurrentTenant().id;
         console.log(`📖 [App] 加载家谱数据 - 租户: ${currentTenantId}`);
 
-        // 优先从数据库加载数据
-        let data = [];
-        try {
-          const response = await fetch(`http://localhost:3003/api/family-data/${currentTenantId}`);
-          const result = await response.json();
-
-          if (response.ok && result.success && result.data && result.data.length > 0) {
-            data = result.data;
-            console.log(`✅ [App] 从数据库加载 ${data.length} 条记录`);
-          } else {
-            console.log(`📝 [App] 数据库无数据，使用本地服务`);
-            // 如果数据库没有数据，使用原有的familyDataService
-            // 对默认租户强制刷新，确保加载最新数据
-            const forceRefresh = currentTenantId === 'default' || 
-                               currentTenantId === process.env.REACT_APP_DEFAULT_TENANT_ID;
-            console.log(`🔄 [App] ${forceRefresh ? '强制刷新' : '常规加载'}家谱数据`);
-            data = await familyDataService.getFamilyData(forceRefresh, currentTenantId);
-          }
-        } catch (dbError) {
-          console.log(`📝 [App] 数据库连接失败，使用本地服务:`, dbError.message);
-          // 如果数据库连接失败，使用原有的familyDataService
-          // 对默认租户强制刷新，确保加载最新数据
-          const forceRefresh = currentTenantId === 'default' || 
-                             currentTenantId === process.env.REACT_APP_DEFAULT_TENANT_ID;
-          console.log(`🔄 [App] ${forceRefresh ? '强制刷新' : '常规加载'}家谱数据`);
-          data = await familyDataService.getFamilyData(forceRefresh, currentTenantId);
+        // 首先尝试从内存缓存快速加载（不等待数据库）
+        const cachedData = await familyDataService.getFamilyData(false, currentTenantId);
+        
+        // 立即设置缓存数据并停止loading状态，提升用户体验
+        if (cachedData && cachedData.length > 0) {
+          setFamilyData(cachedData);
+          const result = validateFamilyData(cachedData);
+          setValidationResult(result);
+          setLoading(false);
+          console.log(`⚡ [App] 使用缓存数据快速显示 (${cachedData.length} 条记录)`);
         }
 
-        // 验证数据
-        const result = validateFamilyData(data);
-        setValidationResult(result);
-
-        if (result.isValid) {
-          setFamilyData(data);
-        } else {
-          console.warn('数据验证失败:', result.issues);
-          setFamilyData(data); // 即使验证失败也加载数据，但会显示警告
+        // 然后在后台异步更新数据
+        try {
+          // 尝试从数据库获取最新数据（不阻塞UI）
+          const response = await fetch(`http://localhost:3003/api/family-data/${currentTenantId}`, {
+            // 设置较短的超时时间避免长时间等待
+            signal: AbortSignal.timeout(3000) // 3秒超时
+          });
+          
+          if (response.ok) {
+            const result = await response.json();
+            if (result.success && result.data && result.data.length > 0) {
+              console.log(`✅ [App] 从数据库获取最新数据 (${result.data.length} 条记录)`);
+              
+              // 验证新数据
+              const validation = validateFamilyData(result.data);
+              
+              // 更新状态，只在数据确实变化时才更新
+              if (JSON.stringify(result.data) !== JSON.stringify(cachedData)) {
+                setFamilyData(result.data);
+                setValidationResult(validation);
+                console.log('🔄 [App] 数据已更新到最新版本');
+              }
+            }
+          }
+        } catch (dbError) {
+          console.log(`📝 [App] 数据库连接超时或失败，使用本地缓存:`, dbError.message);
+          // 数据库连接失败时，仍使用已缓存的数据
         }
       } catch (err) {
         console.error('加载数据失败:', err);
         setError(err.message);
         message.error(`加载家谱数据失败: ${err.message}`);
-      } finally {
         setLoading(false);
       }
     };
@@ -130,7 +128,21 @@ function MainApp() {
       const tenant = tenantService.getCurrentTenant();
       setCurrentTenant(tenant);
 
-      // 加载数据
+      // 先快速加载本地数据，不阻塞UI
+      try {
+        // 使用默认数据快速填充，避免长时间loading
+        const defaultData = await familyDataService.loadOriginalFamilyData(tenant.id);
+        if (defaultData && defaultData.length > 0) {
+          setFamilyData(defaultData);
+          const result = validateFamilyData(defaultData);
+          setValidationResult(result);
+          // 不立即设置loading为false，而是等待从数据库加载完成或超时
+        }
+      } catch (err) {
+        console.error('初始化默认数据失败:', err);
+      }
+
+      // 在后台加载最新数据
       await loadFamilyData(tenant.id);
     };
 
@@ -165,8 +177,8 @@ function MainApp() {
 
 
 
-  // 显示加载状态
-  if (loading) {
+  // 显示加载状态 - 优化：即使在后台加载时也允许用户交互
+  if (loading && familyData.length === 0) {
     return (
       <Layout style={{ minHeight: '100vh' }}>
         <Content style={{
@@ -178,6 +190,9 @@ function MainApp() {
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '24px', marginBottom: '16px' }}>🌳</div>
             <div>正在加载家谱数据...</div>
+            <div style={{ fontSize: '12px', color: '#666', marginTop: '8px' }}>
+              （首次加载可能需要一些时间）
+            </div>
           </div>
         </Content>
       </Layout>
