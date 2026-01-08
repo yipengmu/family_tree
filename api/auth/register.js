@@ -49,13 +49,31 @@ export default async function handler(req, res) {
       });
     }
 
-    // 验证验证码（在实际部署中，应验证存储的验证码）
-    if (!/^\d{6}$/.test(code)) {
+    // 验证验证码
+    const verificationCode = await prisma.verificationCode.findFirst({
+      where: {
+        email: email,
+        code: code,
+        purpose: 'register', // 验证码用途应为注册
+        expires_at: {
+          gte: new Date() // 确保未过期
+        }
+      }
+    });
+
+    if (!verificationCode) {
       return res.status(400).json({
         success: false,
-        error: '验证码格式错误'
+        error: '验证码错误或已过期'
       });
     }
+
+    // 验证码正确，删除它（一次性使用）
+    await prisma.verificationCode.delete({
+      where: {
+        id: verificationCode.id
+      }
+    });
 
     // 对密码进行哈希
     const password_hash = await bcrypt.hash(password, 10);

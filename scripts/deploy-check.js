@@ -92,6 +92,39 @@ async function checkTenantEndpoints() {
   }
 }
 
+async function testVerificationCodeFlow() {
+  console.log('\n🔍 测试验证码流程...');
+  
+  try {
+    // 生成测试邮箱
+    const testEmail = `test${Date.now()}@example.com`;
+    
+    // 测试发送验证码
+    console.log(`📧 发送注册验证码到: ${testEmail}`);
+    const sendResponse = await fetch(`${API_BASE_URL}/api/auth/send-code`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: testEmail,
+        purpose: 'register'
+      })
+    });
+    
+    const sendResult = await sendResponse.json();
+    console.log(`✅ 发送验证码响应 - 状态: ${sendResponse.status}, 成功: ${sendResult.success}`);
+    
+    if (sendResult.success) {
+      console.log('✅ 验证码发送流程正常');
+    } else {
+      console.log('❌ 验证码发送失败:', sendResult.error);
+    }
+  } catch (error) {
+    console.log('❌ 验证码流程测试错误:', error.message);
+  }
+}
+
 async function runDeploymentCheck() {
   console.log('🚀 开始Vercel部署检查...\n');
   console.log(`🌐 目标URL: ${API_BASE_URL}`);
@@ -101,7 +134,8 @@ async function runDeploymentCheck() {
     await checkHealth(),
     checkAuthEndpoints(),
     checkFamilyDataEndpoints(),
-    checkTenantEndpoints()
+    checkTenantEndpoints(),
+    testVerificationCodeFlow()
   ];
   
   console.log('\n🎯 部署检查完成!');
@@ -127,5 +161,6 @@ module.exports = {
   checkHealth,
   checkAuthEndpoints,
   checkFamilyDataEndpoints,
-  checkTenantEndpoints
+  checkTenantEndpoints,
+  testVerificationCodeFlow
 };

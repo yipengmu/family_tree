@@ -101,3 +101,15 @@ model DataVersion {
   
   @@map("data_versions")
 }
+
+model VerificationCode {
+  id         Int      @id @default(autoincrement())
+  email      String
+  code       String
+  purpose    String   // 'register', 'reset', 'rate_limit' 等
+  expires_at DateTime
+  created_at DateTime @default(now())
+  
+  @@map("verification_codes")
+  @@index([email])
+}

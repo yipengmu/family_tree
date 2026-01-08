@@ -37,21 +37,19 @@ export default async function handler(req, res) {
   try {
     // 检查是否已在60秒内发送过验证码
     const now = Date.now();
-    const rateLimitKey = `rate_limit:${email}`;
     
-    // 检查速率限制（在生产环境中，这通常存储在Redis中）
-    // 在当前实现中，我们可以简单地记录最近的发送时间
-    const recentRequest = await prisma.verificationCode.findFirst({
+    // 检查速率限制
+    const recentRateLimit = await prisma.verificationCode.findFirst({
       where: {
         email: email,
-        created_at: {
-          gt: new Date(now - 60000) // 60秒内
-        },
-        purpose: 'rate_limit'
+        purpose: 'rate_limit',
+        expires_at: {
+          gte: new Date() // 确保未过期
+        }
       }
     });
 
-    if (recentRequest) {
+    if (recentRateLimit) {
       return res.status(429).json({ 
         success: false,
         error: '请在60秒后重试' 
@@ -78,25 +76,36 @@ export default async function handler(req, res) {
     const crypto = await import('crypto');
     const code = crypto.randomInt(100000, 999999).toString();
 
-    // 保存验证码到数据库
-    await prisma.verificationCode.create({
-      data: {
-        email: email,
-        code: code,
-        purpose: purpose,
-        expires_at: new Date(now + 5 * 60 * 1000), // 5分钟后过期
-      }
-    });
-
-    // 保存速率限制记录
-    await prisma.verificationCode.create({
-      data: {
-        email: email,
-        code: 'RATE_LIMIT',
-        purpose: 'rate_limit',
-        expires_at: new Date(now + 60 * 1000), // 60秒后过期
-      }
-    });
+    // 开始数据库事务
+    const transactionResult = await prisma.$transaction([
+      // 删除过期的验证码
+      prisma.verificationCode.deleteMany({
+        where: {
+          email: email,
+          expires_at: {
+            lt: new Date() // 过期的验证码
+          }
+        }
+      }),
+      // 保存新的验证码
+      prisma.verificationCode.create({
+        data: {
+          email: email,
+          code: code,
+          purpose: purpose,
+          expires_at: new Date(Date.now() + 5 * 60 * 1000), // 5分钟后过期
+        }
+      }),
+      // 保存速率限制记录
+      prisma.verificationCode.create({
+        data: {
+          email: email,
+          code: 'RATE_LIMIT',
+          purpose: 'rate_limit',
+          expires_at: new Date(Date.now() + 60 * 1000), // 60秒后过期
+        }
+      })
+    ]);
 
     // 检查邮件服务是否配置
     const emailConfig = {
@@ -146,8 +155,8 @@ export default async function handler(req, res) {
       res.status(200).json({
         success: true,
         message: process.env.NODE_ENV === 'development' 
-          ? '验证码已生成（开发环境）' 
-          : '验证码已生成，请联系管理员获取验证码',
+          ? '验证码已生成（开发环境，验证码: ' + code + '）' 
+          : '验证码已生成',
         timestamp: new Date().toISOString()
       });
     }
