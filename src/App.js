@@ -100,7 +100,8 @@ function MainApp() {
         // 然后在后台异步更新数据
         try {
           // 尝试从数据库获取最新数据（不阻塞UI）
-          const response = await fetch(`http://localhost:3003/api/family-data/${currentTenantId}`, {
+          // 修正请求URL以适应Vercel部署
+          const response = await fetch(`/api/family-data/${currentTenantId}`, {
             // 设置较短的超时时间避免长时间等待
             signal: AbortSignal.timeout(3000) // 3秒超时
           });

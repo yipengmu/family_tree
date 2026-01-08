@@ -190,11 +190,19 @@ class FamilyDataService {
       console.log(`🌐 开始从服务器加载家谱数据... (租户: ${tenantId})`);
       const startTime = Date.now();
 
-      const baseURL = process.env.REACT_APP_API_BASE_URL || '';
-      // 修正API请求URL格式，确保正确处理默认租户
-      const url = tenantId === 'default' || tenantId === process.env.REACT_APP_DEFAULT_TENANT_ID
-        ? `${baseURL}/api/family-data/default`
-        : `${baseURL}/api/family-data?tenantId=${tenantId}`;
+      // 根据租户ID确定请求URL
+      let url;
+      if (tenantId === 'default' || tenantId === process.env.REACT_APP_DEFAULT_TENANT_ID) {
+        url = '/api/family-data/default';
+      } else {
+        // 对于非默认租户，需要认证
+        const token = localStorage.getItem('token');
+        if (!token) {
+          console.log(`🔒 未登录，跳过非默认租户数据加载 (租户: ${tenantId})`);
+          throw new Error('需要登录才能加载此租户数据');
+        }
+        url = `/api/family-data`;
+      }
       
       console.log(`🔗 请求URL: ${url}`);
       
@@ -202,10 +210,24 @@ class FamilyDataService {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 3000); // 3秒超时（优化：减少超时时间以提高响应速度）
 
+      const headers = {
+        'Content-Type': 'application/json',
+      };
+
+      // 添加认证头部（如果需要）
+      const token = localStorage.getItem('token');
+      if (token && tenantId !== 'default' && tenantId !== process.env.REACT_APP_DEFAULT_TENANT_ID) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      // 添加租户信息到请求头
+      headers['X-Tenant-ID'] = tenantId;
+      if (tenantService.getCurrentTenant().name) {
+        headers['X-Tenant-Name'] = encodeURIComponent(tenantService.getCurrentTenant().name);
+      }
+
       const response = await fetch(url, {
-        headers: {
-          ...tenantService.getTenantHeaders(),
-        },
+        headers: headers,
         signal: controller.signal
       });
 
@@ -559,12 +581,18 @@ class FamilyDataService {
       }));
 
       // 保存到数据库服务器 (第2层持久化)
-      const baseURL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:3003';
-      const response = await fetch(`${baseURL}/api/family-data/save`, {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('需要登录才能保存家谱数据');
+      }
+
+      const response = await fetch(`/api/family-data/save`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...tenantService.getTenantHeaders(),
+          'Authorization': `Bearer ${token}`,
+          'X-Tenant-ID': currentTenantId,
+          'X-Tenant-Name': encodeURIComponent(tenantService.getCurrentTenant().name || ''),
         },
         body: JSON.stringify({
           tenantId: currentTenantId,

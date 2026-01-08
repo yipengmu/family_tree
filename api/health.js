@@ -1,4 +1,4 @@
-// Vercel Serverless Function for Health Check
+// Vercel Serverless Function for Health Check API
 export default function handler(req, res) {
   // 设置CORS头
   res.setHeader('Access-Control-Allow-Credentials', true);
@@ -14,10 +14,19 @@ export default function handler(req, res) {
     return;
   }
 
-  res.status(200).json({
+  res.json({
     status: 'ok',
-    message: 'Vercel API服务运行正常',
+    message: '家谱创作工具后端服务运行正常',
     timestamp: new Date().toISOString(),
-    version: '1.0.0'
+    version: '1.0.0',
+    environment: process.env.NODE_ENV || 'development'
   });
 }
+
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb',
+    },
+  },
+};

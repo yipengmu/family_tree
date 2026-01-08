@@ -1,4 +1,4 @@
-// Vercel Serverless Function for User Profile
+// Vercel Serverless Function for User Profile API
 import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
 
@@ -12,7 +12,7 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
   res.setHeader(
     'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization'
   );
 
   if (req.method === 'OPTIONS') {
@@ -20,11 +20,7 @@ export default async function handler(req, res) {
     return;
   }
 
-  if (req.method !== 'GET') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
-  // 验证JWT token
+  // 验证JWT令牌
   const authHeader = req.headers.authorization;
   const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
@@ -38,44 +34,46 @@ export default async function handler(req, res) {
     const decoded = jwt.verify(token, jwtSecret);
     const userId = decoded.userId;
 
-    // 从数据库获取用户信息
-    const user = await prisma.user.findUnique({
-      where: {
-        id: Number(userId),
-      },
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        is_active: true,
-        created_at: true,
-        last_login_at: true,
-        wechat_openid: true  // 根据项目规范，包含微信openid字段
-      }
-    });
-    
-    if (!user) {
-      return res.status(404).json({ error: '用户不存在' });
-    }
+    if (req.method === 'GET') {
+      // 获取用户信息
+      const user = await prisma.user.findUnique({
+        where: {
+          id: userId,
+        },
+      });
 
-    res.status(200).json({
-      success: true,
-      user: {
-        id: user.id,
-        name: user.username,
-        email: user.email,
-        isActive: user.is_active,
-        createdAt: user.created_at,
-        lastLoginAt: user.last_login_at,
-        wechatOpenid: user.wechat_openid  // 根据项目规范返回微信openid
-      },
-      timestamp: new Date().toISOString()
-    });
+      if (!user) {
+        return res.status(404).json({ error: '用户不存在' });
+      }
+
+      res.json({
+        success: true,
+        user: {
+          id: user.id,
+          name: user.username,
+          email: user.email,
+          isActive: user.is_active,
+          createdAt: user.created_at,
+          lastLoginAt: user.last_login_at
+        },
+        timestamp: new Date().toISOString()
+      });
+    } else {
+      return res.status(405).json({ error: 'Method not allowed' });
+    }
   } catch (error) {
-    console.error('Token验证失败:', error);
+    console.error('获取用户信息失败:', error);
     res.status(403).json({ error: '令牌无效或已过期' });
   } finally {
     // 断开Prisma连接
     await prisma.$disconnect();
   }
 }
+
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb',
+    },
+  },
+};
