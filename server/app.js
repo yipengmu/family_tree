@@ -5,6 +5,7 @@
 
 const express = require('express');
 const cors = require('cors');
+const http = require('http');
 global.fetch = global.fetch || require('node-fetch');
 require('dotenv').config();
 
@@ -16,10 +17,11 @@ const tenantService = require('./services/tenantService');
 const User = require('./models/user');
 const { sendVerificationCodeByEmail, registerUser, loginUser, generateToken } = require('./services/authService');
 
+// 创建Express应用
 const app = express();
 const PORT = process.env.PORT || 3003;
 
-// 中间件配置
+// 中间件配置 - 增加请求头大小限制
 app.use(cors({
   origin: [
     'http://localhost:3000', 
@@ -31,8 +33,9 @@ app.use(cors({
   credentials: true
 }));
 
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
+// 增加请求头和请求体大小限制
+app.use(express.json({ limit: '50mb', maxHeaderSize: 10 * 1024 * 1024 })); // 10MB header limit, 50MB body limit
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // JWT中间件
 const jwt = require('jsonwebtoken');
@@ -367,7 +370,7 @@ async function processImageWithQwenSingle(imageUrl, apiKey, requestId, attempt =
 - 横向的每一行代表一个世代，每个世代有统一的世代序号
 - 家谱图片中的人员节点格式要尽可能的识别完整，不要有遗漏（如果识别不清，不可特殊标记，但不要跳过）
 - official_position和summary可为空字符串
-- 只返回纯JSON数组，不要markdown标记`;
+- 只返回纯JSON数组，不要其他文字`;
 
   const requestBody = {
     model: model,
@@ -570,459 +573,108 @@ function parseQwenResponse(content, requestId) {
 
     let jsonStr = content.trim();
 
-    // 移除可能的markdown标记
-    if (jsonStr.includes('```json')) {
-      jsonStr = jsonStr.split('```json')[1].split('```')[0].trim();
-    } else if (jsonStr.includes('```')) {
-      jsonStr = jsonStr.split('```')[1].trim();
-    }
-
-    // 查找JSON数组
-    const arrayMatch = jsonStr.match(/\[[\s\S]*\]/);
-    if (arrayMatch) {
-      jsonStr = arrayMatch[0];
-      console.log(`[${getTimestamp()}] 🔍 [后端-${requestId}] 提取到JSON数组，长度: ${jsonStr.length} 字符`);
-    } else {
-      console.log(`[${getTimestamp()}] ⚠️ [后端-${requestId}] 未找到JSON数组格式，尝试解析整个内容`);
-    }
-
-    console.log(`[${getTimestamp()}] 📝 [后端-${requestId}] 准备解析的JSON: ${jsonStr.substring(0, 200)}...`);
-
-    // 尝试修复常见的JSON格式问题
-    jsonStr = fixJsonFormat(jsonStr, requestId);
-
-    const parsed = JSON.parse(jsonStr);
-
-    if (Array.isArray(parsed)) {
-      console.log(`[${getTimestamp()}] ✅ [后端-${requestId}] JSON解析成功，识别到 ${parsed.length} 个人物`);
-      if (parsed.length > 0) {
-        console.log(`[${getTimestamp()}] 👤 [后端-${requestId}] 第一个人物示例: ${JSON.stringify(parsed[0], null, 2)}`);
+    // 移除可能的markdown格式
+    if (jsonStr.startsWith('```json')) {
+      jsonStr = jsonStr.substring(7); // 移除 ```json
+      if (jsonStr.endsWith('```')) {
+        jsonStr = jsonStr.slice(0, -3); // 移除结尾的 ```
       }
-      return parsed;
-    } else {
-      console.log(`[${getTimestamp()}] ✅ [后端-${requestId}] JSON解析成功，识别到 1 个人物`);
-      console.log(`[${getTimestamp()}] 👤 [后端-${requestId}] 人物信息: ${JSON.stringify(parsed, null, 2)}`);
-      return [parsed];
+    } else if (jsonStr.startsWith('```')) {
+      jsonStr = jsonStr.substring(3); // 移除开头的 ```
+      if (jsonStr.endsWith('```')) {
+        jsonStr = jsonStr.slice(0, -3); // 移除结尾的 ```
+      }
     }
+
+    // 尝试解析JSON
+    let parsedData = JSON.parse(jsonStr);
+    
+    // 确保返回的是数组
+    if (!Array.isArray(parsedData)) {
+      console.warn(`[${getTimestamp()}] ⚠️ [后端-${requestId}] 解析结果不是数组，尝试包装成数组`);
+      parsedData = [parsedData];
+    }
+
+    // 验证数据结构
+    const validatedData = parsedData.map((item, index) => {
+      // 确保必需字段存在
+      const validatedItem = {
+        id: item.id || index + 1,
+        name: item.name || `未知姓名${index + 1}`,
+        g_rank: item.g_rank || 1,
+        rank_index: item.rank_index || index + 1,
+        g_father_id: typeof item.g_father_id !== 'undefined' ? item.g_father_id : 0,
+        sex: item.sex || "MAN",
+        adoption: item.adoption || "none",
+        official_position: item.official_position || "",
+        summary: item.summary || ""
+      };
+      
+      return validatedItem;
+    });
+
+    console.log(`[${getTimestamp()}] ✅ [后端-${requestId}] 成功解析 ${validatedData.length} 条记录`);
+    return validatedData;
 
   } catch (parseError) {
     console.error(`[${getTimestamp()}] ❌ [后端-${requestId}] JSON解析失败:`, parseError.message);
-    console.error(`[${getTimestamp()}] ❌ [后端-${requestId}] 错误位置信息:`, {
-      message: parseError.message,
-      position: parseError.message.match(/position (\d+)/)?.[1] || 'unknown'
-    });
-
-    // 打印错误位置附近的内容
-    const position = parseInt(parseError.message.match(/position (\d+)/)?.[1] || '0');
-    if (position > 0) {
-      const start = Math.max(0, position - 100);
-      const end = Math.min(jsonStr.length, position + 100);
-      console.error(`[${getTimestamp()}] ❌ [后端-${requestId}] 错误位置附近内容:`, jsonStr.substring(start, end));
-    }
-
-    console.error(`[${getTimestamp()}] ❌ [后端-${requestId}] 完整JSON内容:`, jsonStr);
-
-    // 如果JSON解析失败，尝试从文本中提取基本信息
-    return extractBasicInfo(content, requestId);
-  }
-}
-
-/**
- * 修复常见的JSON格式问题
- */
-function fixJsonFormat(jsonStr, requestId) {
-  console.log(`[${getTimestamp()}] 🔧 [后端-${requestId}] 开始修复JSON格式...`);
-
-  let fixed = jsonStr;
-
-  // 1. 首先移除所有换行符和制表符（这是主要问题）
-  fixed = fixed.replace(/[\n\r\t]/g, '');
-
-  // 2. 移除多余的空白字符
-  fixed = fixed.replace(/\s+/g, ' ');
-
-  // 3. 修复单引号为双引号
-  fixed = fixed.replace(/'/g, '"');
-
-  // 4. 修复属性名没有引号的问题
-  fixed = fixed.replace(/([{,]\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:/g, '$1"$2":');
-
-  // 5. 修复尾随逗号
-  fixed = fixed.replace(/,(\s*[}\]])/g, '$1');
-
-  // 6. 修复多余的逗号
-  fixed = fixed.replace(/,,+/g, ',');
-
-  // 7. 修复布尔值和null值的引号问题
-  fixed = fixed.replace(/:\s*"(true|false|null)"/g, ': $1');
-
-  // 8. 修复数字值的引号问题
-  fixed = fixed.replace(/:\s*"(\d+)"/g, ': $1');
-
-  // 9. 确保JSON结构完整
-  fixed = fixed.trim();
-  if (!fixed.startsWith('[') && !fixed.startsWith('{')) {
-    // 如果不是以[或{开始，尝试找到第一个[或{
-    const startIndex = Math.max(fixed.indexOf('['), fixed.indexOf('{'));
-    if (startIndex > 0) {
-      fixed = fixed.substring(startIndex);
-    }
-  }
-
-  if (fixed !== jsonStr) {
-    console.log(`[${getTimestamp()}] 🔧 [后端-${requestId}] JSON格式已修复`);
-    console.log(`[${getTimestamp()}] 📝 [后端-${requestId}] 修复前长度: ${jsonStr.length}, 修复后长度: ${fixed.length}`);
-    console.log(`[${getTimestamp()}] 📝 [后端-${requestId}] 修复后预览: ${fixed.substring(0, 200)}...`);
-  }
-
-  return fixed;
-}
-
-/**
- * 从文本中提取基本信息（备用方案）
- */
-function extractBasicInfo(content, requestId) {
-  console.log(`[${getTimestamp()}] 🔍 [后端-${requestId}] 尝试从文本中提取基本信息...`);
-  
-  const people = [];
-  const lines = content.split('\n');
-  let id = 1;
-  
-  lines.forEach(line => {
-    // 查找包含世代信息的行
-    if (line.includes('世：') || line.includes('代：')) {
-      const names = line.split('：')[1]?.split('、') || [];
-      names.forEach(name => {
-        if (name.trim()) {
-          people.push({
-            id: id++,
-            name: name.trim(),
-            g_rank: 1,
-            rank_index: id - 1,
-            g_father_id: 0,
-            official_position: null,
-            summary: null,
-            adoption: "none",
-            sex: "MAN",
-            g_mother_id: null,
-            birth_date: null,
-            id_card: null,
-            face_img: "",
-            photos: null,
-            household_info: null,
-            spouse: null,
-            home_page: null,
-            dealth: null,
-            formal_name: null,
-            location: null,
-            childrens: null
-          });
-        }
-      });
-    }
-  });
-  
-  console.log(`[${getTimestamp()}] 🔍 [后端-${requestId}] 从文本中提取到 ${people.length} 个人物`);
-  return people;
-}
-
-// ==================== 租户管理API ====================
-
-// 获取所有租户
-app.get('/api/tenants', async (req, res) => {
-  try {
-    console.log(`🏢 [${getTimestamp()}] 获取租户列表请求`);
-
-    const tenants = await tenantService.getAllTenants();
-
-    res.json({
-      success: true,
-      data: tenants,
-      count: tenants.length,
-      timestamp: new Date().toISOString()
-    });
-
-  } catch (error) {
-    console.error(`❌ [${getTimestamp()}] 获取租户列表失败:`, error);
-    res.status(500).json({
-      error: '获取租户列表失败',
-      message: error.message
-    });
-  }
-});
-
-// 获取指定租户信息
-app.get('/api/tenants/:tenantId', async (req, res) => {
-  try {
-    const { tenantId } = req.params;
-    console.log(`🏢 [${getTimestamp()}] 获取租户信息请求 - 租户: ${tenantId}`);
-
-    const tenant = await tenantService.getTenant(tenantId);
     
-    if (!tenant) {
-      return res.status(404).json({
-        success: false,
-        error: '租户不存在',
-        message: `租户 ${tenantId} 不存在`
-      });
+    // 尝试更宽松的解析方法
+    try {
+      // 查找JSON部分
+      const jsonMatch = content.match(/\[.*\]/s);
+      if (jsonMatch) {
+        let jsonData = jsonMatch[0];
+        
+        // 尝试修复常见的JSON问题
+        jsonData = jsonData.replace(/,\s*[}\]]/g, ']');
+        jsonData = jsonData.replace(/([{,]\s*)(\w+):/g, '$1"$2":'); // 添加引号到键名
+        
+        const parsed = JSON.parse(jsonData);
+        console.log(`[${getTimestamp()}] ✅ [后端-${requestId}] 使用宽松解析成功`);
+        return Array.isArray(parsed) ? parsed : [parsed];
+      }
+    } catch (looseParseError) {
+      console.error(`[${getTimestamp()}] ❌ [后端-${requestId}] 宽松解析也失败:`, looseParseError.message);
     }
-
-    res.json({
-      success: true,
-      tenant: tenant,
-      timestamp: new Date().toISOString()
-    });
-
-  } catch (error) {
-    console.error(`❌ [${getTimestamp()}] 获取租户信息失败:`, error);
-    res.status(500).json({
-      error: '获取租户信息失败',
-      message: error.message
-    });
+    
+    // 返回默认空数组
+    console.warn(`[${getTimestamp()}] ⚠️ [后端-${requestId}] 返回空数组作为备选`);
+    return [];
   }
+}
+
+// 在服务器启动时添加错误处理
+app.on('error', (error) => {
+  console.error('服务器错误:', error);
 });
 
-// 创建或更新租户
-app.post('/api/tenants', async (req, res) => {
-  try {
-    const tenantData = req.body;
-    console.log(`🏢 [${getTimestamp()}] 创建租户请求:`, {
-      id: tenantData.id,
-      name: tenantData.name
-    });
+// 创建HTTP服务器并设置更大的请求头限制
+const server = http.createServer({
+  maxHeadersCount: 200,
+  headersTimeout: 60000, // 60秒头部超时
+}, app);
 
-    if (!tenantData.name) {
-      return res.status(400).json({
-        success: false,
-        error: '缺少租户名称',
-        message: '租户名称是必填项'
-      });
-    }
+// 监听端口
+server.listen(PORT, () => {
+  console.log(`🚀 家谱创作工具后端服务器运行在端口 ${PORT}`);
+  console.log(`📋 可用端点:`);
+  console.log(`   GET  /health - 健康检查`);
+  console.log(`   POST /api/auth/login - 用户登录`);
+  console.log(`   POST /api/auth/register - 用户注册`);
+  console.log(`   POST /api/auth/send-code - 发送验证码`);
+  console.log(`   GET  /api/user/profile - 获取用户资料 (需认证)`);
+  console.log(`   POST /api/qwen/ocr - OCR处理接口`);
+  console.log(`\n监听地址: http://localhost:${PORT}`);
+});
 
-    // 如果没有提供ID，生成一个
-    if (!tenantData.id) {
-      const timestamp = Date.now().toString(36);
-      const random = Math.random().toString(36).substring(2, 8);
-      tenantData.id = `tenant_${timestamp}_${random}`;
-    }
-
-    const tenant = await tenantService.createOrUpdateTenant(tenantData.id, tenantData);
-
-    res.json({
-      success: true,
-      tenant: tenant,
-      message: '租户创建成功',
-      timestamp: new Date().toISOString()
-    });
-
-  } catch (error) {
-    console.error(`❌ [${getTimestamp()}] 创建租户失败:`, error);
-    res.status(500).json({
-      success: false,
-      error: '创建租户失败',
-      message: error.message
-    });
+// 监听服务器错误
+server.on('error', (error) => {
+  if (error.code === 'EADDRINUSE') {
+    console.error(`❌ 端口 ${PORT} 已被占用，请更改端口或关闭占用该端口的程序`);
+  } else {
+    console.error('服务器启动错误:', error);
   }
-});
-
-// 删除租户
-app.delete('/api/tenants/:tenantId', async (req, res) => {
-  try {
-    const { tenantId } = req.params;
-    console.log(`🗑️ [${getTimestamp()}] 删除租户请求 - 租户: ${tenantId}`);
-
-    if (tenantId === 'default') {
-      return res.status(400).json({
-        success: false,
-        error: '不能删除默认租户',
-        message: '默认租户不能被删除'
-      });
-    }
-
-    const result = await tenantService.deleteTenant(tenantId);
-
-    res.json({
-      success: true,
-      message: result.message,
-      timestamp: new Date().toISOString()
-    });
-
-  } catch (error) {
-    console.error(`❌ [${getTimestamp()}] 删除租户失败:`, error);
-    res.status(500).json({
-      error: '删除租户失败',
-      message: error.message
-    });
-  }
-});
-
-// 获取租户统计信息
-app.get('/api/tenants/:tenantId/stats', async (req, res) => {
-  try {
-    const { tenantId } = req.params;
-    console.log(`📊 [${getTimestamp()}] 获取租户统计请求 - 租户: ${tenantId}`);
-
-    const stats = await tenantService.getTenantStats(tenantId);
-
-    res.json({
-      success: true,
-      stats: stats,
-      timestamp: new Date().toISOString()
-    });
-
-  } catch (error) {
-    console.error(`❌ [${getTimestamp()}] 获取租户统计失败:`, error);
-    res.status(500).json({
-      error: '获取租户统计失败',
-      message: error.message
-    });
-  }
-});
-
-// ==================== 家谱数据管理API ====================
-
-// 保存家谱数据到数据库
-app.post('/api/family-data/save', async (req, res) => {
-  try {
-    const { tenantId, familyData } = req.body;
-
-    if (!tenantId) {
-      return res.status(400).json({ error: '缺少租户ID' });
-    }
-
-    if (!familyData || !Array.isArray(familyData)) {
-      return res.status(400).json({ error: '家谱数据格式错误' });
-    }
-
-    console.log(`📊 [${new Date().toISOString()}] 保存家谱数据请求 - 租户: ${tenantId}, 数据条数: ${familyData.length}`);
-
-    // 确保租户存在
-    let tenant = await tenantService.getTenant(tenantId);
-    if (!tenant) {
-      await tenantService.createOrUpdateTenant(tenantId, {
-        name: `族谱_${tenantId}`,
-        description: '自动创建的族谱'
-      });
-    }
-
-    // 保存家谱数据
-    const result = await familyDataService.saveFamilyData(tenantId, familyData);
-
-    res.json({
-      success: true,
-      message: result.message,
-      savedCount: result.savedCount,
-      timestamp: new Date().toISOString()
-    });
-
-  } catch (error) {
-    console.error(`❌ [${new Date().toISOString()}] 保存家谱数据失败:`, error);
-    res.status(500).json({
-      error: '保存家谱数据失败',
-      message: error.message
-    });
-  }
-});
-
-// 获取家谱数据
-app.get('/api/family-data/:tenantId', async (req, res) => {
-  try {
-    const { tenantId } = req.params;
-
-    console.log(`📖 [${new Date().toISOString()}] 获取家谱数据请求 - 租户: ${tenantId}`);
-
-    const familyData = await familyDataService.getFamilyData(tenantId);
-
-    res.json({
-      success: true,
-      data: familyData,
-      count: familyData.length,
-      timestamp: new Date().toISOString()
-    });
-
-  } catch (error) {
-    console.error(`❌ [${getTimestamp()}] 获取家谱数据失败:`, error);
-    res.status(500).json({
-      error: '获取家谱数据失败',
-      message: error.message
-    });
-  }
-});
-
-// 获取默认家谱数据（特殊接口）
-app.get('/api/family-data/default', async (req, res) => {
-  try {
-    console.log(`📖 [${new Date().toISOString()}] 获取默认家谱数据请求`);
-
-    const familyData = await familyDataService.getFamilyData('default');
-
-    res.json({
-      success: true,
-      data: familyData,
-      count: familyData.length,
-      timestamp: new Date().toISOString()
-    });
-
-  } catch (error) {
-    console.error(`❌ [${getTimestamp()}] 获取默认家谱数据失败:`, error);
-    res.status(500).json({
-      error: '获取默认家谱数据失败',
-      message: error.message
-    });
-  }
-});
-
-// 重新初始化默认家谱数据
-app.post('/api/reinit-default-data', async (req, res) => {
-  try {
-    console.log(`🔄 [${new Date().toISOString()}] 重新初始化默认家谱数据请求`);
-
-    // 强制重新加载默认穆氏族谱数据
-    await tenantService.forceInitializeDefaultFamilyData();
-
-    res.json({
-      success: true,
-      message: '默认家谱数据重新初始化完成',
-      timestamp: new Date().toISOString()
-    });
-
-  } catch (error) {
-    console.error(`❌ [${new Date().toISOString()}] 重新初始化默认家谱数据失败:`, error);
-    res.status(500).json({
-      error: '重新初始化失败',
-      message: error.message
-    });
-  }
-});
-
-// 错误处理中间件
-app.use((error, req, res, next) => {
-  console.error(`[${getTimestamp()}] ❌ 服务器错误:`, error);
-  res.status(500).json({
-    error: '服务器内部错误',
-    message: error.message
-  });
-});
-
-// 404处理
-app.use((req, res) => {
-  res.status(404).json({
-    error: '接口不存在',
-    message: `路径 ${req.path} 不存在`
-  });
-});
-
-// 启动服务器
-app.listen(PORT, () => {
-  console.log(`
-🚀 ========== 家谱创作工具后端服务启动成功 ==========
-📡 服务地址: http://localhost:${PORT}
-🔗 健康检查: http://localhost:${PORT}/health
-🔄 OCR端点: http://localhost:${PORT}/api/qwen/ocr
-💾 家谱数据API: http://localhost:${PORT}/api/family-data
-🔐 认证API: http://localhost:${PORT}/api/auth
-⏰ 启动时间: ${new Date().toISOString()}
-=====================================`);
 });
 
 module.exports = app;

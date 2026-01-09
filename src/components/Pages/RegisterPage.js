@@ -100,17 +100,8 @@ const RegisterPage = () => {
         >
           <div style={{ textAlign: 'center', marginBottom: '24px' }}>
             <Title level={2} style={{ marginBottom: '8px' }}>创建账号</Title>
-            <Text type="secondary">开始您的家谱之旅</Text>
+            <Text type="secondary">开启你的家谱</Text>
           </div>
-
-          {/* 开发环境提示 */}
-          <Alert
-            message="开发提示"
-            description="当前为开发环境，邮件服务未配置。验证码将在服务器控制台输出，或使用任意6位数字验证码。"
-            type="info"
-            showIcon
-            style={{ marginBottom: '16px' }}
-          />
 
           <Form
             form={form}
