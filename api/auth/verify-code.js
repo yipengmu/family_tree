@@ -1,13 +1,18 @@
 // Vercel Serverless Function for Verify Verification Code API
 import { PrismaClient } from '@prisma/client';
 
-// 全局缓存Prisma客户端实例，避免重复初始化
-const globalForPrisma = global;
-const prisma = globalForPrisma.prisma || new PrismaClient();
+// 优化Prisma客户端初始化，适配Vercel环境
+let prisma;
 
-// 在开发环境中缓存Prisma客户端实例
-if (process.env.NODE_ENV !== 'production') {
-  globalForPrisma.prisma = prisma;
+if (process.env.NODE_ENV === 'production') {
+  // 在生产环境中使用全局缓存避免重复初始化
+  if (!global.__prisma__) {
+    global.__prisma__ = new PrismaClient();
+  }
+  prisma = global.__prisma__;
+} else {
+  // 在开发环境中直接创建新实例
+  prisma = new PrismaClient();
 }
 
 export default async function handler(req, res) {

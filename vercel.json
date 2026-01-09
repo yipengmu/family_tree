@@ -8,6 +8,14 @@
         "includeFiles": ["dist/**"],
         "buildCommand": "npm install && npx prisma generate && npm run build"
       }
+    },
+    {
+      "src": "api/**/*.js",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": ["api/**/*"],
+        "excludeFiles": ["node_modules/**", "dist/**"]
+      }
     }
   ],
   "rewrites": [
