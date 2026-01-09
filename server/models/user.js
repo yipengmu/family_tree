@@ -3,16 +3,13 @@
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 
-// 在開發環境中，使用全局變量避免熱重載時的重複實例
-let prisma;
+// 全局緩存Prisma客戶端實例，避免重複初始化
+const globalForPrisma = global;
+const prisma = globalForPrisma.prisma || new PrismaClient();
 
-if (process.env.NODE_ENV === 'production') {
-  prisma = new PrismaClient();
-} else {
-  if (!global.prisma) {
-    global.prisma = new PrismaClient();
-  }
-  prisma = global.prisma;
+// 在開發環境中緩存Prisma客戶端實例
+if (process.env.NODE_ENV !== 'production') {
+  globalForPrisma.prisma = prisma;
 }
 
 const User = {

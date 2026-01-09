@@ -2,8 +2,14 @@
 import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
 
-// 初始化Prisma客户端
-const prisma = new PrismaClient();
+// 全局缓存Prisma客户端实例，避免重复初始化
+const globalForPrisma = global;
+const prisma = globalForPrisma.prisma || new PrismaClient();
+
+// 在开发环境中缓存Prisma客户端实例
+if (process.env.NODE_ENV !== 'production') {
+  globalForPrisma.prisma = prisma;
+}
 
 export default async function handler(req, res) {
   // 设置CORS头
@@ -88,10 +94,12 @@ export default async function handler(req, res) {
       error: '保存家谱数据失败',
       message: error.message
     });
-  } finally {
-    // 断开Prisma连接
-    await prisma.$disconnect();
   }
+  // 注意：在Vercel无服务器函数中，不需要手动断开连接，因为函数结束后会自动释放资源
+  // finally {
+  //   // 断开Prisma连接
+  //   await prisma.$disconnect();
+  // }
 }
 
 export const config = {

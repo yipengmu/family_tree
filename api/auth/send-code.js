@@ -2,8 +2,14 @@
 import { PrismaClient } from '@prisma/client';
 import nodemailer from 'nodemailer';
 
-// 初始化Prisma客户端
-const prisma = new PrismaClient();
+// 全局缓存Prisma客户端实例，避免重复初始化
+const globalForPrisma = global;
+const prisma = globalForPrisma.prisma || new PrismaClient();
+
+// 在开发环境中缓存Prisma客户端实例
+if (process.env.NODE_ENV !== 'production') {
+  globalForPrisma.prisma = prisma;
+}
 
 export default async function handler(req, res) {
   // 设置CORS头
@@ -157,7 +163,7 @@ export default async function handler(req, res) {
         message: process.env.NODE_ENV === 'development' 
           ? '验证码已生成（开发环境，验证码: ' + code + '）' 
           : '验证码已生成',
-        timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString()
       });
     }
   } catch (error) {
@@ -166,10 +172,12 @@ export default async function handler(req, res) {
       success: false,
       error: error.message || '发送验证码失败'
     });
-  } finally {
-    // 断开Prisma连接
-    await prisma.$disconnect();
   }
+  // 注意：在Vercel无服务器函数中，不需要手动断开连接，因为函数结束后会自动释放资源
+  // finally {
+  //   // 断开Prisma连接
+  //   await prisma.$disconnect();
+  // }
 }
 
 export const config = {
