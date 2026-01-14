@@ -27,6 +27,7 @@ app.use(cors({
     'http://localhost:3000', 
     'http://localhost:3001', 
     'http://localhost:3002',
+    'http://localhost:3003', // 添加本地开发服务器地址
     'https://www.tatababa.top',  // 线上域名
     'https://tatababa.top'      // 如果有非www版本
   ],
@@ -34,8 +35,8 @@ app.use(cors({
 }));
 
 // 增加请求头和请求体大小限制
-app.use(express.json({ limit: '50mb', maxHeaderSize: 10 * 1024 * 1024 })); // 10MB header limit, 50MB body limit
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+app.use(express.json({ limit: '50mb', maxHeaderSize: 1024 * 1024 * 10 })); // 10MB header limit, 50MB body limit
+app.use(express.urlencoded({ extended: true, limit: '50mb', maxHeaderSize: 1024 * 1024 * 10 }));
 
 // JWT中间件
 const jwt = require('jsonwebtoken');
@@ -651,7 +652,8 @@ app.on('error', (error) => {
 
 // 创建HTTP服务器并设置更大的请求头限制
 const server = http.createServer({
-  maxHeadersCount: 200,
+  maxHeadersCount: 1000,
+  maxHeaderSize: 1024 * 1024 * 10, // 10MB 最大头部大小
   headersTimeout: 60000, // 60秒头部超时
 }, app);
 
