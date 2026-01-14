@@ -89,12 +89,6 @@ const TopNavbar = ({ currentPage, onMenuClick }) => {
             >
               登录
             </Button>
-            <Button 
-              type="primary" 
-              onClick={() => navigate('/register')}
-            >
-              注册
-            </Button>
           </Space>
         )}
       </div>

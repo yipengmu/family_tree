@@ -392,6 +392,24 @@
   flex: 1; /* 允许收缩 */
 }
 
+.login-section {
+  display: flex;
+  align-items: center;
+  padding: 8px 10px;
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0; /* 允许flex项目缩小 */
+  overflow: hidden; /* 防止内容溢出 */
+  flex-wrap: wrap; /* 允许换行以适应较小的空间 */
+}
+
+.user-profile-sidebar.collapsed .login-section {
+  justify-content: center;
+  padding: 8px;
+  gap: 4px;
+  flex-direction: column; /* 收起时垂直排列按钮 */
+}
+
 /* 侧边栏中的租户选择器样式覆盖 - 透明质感风格 */
 .sidebar .tenant-selector {
   width: 100%;
@@ -568,6 +586,15 @@
   .user-name-sidebar {
     font-size: 13px;
     font-weight: 500;
+  }
+  
+  .login-section {
+    padding: 8px 12px;
+  }
+  
+  .user-profile-sidebar.collapsed .login-section {
+    flex-direction: row; /* 移动端即使在收起状态下也水平排列 */
+    gap: 6px;
   }
   
 }

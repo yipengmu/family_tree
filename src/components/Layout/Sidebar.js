@@ -158,13 +158,6 @@ const Sidebar = ({ activeItem = 'tree', onMenuClick, collapsed = false, onToggle
                 >
                   登录
                 </Button>
-                <Button 
-                  type="primary" 
-                  onClick={() => navigate('/register')}
-                  size="small"
-                >
-                  注册
-                </Button>
               </Space>
             </div>
           )}
