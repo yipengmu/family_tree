@@ -143,8 +143,8 @@ function MainApp() {
         // 设置默认租户为穆家家谱
         const defaultTenant = {
           id: 'default',
-          name: '穆家家谱 (游客模式)',
-          description: '默认家谱数据 - 游客模式',
+          name: '穆家家谱',
+          description: '默认家谱 - 游客模式',
           createdAt: new Date().toISOString(),
           isDefault: true,
         };

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Select, Button, Modal, Form, Input, Switch, message, Space, Tooltip } from 'antd';
-import { PlusOutlined, SettingOutlined, DeleteOutlined, HomeOutlined } from '@ant-design/icons';
+import { PlusOutlined, SettingOutlined, DeleteOutlined, HomeOutlined, ReloadOutlined } from '@ant-design/icons';
 import tenantService from '../services/tenantService.js';
+import { clearTenantCache } from '../utils/clearCache.js';
 import './TenantSelector.css';
 
 const { Option } = Select;
@@ -115,8 +116,22 @@ const TenantSelector = ({ onTenantChange, style, compact = false }) => {
     return null;
   }
 
+  // 根据背景色判断是否需要改变文字颜色
+  const getBackgroundClass = () => {
+    // 获取容器背景色，如果是白色或浅蓝色则应用相应类
+    const containerBg = style?.backgroundColor;
+    if (containerBg === 'white' || containerBg === '#ffffff' || containerBg === '#fff') {
+      return 'ant-select-white-bg';
+    } else if (containerBg && (containerBg.includes('blue') || containerBg.includes('#e6f7ff'))) {
+      return 'ant-select-blue-bg';
+    }
+    return '';
+  };
+
+  const backgroundClass = getBackgroundClass();
+
   return (
-    <div className={`tenant-selector ${compact ? 'compact' : ''}`} style={style}>
+    <div className={`tenant-selector purple-theme ${compact ? 'compact' : ''} ${backgroundClass}`} style={style}>
       {compact ? (
         // 紧凑模式：仅显示一个选择框
         <Select
@@ -146,9 +161,8 @@ const TenantSelector = ({ onTenantChange, style, compact = false }) => {
           {tenants.map((tenant) => (
             <Option key={tenant.id} value={tenant.id}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px' }}>
-                  {tenant.isDefault && <HomeOutlined style={{ marginRight: 4, color: '#1890ff' }} />}
-                  {tenant.name}
+                <span style={{ fontSize: '12px', color: 'white' }}>
+                  {tenant.name.length > 8 ? `${tenant.name.substring(0, 8)}...` : tenant.name}
                 </span>
                 {!tenant.isDefault && (
                   <Tooltip title="删除家谱">
@@ -172,7 +186,7 @@ const TenantSelector = ({ onTenantChange, style, compact = false }) => {
             value={currentTenant?.id}
             onChange={handleTenantChange}
             loading={loading}
-            style={{ minWidth: 200 }}
+            style={{ width: '100%', minWidth: 120 }}
             placeholder="选择家谱"
             dropdownRender={(menu) => (
               <>
@@ -193,9 +207,8 @@ const TenantSelector = ({ onTenantChange, style, compact = false }) => {
             {tenants.map((tenant) => (
               <Option key={tenant.id} value={tenant.id}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span>
-                    {tenant.isDefault && <HomeOutlined style={{ marginRight: 4, color: '#1890ff' }} />}
-                    {tenant.name}
+                  <span style={{ color: 'white' }}>
+                    {tenant.name.length > 8 ? `${tenant.name.substring(0, 8)}...` : tenant.name}
                   </span>
                   {!tenant.isDefault && (
                     <Tooltip title="删除家谱">
@@ -213,6 +226,16 @@ const TenantSelector = ({ onTenantChange, style, compact = false }) => {
             ))}
           </Select>
 
+          <Tooltip title="刷新缓存">
+            <Button
+              icon={<ReloadOutlined />}
+              onClick={() => {
+                clearTenantCache();
+                loadTenants();
+                message.success('缓存已刷新');
+              }}
+            />
+          </Tooltip>
           <Tooltip title="租户设置">
             <Button
               icon={<SettingOutlined />}

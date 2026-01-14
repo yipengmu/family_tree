@@ -3,6 +3,7 @@
  */
 
 import cacheManager from '../utils/cacheManager.js';
+import { clearTenantCache } from '../utils/clearCache.js';
 
 // 缓存键常量
 const CACHE_KEYS = {
@@ -52,7 +53,7 @@ class TenantService {
       // 游客模式下，始终返回默认的穆家家谱
       const guestTenant = {
         id: this.defaultTenantId,
-        name: '穆家家谱 (游客模式)',
+        name: '穆家家谱',
         description: '默认家谱数据 - 游客模式浏览',
         createdAt: new Date().toISOString(),
         isDefault: true,
@@ -124,11 +125,20 @@ class TenantService {
 
       // 如果启用了多租户且有后端API
       if (this.isMultiTenantEnabled && this.baseURL) {
+        // 获取认证令牌
+        const token = localStorage.getItem('token');
+        
+        const headers = {
+          'Content-Type': 'application/json',
+        };
+        
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+        
         const response = await fetch(`${this.baseURL}/api/tenants`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers,
           body: JSON.stringify(tenant),
         });
 
@@ -178,7 +188,16 @@ class TenantService {
       // 如果启用了多租户且有后端API
       if (this.isMultiTenantEnabled && this.baseURL) {
         try {
-          const response = await fetch(`${this.baseURL}/api/tenants`);
+          const token = localStorage.getItem('token');
+          
+          const headers = {};
+          if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+          }
+          
+          const response = await fetch(`${this.baseURL}/api/tenants`, {
+            headers
+          });
           if (response.ok) {
             const result = await response.json();
             tenants = result.data || [];
@@ -266,8 +285,16 @@ class TenantService {
 
       // 如果启用了多租户且有后端API
       if (this.isMultiTenantEnabled && this.baseURL) {
+        const token = localStorage.getItem('token');
+        
+        const headers = {};
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+        
         const response = await fetch(`${this.baseURL}/api/tenants/${tenantId}`, {
           method: 'DELETE',
+          headers,
         });
 
         if (!response.ok) {
@@ -413,6 +440,18 @@ class TenantService {
    */
   isGuestMode() {
     return !localStorage.getItem('token') && localStorage.getItem('guest_mode') === 'true';
+  }
+
+  /**
+   * 清除租户相关缓存
+   */
+  clearCache() {
+    clearTenantCache();
+    
+    // 同时清除内存缓存
+    cacheManager.clear();
+    
+    console.log('🗑️ 租户服务缓存已清除');
   }
 }
 

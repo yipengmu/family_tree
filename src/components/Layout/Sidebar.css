@@ -293,17 +293,19 @@
   background: rgba(255, 255, 255, 0.5);
 }
 
-/* 底部区域 - 精简优化布局 */
+/* 底部区域 - 统一视觉风格优化 */
 .bottom-section {
   margin-top: auto;
-  padding: 8px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   width: 100%; /* 明确宽度 */
   overflow: hidden; /* 防止内容溢出 */
   box-sizing: border-box;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.2), transparent);
+  min-width: 0; /* 允许flex项目缩小 */
 }
 
 /* 租户管理区域样式 - 优化为顶部位置 */
@@ -313,6 +315,10 @@
   width: 100%; /* 明确宽度限制 */
   overflow: hidden; /* 防止内容溢出 */
   box-sizing: border-box; /* 包含内边距和边框在宽度计算内 */
+  padding: 2px 0; /* 添加垂直内边距 */
+  min-width: 0; /* 关键：允许flex项目缩小 */
+  display: flex;
+  flex-direction: column;
 }
 
 .tenant-section.collapsed {
@@ -323,52 +329,67 @@
 .user-profile-sidebar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 8px; /* 减小内边距 */
-  background: rgba(255, 255, 255, 0.08); /* 降低背景透明度 */
-  border-radius: 6px; /* 减小圆角 */
+  gap: 10px;
+  padding: 8px 10px; /* 增加内边距提高舒适度 */
+  background: rgba(255, 255, 255, 0.08); /* 保持一致的透明背景 */
+  border-radius: 8px; /* 统一圆角 */
   transition: all 0.3s ease;
   cursor: pointer;
   order: 2; /* 确保用户信息在下方 */
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  width: 100%; /* 确保宽度不超过父容器 */
+  box-sizing: border-box; /* 包含边框和内边距在宽度计算内 */
+  min-width: 0; /* 允许flex项目缩小 */
 }
 
 .user-profile-sidebar:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .user-profile-sidebar.collapsed {
   justify-content: center;
-  padding: 6px;
+  padding: 8px;
+  gap: 0;
 }
 
 .user-avatar-sidebar {
-  width: 28px; /* 减小头像尺寸 */
-  height: 28px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 6px; /* 减小圆角 */
+  width: 30px; /* 统一头像尺寸 */
+  height: 30px;
+  border-radius: 8px; /* 统一圆角 */
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
   font-weight: 600;
-  font-size: 12px; /* 减小字体 */
+  font-size: 13px; /* 统一字体大小 */
   flex-shrink: 0;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  transition: all 0.3s ease;
+}
+
+.user-avatar-sidebar:hover {
+  transform: scale(1.05);
 }
 
 .user-info-sidebar {
   flex: 1;
   min-width: 0;
+  width: 100%; /* 确保不会超出父容器 */
+  max-width: 100%; /* 限制最大宽度 */
+  box-sizing: border-box; /* 确保宽度计算正确 */
 }
 
 .user-name-sidebar {
   color: white;
-  font-size: 11px; /* 减小字体 */
+  font-size: 12px; /* 统一字体大小 */
   font-weight: 500; /* 降低字重 */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  line-height: 1.2;
+  line-height: 1.3;
+  max-width: 100%; /* 确保不超过父容器宽度 */
+  flex: 1; /* 允许收缩 */
 }
 
 /* 侧边栏中的租户选择器样式覆盖 - 透明质感风格 */
@@ -391,9 +412,6 @@
 }
 
 .sidebar .tenant-selector.compact .ant-select-selector {
-  background: rgba(255, 255, 255, 0.08) !important; /* 与用户信息区域相同的透明背景 */
-  border: 1px solid rgba(255, 255, 255, 0.15) !important; /* 更柔和的边框 */
-  color: rgba(255, 255, 255, 0.9) !important;
   border-radius: 6px !important;
   padding: 3px 5px !important; /* 进一步减小内边距 */
   font-size: 10px !important; /* 基础字体大小 */
@@ -404,6 +422,20 @@
   display: flex !important;
   align-items: center !important;
   overflow: hidden !important; /* 确保内容不溢出 */
+}
+
+.sidebar .tenant-selector.compact .ant-select-selector {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* 覆盖特定的动态类名以确保透明背景 */
+:where(.css-dev-only-do-not-override-36gkoj).ant-select-outlined:not(.ant-select-customize-input) .ant-select-selector {
+  background: transparent !important;
+}
+
+/* 确保所有选择器都有透明背景 */
+.sidebar .ant-select-outlined:not(.ant-select-customize-input) .ant-select-selector {
+  background: transparent !important;
 }
 
 .sidebar .tenant-selector.compact .ant-select-selector:hover {
@@ -538,24 +570,4 @@
     font-weight: 500;
   }
   
-  .sidebar .tenant-selector.compact .ant-select-selector {
-    background: rgba(255, 255, 255, 0.08) !important; /* 保持透明质感 */
-    border: 1px solid rgba(255, 255, 255, 0.15) !important;
-    padding: 8px 12px !important;
-    font-size: 13px !important; /* 移动端适当增大字体 */
-  }
-  
-  .sidebar .tenant-selector.compact .ant-select-selector:hover {
-    background: rgba(255, 255, 255, 0.12) !important;
-    border-color: rgba(255, 255, 255, 0.3) !important;
-  }
-  
-  .sidebar .tenant-selector.compact .ant-select-selection-item {
-    font-size: 13px !important;
-    font-weight: 500 !important;
-  }
-  
-  .sidebar .tenant-selector.compact .ant-select-selection-placeholder {
-    font-size: 13px !important;
-  }
 }

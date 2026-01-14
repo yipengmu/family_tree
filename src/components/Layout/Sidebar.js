@@ -137,7 +137,7 @@ const Sidebar = ({ activeItem = 'tree', onMenuClick, collapsed = false, onToggle
         <div className={`user-profile-sidebar ${collapsed ? 'collapsed' : ''}`}>
           {isAuthenticated ? (
             <Dropdown menu={{ items: userMenuItems }} trigger={['click']} placement="topRight">
-              <Button type="text" icon={<UserOutlined />} className="user-info-button">
+              <div type="text" className="user-info-button">
                 <Space>
                   <div className="user-avatar-sidebar">{currentUser?.name?.charAt(0) || currentUser?.email?.charAt(0) || 'U'}</div>
                   {!collapsed && (
@@ -146,7 +146,7 @@ const Sidebar = ({ activeItem = 'tree', onMenuClick, collapsed = false, onToggle
                     </div>
                   )}
                 </Space>
-              </Button>
+              </div>
             </Dropdown>
           ) : (
             <div className="login-section">

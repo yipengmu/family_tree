@@ -370,24 +370,19 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
     }
   }, [currentTenant]);
 
-  // 监听租户切换（已删除localStorage逻辑）
+  // 监听租户切换（优化版 - 保持数据状态）
   useEffect(() => {
     const unsubscribe = tenantService.onTenantChange(async (tenant) => {
       const previousTenant = currentTenant;
       setCurrentTenant(tenant);
       
-      // 租户切换时，清空当前状态，等待上面的useEffect重新加载数据
-      console.log('🔄 租户切换，清空当前状态...');
-      setRows([]);
-      setFiles([]);
-      setPreviews([]);
-      setOssUrls([]);
-      setJsonOutput('');
-      // 清除搜索状态
-      setSearchText('');
-      setFilteredRows([]);
+      // 租户切换时，不立即清空数据，而是保留现有数据状态
+      console.log('🔄 租户切换，数据状态保持不变...');
       
-      message.info(`已切换到 ${tenant.name}`);
+      // 可选：如果需要，可以在这里添加数据刷新逻辑
+      // await loadFamilyData();
+      
+      message.info(`已切换到 ${tenant.name}，数据状态已保持`);
     });
 
     return unsubscribe;

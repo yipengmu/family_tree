@@ -2,12 +2,17 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0; /* 关键：允许flex项目缩小到内容以下 */
 }
 
 /* 紧凑模式样式 */
 .tenant-selector.compact {
   width: 100%;
   gap: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .tenant-selector.compact .ant-select {
@@ -16,22 +21,33 @@
 }
 
 .tenant-selector .ant-select {
-  min-width: 200px;
+  min-width: 120px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.tenant-selector .ant-select-single .ant-select-selector {
+  padding: 0 11px !important;
+  width: 100% !important;
+  box-sizing: border-box;
 }
 
 .tenant-selector .ant-select-selector {
   border-radius: 6px;
-  border: 1px solid #d9d9d9;
+  border: 1px solid white !important;
   transition: all 0.3s;
+  color: white !important;
+  background-color: transparent !important;
 }
 
 .tenant-selector .ant-select-selector:hover {
-  border-color: #40a9ff;
+  border-color: white !important;
 }
 
 .tenant-selector .ant-select-focused .ant-select-selector {
-  border-color: #1890ff;
-  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+  border-color: white !important;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2) !important;
 }
 
 .tenant-selector .ant-btn {
@@ -52,15 +68,77 @@
   box-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 9px 28px 8px rgba(0, 0, 0, 0.05);
 }
 
-/* 侧边栏中的下拉菜单样式 - 透明质感风格 */
-.sidebar .tenant-selector .ant-select-dropdown {
+/* 当选择器背景为白色或浅蓝色时的文字颜色 */
+.tenant-selector .ant-select-white-bg .ant-select-selector {
+  background-color: white !important;
+}
+
+.tenant-selector .ant-select-white-bg .ant-select-selector .ant-select-selection-item,
+.tenant-selector .ant-select-white-bg .ant-select-selector .ant-select-selection-placeholder {
+  color: rgba(0, 0, 0, 0.65) !important; /* 标准灰色文字 */
+}
+
+/* 当选择器背景为浅蓝色时的文字颜色 */
+.tenant-selector .ant-select-blue-bg .ant-select-selector {
+  background-color: #e6f7ff !important;
+}
+
+.tenant-selector .ant-select-blue-bg .ant-select-selector .ant-select-selection-item,
+.tenant-selector .ant-select-blue-bg .ant-select-selector .ant-select-selection-placeholder {
+  color: rgba(0, 0, 0, 0.65) !important; /* 标准灰色文字 */
+}
+
+/* 紫色默认风格 */
+.tenant-selector.purple-theme .ant-select-selector {
+  background: linear-gradient(135deg, #8b5cf6, #6d28d9) !important;
+  border: 1px solid white !important;
+  color: white !important;
+}
+
+.tenant-selector.purple-theme .ant-select-selector:hover {
+  background: linear-gradient(135deg, #7c3aed, #5b21b6) !important;
+  border-color: white !important;
+}
+
+.tenant-selector.purple-theme .ant-select-focused .ant-select-selector {
+  background: linear-gradient(135deg, #7c3aed, #5b21b6) !important;
+  border-color: white !important;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2) !important;
+}
+
+/* 通用下拉菜单样式 - 紫色主题 */
+.tenant-selector.purple-theme .ant-select-dropdown {
   background: rgba(139, 92, 246, 0.95) !important; /* 紫色主题透明背景 */
   backdrop-filter: blur(12px) !important;
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
   border-radius: 8px !important;
   box-shadow: 0 8px 32px rgba(139, 92, 246, 0.3), 0 2px 8px rgba(0, 0, 0, 0.15) !important; /* 紫色阴影 */
-  min-width: 200px !important;
-  max-width: 280px !important; /* 限制最大宽度，防止超出侧边栏 */
+  min-width: 120px !important;
+  max-width: 100% !important; /* 限制最大宽度不超过父容器 */
+  width: auto !important; /* 允许自动调整宽度 */
+}
+
+/* 侧边栏中的下拉菜单样式 - 透明质感风格 */
+.sidebar .tenant-selector.purple-theme .ant-select-dropdown {
+  background: rgba(139, 92, 246, 0.95) !important; /* 紫色主题透明背景 */
+  backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 8px 32px rgba(139, 92, 246, 0.3), 0 2px 8px rgba(0, 0, 0, 0.15) !important; /* 紫色阴影 */
+  min-width: 120px !important; /* 紧凑宽度 */
+  max-width: 100% !important; /* 限制最大宽度不超过父容器 */
+  width: auto !important; /* 允许自动调整宽度 */
+}
+
+/* 白色/浅蓝色背景下的下拉菜单样式 */
+.tenant-selector .ant-select-white-bg .ant-select-dropdown,
+.tenant-selector .ant-select-blue-bg .ant-select-dropdown {
+  background: white !important;
+  border: 1px solid #d9d9d9 !important;
+  box-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 9px 28px 8px rgba(0, 0, 0, 0.05) !important;
+  min-width: 120px !important; /* 紧凑宽度 */
+  max-width: 100% !important; /* 限制最大宽度不超过父容器 */
+  width: auto !important; /* 允许自动调整宽度 */
 }
 
 .sidebar .tenant-selector .ant-select-item {
@@ -103,15 +181,50 @@
   color: white !important;
 }
 
-/* 侧边栏中的默认租户图标样式 */
+/* 侧边栏中的默认租户图标样式 - 隐藏 */
 .sidebar .tenant-selector .anticon-home {
-  color: white !important; /* 白色图标 */
+  display: none !important; /* 隐藏小房子图标 */
 }
 
 /* 侧边栏中的删除按钮样式 */
 .sidebar .tenant-selector .anticon-delete:hover {
   color: #fecaca !important; /* 柔和的红色 */
   transform: scale(1.1) !important;
+}
+
+/* 紫色主题选项样式 */
+.tenant-selector.purple-theme .ant-select-item {
+  color: rgba(255, 255, 255, 0.9) !important; /* 白色文字 */
+}
+
+.tenant-selector.purple-theme .ant-select-item:hover {
+  background: rgba(255, 255, 255, 0.15) !important; /* 白色半透明悬停效果 */
+  color: white !important;
+}
+
+.tenant-selector.purple-theme .ant-select-item-option-selected {
+  background: rgba(255, 255, 255, 0.2) !important; /* 白色半透明选中效果 */
+  color: white !important;
+  font-weight: 600 !important;
+}
+
+/* 白色/浅蓝色背景选项样式 */
+.tenant-selector .ant-select-white-bg .ant-select-item,
+.tenant-selector .ant-select-blue-bg .ant-select-item {
+  color: rgba(0, 0, 0, 0.65) !important; /* 标准灰色文字 */
+}
+
+.tenant-selector .ant-select-white-bg .ant-select-item:hover,
+.tenant-selector .ant-select-blue-bg .ant-select-item:hover {
+  background: #f5f5f5 !important;
+  color: rgba(0, 0, 0, 0.85) !important;
+}
+
+.tenant-selector .ant-select-white-bg .ant-select-item-option-selected,
+.tenant-selector .ant-select-blue-bg .ant-select-item-option-selected {
+  background: #e6f7ff !important;
+  color: rgba(0, 0, 0, 0.85) !important;
+  font-weight: 600 !important;
 }
 
 .tenant-selector .ant-select-item {
@@ -157,10 +270,6 @@
   transform: scale(1.1);
 }
 
-/* 默认租户图标样式 */
-.tenant-selector .anticon-home {
-  color: #1890ff;
-}
 
 /* 响应式设计 */
 @media (max-width: 768px) {
