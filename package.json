@@ -13,6 +13,7 @@
     "dagre": "^0.8.5",
     "dotenv": "^17.2.2",
     "express": "^5.1.0",
+    "http-proxy-middleware": "^3.0.5",
     "jsonwebtoken": "^9.0.3",
     "lodash": "^4.17.21",
     "moment": "^2.30.1",

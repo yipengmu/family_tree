@@ -4,13 +4,19 @@ class AuthService {
   static async login(email, password) {
     try {
       // 在Vercel部署中，API端点可能需要调整
-      const apiUrl = process.env.NODE_ENV === 'development' ? '/api/auth/login' : '/api/auth/login';
+      // 在Vercel部署中，API端点可能需要调整
+      // 根据环境变量确定API基础URL
+      const isDev = process.env.NODE_ENV === 'development';
+      const baseUrl = process.env.REACT_APP_API_BASE_URL || (isDev ? 'http://localhost:3003' : '');
+      const apiUrl = `${baseUrl}/api/auth/login`;
       
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'omit', // omit cookies to avoid oversized request headers
+        cache: 'no-store',
         body: JSON.stringify({
           email,
           password,
@@ -76,13 +82,17 @@ class AuthService {
   // 注册
   static async register(name, email, password, code) {
     try {
-      const apiUrl = process.env.NODE_ENV === 'development' ? '/api/auth/register' : '/api/auth/register';
+      // 根据环境变量确定API基础URL
+      const baseUrl = process.env.REACT_APP_API_BASE_URL || (process.env.NODE_ENV === 'development' ? 'http://localhost:3003' : '');
+      const apiUrl = `${baseUrl}/api/auth/register`;
       
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'omit', // omit cookies to avoid oversized request headers
+        cache: 'no-store',
         body: JSON.stringify({
           name,
           email,
@@ -141,13 +151,17 @@ class AuthService {
   // 发送验证码
   static async sendVerificationCode(email, purpose = 'register') {
     try {
-      const apiUrl = process.env.NODE_ENV === 'development' ? '/api/auth/send-code' : '/api/auth/send-code';
+      // 根据环境变量确定API基础URL
+      const baseUrl = process.env.REACT_APP_API_BASE_URL || (process.env.NODE_ENV === 'development' ? 'http://localhost:3003' : '');
+      const apiUrl = `${baseUrl}/api/auth/send-code`;
       
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'omit', // omit cookies to avoid oversized request headers
+        cache: 'no-store',
         body: JSON.stringify({
           email,
           purpose,
@@ -216,13 +230,17 @@ class AuthService {
     }
 
     try {
-      const apiUrl = process.env.NODE_ENV === 'development' ? '/api/user/profile' : '/api/user/profile';
+      // 根据环境变量确定API基础URL
+      const baseUrl = process.env.REACT_APP_API_BASE_URL || (process.env.NODE_ENV === 'development' ? 'http://localhost:3003' : '');
+      const apiUrl = `${baseUrl}/api/user/profile`;
       
       const response = await fetch(apiUrl, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
         },
+        credentials: 'omit', // omit cookies to avoid oversized request headers
+        cache: 'no-store',
       });
 
       // 检查响应状态
@@ -303,6 +321,26 @@ class AuthService {
     return {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json',
+    };
+  }
+
+  // 获取认证请求选项
+  static getAuthOptions(method = 'GET', additionalHeaders = {}) {
+    const token = localStorage.getItem('token');
+    const headers = {
+      'Content-Type': 'application/json',
+      ...additionalHeaders
+    };
+    
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    return {
+      method,
+      headers,
+      credentials: 'omit', // omit cookies to avoid oversized request headers
+      cache: 'no-store'
     };
   }
 }

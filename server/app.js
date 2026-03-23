@@ -29,14 +29,18 @@ app.use(cors({
     'http://localhost:3002',
     'http://localhost:3003', // 添加本地开发服务器地址
     'https://www.tatababa.top',  // 线上域名
-    'https://tatababa.top'      // 如果有非www版本
+    'https://tatababa.top',      // 如果有非www版本
+    'http://localhost:3001'    // 前端开发服务器
   ],
-  credentials: true
+  credentials: true,
+  optionsSuccessStatus: 200,
+  exposedHeaders: ['Content-Length', 'X-Content-Type-Options', 'X-Kuma-Revision', 'X-Kuma-Tagline'],
+  maxAge: 86400 // 24小时
 }));
 
 // 增加请求头和请求体大小限制
-app.use(express.json({ limit: '50mb', maxHeaderSize: 1024 * 1024 * 10 })); // 10MB header limit, 50MB body limit
-app.use(express.urlencoded({ extended: true, limit: '50mb', maxHeaderSize: 1024 * 1024 * 10 }));
+app.use(express.json({ limit: '50mb', maxHeaderSize: 1024 * 1024 * 20 })); // 20MB header limit, 50MB body limit
+app.use(express.urlencoded({ extended: true, limit: '50mb', maxHeaderSize: 1024 * 1024 * 20 }));
 
 // JWT中间件
 const jwt = require('jsonwebtoken');
@@ -73,6 +77,16 @@ function getTimestamp() {
   const ms = now.getMilliseconds().toString().padStart(3, '0');
   return `${hours}:${minutes}:${seconds}.${ms}`;
 }
+
+// 中间件：处理预检请求
+// Express 5.x 使用 {*path} 语法替代 *
+app.options('{*path}', (req, res) => {
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', req.headers['access-control-request-headers'] || 'Content-Type, Authorization');
+  res.header('Access-Control-Max-Age', '86400'); // 24小时
+  res.sendStatus(200);
+});
 
 // 日志中间件
 app.use((req, res, next) => {
@@ -650,12 +664,15 @@ app.on('error', (error) => {
   console.error('服务器错误:', error);
 });
 
-// 创建HTTP服务器并设置更大的请求头限制
-const server = http.createServer({
-  maxHeadersCount: 1000,
-  maxHeaderSize: 1024 * 1024 * 10, // 10MB 最大头部大小
-  headersTimeout: 60000, // 60秒头部超时
-}, app);
+// 创建HTTP服务器
+// 注意：Node.js 18+ 默认 HTTP 头部大小限制为 16KB
+// 如果需要更大的头部限制，需要通过命令行参数 --max-http-header-size 启动
+// 例如：node --max-http-header-size=10485760 server/app.js
+const server = http.createServer(app);
+
+// 设置服务器超时
+server.headersTimeout = 60000; // 60秒头部超时
+server.requestTimeout = 120000; // 120秒请求超时
 
 // 监听端口
 server.listen(PORT, () => {

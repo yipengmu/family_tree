@@ -28,7 +28,7 @@ model Tenant {
   description String?
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
-  settings    Json     @default("{}")
+  settings    String   @default("{}")
   status      String   @default("active")
   
   // 添加反向关系
