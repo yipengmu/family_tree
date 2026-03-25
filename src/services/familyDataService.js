@@ -149,12 +149,17 @@ class FamilyDataService {
    * @returns {Promise<Array>} - 家谱数据
    */
   async loadDataWithFallback(tenantId) {
-    // 对于游客模式或默认租户，优先使用原始数据文件
-    if (tenantId === 'default' || tenantService.isGuestMode()) {
-      console.log(`📁 [第3层] 游客模式或默认租户，优先加载原始familyData.js`);
+    // 检查用户是否已登录
+    const isAuthenticated = !!localStorage.getItem('token');
+    
+    // 对于未登录用户（游客模式）或默认租户，优先使用本地原始数据文件
+    // 这样可以确保在 Vercel 环境下也能正确显示完整的穆氏族谱
+    if (!isAuthenticated || tenantId === 'default' || tenantService.isGuestMode()) {
+      console.log(`📁 [第3层] 未登录/游客模式/默认租户，优先加载本地familyData.js`);
       try {
         const originalData = this.loadOriginalFamilyData(tenantId);
         if (originalData && originalData.length > 0) {
+          console.log(`✅ [第3层] 成功加载本地数据: ${originalData.length} 条记录`);
           return originalData;
         }
       } catch (error) {
@@ -163,7 +168,7 @@ class FamilyDataService {
     }
 
     try {
-      // 第2层：从数据库加载（带超时）
+      // 第2层：从数据库加载（带超时）- 仅对已登录用户
       console.log(`🗄️ [第2层] 尝试从数据库加载数据 (租户: ${tenantId})`);
       const dbData = await this.loadFamilyDataFromServer(tenantId);
       
@@ -270,10 +275,12 @@ class FamilyDataService {
    */
   loadOriginalFamilyData(tenantId = null) {
     const currentTenantId = tenantId || tenantService.getCurrentTenant().id;
+    const isAuthenticated = !!localStorage.getItem('token');
     
-    // 只有默认租户才从原始文件加载
-    if (currentTenantId !== 'default' && currentTenantId !== process.env.REACT_APP_DEFAULT_TENANT_ID) {
-      console.log(`📊 [第3层] 非默认租户 ${currentTenantId}，返回空数据`);
+    // 对于未登录用户，始终加载默认的穆氏族谱数据
+    // 对于已登录用户，只有默认租户才从原始文件加载
+    if (isAuthenticated && currentTenantId !== 'default' && currentTenantId !== process.env.REACT_APP_DEFAULT_TENANT_ID) {
+      console.log(`📊 [第3层] 已登录用户的非默认租户 ${currentTenantId}，返回空数据`);
       return [];
     }
 
