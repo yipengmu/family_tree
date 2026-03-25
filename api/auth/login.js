@@ -1,21 +1,8 @@
 // Vercel Serverless Function for Login API
+// 统一使用 Prisma + PostgreSQL 数据库
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { PrismaClient } from '@prisma/client';
-
-// 优化Prisma客户端初始化，适配Vercel环境
-let prisma;
-
-if (process.env.NODE_ENV === 'production') {
-  // 在生产环境中使用全局缓存避免重复初始化
-  if (!global.__prisma__) {
-    global.__prisma__ = new PrismaClient();
-  }
-  prisma = global.__prisma__;
-} else {
-  // 在开发环境中直接创建新实例
-  prisma = new PrismaClient();
-}
+import prisma from '../../lib/prisma.js';
 
 export default async function handler(req, res) {
   // 设置CORS头

@@ -1,21 +1,7 @@
 // server/models/user.js
-// 用戶模型，適配Prisma + Neon數據庫
-const { PrismaClient } = require('@prisma/client');
+// 用戶模型，統一使用 Prisma + PostgreSQL 數據庫
+const prisma = require('../../lib/prisma.cjs');
 const bcrypt = require('bcryptjs');
-
-// 优化Prisma客户端初始化，适配Vercel环境
-let prisma;
-
-if (process.env.NODE_ENV === 'production') {
-  // 在生产环境中使用全局缓存避免重复初始化
-  if (!global.__prisma__) {
-    global.__prisma__ = new PrismaClient();
-  }
-  prisma = global.__prisma__;
-} else {
-  // 在开发环境中直接创建新实例
-  prisma = new PrismaClient();
-}
 
 const User = {
   // 創建用戶
