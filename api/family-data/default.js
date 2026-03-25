@@ -1,6 +1,6 @@
 // Vercel Serverless Function for Default Family Data API
-// 导入完整的穆氏族谱数据
-import dbJson from '../data/familyData.js';
+// 使用 require 导入 JSON 数据文件（不会被计入 Serverless Function 限制）
+import familyData from '../data/familyData.json';
 
 export default async function handler(req, res) {
   // 设置CORS头
@@ -19,9 +19,6 @@ export default async function handler(req, res) {
 
   if (req.method === 'GET') {
     try {
-      // 使用导入的完整穆氏族谱数据
-      const familyData = dbJson;
-      
       console.log(`📊 返回默认家谱数据: ${familyData.length} 条记录`);
 
       res.json({

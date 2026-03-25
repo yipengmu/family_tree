@@ -1,4 +1,4 @@
-const dbJson = [
+[
 	{
 		"id": 1,
 		"name": "穆茂",
@@ -14351,6 +14351,4 @@ const dbJson = [
 		"location": null,
 		"childrens": null
 	}
-];
-
-export default dbJson;
+]
