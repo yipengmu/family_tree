@@ -3,6 +3,11 @@
  * 处理千问API调用，解决CORS问题
  */
 
+// 本地开发环境跳过 TLS 证书验证（Node.js v22+ 对 Neon 数据库连接需要）
+if (process.env.NODE_ENV !== 'production') {
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+}
+
 const express = require('express');
 const cors = require('cors');
 const http = require('http');
@@ -19,7 +24,7 @@ const { sendVerificationCodeByEmail, registerUser, loginUser, generateToken } = 
 
 // 创建Express应用
 const app = express();
-const PORT = process.env.PORT || 3003;
+const PORT = process.env.SERVER_PORT || process.env.PORT || 3003;
 
 // 中间件配置 - 增加请求头大小限制
 app.use(cors({
