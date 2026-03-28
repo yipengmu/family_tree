@@ -1,7 +1,39 @@
 // Vercel Serverless Function for Send Verification Code API
 // 统一使用 Prisma + PostgreSQL 数据库
 import prisma from '../../lib/prisma.js';
-import nodemailer from 'nodemailer';
+
+// 邮件发送函数 - 支持 Resend API
+async function sendEmail({ to, subject, text, html }) {
+  const resendApiKey = process.env.RESEND_API_KEY;
+  
+  if (!resendApiKey) {
+    throw new Error('RESEND_API_KEY 未配置');
+  }
+  
+  const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+  
+  const response = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${resendApiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from: fromEmail,
+      to: to,
+      subject: subject,
+      text: text,
+      html: html,
+    }),
+  });
+  
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Resend API 错误: ${error}`);
+  }
+  
+  return await response.json();
+}
 
 export default async function handler(req, res) {
   // 设置CORS头
@@ -105,33 +137,18 @@ export default async function handler(req, res) {
       })
     ]);
 
-    // 检查邮件服务是否配置
-    const emailConfig = {
-      host: process.env.EMAIL_HOST,
-      port: parseInt(process.env.EMAIL_PORT) || 587,
-      secure: false, // true for 465, false for other ports
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    };
+    // 检查 Resend API 是否配置
+    const isResendConfigured = process.env.RESEND_API_KEY;
 
-    const isEmailConfigured = emailConfig.host && emailConfig.auth.user && emailConfig.auth.pass;
-
-    if (isEmailConfigured) {
-      // 如果邮件服务已配置，尝试发送邮件
+    if (isResendConfigured) {
+      // 使用 Resend 发送邮件
       try {
-        const transporter = nodemailer.createTransporter(emailConfig);
-
-        const mailOptions = {
-          from: process.env.EMAIL_USER,
+        await sendEmail({
           to: email,
           subject: `家谱创作工具 - ${purpose === 'register' ? '注册' : '密码重置'}验证码`,
           text: `您的验证码是: ${code}，有效期5分钟。如果不是本人操作，请忽略此邮件。`,
           html: `<p>您的验证码是: <strong>${code}</strong>，有效期5分钟。</p><p>如果不是本人操作，请忽略此邮件。</p>`,
-        };
-
-        await transporter.sendMail(mailOptions);
+        });
         
         res.status(200).json({
           success: true,
@@ -139,22 +156,21 @@ export default async function handler(req, res) {
           timestamp: new Date().toISOString()
         });
       } catch (emailError) {
-        console.error('邮件发送失败:', emailError);
-        // 即使邮件发送失败，也要返回成功（因为验证码已存储在数据库中）
+        console.error('Resend 邮件发送失败:', emailError);
         res.status(200).json({
           success: true,
-          message: '验证码已生成（邮件发送失败，请检查邮箱设置）',
+          message: '验证码已生成（邮件发送失败，请检查配置）',
           timestamp: new Date().toISOString()
         });
       }
     } else {
-      // 在开发环境中，如果没有配置邮件服务，记录验证码到控制台以便调试
-      console.log(`⚠️ 邮件服务未配置，验证码: ${code} (有效期5分钟) - 仅用于开发调试`);
+      // 未配置邮件服务
+      console.log(`⚠️ Resend 未配置，验证码: ${code} (有效期5分钟) - 仅用于开发调试`);
       res.status(200).json({
         success: true,
         message: process.env.NODE_ENV === 'development' 
           ? '验证码已生成（开发环境，验证码: ' + code + '）' 
-          : '验证码已生成',
+          : '验证码已生成（邮件服务未配置）',
           timestamp: new Date().toISOString()
       });
     }
