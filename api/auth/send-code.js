@@ -6,33 +6,47 @@ import prisma from '../../lib/prisma.js';
 async function sendEmail({ to, subject, text, html }) {
   const resendApiKey = process.env.RESEND_API_KEY;
   
+  console.log('[邮件发送] 检查 RESEND_API_KEY:', resendApiKey ? '已配置 (' + resendApiKey.substring(0, 10) + '...)' : '未配置');
+  
   if (!resendApiKey) {
     throw new Error('RESEND_API_KEY 未配置');
   }
   
   const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+  console.log('[邮件发送] 发件人:', fromEmail);
+  console.log('[邮件发送] 收件人:', to);
   
-  const response = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${resendApiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      from: fromEmail,
-      to: to,
-      subject: subject,
-      text: text,
-      html: html,
-    }),
-  });
-  
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Resend API 错误: ${error}`);
+  try {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${resendApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: fromEmail,
+        to: to,
+        subject: subject,
+        text: text,
+        html: html,
+      }),
+    });
+    
+    console.log('[邮件发送] Resend API 响应状态:', response.status);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('[邮件发送] Resend API 错误:', errorText);
+      throw new Error(`Resend API 错误: ${errorText}`);
+    }
+    
+    const result = await response.json();
+    console.log('[邮件发送] 成功:', result);
+    return result;
+  } catch (error) {
+    console.error('[邮件发送] 请求异常:', error.message);
+    throw error;
   }
-  
-  return await response.json();
 }
 
 export default async function handler(req, res) {
@@ -139,6 +153,8 @@ export default async function handler(req, res) {
 
     // 检查 Resend API 是否配置
     const isResendConfigured = process.env.RESEND_API_KEY;
+    console.log('[验证码] 环境检查 - RESEND_API_KEY:', isResendConfigured ? '已配置' : '未配置');
+    console.log('[验证码] 生成的验证码:', code);
 
     if (isResendConfigured) {
       // 使用 Resend 发送邮件
