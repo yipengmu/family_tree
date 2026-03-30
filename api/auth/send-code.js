@@ -153,7 +153,10 @@ export default async function handler(req, res) {
 
     // 检查 Resend API 是否配置
     const isResendConfigured = process.env.RESEND_API_KEY;
-    console.log('[验证码] 环境检查 - RESEND_API_KEY:', isResendConfigured ? '已配置' : '未配置');
+    console.log('[验证码] 环境检查 - RESEND_API_KEY:', isResendConfigured ? '已配置 (' + isResendConfigured.substring(0, 10) + '...)' : '未配置');
+    console.log('[验证码] 所有环境变量:', Object.keys(process.env).filter(k => k.includes('RESEND') || k.includes('EMAIL')));
+    console.log('[验证码] NODE_ENV:', process.env.NODE_ENV);
+    console.log('[验证码] VERCEL_ENV:', process.env.VERCEL_ENV);
     console.log('[验证码] 生成的验证码:', code);
 
     if (isResendConfigured) {
