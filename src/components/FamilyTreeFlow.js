@@ -171,10 +171,10 @@ const FamilyTreeFlow = forwardRef(({ familyData, loading = false, error = null, 
   const idealViewParams = useMemo(() => {
     if (isMobile) {
       return {
-        zoom: 0.8,           // 移动端更小的缩放比例
-        centerOffsetX: 50,   // 移动端更小的偏移
-        centerOffsetY: 20,   // 移动端更小的偏移
-        topPadding: 5        // 移动端减少顶部留白，从10减少到5
+        zoom: 0.5,           // 移动端更小的缩放比例，从0.8降到0.5，显示更多内容
+        centerOffsetX: 30,   // 移动端更小的偏移
+        centerOffsetY: 10,   // 移动端更小的偏移
+        topPadding: 0        // 移动端顶部不留白
       };
     }
     return {
@@ -514,7 +514,7 @@ const FamilyTreeFlow = forwardRef(({ familyData, loading = false, error = null, 
 
             // 直接将根节点设置为画布中心
             reactFlow.setCenter(rootNode.position.x, rootNode.position.y + 200, {
-              zoom: isMobile ? 0.6 : 0.7,
+              zoom: isMobile ? 0.45 : 0.7,  // 移动端初始缩放从0.6降到0.45，显示更多内容
               duration: 800
             });
 
@@ -1025,12 +1025,12 @@ const FamilyTreeFlow = forwardRef(({ familyData, loading = false, error = null, 
           defaultViewport={{
             x: 0,
             y: 0,
-            zoom: isMobile ? 0.4 : 0.6  // PC端稍微增加默认缩放，从0.5增加到0.6，以便显示3行
+            zoom: isMobile ? 0.35 : 0.6  // 移动端默认缩放从0.4降到0.35，显示更多内容
           }}
           fitViewOptions={{
-            padding: isMobile ? 0.1 : 0.2,
+            padding: isMobile ? 0.05 : 0.2,  // 移动端padding从0.1降到0.05，更紧凑
             includeHiddenNodes: false,
-            minZoom: isMobile ? 0.4 : 0.5,
+            minZoom: isMobile ? 0.3 : 0.5,   // 移动端最小缩放从0.4降到0.3
             maxZoom: isMobile ? 1.5 : 1.2
           }}
           // 交互配置

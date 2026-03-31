@@ -2,9 +2,12 @@
  * 家譜數據服務
  * 3層數據架構：內存緩存 → 數據庫持久化 → 原始familyData.js
  * 為雲端SaaS部署優化，確保數據一致性
+ * 
+ * 統一使用 Prisma + PostgreSQL 作為數據訪問層
  */
 
 const tenantService = require('./tenantService');
+const prisma = require('../../lib/prisma.cjs');
 
 const CACHE_KEYS = {
   FAMILY_DATA: 'familyData',
@@ -149,16 +152,29 @@ class FamilyDataService {
    */
   async loadDataWithFallback(tenantId) {
     try {
-      // 第2層：從數據庫加載
-      console.log(`🗄️ [第2層] 嘗試從數據庫加載數據 (租戶: ${tenantId})`);
-      const dbData = await this.loadFamilyDataFromServer(tenantId);
+      // 第2層：直接從 PostgreSQL 數據庫加載（使用 Prisma）
+      console.log(`🗄️ [第2層] 嘗試從 PostgreSQL 數據庫加載數據 (租戶: ${tenantId})`);
+      const dbData = await this.loadFamilyDataFromDatabase(tenantId);
       
       if (dbData && dbData.length > 0) {
         console.log(`✅ [第2層] 從數據庫加載成功 (${dbData.length}條記錄)`);
         return dbData;
       }
+      
+      console.log(`📂 數據庫中沒有數據，嘗試從 API 加載...`);
     } catch (error) {
       console.warn(`⚠️ [第2層] 數據庫加載失敗:`, error.message);
+    }
+    
+    // 嘗試從 API 加載（用於前端場景）
+    try {
+      const apiData = await this.loadFamilyDataFromServer(tenantId);
+      if (apiData && apiData.length > 0) {
+        console.log(`✅ 從 API 加載成功 (${apiData.length}條記錄)`);
+        return apiData;
+      }
+    } catch (error) {
+      console.warn(`⚠️ API 加載失敗:`, error.message);
     }
 
     // 第3層：回退到原始數據文件
@@ -268,15 +284,105 @@ class FamilyDataService {
    */
   async saveFamilyDataToDatabase(tenantId, familyData) {
     try {
-      // 在實際實現中，這裡會將數據保存到數據庫
-      // 使用Prisma或其他ORM進行數據庫操作
       console.log(`🗄️ 保存家譜數據到數據庫 (租戶: ${tenantId}, ${familyData.length}條記錄)`);
       
-      // 模擬數據庫保存操作
-      // 在真實實現中，這裡會使用Prisma客戶端進行數據庫操作
+      // 使用 Prisma 事務確保數據一致性
+      await prisma.$transaction(async (tx) => {
+        // 先刪除該租戶的現有數據
+        await tx.familyData.deleteMany({
+          where: { tenant_id: tenantId }
+        });
+        
+        // 批量插入新數據
+        if (familyData.length > 0) {
+          const dataToInsert = familyData.map(item => ({
+            tenant_id: tenantId,
+            person_id: String(item.person_id || item.id || ''),
+            name: item.name || '',
+            g_rank: item.g_rank || 1,
+            rank_index: item.rank_index || 1,
+            g_father_id: item.g_father_id ? String(item.g_father_id) : null,
+            g_mother_id: item.g_mother_id ? String(item.g_mother_id) : null,
+            sex: item.sex || 'MAN',
+            adoption: item.adoption || 'none',
+            official_position: item.official_position || null,
+            summary: item.summary || null,
+            birth_date: item.birth_date || null,
+            death_date: item.death_date || null,
+            spouse: item.spouse || null,
+            location: item.location || null,
+            formal_name: item.formal_name || null,
+            id_card: item.id_card || null,
+            face_img: item.face_img || '',
+            photos: item.photos || null,
+            household_info: item.household_info || null,
+            home_page: item.home_page || null,
+            childrens: item.childrens || null,
+          }));
+          
+          await tx.familyData.createMany({
+            data: dataToInsert,
+          });
+        }
+      });
+      
+      console.log(`✅ 數據庫保存完成`);
       return { savedCount: familyData.length };
     } catch (error) {
       console.error('保存數據到數據庫失敗:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 從數據庫加載家譜數據
+   * @param {string} tenantId - 租戶ID
+   * @returns {Promise<Array>} - 家譜數據
+   */
+  async loadFamilyDataFromDatabase(tenantId) {
+    try {
+      console.log(`🗄️ 從數據庫加載家譜數據 (租戶: ${tenantId})`);
+      
+      const data = await prisma.familyData.findMany({
+        where: { tenant_id: tenantId },
+        orderBy: [
+          { g_rank: 'asc' },
+          { rank_index: 'asc' }
+        ]
+      });
+      
+      // 轉換數據格式以匹配前端期望的結構
+      const formattedData = data.map(item => ({
+        id: item.id,
+        person_id: item.person_id,
+        name: item.name,
+        g_rank: item.g_rank,
+        rank_index: item.rank_index,
+        g_father_id: item.g_father_id,
+        g_mother_id: item.g_mother_id,
+        sex: item.sex,
+        adoption: item.adoption,
+        official_position: item.official_position,
+        summary: item.summary,
+        birth_date: item.birth_date,
+        death_date: item.death_date,
+        spouse: item.spouse,
+        location: item.location,
+        formal_name: item.formal_name,
+        id_card: item.id_card,
+        face_img: item.face_img,
+        photos: item.photos,
+        household_info: item.household_info,
+        home_page: item.home_page,
+        childrens: item.childrens,
+        created_at: item.created_at,
+        updated_at: item.updated_at,
+      }));
+      
+      console.log(`✅ 從數據庫加載了 ${formattedData.length} 條記錄`);
+      return formattedData;
+    } catch (error) {
+      console.error('從數據庫加載數據失敗:', error);
       throw error;
     }
   }

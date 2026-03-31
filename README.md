@@ -48,7 +48,7 @@
 | **布局算法** | Dagre |
 | **后端框架** | Express 5 |
 | **数据库 ORM** | Prisma 5 |
-| **数据库** | PostgreSQL (Neon) / SQLite |
+| **数据库** | PostgreSQL (Neon) |
 | **部署平台** | Vercel (Serverless) |
 
 ## 🚀 快速开始
@@ -57,7 +57,7 @@
 
 - Node.js 18+
 - npm 或 yarn
-- PostgreSQL 数据库（或使用 SQLite 本地开发）
+- PostgreSQL 数据库（推荐使用 [Neon](https://neon.tech) 免费 Serverless PostgreSQL）
 
 ### 安装步骤
 

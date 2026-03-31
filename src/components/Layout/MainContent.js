@@ -26,7 +26,7 @@ const MainContent = ({
             onSelect={onSearchSelect}
             placeholder="搜索族谱成员..."
             showStatus={true}
-            style={{ flex: 1, maxWidth: 400 }}
+            style={{ flex: 1, maxWidth: '100%' }}
           />
         </div>
       </header>

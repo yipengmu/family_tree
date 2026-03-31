@@ -6,6 +6,52 @@
   flex-direction: column;
   min-height: 600px; /* 最小高度保证 */
   box-sizing: border-box;
+  position: relative; /* 为覆盖式提示提供定位上下文 */
+}
+
+/* 游客模式提示横幅 - 桌面端样式 */
+.guest-mode-banner {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 100;
+  background-color: #e6f7ff;
+  padding: 8px 12px;
+  border-radius: 4px;
+  border: 1px solid #91d5ff;
+  font-size: 12px;
+  color: #1890ff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.guest-mode-text {
+  white-space: nowrap;
+}
+
+.create-family-btn {
+  padding: 0 !important;
+  height: auto !important;
+  line-height: inherit !important;
+}
+
+/* 用户状态提示横幅 - 桌面端样式 */
+.user-status-banner {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 100;
+  background-color: #f6ffed;
+  padding: 8px 12px;
+  border-radius: 4px;
+  border: 1px solid #b7eb8f;
+  font-size: 12px;
+  color: #52c41a;
+}
+
+.user-status-text {
+  white-space: nowrap;
 }
 
 .family-tree-wrapper {
@@ -52,8 +98,64 @@
   }
 
   .family-tree-wrapper {
-    border-radius: 12px;
-    margin: 0 -16px;
+    border-radius: 0; /* 移动端移除圆角，最大化内容区域 */
+    margin: 0; /* 移除负margin，让容器占满可用宽度 */
+    width: 100%;
     min-height: 400px;
+    border-left: none;
+    border-right: none;
+    box-shadow: none; /* 移动端移除阴影，更简洁 */
+  }
+
+  /* 移动端：提示横幅改为覆盖式，不占用空间 */
+  .guest-mode-banner,
+  .user-status-banner {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    left: auto;
+    z-index: 1000;
+    padding: 6px 10px;
+    font-size: 11px;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    max-width: calc(100% - 16px);
+  }
+
+  .guest-mode-banner {
+    background-color: rgba(230, 247, 255, 0.95);
+  }
+
+  .user-status-banner {
+    background-color: rgba(246, 255, 237, 0.95);
+  }
+
+  .guest-mode-text,
+  .user-status-text {
+    font-size: 11px;
+  }
+
+  .create-family-btn {
+    font-size: 11px !important;
+  }
+}
+
+/* 小屏幕手机优化 */
+@media (max-width: 480px) {
+  .guest-mode-banner,
+  .user-status-banner {
+    padding: 5px 8px;
+    font-size: 10px;
+  }
+
+  .guest-mode-text,
+  .user-status-text {
+    font-size: 10px;
+  }
+
+  .create-family-btn {
+    font-size: 10px !important;
   }
 }
