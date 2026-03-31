@@ -492,7 +492,7 @@
 
 .react-flow__panel {
   background: transparent;
-  margin-top: 200px;
+  margin: 0; /* 移除默认margin */
 }
 
 /* 移动端优化 */
@@ -592,11 +592,21 @@
 @media (max-width: 768px) {
   .family-tree-container {
     height: 100vh;
+    width: 100%; /* 确保占满宽度 */
   }
 
   /* 移动端Tab模式下的容器高度调整 */
   .mobile-layout .family-tree-container {
     height: calc(100vh - 56px); /* 减去微信风格Tab高度 */
+    width: 100%;
+  }
+
+  /* 移动端flow-container占满宽度 */
+  .flow-container {
+    width: 100% !important;
+    border-radius: 8px; /* 移动端稍微减小圆角 */
+    border-left: none;
+    border-right: none;
   }
 
   .unified-navbar {
@@ -785,11 +795,11 @@
   .react-flow__panel {
     position: relative !important;
     transform: none !important;
-    margin: 8px;
+    margin: 0; /* 移除margin，让面板占满宽度 */
   }
 
   .react-flow__panel .ant-card {
-    width: calc(100vw - 32px) !important;
+    width: 100% !important; /* 占满可用宽度 */
     max-width: none !important;
   }
 }

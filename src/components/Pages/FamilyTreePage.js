@@ -73,47 +73,25 @@ const FamilyTreePage = ({
       onSearchSelect={handleSearchSelect}
     >
       <div className="family-tree-page">
-        {/* 游客模式提示 */}
+        {/* 游客模式提示 - 移动端覆盖式，桌面端固定 */}
         {!localStorage.getItem('token') && (
-          <div style={{
-            position: 'absolute',
-            top: '10px',
-            right: '10px',
-            zIndex: 100,
-            backgroundColor: '#e6f7ff',
-            padding: '8px 12px',
-            borderRadius: '4px',
-            border: '1px solid #91d5ff',
-            fontSize: '12px',
-            color: '#1890ff'
-          }}>
-            🏃‍♂️ 游客模式 - 正在浏览穆家家谱
+          <div className="guest-mode-banner">
+            <span className="guest-mode-text">🏃‍♂️ 游客模式 - 正在浏览穆家家谱</span>
             <Button 
               type="link" 
               size="small" 
               onClick={handleCreateMyFamilyTree}
-              style={{ padding: 0, marginLeft: '8px', height: 'auto', lineHeight: 'inherit' }}
+              className="create-family-btn"
             >
               创建我的家谱
             </Button>
           </div>
         )}
         
-        {/* 显示当前用户状态 */}
+        {/* 显示当前用户状态 - 移动端覆盖式，桌面端固定 */}
         {localStorage.getItem('token') && (
-          <div style={{
-            position: 'absolute',
-            top: '10px',
-            right: '10px',
-            zIndex: 100,
-            backgroundColor: '#f6ffed',
-            padding: '8px 12px',
-            borderRadius: '4px',
-            border: '1px solid #b7eb8f',
-            fontSize: '12px',
-            color: '#52c41a'
-          }}>
-            👤 已登录 - 可以管理您的家谱
+          <div className="user-status-banner">
+            <span className="user-status-text">👤 已登录 - 可以管理您的家谱</span>
           </div>
         )}
 
