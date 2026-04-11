@@ -79,6 +79,16 @@ export default async function handler(req, res) {
   }
 
   try {
+    // 检查 DATABASE_URL 是否配置
+    if (!process.env.DATABASE_URL) {
+      console.error('[验证码] DATABASE_URL 未配置！');
+      return res.status(500).json({ success: false, error: '数据库未配置' });
+    }
+    console.log('[验证码] DATABASE_URL:', process.env.DATABASE_URL.substring(0, 30) + '...');
+    
+    // 预热数据库连接（Neon 冷启动可能需要几秒）
+    await prisma.$connect();
+    
     // 检查是否已在60秒内发送过验证码
     const now = Date.now();
     
