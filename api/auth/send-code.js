@@ -12,7 +12,14 @@ async function sendEmail({ to, subject, text, html }) {
     throw new Error('RESEND_API_KEY 未配置');
   }
   
-  const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+  // 获取发件人地址，如果是公共邮箱域名（未在Resend验证），自动回退到默认地址
+  let fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+  const publicDomains = ['gmail.com', 'qq.com', 'outlook.com', 'hotmail.com', '163.com', '126.com', 'yahoo.com'];
+  const emailDomain = fromEmail.split('@')[1]?.toLowerCase();
+  if (publicDomains.includes(emailDomain)) {
+    console.log('[邮件发送] 检测到公共邮箱域名，自动切换到 Resend 默认发件地址');
+    fromEmail = 'onboarding@resend.dev';
+  }
   console.log('[邮件发送] 发件人:', fromEmail);
   console.log('[邮件发送] 收件人:', to);
   
