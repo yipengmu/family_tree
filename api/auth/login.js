@@ -2,7 +2,7 @@
 // 统一使用 Prisma + PostgreSQL 数据库
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import prisma from '../../lib/prisma.js';
+import prisma, { ensureConnection } from '../../lib/prisma.js';
 
 export default async function handler(req, res) {
   // 设置CORS头
@@ -33,6 +33,9 @@ export default async function handler(req, res) {
   }
 
   try {
+    // 预热数据库连接（Neon 冷启动可能需要重试）
+    await ensureConnection();
+
     // 从数据库查找用户
     const user = await prisma.user.findUnique({
       where: {

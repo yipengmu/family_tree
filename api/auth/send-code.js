@@ -1,6 +1,6 @@
 // Vercel Serverless Function for Send Verification Code API
 // 统一使用 Prisma + PostgreSQL 数据库
-import prisma from '../../lib/prisma.js';
+import prisma, { ensureConnection } from '../../lib/prisma.js';
 
 // 邮件发送函数 - 支持 Resend API
 async function sendEmail({ to, subject, text, html }) {
@@ -79,6 +79,15 @@ export default async function handler(req, res) {
   }
 
   try {
+    // 检查 DATABASE_URL 是否配置
+    if (!process.env.DATABASE_URL) {
+      console.error('[验证码] DATABASE_URL 未配置！');
+      return res.status(500).json({ success: false, error: '数据库未配置' });
+    }
+    
+    // 预热数据库连接（Neon 冷启动可能需要重试）
+    await ensureConnection();
+
     // 检查是否已在60秒内发送过验证码
     const now = Date.now();
     

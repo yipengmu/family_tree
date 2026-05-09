@@ -1,6 +1,6 @@
 // Vercel Serverless Function for Verify Verification Code API
 // 统一使用 Prisma + PostgreSQL 数据库
-import prisma from '../../lib/prisma.js';
+import prisma, { ensureConnection } from '../../lib/prisma.js';
 
 export default async function handler(req, res) {
   // 设置CORS头
@@ -28,6 +28,9 @@ export default async function handler(req, res) {
   }
 
   try {
+    // 预热数据库连接（Neon 冷启动可能需要重试）
+    await ensureConnection();
+
     // 查找验证码
     const verificationCode = await prisma.verificationCode.findFirst({
       where: {
