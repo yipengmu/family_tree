@@ -23,7 +23,10 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { name, email, password, code } = req.body;
+  const name = String(req.body?.name || '').trim();
+  const email = String(req.body?.email || '').trim().toLowerCase();
+  const password = String(req.body?.password || '');
+  const code = String(req.body?.code || '').trim();
 
   if (!name || !email || !password || !code) {
     return res.status(400).json({ 
@@ -32,61 +35,32 @@ export default async function handler(req, res) {
     });
   }
 
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return res.status(400).json({ success: false, error: '请输入有效的邮箱地址' });
+  }
+  if (name.length > 50 || password.length < 6 || password.length > 100 || !/^\d{6}$/.test(code)) {
+    return res.status(400).json({ success: false, error: '注册信息格式不正确' });
+  }
+
   try {
     // 预热数据库连接（Neon 冷启动可能需要重试）
     await ensureConnection();
 
-    // 检查用户是否已存在
-    const existingUser = await prisma.user.findUnique({
-      where: {
-        email: email,
-      },
-    });
-    
-    if (existingUser) {
-      return res.status(400).json({
-        success: false,
-        error: '该邮箱已被注册'
-      });
-    }
-
-    // 验证验证码
-    const verificationCode = await prisma.verificationCode.findFirst({
-      where: {
-        email: email,
-        code: code,
-        purpose: 'register', // 验证码用途应为注册
-        expires_at: {
-          gte: new Date() // 确保未过期
-        }
-      }
-    });
-
-    if (!verificationCode) {
-      return res.status(400).json({
-        success: false,
-        error: '验证码错误或已过期'
-      });
-    }
-
-    // 验证码正确，删除它（一次性使用）
-    await prisma.verificationCode.delete({
-      where: {
-        id: verificationCode.id
-      }
-    });
-
-    // 对密码进行哈希
+    // 在同一事务内校验并消费验证码，防止验证码被重复注册使用。
     const password_hash = await bcrypt.hash(password, 10);
+    const newUser = await prisma.$transaction(async (tx) => {
+      const existingUser = await tx.user.findUnique({ where: { email } });
+      if (existingUser) throw new Error('该邮箱已被注册');
 
-    // 创建新用户
-    const newUser = await prisma.user.create({
-      data: {
-        username: name,
-        email,
-        password_hash,
-        is_active: true,
-      },
+      const verificationCode = await tx.verificationCode.findFirst({
+        where: { email, code, purpose: 'register', expires_at: { gte: new Date() } }
+      });
+      if (!verificationCode) throw new Error('验证码错误或已过期');
+
+      await tx.verificationCode.delete({ where: { id: verificationCode.id } });
+      return tx.user.create({
+        data: { username: name, email, password_hash, is_active: true }
+      });
     });
 
     // 生成JWT令牌
@@ -107,7 +81,8 @@ export default async function handler(req, res) {
     });
   } catch (error) {
     console.error('注册错误:', error);
-    res.status(500).json({
+    const clientError = ['该邮箱已被注册', '验证码错误或已过期'].includes(error.message);
+    res.status(clientError ? 400 : 500).json({
       success: false,
       error: error.message || '服务器内部错误'
     });

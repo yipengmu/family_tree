@@ -121,10 +121,15 @@ app.get('/health', (req, res) => {
 // 发送验证码
 app.post('/api/auth/send-code', async (req, res) => {
   try {
-    const { email, purpose } = req.body;
+    const email = String(req.body?.email || '').trim().toLowerCase();
+    const { purpose } = req.body || {};
 
     if (!email) {
       return res.status(400).json({ error: '邮箱地址是必需的' });
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ error: '请输入有效的邮箱地址' });
     }
 
     if (!purpose || !['register', 'reset'].includes(purpose)) {
@@ -152,13 +157,20 @@ app.post('/api/auth/send-code', async (req, res) => {
 // 用户注册
 app.post('/api/auth/register', async (req, res) => {
   try {
-    const { name, email, password, code } = req.body;
+    const name = String(req.body?.name || '').trim();
+    const email = String(req.body?.email || '').trim().toLowerCase();
+    const password = String(req.body?.password || '');
+    const code = String(req.body?.code || '').trim();
 
     if (!name || !email || !password || !code) {
       return res.status(400).json({ 
         success: false,
         error: '姓名、邮箱、密码和验证码都是必需的' 
       });
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || name.length > 50 || password.length < 6 || password.length > 100 || !/^\d{6}$/.test(code)) {
+      return res.status(400).json({ success: false, error: '注册信息格式不正确' });
     }
 
     // 注册用户
@@ -182,7 +194,8 @@ app.post('/api/auth/register', async (req, res) => {
 
   } catch (error) {
     console.error(`[${getTimestamp()}] 用户注册失败:`, error);
-    res.status(500).json({
+    const clientError = ['该邮箱已被注册', '验证码错误或已过期'].includes(error.message);
+    res.status(clientError ? 400 : 500).json({
       success: false,
       error: error.message || '注册失败',
       timestamp: new Date().toISOString()

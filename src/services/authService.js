@@ -18,7 +18,7 @@ class AuthService {
         credentials: 'omit', // omit cookies to avoid oversized request headers
         cache: 'no-store',
         body: JSON.stringify({
-          email,
+          email: email.trim().toLowerCase(),
           password,
         }),
       });
@@ -95,7 +95,7 @@ class AuthService {
         cache: 'no-store',
         body: JSON.stringify({
           name,
-          email,
+          email: email.trim().toLowerCase(),
           password,
           code,
         }),
@@ -204,12 +204,6 @@ class AuthService {
       if (data.success) {
         return { success: true, message: data.message };
       } else {
-        // 检查是否是邮件服务未配置的错误
-        if (data.error && data.error.includes('邮件发送失败')) {
-          console.warn('邮件发送失败，但在开发环境中继续处理:', data.error);
-          // 在开发环境中，即使邮件发送失败也返回成功，因为验证码可能已保存到内存中
-          return { success: true, message: '验证码已生成（开发环境）' };
-        }
         return { success: false, error: data.error || '发送验证码失败' };
       }
     } catch (error) {

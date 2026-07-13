@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, Form, Input, Button, message, Row, Col, Typography, Divider, Alert } from 'antd';
+import { Card, Form, Input, Button, message, Row, Col, Typography, Divider } from 'antd';
 import { UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import AuthService from '../../services/authService.js';
@@ -16,7 +16,8 @@ const RegisterPage = () => {
   // 发送验证码
   const sendVerificationCode = async () => {
     try {
-      const email = form.getFieldValue('email');
+      await form.validateFields(['email']);
+      const email = form.getFieldValue('email')?.trim().toLowerCase();
       if (!email) {
         message.error('请先输入邮箱地址');
         return;
@@ -50,7 +51,8 @@ const RegisterPage = () => {
       }
     } catch (error) {
       console.error('发送验证码失败:', error);
-      message.error('发送验证码失败，请检查网络连接');
+      if (error?.errorFields) return;
+      message.error(error?.message || '发送验证码失败，请检查网络连接');
     } finally {
       setCodeLoading(false);
     }

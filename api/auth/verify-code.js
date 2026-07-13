@@ -21,7 +21,9 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { email, code, purpose } = req.body;
+  const email = String(req.body?.email || '').trim().toLowerCase();
+  const code = String(req.body?.code || '').trim();
+  const { purpose } = req.body || {};
 
   if (!email || !code) {
     return res.status(400).json({ error: '邮箱和验证码都是必需的' });
@@ -50,13 +52,7 @@ export default async function handler(req, res) {
       });
     }
 
-    // 验证成功后删除验证码
-    await prisma.verificationCode.delete({
-      where: {
-        id: verificationCode.id
-      }
-    });
-
+    // 这里只做预校验；验证码由最终注册/重置接口原子消费。
     res.status(200).json({
       success: true,
       message: '验证码验证成功',

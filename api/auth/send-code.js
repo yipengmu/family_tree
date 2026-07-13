@@ -22,7 +22,8 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { email, purpose } = req.body;
+  const email = String(req.body?.email || '').trim().toLowerCase();
+  const { purpose } = req.body || {};
 
   if (!email) {
     return res.status(400).json({ error: '邮箱地址是必需的' });
@@ -90,13 +91,14 @@ export default async function handler(req, res) {
 
     // 开始数据库事务
     await prisma.$transaction([
-      // 删除过期的验证码
+      // 删除过期和同用途的旧验证码，只保留最新验证码
       prisma.verificationCode.deleteMany({
         where: {
           email: email,
-          expires_at: {
-            lt: new Date() // 过期的验证码
-          }
+          OR: [
+            { expires_at: { lt: new Date() } },
+            { purpose }
+          ]
         }
       }),
       // 保存新的验证码
