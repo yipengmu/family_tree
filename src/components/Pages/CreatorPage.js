@@ -328,9 +328,8 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
 
     setUploadConfig(uploadConf);
 
-    // 检查通义千问API Key配置
-    const hasQwenKey = !!process.env.REACT_APP_QWEN_API_KEY;
-    setOcrConfig({ configured: hasQwenKey });
+    // OCR 密钥仅由服务端持有，浏览器不再读取或判断长期密钥。
+    setOcrConfig({ configured: true, managedByServer: true });
   }, []);
 
   // 修改为使用familyDataService的3层架构加载数据
@@ -572,7 +571,7 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
       console.log('🔍 开始OCR识别详细流程:');
       console.log('📸 图片URLs:', imageUrls);
       console.log('🏢 租户ID:', tenantId);
-      console.log('🔑 API Key状态:', process.env.REACT_APP_QWEN_API_KEY ? '已配置' : '未配置');
+      console.log('🔐 OCR 由服务端安全代理');
 
       // 验证图片URL可访问性
       for (let i = 0; i < imageUrls.length; i++) {
@@ -1086,7 +1085,7 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
               <span> {getCurrentDisplayData().length > 0 && currentTenant && (
                   <span style={{ marginRight: '16px', color: '#6b7280', fontSize: '14px' }}>
                     {currentTenant.id === 'default' || currentTenant.id === process.env.REACT_APP_DEFAULT_TENANT_ID 
-                      ? `默认穆氏族谱: ${getCurrentDisplayData().length}条` 
+                      ? `穆氏示范家谱: ${getCurrentDisplayData().length}条`
                       : `${currentTenant.name}: ${getCurrentDisplayData().length}条`
                     }
                     {searchText && (
@@ -1451,4 +1450,3 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
 }
 
 export default CreatorPage;
-

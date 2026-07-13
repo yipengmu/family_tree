@@ -1,18 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Layout, Alert, Tabs, message } from 'antd';
-import { TeamOutlined, SettingOutlined } from '@ant-design/icons';
+import { Layout, Alert, message } from 'antd';
 import { validateFamilyData } from './utils/familyTreeUtils.js';
-import dbJson from './data/familyData.js';
 import FamilyTreePage from './components/Pages/FamilyTreePage.js';
 import SettingsPage from './components/Pages/SettingsPage.js';
 import CreatorPage from './components/Pages/CreatorPage.js';
 import DiscoverPage from './components/Pages/DiscoverPage.js';
-import TenantSelector from './components/TenantSelector.js';
 import familyDataService from './services/familyDataService.js';
 import tenantService from './services/tenantService.js';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './components/Pages/LoginPage.js';
 import RegisterPage from './components/Pages/RegisterPage.js';
+import BRAND from './constants/brand.js';
 // 导入测试工具（开发环境自动运行）
 
 import './App.css';
@@ -30,7 +28,6 @@ function MainApp() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [validationResult, setValidationResult] = useState(null);
-  const [activeTab, setActiveTab] = useState('tree');
   const [mobile, setMobile] = useState(isMobile());
   const [currentPage, setCurrentPage] = useState('tree'); // 新增页面状态
   const [currentTenant, setCurrentTenant] = useState(null);
@@ -39,11 +36,6 @@ function MainApp() {
   const isAuthenticated = () => {
     const token = localStorage.getItem('token');
     return !!token;
-  };
-
-  // 检查是否为游客模式
-  const isGuestMode = () => {
-    return !isAuthenticated() && localStorage.getItem('guest_mode') === 'true';
   };
 
   // 处理菜单点击
@@ -97,35 +89,13 @@ function MainApp() {
           console.log(`⚡ [App] 使用缓存数据快速显示 (${cachedData.length} 条记录)`);
         }
 
-        // 然后在后台异步更新数据
-        try {
-          // 尝试从数据库获取最新数据（不阻塞UI）
-          // 修正请求URL以适应Vercel部署
-          const response = await fetch(`/api/family-data/${currentTenantId}`, {
-            // 设置较短的超时时间避免长时间等待
-            signal: AbortSignal.timeout(3000) // 3秒超时
-          });
-          
-          if (response.ok) {
-            const result = await response.json();
-            if (result.success && result.data && result.data.length > 0) {
-              console.log(`✅ [App] 从数据库获取最新数据 (${result.data.length} 条记录)`);
-              
-              // 验证新数据
-              const validation = validateFamilyData(result.data);
-              
-              // 更新状态，只在数据确实变化时才更新
-              if (JSON.stringify(result.data) !== JSON.stringify(cachedData)) {
-                setFamilyData(result.data);
-                setValidationResult(validation);
-                console.log('🔄 [App] 数据已更新到最新版本');
-              }
-            }
-          }
-        } catch (dbError) {
-          console.log(`📝 [App] 数据库连接超时或失败，使用本地缓存:`, dbError.message);
-          // 数据库连接失败时，仍使用已缓存的数据
+        // 强制刷新统一走 familyDataService，避免页面层与 API 契约分叉。
+        const latestData = await familyDataService.getFamilyData(true, currentTenantId);
+        if (latestData && JSON.stringify(latestData) !== JSON.stringify(cachedData)) {
+          setFamilyData(latestData);
+          setValidationResult(validateFamilyData(latestData));
         }
+        setLoading(false);
       } catch (err) {
         console.error('加载数据失败:', err);
         setError(err.message);
@@ -143,8 +113,8 @@ function MainApp() {
         // 设置默认租户为穆家家谱
         const defaultTenant = {
           id: 'default',
-          name: '穆家家谱',
-          description: '默认家谱 - 游客模式',
+          name: BRAND.demoFamilyName,
+          description: '公开示范家谱 · 游客只读',
           createdAt: new Date().toISOString(),
           isDefault: true,
         };
@@ -159,22 +129,9 @@ function MainApp() {
         setCurrentTenant(tenant);
       }
 
-      // 先快速加载本地数据，不阻塞UI
-      try {
-        // 使用默认数据快速填充，避免长时间loading
-        const defaultData = await familyDataService.loadOriginalFamilyData('default');
-        if (defaultData && defaultData.length > 0) {
-          setFamilyData(defaultData);
-          const result = validateFamilyData(defaultData);
-          setValidationResult(result);
-          // 不立即设置loading为false，而是等待从数据库加载完成或超时
-        }
-      } catch (err) {
-        console.error('初始化默认数据失败:', err);
-      }
-
-      // 在后台加载最新数据
-      await loadFamilyData('default');
+      const initialTenantId = tenantService.getCurrentTenant().id;
+      // 游客读取示范家谱；登录用户直接读取自己上次使用的家谱，避免短暂泄露示范数据或错租户编辑。
+      await loadFamilyData(initialTenantId);
     };
 
     initializeApp();

@@ -3,6 +3,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import prisma, { ensureConnection } from '../../lib/prisma.js';
+import { getJwtSecret } from '../../lib/auth.js';
 
 export default async function handler(req, res) {
   // 设置CORS头
@@ -48,7 +49,7 @@ export default async function handler(req, res) {
 
     // 在同一事务内校验并消费验证码，防止验证码被重复注册使用。
     const password_hash = await bcrypt.hash(password, 10);
-    const newUser = await prisma.$transaction(async (tx) => {
+    const registration = await prisma.$transaction(async (tx) => {
       const existingUser = await tx.user.findUnique({ where: { email } });
       if (existingUser) throw new Error('该邮箱已被注册');
 
@@ -58,14 +59,26 @@ export default async function handler(req, res) {
       if (!verificationCode) throw new Error('验证码错误或已过期');
 
       await tx.verificationCode.delete({ where: { id: verificationCode.id } });
-      return tx.user.create({
+      const user = await tx.user.create({
         data: { username: name, email, password_hash, is_active: true }
       });
+      const tenant = await tx.tenant.create({
+        data: {
+          id: `user_${user.id}`,
+          name: `${name}的家谱`,
+          description: '我的私密数字家谱',
+          settings: JSON.stringify({ publicAccess: false, livingPersonPrivacy: true, nameProtection: true }),
+        },
+      });
+      await tx.tenantMembership.create({
+        data: { tenant_id: tenant.id, user_id: user.id, role: 'OWNER' },
+      });
+      return { user, tenant };
     });
+    const { user: newUser, tenant } = registration;
 
     // 生成JWT令牌
-    const jwtSecret = process.env.JWT_SECRET || 'fallback_secret_key_for_vercel_deployment';
-    const token = jwt.sign({ userId: newUser.id }, jwtSecret, { expiresIn: '24h' });
+    const token = jwt.sign({ userId: newUser.id }, getJwtSecret(), { expiresIn: '24h' });
 
     res.status(200).json({
       success: true,
@@ -76,6 +89,13 @@ export default async function handler(req, res) {
         email: newUser.email,
         isActive: newUser.is_active,
         createdAt: newUser.created_at
+      },
+      tenant: {
+        id: tenant.id,
+        name: tenant.name,
+        description: tenant.description,
+        role: 'OWNER',
+        isDefault: false,
       },
       message: '注册成功'
     });

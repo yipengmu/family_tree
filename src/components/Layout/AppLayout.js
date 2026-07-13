@@ -15,10 +15,6 @@ const AppLayout = ({
 }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false); // 移动端侧边栏状态
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false); // 桌面端侧边栏收起状态
-  const [currentUser] = useState({
-    name: '穆塔爸',
-    avatar: '穆'
-  });
 
   const handleMenuClick = (menuKey) => {
     console.log('Menu clicked:', menuKey);
@@ -58,13 +54,11 @@ const AppLayout = ({
             collapsed={sidebarCollapsed}
             onToggleCollapse={toggleSidebarCollapse}
             open={sidebarOpen}
-            user={currentUser}
           />
         </div>
 
         {/* 主要内容 */}
         <MainContent
-          user={currentUser}
           familyData={familyData}
           nodes={nodes}
           statistics={statistics}

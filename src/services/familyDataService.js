@@ -85,6 +85,7 @@ class FamilyDataService {
   constructor() {
     this.isLoading = false;
     this.loadingPromise = null;
+    this.versions = new Map();
   }
 
   /**
@@ -248,6 +249,7 @@ class FamilyDataService {
       }
 
       const result = await response.json();
+      if (typeof result.version === 'number') this.versions.set(tenantId, result.version);
       const data = result.data || result;
       const loadTime = Date.now() - startTime;
 
@@ -604,6 +606,7 @@ class FamilyDataService {
         body: JSON.stringify({
           tenantId: currentTenantId,
           familyData: familyData, // 使用原始数据，不带tenant_id
+          expectedVersion: this.versions.get(currentTenantId) ?? 0,
         }),
       });
 
@@ -613,6 +616,7 @@ class FamilyDataService {
       }
 
       const result = await response.json();
+      if (typeof result.version === 'number') this.versions.set(currentTenantId, result.version);
       console.log('✅ [第2层] 数据已保存到数据库:', result.message);
       
       // 清除内存缓存，强制重新加载

@@ -18,6 +18,7 @@ model User {
   created_at  DateTime @default(now())
   last_login_at DateTime?
   wechat_openid String? @unique // 根据项目规范，添加微信openid字段
+  memberships  TenantMembership[]
   
   @@map("users")
 }
@@ -35,8 +36,26 @@ model Tenant {
   familyData    FamilyData[]
   familyConfig  FamilyConfig[]
   dataVersions  DataVersion[]
+  memberships   TenantMembership[]
   
   @@map("tenants")
+}
+
+model TenantMembership {
+  id         String   @id @default(cuid())
+  tenant_id  String
+  user_id    Int
+  role       String   @default("VIEWER")
+  status     String   @default("ACTIVE")
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([tenant_id, user_id])
+  @@index([user_id, status])
+  @@map("tenant_memberships")
 }
 
 model FamilyData {
@@ -99,6 +118,7 @@ model DataVersion {
   // 关联租户
   tenant          Tenant   @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
   
+  @@unique([tenant_id, version_number])
   @@map("data_versions")
 }
 

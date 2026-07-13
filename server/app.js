@@ -57,12 +57,8 @@ const authenticateToken = (req, res, next) => {
     return res.status(401).json({ error: '访问令牌缺失' });
   }
 
-  const jwtSecret = process.env.JWT_SECRET || 'fallback_secret_key_for_development';
-  
-  // 在生产环境中，如果JWT_SECRET未设置，记录警告
-  if (!process.env.JWT_SECRET && process.env.NODE_ENV !== 'development') {
-    console.warn('⚠️ 警告: JWT_SECRET 环境变量未设置，使用默认密钥。请在线上环境中设置JWT_SECRET环境变量。');
-  }
+  const jwtSecret = process.env.JWT_SECRET || (process.env.NODE_ENV !== 'production' ? 'local-development-only-change-me' : null);
+  if (!jwtSecret) return res.status(500).json({ error: '服务端认证配置不完整' });
 
   jwt.verify(token, jwtSecret, (err, user) => {
     if (err) {
@@ -278,7 +274,7 @@ app.get('/api/user/profile', authenticateToken, async (req, res) => {
 
 // ==================== 千问API代理端点 ====================
 
-app.post('/api/qwen/ocr', async (req, res) => {
+app.post('/api/qwen/ocr', authenticateToken, async (req, res) => {
   const requestId = Date.now().toString(36);
   console.log(`\n[${getTimestamp()}] 🆔 [后端-${requestId}] ========== 新的OCR请求 ==========`);
   
@@ -301,7 +297,7 @@ app.post('/api/qwen/ocr', async (req, res) => {
     }
 
     // 验证API Key
-    const apiKey = process.env.REACT_APP_QWEN_API_KEY;
+    const apiKey = process.env.DASHSCOPE_API_KEY;
     if (!apiKey) {
       console.error(`[${getTimestamp()}] ❌ [后端-${requestId}] 未配置千问API Key`);
       return res.status(500).json({
@@ -533,7 +529,7 @@ async function processImageWithQwenSingle(imageUrl, apiKey, requestId, attempt =
     // 根据状态码提供具体的错误信息
     let errorMessage = `千问API请求失败: ${response.status} ${response.statusText}`;
     if (response.status === 401) {
-      errorMessage = 'API Key无效或已过期，请检查REACT_APP_QWEN_API_KEY配置';
+      errorMessage = 'API Key无效或已过期，请检查DASHSCOPE_API_KEY配置';
     } else if (response.status === 403) {
       errorMessage = 'API访问被拒绝，请检查API Key权限或模型访问权限';
     } else if (response.status === 429) {

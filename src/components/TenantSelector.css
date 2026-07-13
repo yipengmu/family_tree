@@ -358,3 +358,25 @@
 .tenant-selector .ant-tooltip-arrow::before {
   background-color: #262626;
 }
+
+/* 黛青侧栏中的家谱选择器 */
+.tenant-selector.ink-theme .ant-select-selector {
+  border-color: rgba(255,255,255,.2) !important;
+  background: rgba(255,255,255,.06) !important;
+  color: rgba(255,255,255,.84) !important;
+}
+.tenant-selector.ink-theme .ant-select-selection-item,
+.tenant-selector.ink-theme .ant-select-selection-placeholder,
+.tenant-selector.ink-theme .ant-select-arrow { color: rgba(255,255,255,.82) !important; }
+.tenant-selector.ink-theme .ant-select-focused .ant-select-selector {
+  border-color: rgba(216,180,107,.7) !important;
+  box-shadow: 0 0 0 2px rgba(216,180,107,.1) !important;
+}
+.tenant-selector.ink-theme .ant-select-dropdown {
+  background: #fffdf7 !important;
+  border: 1px solid rgba(35,53,47,.14) !important;
+  box-shadow: 0 12px 30px rgba(35,53,47,.14) !important;
+}
+.sidebar .tenant-selector.ink-theme .ant-select-item { color: var(--ink) !important; }
+.sidebar .tenant-selector.ink-theme .ant-select-item:hover { color: var(--ink) !important; background: rgba(23,63,56,.07) !important; }
+.sidebar .tenant-selector.ink-theme .ant-select-item-option-selected { color: var(--pine) !important; background: rgba(23,63,56,.1) !important; }

@@ -4,6 +4,8 @@ import FamilyTreeFlow from '../FamilyTreeFlow.js';
 import AppLayout from '../Layout/AppLayout.js';
 import { Button } from 'antd';
 import './FamilyTreePage.css';
+import tenantService from '../../services/tenantService.js';
+import BRAND from '../../constants/brand.js';
 
 const FamilyTreePage = ({
   familyData,
@@ -16,6 +18,8 @@ const FamilyTreePage = ({
   const [nodes, setNodes] = useState([]);
   const [statistics, setStatistics] = useState(null);
   const familyTreeRef = useRef(null);
+  const currentTenant = tenantService.getCurrentTenant();
+  const familyName = currentTenant?.isDefault ? BRAND.demoFamilyName : (currentTenant?.name || '我的家谱');
 
   // 检查用户是否已登录
   const isAuthenticated = () => {
@@ -73,27 +77,29 @@ const FamilyTreePage = ({
       onSearchSelect={handleSearchSelect}
     >
       <div className="family-tree-page">
-        {/* 游客模式提示 - 移动端覆盖式，桌面端固定 */}
-        {!localStorage.getItem('token') && (
-          <div className="guest-mode-banner">
-            <span className="guest-mode-text">🏃‍♂️ 游客模式 - 正在浏览穆家家谱</span>
-            <Button 
-              type="link" 
-              size="small" 
-              onClick={handleCreateMyFamilyTree}
-              className="create-family-btn"
-            >
-              创建我的家谱
-            </Button>
+        <section className="family-context-bar" aria-label="当前家谱信息">
+          <div className="family-context-copy">
+            <span className="family-context-kicker">世系总览</span>
+            <h1>{familyName}</h1>
+            <span className="family-context-meta">
+              {familyData.length || 0} 位族人
+              <i aria-hidden="true" />
+              {statistics?.generationCount || statistics?.totalGenerations || '多'} 代相承
+            </span>
           </div>
-        )}
-        
-        {/* 显示当前用户状态 - 移动端覆盖式，桌面端固定 */}
-        {localStorage.getItem('token') && (
-          <div className="user-status-banner">
-            <span className="user-status-text">👤 已登录 - 可以管理您的家谱</span>
+          <div className="family-context-actions">
+            <span className="privacy-badge"><span aria-hidden="true">◈</span> 默认私密</span>
+            {!localStorage.getItem('token') ? (
+              <Button onClick={handleCreateMyFamilyTree} className="create-family-btn">
+                创建我的家谱
+              </Button>
+            ) : (
+              <Button onClick={() => onMenuClick && onMenuClick('create')} className="create-family-btn">
+                续录族人
+              </Button>
+            )}
           </div>
-        )}
+        </section>
 
         {/* 显示加载状态 */}
         {loading && familyData.length === 0 && (

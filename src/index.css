@@ -1,11 +1,31 @@
+:root {
+  --paper: #f7f3e8;
+  --paper-deep: #eee7d6;
+  --ink: #23352f;
+  --ink-soft: #65736d;
+  --pine: #173f38;
+  --pine-light: #2d5c52;
+  --cinnabar: #a64632;
+  --hairline: rgba(35, 53, 47, 0.14);
+  --serif: "Songti SC", "STSong", "Noto Serif CJK SC", serif;
+  --sans: "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
 body {
   margin: 0;
   padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
-    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
-    sans-serif;
+  font-family: var(--sans);
+  color: var(--ink);
+  background: var(--paper);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
 }
 
 code {

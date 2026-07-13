@@ -3,6 +3,7 @@ import { Card, Form, Input, Button, message, Row, Col, Typography, Divider } fro
 import { UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import AuthService from '../../services/authService.js';
+import BRAND from '../../constants/brand.js';
 
 const { Title, Text } = Typography;
 
@@ -85,15 +86,9 @@ const RegisterPage = () => {
   };
 
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      display: 'flex', 
-      alignItems: 'center', 
-      justifyContent: 'center',
-      background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)'
-    }}>
+    <div className="auth-page">
       <div style={{ width: '100%', maxWidth: '400px', padding: '20px' }}>
-        <Card 
+        <Card className="auth-card"
           style={{ 
             borderRadius: '10px',
             boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
@@ -101,8 +96,9 @@ const RegisterPage = () => {
           bodyStyle={{ padding: '30px' }}
         >
           <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-            <Title level={2} style={{ marginBottom: '8px' }}>创建账号</Title>
-            <Text type="secondary">开启你的家谱</Text>
+            <div className="auth-seal">{BRAND.seal}</div>
+            <Title level={2} style={{ marginBottom: '8px' }}>创建第一本数字家谱</Title>
+            <Text type="secondary">默认私密，只有受邀家人可以查看</Text>
           </div>
 
           <Form

@@ -7,6 +7,26 @@
   width: 100%;
 }
 
+/* 谱里搜索 */
+.count-info {
+  border-color: var(--hairline);
+  background: rgba(255,255,255,.46);
+  color: var(--ink-soft);
+}
+.family-search-input {
+  height: 34px;
+  border-color: var(--hairline);
+  border-radius: 6px;
+  background: rgba(255,255,255,.66);
+  color: var(--ink);
+}
+.family-search-input:hover { border-color: rgba(23,63,56,.38); }
+.family-search-input:focus,
+.family-search-input.ant-input-focused {
+  border-color: var(--pine);
+  box-shadow: 0 0 0 2px rgba(23,63,56,.08);
+}
+
 /* 状态信息 - 简化 */
 .status-info {
   display: flex;

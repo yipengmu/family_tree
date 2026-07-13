@@ -131,7 +131,7 @@ const TenantSelector = ({ onTenantChange, style, compact = false }) => {
   const backgroundClass = getBackgroundClass();
 
   return (
-    <div className={`tenant-selector purple-theme ${compact ? 'compact' : ''} ${backgroundClass}`} style={style}>
+    <div className={`tenant-selector ink-theme ${compact ? 'compact' : ''} ${backgroundClass}`} style={style}>
       {compact ? (
         // 紧凑模式：仅显示一个选择框
         <Select
@@ -161,7 +161,7 @@ const TenantSelector = ({ onTenantChange, style, compact = false }) => {
           {tenants.map((tenant) => (
             <Option key={tenant.id} value={tenant.id}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '12px', color: 'white' }}>
+                <span style={{ fontSize: '12px' }}>
                   {tenant.name.length > 8 ? `${tenant.name.substring(0, 8)}...` : tenant.name}
                 </span>
                 {!tenant.isDefault && (
@@ -207,7 +207,7 @@ const TenantSelector = ({ onTenantChange, style, compact = false }) => {
             {tenants.map((tenant) => (
               <Option key={tenant.id} value={tenant.id}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ color: 'white' }}>
+                  <span>
                     {tenant.name.length > 8 ? `${tenant.name.substring(0, 8)}...` : tenant.name}
                   </span>
                   {!tenant.isDefault && (
@@ -291,6 +291,7 @@ const TenantSelector = ({ onTenantChange, style, compact = false }) => {
             name="nameProtection"
             label="姓名保护"
             valuePropName="checked"
+            initialValue={true}
             extra="开启后，在公开展示时会隐藏部分姓名信息"
           >
             <Switch />
@@ -300,7 +301,8 @@ const TenantSelector = ({ onTenantChange, style, compact = false }) => {
             name="publicAccess"
             label="公开访问"
             valuePropName="checked"
-            extra="开启后，其他人可以查看这个家谱（只读）"
+            initialValue={false}
+            extra="家谱默认私密；仅在管理员主动开启后，其他人才可只读访问"
           >
             <Switch />
           </Form.Item>

@@ -9,6 +9,92 @@
   position: relative; /* 为覆盖式提示提供定位上下文 */
 }
 
+/* 当前家谱信息条 */
+.family-context-bar {
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 0 4px 14px;
+}
+.family-context-copy {
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: baseline;
+  column-gap: 12px;
+}
+.family-context-kicker {
+  grid-row: 1 / 3;
+  align-self: center;
+  writing-mode: vertical-rl;
+  padding-right: 9px;
+  border-right: 2px solid var(--cinnabar);
+  color: var(--cinnabar);
+  font-family: var(--serif);
+  font-size: 10px;
+  letter-spacing: .18em;
+}
+.family-context-copy h1 {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: .05em;
+}
+.family-context-meta { color: var(--ink-soft); font-size: 11px; }
+.family-context-meta i {
+  display: inline-block;
+  width: 3px; height: 3px; margin: 0 8px 2px;
+  border-radius: 50%; background: #9a8f78;
+}
+.family-context-actions { display: flex; align-items: center; gap: 10px; }
+.privacy-badge {
+  padding: 5px 9px;
+  border: 1px solid rgba(23,63,56,.16);
+  border-radius: 999px;
+  color: var(--pine);
+  background: rgba(255,255,255,.4);
+  font-size: 11px;
+}
+.family-context-actions .create-family-btn {
+  height: 34px;
+  padding: 0 15px !important;
+  border-color: var(--pine);
+  border-radius: 6px;
+  background: var(--pine);
+  color: #fffdf6;
+}
+.family-context-actions .create-family-btn:hover {
+  border-color: var(--pine-light) !important;
+  background: var(--pine-light) !important;
+  color: #fff !important;
+}
+.family-tree-wrapper {
+  border-color: var(--hairline);
+  border-radius: 10px;
+  background: #f8f4e9;
+  box-shadow: 0 12px 30px rgba(45, 54, 48, .07);
+}
+.family-tree-wrapper .react-flow {
+  background-color: #f8f4e9;
+  background-image:
+    linear-gradient(rgba(112,100,72,.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(112,100,72,.025) 1px, transparent 1px),
+    radial-gradient(circle at 12% 18%, rgba(45,92,82,.055), transparent 28%);
+  background-size: 32px 32px, 32px 32px, auto;
+}
+
+@media (max-width: 768px) {
+  .family-context-bar { min-height: 62px; padding: 2px 4px 9px; }
+  .family-context-copy h1 { font-size: 17px; }
+  .family-context-meta { font-size: 10px; }
+  .privacy-badge { display: none; }
+  .family-context-actions .create-family-btn { height: 30px; padding: 0 10px !important; font-size: 11px; }
+  .family-tree-page { height: 100%; min-height: 0; }
+}
+
 /* 游客模式提示横幅 - 桌面端样式 */
 .guest-mode-banner {
   position: absolute;

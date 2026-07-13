@@ -2,6 +2,7 @@
 // 统一使用 Prisma + PostgreSQL 数据库
 import jwt from 'jsonwebtoken';
 import prisma from '../../lib/prisma.js';
+import { getJwtSecret } from '../../lib/auth.js';
 
 export default async function handler(req, res) {
   // 设置CORS头
@@ -26,7 +27,7 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: '访问令牌缺失' });
   }
 
-  const jwtSecret = process.env.JWT_SECRET || 'fallback_secret_key_for_vercel_deployment';
+  const jwtSecret = getJwtSecret();
   
   try {
     const decoded = jwt.verify(token, jwtSecret);

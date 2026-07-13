@@ -4,6 +4,7 @@
 
 import cacheManager from '../utils/cacheManager.js';
 import { clearTenantCache } from '../utils/clearCache.js';
+import BRAND from '../constants/brand.js';
 
 // 缓存键常量
 const CACHE_KEYS = {
@@ -14,7 +15,7 @@ const CACHE_KEYS = {
 
 class TenantService {
   constructor() {
-    this.baseURL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:3003';
+    this.baseURL = process.env.REACT_APP_API_BASE_URL || '';
     this.isMultiTenantEnabled = process.env.REACT_APP_ENABLE_MULTI_TENANT === 'true';
     this.defaultTenantId = process.env.REACT_APP_DEFAULT_TENANT_ID || 'default';
     this.CACHE_KEYS = CACHE_KEYS;
@@ -50,11 +51,11 @@ class TenantService {
     const isGuestMode = !localStorage.getItem('token') && localStorage.getItem('guest_mode') === 'true';
     
     if (isGuestMode) {
-      // 游客模式下，始终返回默认的穆家家谱
+      // 游客模式下，始终返回公开示范家谱
       const guestTenant = {
         id: this.defaultTenantId,
-        name: '穆家家谱',
-        description: '默认家谱数据 - 游客模式浏览',
+        name: BRAND.demoFamilyName,
+        description: '公开示范家谱 · 游客只读',
         createdAt: new Date().toISOString(),
         isDefault: true,
         isGuest: true, // 标记为游客模式
@@ -124,7 +125,7 @@ class TenantService {
       };
 
       // 如果启用了多租户且有后端API
-      if (this.isMultiTenantEnabled && this.baseURL) {
+      if (this.isMultiTenantEnabled) {
         // 获取认证令牌
         const token = localStorage.getItem('token');
         
@@ -147,7 +148,7 @@ class TenantService {
         }
 
         const result = await response.json();
-        tenant.id = result.id || tenant.id;
+        Object.assign(tenant, result.tenant || result);
       }
 
       // 保存到本地存储
@@ -186,7 +187,7 @@ class TenantService {
       let tenants = [];
 
       // 如果启用了多租户且有后端API
-      if (this.isMultiTenantEnabled && this.baseURL) {
+      if (this.isMultiTenantEnabled) {
         try {
           const token = localStorage.getItem('token');
           
@@ -284,7 +285,7 @@ class TenantService {
       }
 
       // 如果启用了多租户且有后端API
-      if (this.isMultiTenantEnabled && this.baseURL) {
+      if (this.isMultiTenantEnabled) {
         const token = localStorage.getItem('token');
         
         const headers = {};

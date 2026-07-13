@@ -1,3 +1,5 @@
+import cacheManager from '../utils/cacheManager.js';
+
 // 认证服务
 class AuthService {
   // 登录
@@ -60,7 +62,12 @@ class AuthService {
         // 保存token到localStorage
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
-        return { success: true, user: data.user, token: data.token };
+        if (data.tenant) {
+          localStorage.setItem('current_tenant', JSON.stringify(data.tenant));
+          cacheManager.set('current_tenant', data.tenant, 3600);
+        }
+        localStorage.removeItem('guest_mode');
+        return { success: true, user: data.user, token: data.token, tenant: data.tenant };
       } else {
         return { success: false, error: data.error || '登录失败' };
       }
@@ -138,7 +145,12 @@ class AuthService {
         // 保存token到localStorage
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
-        return { success: true, user: data.user, token: data.token };
+        if (data.tenant) {
+          localStorage.setItem('current_tenant', JSON.stringify(data.tenant));
+          cacheManager.set('current_tenant', data.tenant, 3600);
+        }
+        localStorage.removeItem('guest_mode');
+        return { success: true, user: data.user, token: data.token, tenant: data.tenant };
       } else {
         return { success: false, error: data.error || '注册失败' };
       }

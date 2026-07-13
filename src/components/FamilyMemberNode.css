@@ -4,6 +4,26 @@
   font-size: 13px;
 }
 
+/* 谱牒卡片：避免厚重仿古，保留现代可读性 */
+.member-card,
+.member-card.member-card {
+  border-color: rgba(42,66,58,.18) !important;
+  border-radius: 8px;
+  background: rgba(255,253,247,.96) !important;
+  box-shadow: 0 3px 10px rgba(55,63,57,.07);
+}
+.member-card:hover {
+  border-color: rgba(23,63,56,.38) !important;
+  box-shadow: 0 8px 20px rgba(42,66,58,.11);
+}
+.family-member-node.selected .member-card { box-shadow: 0 0 0 2px rgba(166,70,50,.72); }
+.name-text { color: var(--ink) !important; font-family: var(--serif); letter-spacing: .03em; }
+.position-text { color: var(--ink-soft) !important; }
+.member-position,
+.member-meta { border-color: rgba(42,66,58,.11) !important; }
+.react-flow__handle { background: #6b7c75; border-color: #fffdf6; }
+.react-flow__handle:hover { background: var(--cinnabar); }
+
 .family-member-node.selected .member-card {
   box-shadow: 0 0 0 2px hsl(221.2 83.2% 53.3%);
   transform: scale(1.02);

@@ -2,13 +2,7 @@ import React from 'react';
 import { 
   HomeOutlined, 
   EditOutlined, 
-  TeamOutlined, 
-  FolderOutlined, 
-  BarChartOutlined, 
   SettingOutlined,
-  MenuOutlined,
-  MenuUnfoldOutlined,
-  UserOutlined, 
   LoginOutlined, 
   LogoutOutlined,
   ProfileOutlined
@@ -18,8 +12,9 @@ import TenantSelector from '../TenantSelector.js';
 import './Sidebar.css';
 import AuthService from '../../services/authService.js';
 import { useNavigate } from 'react-router-dom';
+import BRAND from '../../constants/brand.js';
 
-const Sidebar = ({ activeItem = 'tree', onMenuClick, collapsed = false, onToggleCollapse, open = false, user = { name: '穆塔爸', avatar: '穆' } }) => {
+const Sidebar = ({ activeItem = 'tree', onMenuClick, collapsed = false, onToggleCollapse, open = false }) => {
   const navigate = useNavigate();
   const isAuthenticated = AuthService.isAuthenticated();
   const currentUser = isAuthenticated ? JSON.parse(localStorage.getItem('user')) : null;
@@ -57,13 +52,13 @@ const Sidebar = ({ activeItem = 'tree', onMenuClick, collapsed = false, onToggle
     {
       key: 'tree',
       icon: <HomeOutlined />,
-      label: '族谱',
+      label: '看家谱',
       path: '/'
     },
     {
       key: 'create',
       icon: <EditOutlined />,
-      label: '数据管理',
+      label: '续家谱',
       path: '/create'
     },
     // {
@@ -87,7 +82,7 @@ const Sidebar = ({ activeItem = 'tree', onMenuClick, collapsed = false, onToggle
     {
       key: 'settings',
       icon: <SettingOutlined />,
-      label: '设置',
+      label: '家族设置',
       path: '/settings'
     }
   ];
@@ -96,8 +91,13 @@ const Sidebar = ({ activeItem = 'tree', onMenuClick, collapsed = false, onToggle
     <aside className={`sidebar ${collapsed ? 'collapsed' : ''} ${open ? 'open' : ''}`} id="sidebar">
       {/* Logo */}
       <div className="logo">
-        <div className="logo-icon">穆</div>
-        {!collapsed && <div className="logo-text">穆氏族谱</div>}
+        <div className="logo-icon" aria-hidden="true">{BRAND.seal}</div>
+        {!collapsed && (
+          <div className="logo-copy">
+            <div className="logo-text">{BRAND.name}</div>
+            <div className="logo-subtitle">数字家谱</div>
+          </div>
+        )}
       </div>
       
       {/* 导航菜单 */}
@@ -128,6 +128,12 @@ const Sidebar = ({ activeItem = 'tree', onMenuClick, collapsed = false, onToggle
       
       {/* 用户信息与租户管理 - 精简底部区域 */}
       <div className="bottom-section">
+        {!collapsed && (
+          <div className="privacy-note">
+            <span className="privacy-dot" />
+            家谱默认私密保存
+          </div>
+        )}
         {/* 租户管理区域 */}
         <div className={`tenant-section ${collapsed ? 'collapsed' : ''}`}>
           <TenantSelector compact={collapsed} />

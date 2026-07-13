@@ -14,6 +14,110 @@
   transition: width 0.3s ease;
 }
 
+/* 谱里：宣纸与黛青主视觉 */
+.sidebar {
+  width: 184px;
+  padding: 22px 0 18px;
+  background:
+    radial-gradient(circle at 20% 8%, rgba(255,255,255,.09), transparent 28%),
+    linear-gradient(180deg, #1d4a41 0%, #173f38 58%, #12352f 100%);
+  box-shadow: 8px 0 28px rgba(31, 51, 45, 0.12);
+}
+
+.sidebar.collapsed { width: 72px; }
+
+.sidebar .logo {
+  gap: 11px;
+  padding: 0 17px 20px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid rgba(255,255,255,.12);
+}
+
+.sidebar .logo-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,.72);
+  background: var(--cinnabar);
+  color: #fffaf0;
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 500;
+  box-shadow: inset 0 0 0 3px rgba(255,255,255,.12);
+}
+
+.logo-copy { min-width: 0; }
+.sidebar .logo-text {
+  color: #fffdf6;
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: .14em;
+  line-height: 1.2;
+}
+.logo-subtitle {
+  margin-top: 3px;
+  color: rgba(255,255,255,.58);
+  font-size: 10px;
+  letter-spacing: .22em;
+}
+
+.sidebar .nav-item { margin: 4px 10px; }
+.sidebar .nav-link {
+  width: 100%;
+  margin: 0;
+  padding: 11px 12px;
+  gap: 11px;
+  border-radius: 7px;
+  color: rgba(255,255,255,.68);
+  font-size: 13px;
+  font-weight: 400;
+}
+.sidebar .nav-link:hover { background: rgba(255,255,255,.07); }
+.sidebar .nav-item.active .nav-link {
+  color: #fffdf6;
+  background: rgba(255,255,255,.12);
+}
+.sidebar .nav-item.active .nav-link::before {
+  left: -10px;
+  width: 3px;
+  background: #d8b46b;
+}
+
+.privacy-note {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 14px 10px;
+  padding: 9px 10px;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 7px;
+  color: rgba(255,255,255,.56);
+  font-size: 10px;
+}
+.privacy-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #d8b46b;
+  box-shadow: 0 0 0 3px rgba(216,180,107,.12);
+}
+
+.sidebar .collapse-btn {
+  color: var(--pine);
+  border-color: rgba(23,63,56,.18);
+  background: #faf6eb;
+}
+.sidebar .collapse-btn:hover { background: var(--pine); box-shadow: none; }
+
+@media (max-width: 1024px) and (min-width: 769px) {
+  .sidebar { width: 168px; }
+}
+
+@media (max-width: 768px) {
+  .sidebar { width: min(82vw, 300px); }
+}
+
 /* 收起状态 */
 .sidebar.collapsed {
   width: 60px;

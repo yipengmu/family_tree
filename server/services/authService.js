@@ -199,12 +199,8 @@ const loginUser = async (email, password) => {
 
 // 生成JWT Token
 const generateToken = (userId) => {
-  const jwtSecret = process.env.JWT_SECRET || 'fallback_secret_key_for_development';
-  
-  // 在生產環境中，如果JWT_SECRET未設置，記錄警告
-  if (!process.env.JWT_SECRET && process.env.NODE_ENV !== 'development') {
-    console.warn('⚠️ 警告: JWT_SECRET 環境變量未設置，使用默認密鑰。請在線上環境中設置JWT_SECRET環境變量。');
-  }
+  const jwtSecret = process.env.JWT_SECRET || (process.env.NODE_ENV !== 'production' ? 'local-development-only-change-me' : null);
+  if (!jwtSecret) throw new Error('服务端认证配置不完整');
   
   const token = jwt.sign({ userId }, jwtSecret, { expiresIn: '24h' });
   return token;

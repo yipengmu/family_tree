@@ -3,6 +3,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import prisma, { ensureConnection } from '../../lib/prisma.js';
+import { getJwtSecret } from '../../lib/auth.js';
 
 export default async function handler(req, res) {
   // 设置CORS头
@@ -61,13 +62,32 @@ export default async function handler(req, res) {
     }
 
     // 生成JWT令牌
-    const jwtSecret = process.env.JWT_SECRET || 'fallback_secret_key_for_vercel_deployment';
-    
-    if (!process.env.JWT_SECRET && process.env.NODE_ENV !== 'development') {
-      console.warn('⚠️ 警告: JWT_SECRET 环境变量未设置，使用默认密钥。请在Vercel环境变量中设置JWT_SECRET。');
-    }
+    const token = jwt.sign({ userId: user.id }, getJwtSecret(), { expiresIn: '24h' });
 
-    const token = jwt.sign({ userId: user.id }, jwtSecret, { expiresIn: '24h' });
+    // 兼容早期账号：首次登录时补齐真实的家谱归属关系。
+    let membership = await prisma.tenantMembership.findFirst({
+      where: { user_id: user.id, status: 'ACTIVE' },
+      include: { tenant: true },
+      orderBy: { created_at: 'asc' },
+    });
+    if (!membership) {
+      membership = await prisma.$transaction(async (tx) => {
+        const tenant = await tx.tenant.upsert({
+          where: { id: `user_${user.id}` },
+          update: {},
+          create: {
+            id: `user_${user.id}`,
+            name: `${user.username}的家谱`,
+            description: '我的私密数字家谱',
+            settings: JSON.stringify({ publicAccess: false, livingPersonPrivacy: true, nameProtection: true }),
+          },
+        });
+        return tx.tenantMembership.create({
+          data: { tenant_id: tenant.id, user_id: user.id, role: 'OWNER' },
+          include: { tenant: true },
+        });
+      });
+    }
 
     // 更新最后登录时间
     await prisma.user.update({
@@ -89,6 +109,13 @@ export default async function handler(req, res) {
         isActive: user.is_active,
         createdAt: user.created_at,
         lastLoginAt: user.last_login_at
+      },
+      tenant: {
+        id: membership.tenant.id,
+        name: membership.tenant.name,
+        description: membership.tenant.description,
+        role: membership.role,
+        isDefault: false,
       },
       message: '登录成功'
     });
