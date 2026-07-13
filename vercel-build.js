@@ -3,16 +3,12 @@ const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
 
-const root = path.resolve(__dirname, '..');
+const root = __dirname;
 const buildDir = path.join(root, 'build');
 const markerPath = path.join(root, '.vercel-build-meta.json');
 
 const hash = crypto.createHash('sha256');
-const files = [
-  'package.json',
-  'package-lock.json',
-  'craco.config.js',
-];
+const files = ['package.json', 'package-lock.json', 'craco.config.js'];
 
 function addDirectory(directory) {
   const absoluteDirectory = path.join(root, directory);
