@@ -47,3 +47,4 @@ Thumbs.db
 # cache
 .cache/
 .eslintcache
+.vercel-build-meta.json

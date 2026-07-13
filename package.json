@@ -40,7 +40,7 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "postinstall": "prisma generate",
-    "vercel-build": "GENERATE_SOURCEMAP=false npm run build",
+    "vercel-build": "node scripts/vercel-build.js",
     "db:generate": "npx prisma generate",
     "db:push": "npx prisma db push",
     "db:migrate": "npx prisma migrate dev",
