@@ -436,9 +436,20 @@
 }
 
 @media (max-width: 768px) {
+  .mobile-layout { height: 100dvh; padding-bottom: 0; overflow: hidden; background: var(--paper); }
+  .mobile-layout .sidebar-wrapper,
+  .mobile-layout .sidebar-overlay,
+  .mobile-layout .mobile-menu-btn { display: none !important; }
   .sidebar { width: min(82vw, 300px); }
   .main-content { margin-left: 0; }
-  .main-content .header { min-height: 52px; padding: 8px 12px; }
-  .content-container { height: calc(100dvh - 52px); padding: 8px; }
+  .main-content .header { min-height: 52px; padding: 8px 10px; gap: 9px; }
+  .content-container { height: calc(100dvh - 52px - 64px - env(safe-area-inset-bottom)); padding: 8px; overflow: hidden; }
+  .mobile-layout .main-content.no-search .header { display: none; }
+  .mobile-layout .main-content.no-search .content-container { height: calc(100dvh - 64px - env(safe-area-inset-bottom)); padding-top: 10px; }
   .family-tree-page { height: 100%; min-height: 0; }
+  .mobile-layout .react-flow { height: 100% !important; }
+  .mobile-layout .ant-modal-content { border-radius: 14px; }
+  .mobile-layout .ant-modal-header { background: #fffdf7; border-bottom: 1px solid var(--hairline); }
+  .mobile-layout .ant-modal-title { color: var(--ink); }
+  .mobile-layout .ant-modal-close { color: var(--ink-soft); }
 }

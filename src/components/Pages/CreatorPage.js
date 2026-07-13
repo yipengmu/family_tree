@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { message, Progress, Button, Space, Card, Row, Col, Divider, Typography, Modal, Tooltip, Input } from 'antd';
+import { message, Progress, Button, Space, Card, Row, Col, Divider, Typography, Modal, Tooltip, Input, Form, Select } from 'antd';
 import { PlusOutlined, CloudUploadOutlined, TableOutlined, SaveOutlined, DownloadOutlined, ScanOutlined, CameraOutlined, SettingOutlined, ExclamationCircleOutlined, DeleteOutlined, SearchOutlined, ClearOutlined } from '@ant-design/icons';
 import * as XLSX from 'xlsx';
 import AppLayout from '../Layout/AppLayout.js';
@@ -41,6 +41,9 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
   // 弹框状态管理
   const [ocrModalVisible, setOcrModalVisible] = useState(false);
   const [managementModalVisible, setManagementModalVisible] = useState(false);
+  const [mobilePersonModalVisible, setMobilePersonModalVisible] = useState(false);
+  const [showMobileTable, setShowMobileTable] = useState(false);
+  const [mobilePersonForm] = Form.useForm();
   
   // 重名检测相关状态
   const [duplicateModalVisible, setDuplicateModalVisible] = useState(false);
@@ -793,6 +796,27 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
     message.success('已添加新行（仅在内存中）');
   };
 
+  const addMobilePerson = async (values) => {
+    const newId = rows.length > 0 ? Math.max(...rows.map((row) => parseInt(row.id) || 0)) + 1 : 1;
+    const generation = Number(values.g_rank) || 1;
+    const newPerson = {
+      ...emptyRow(),
+      ...values,
+      id: newId,
+      g_rank: generation,
+      rank_index: rows.filter((row) => Number(row.g_rank) === generation).length + 1,
+      g_father_id: values.g_father_id ? Number(values.g_father_id) || values.g_father_id : 0,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    const nextRows = [...rows, newPerson];
+    setRows(nextRows);
+    setMobilePersonModalVisible(false);
+    mobilePersonForm.resetFields();
+    const saved = await saveToCurrentTenant(nextRows);
+    if (saved) message.success(`${values.name} 已续入家谱`);
+  };
+
 
 
 
@@ -971,89 +995,16 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
       // 过滤掉空行
       const validRows = dataToSave.filter(row => row.name && row.name.trim());
 
-      console.log('💾 保存家谱数据到数据库:', {
-        tenantId: currentTenant.id,
-        dataCount: validRows.length,
-        operation: '全量覆盖更新'
-      });
-
-      // 调用后端API保存数据到数据库（全量覆盖）
-      console.log('🌐 发送保存请求到:', 'http://localhost:3003/api/family-data/save');
-      console.log('📤 请求数据:', {
-        tenantId: currentTenant.id,
-        dataCount: validRows.length
-      });
-
-      const response = await fetch('http://localhost:3003/api/family-data/save', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          tenantId: currentTenant.id,
-          familyData: validRows
-        })
-      });
-
-      console.log('📥 响应状态:', response.status, response.statusText);
-      console.log('📥 响应头:', Object.fromEntries(response.headers.entries()));
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ 响应错误内容:', errorText);
-        throw new Error(`HTTP ${response.status}: ${errorText || '保存失败'}`);
-      }
-
-      const result = await response.json();
-      console.log('✅ 响应结果:', result);
-
-      if (result.success) {
-        message.destroy();
-        message.success(`${result.message} 到 ${currentTenant.name}`);
-        console.log('✅ 家谱数据保存成功:', result);
-
-        // 清除所有相关缓存，确保族谱页面能获取到最新数据
-        try {
-          // 清除前端服务的缓存
-          const familyDataService = (await import('../../services/familyDataService')).default;
-          familyDataService.clearAllCache();
-
-          // 清除本地缓存管理器的缓存
-          const cacheManager = (await import('../../utils/cacheManager')).default;
-          cacheManager.remove(`family_data_${currentTenant.id}`);
-          cacheManager.remove(`tenant_${currentTenant.id}_family_data`);
-
-          console.log('🗑️ 已清除所有相关缓存，族谱页面将显示最新数据');
-        } catch (cacheError) {
-          console.warn('清除缓存时出现警告:', cacheError);
-        }
-
-        // 触发全局数据刷新事件（如果存在）
-        if (window.dispatchEvent) {
-          window.dispatchEvent(new CustomEvent('familyDataUpdated', {
-            detail: {
-              tenantId: currentTenant.id,
-              dataCount: validRows.length,
-              timestamp: new Date().toISOString()
-            }
-          }));
-        }
-
-        // 生成JSON用于预览
-        convertToJSON();
-
-        // 提示用户切换到族谱页面查看
-        setTimeout(() => {
-          message.info('数据已保存，可切换到族谱页面查看最新内容', 3);
-        }, 1000);
-
-      } else {
-        throw new Error(result.message || '保存失败');
-      }
+      await familyDataService.saveFamilyData(validRows, currentTenant.id);
+      message.destroy();
+      message.success(`已保存到 ${currentTenant.name}`);
+      convertToJSON();
+      return true;
     } catch (error) {
       message.destroy();
       message.error(`保存失败: ${error.message}`);
       console.error('保存家谱数据失败:', error);
+      return false;
     } finally {
       setBusy(false);
     }
@@ -1063,6 +1014,32 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
   return (
     <AppLayout activeMenuItem={activeMenuItem} onMenuClick={onMenuClick}>
       <div className="data-management-page">
+        <section className="mobile-continue-hub">
+          <div className="mobile-continue-heading">
+            <span>续家谱</span>
+            <h1>今天想补充什么？</h1>
+            <p>{currentTenant?.name || '我的家谱'} · 已记录 {rows.filter((row) => row.name).length} 位族人</p>
+          </div>
+          <button type="button" className="mobile-flow-card primary" onClick={() => setMobilePersonModalVisible(true)}>
+            <span className="mobile-flow-icon"><PlusOutlined /></span>
+            <span><strong>续录一位族人</strong><small>姓名、辈分与父子关系</small></span>
+            <b>开始</b>
+          </button>
+          <button type="button" className="mobile-flow-card" onClick={() => setOcrModalVisible(true)}>
+            <span className="mobile-flow-icon"><CameraOutlined /></span>
+            <span><strong>拍老家谱识别</strong><small>上传照片，确认后再入谱</small></span>
+            <b>拍照</b>
+          </button>
+          <button type="button" className="mobile-flow-card" onClick={() => setShowMobileTable((value) => !value)}>
+            <span className="mobile-flow-icon"><TableOutlined /></span>
+            <span><strong>批量整理资料</strong><small>适合一次修改多位族人</small></span>
+            <b>{showMobileTable ? '收起' : '展开'}</b>
+          </button>
+          <button type="button" className="mobile-manage-link" onClick={() => setManagementModalVisible(true)}>
+            <SettingOutlined /> 保存、导出与更多管理
+          </button>
+        </section>
+
         {/* 页面头部 */}
         <div className="page-header">
           <Row justify="space-between" align="middle" style={{ marginBottom: '24px' }}>
@@ -1079,7 +1056,7 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
         </div>
 
         {/* 核心数据表格区域（带内置功能入口） */}
-        <Card 
+        <Card className={`family-data-card ${showMobileTable ? 'show-mobile-table' : ''}`}
           title={
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
               <span> {getCurrentDisplayData().length > 0 && currentTenant && (
@@ -1194,6 +1171,45 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
             onSelectedRowsChange={setSelectedRows}
           />
         </Card>
+
+        <Modal
+          title="续录一位族人"
+          open={mobilePersonModalVisible}
+          onCancel={() => setMobilePersonModalVisible(false)}
+          footer={null}
+          destroyOnClose
+          className="mobile-person-modal"
+        >
+          <Form form={mobilePersonForm} layout="vertical" onFinish={addMobilePerson} initialValues={{ sex: 'MAN', g_rank: 1 }}>
+            <Form.Item name="name" label="姓名" rules={[{ required: true, message: '请填写族人姓名' }]}>
+              <Input size="large" placeholder="例如：穆毅鹏" autoFocus />
+            </Form.Item>
+            <div className="mobile-form-grid">
+              <Form.Item name="sex" label="性别">
+                <Select size="large" options={[{ value: 'MAN', label: '男' }, { value: 'WOMAN', label: '女' }]} />
+              </Form.Item>
+              <Form.Item name="g_rank" label="第几代">
+                <Input size="large" type="number" min="1" inputMode="numeric" />
+              </Form.Item>
+            </div>
+            <Form.Item name="g_father_id" label="父亲编号" extra="暂不清楚可以留空，之后再补充">
+              <Input size="large" inputMode="numeric" placeholder="例如：12" />
+            </Form.Item>
+            <Form.Item name="birth_date" label="出生时间">
+              <Input size="large" placeholder="例如：1988年或1988-06-12" />
+            </Form.Item>
+            <Form.Item name="location" label="籍贯或居住地">
+              <Input size="large" placeholder="例如：山东省临沂市" />
+            </Form.Item>
+            <Form.Item name="spouse" label="配偶">
+              <Input size="large" placeholder="可稍后补充" />
+            </Form.Item>
+            <Form.Item name="summary" label="简要记述">
+              <Input.TextArea rows={3} placeholder="职业、经历或想留给后人的一句话" />
+            </Form.Item>
+            <Button type="primary" htmlType="submit" size="large" block loading={busy}>保存并入谱</Button>
+          </Form>
+        </Modal>
 
         {/* OCR识别功能弹框 */}
         <Modal

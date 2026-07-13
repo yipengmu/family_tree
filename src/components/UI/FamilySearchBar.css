@@ -112,12 +112,13 @@
   }
   
   .search-section {
-    width: auto; /* 自适应宽度 */
-    min-width: 160px; /* 最小宽度 */
+    width: 100%;
+    min-width: 0;
+    flex: 1;
   }
   
   .search-section .ant-select {
-    width: 160px !important; /* 移动端减小搜索框宽度 */
+    width: 100% !important;
   }
   
   .family-search-input {
@@ -142,6 +143,10 @@
     padding: 3px 6px;
     font-size: 11px;
   }
+}
+
+@media (max-width: 360px) {
+  .family-search-bar .status-info { display: none; }
 }
 
 /* 加载状态 */

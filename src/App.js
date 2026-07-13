@@ -10,6 +10,7 @@ import tenantService from './services/tenantService.js';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './components/Pages/LoginPage.js';
 import RegisterPage from './components/Pages/RegisterPage.js';
+import MyPage from './components/Pages/MyPage.js';
 import BRAND from './constants/brand.js';
 // 导入测试工具（开发环境自动运行）
 
@@ -40,8 +41,12 @@ function MainApp() {
 
   // 处理菜单点击
   const handleMenuClick = (menuKey) => {
+    if (!isAuthenticated() && menuKey === 'create') {
+      setCurrentPage('register');
+      return;
+    }
     // 如果用户未登录且不在游客模式，且点击的是需要登录的功能，则跳转到登录页
-    if (!isAuthenticated() && menuKey !== 'tree' && menuKey !== 'discover') {
+    if (!isAuthenticated() && !['tree', 'discover', 'mine', 'login', 'register'].includes(menuKey)) {
       setCurrentPage('login-required');
       return;
     }
@@ -256,7 +261,9 @@ function MainApp() {
             </div>
           );
         }
-        return <SettingsPage {...commonProps} />;
+        return <SettingsPage {...commonProps} familyData={familyData} />;
+      case 'mine':
+        return <MyPage {...commonProps} familyData={familyData} />;
       case 'create':
         // 如果用户未登录，引导注册
         if (!isAuthenticated()) {

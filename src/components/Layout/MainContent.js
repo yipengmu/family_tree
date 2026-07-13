@@ -10,19 +10,24 @@ const MainContent = ({
   statistics = null,
   onSearch,
   onSearchSelect,
-  sidebarCollapsed = false
+  sidebarCollapsed = false,
+  showSearch = true
 }) => {
   return (
-    <main className={`main-content ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+    <main className={`main-content ${sidebarCollapsed ? 'sidebar-collapsed' : ''} ${showSearch ? '' : 'no-search'}`}>
       {/* 顶部导航栏 - 简化为仅搜索功能 */}
-      <header className="header">
+      <header className={`header ${showSearch ? '' : 'no-search'}`}>
+        <div className="mobile-header-identity" aria-label={BRAND.name}>
+          <span>{BRAND.seal}</span>
+          <b>{BRAND.name}</b>
+        </div>
         <div className="header-brandline">
           <span className="header-eyebrow">{BRAND.tagline}</span>
           <span className="header-divider" aria-hidden="true" />
           <span className="header-privacy">私密 · 可导出</span>
         </div>
         {/* 搜索栏 */}
-        <div className="header-search">
+        {showSearch && <div className="header-search">
           <FamilySearchBar
             familyData={familyData}
             nodes={nodes}
@@ -33,7 +38,7 @@ const MainContent = ({
             showStatus={true}
             style={{ flex: 1, maxWidth: '100%' }}
           />
-        </div>
+        </div>}
       </header>
 
       {/* 主要内容区域 */}

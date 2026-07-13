@@ -17,6 +17,12 @@ const FamilyTreePage = ({
   // 状态管理
   const [nodes, setNodes] = useState([]);
   const [statistics, setStatistics] = useState(null);
+  const [showMobileWelcome, setShowMobileWelcome] = useState(() => (
+    typeof window !== 'undefined'
+    && window.innerWidth <= 768
+    && !localStorage.getItem('token')
+    && localStorage.getItem('puli_mobile_welcome_seen') !== 'true'
+  ));
   const familyTreeRef = useRef(null);
   const currentTenant = tenantService.getCurrentTenant();
   const familyName = currentTenant?.isDefault ? BRAND.demoFamilyName : (currentTenant?.name || '我的家谱');
@@ -54,9 +60,8 @@ const FamilyTreePage = ({
   const handleCreateMyFamilyTree = () => {
     // 检查用户是否已登录
     if (!isAuthenticated()) {
-      // 如果未登录，触发菜单中的创建选项，这将引导用户到注册/登录页面
       if (onMenuClick) {
-        onMenuClick('create');
+        onMenuClick('register');
       }
     } else {
       // 如果已登录，直接进入创建页面
@@ -64,6 +69,11 @@ const FamilyTreePage = ({
         onMenuClick('create');
       }
     }
+  };
+
+  const dismissMobileWelcome = () => {
+    localStorage.setItem('puli_mobile_welcome_seen', 'true');
+    setShowMobileWelcome(false);
   };
 
   return (
@@ -77,6 +87,30 @@ const FamilyTreePage = ({
       onSearchSelect={handleSearchSelect}
     >
       <div className="family-tree-page">
+        {showMobileWelcome && (
+          <section className="mobile-welcome" aria-label="欢迎使用谱里">
+            <div className="mobile-welcome-paper">
+              <span className="mobile-welcome-seal">谱</span>
+              <span className="mobile-welcome-kicker">互联网人的第一本数字家谱</span>
+              <h1>让家人的名字<br />一代代留在谱里</h1>
+              <p>从自己开始，十分钟建立三代家谱。默认私密，只有受邀家人可以查看。</p>
+              <div className="mobile-welcome-steps" aria-label="创建步骤">
+                <span><i>一</i> 添加自己</span>
+                <b aria-hidden="true" />
+                <span><i>二</i> 补充长辈</span>
+                <b aria-hidden="true" />
+                <span><i>三</i> 邀请家人</span>
+              </div>
+              <Button type="primary" size="large" block onClick={handleCreateMyFamilyTree}>免费创建我的家谱</Button>
+              <div className="mobile-welcome-secondary">
+                <button type="button" onClick={dismissMobileWelcome}>先看看穆氏示范家谱</button>
+                <button type="button" onClick={() => onMenuClick?.('login')}>登录</button>
+              </div>
+            </div>
+            <span className="mobile-welcome-privacy">◈ 家谱私密保存 · 数据可随时导出</span>
+          </section>
+        )}
+
         <section className="family-context-bar" aria-label="当前家谱信息">
           <div className="family-context-copy">
             <span className="family-context-kicker">世系总览</span>
@@ -100,6 +134,20 @@ const FamilyTreePage = ({
             )}
           </div>
         </section>
+
+        {localStorage.getItem('token') && familyData.length === 0 && !loading && (
+          <section className="mobile-empty-family">
+            <span className="mobile-empty-kicker">从第一位族人开始</span>
+            <h2>先把自己写进家谱</h2>
+            <p>接着补充父母与祖辈，谱系会自动连接起来。</p>
+            <ol>
+              <li><span>1</span>录入自己</li>
+              <li><span>2</span>补充父母</li>
+              <li><span>3</span>继续向上续谱</li>
+            </ol>
+            <Button type="primary" block size="large" onClick={() => onMenuClick?.('create')}>录入第一位族人</Button>
+          </section>
+        )}
 
         {/* 显示加载状态 */}
         {loading && familyData.length === 0 && (

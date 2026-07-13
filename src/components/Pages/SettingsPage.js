@@ -7,119 +7,63 @@ import {
   SearchOutlined, 
   EyeOutlined, 
   MobileOutlined,
-  ReloadOutlined,
-  ExclamationCircleOutlined 
+  ReloadOutlined
 } from '@ant-design/icons';
 import AppLayout from '../Layout/AppLayout.js';
+import tenantService from '../../services/tenantService.js';
+import BRAND from '../../constants/brand.js';
 import './SettingsPage.css';
 
 const { Title, Text, Paragraph } = Typography;
 
-const SettingsPage = ({ activeMenuItem = 'settings', onMenuClick }) => {
-  const [settings, setSettings] = useState({
-    showSearchHistory: true,
-    autoCollapse: true,
-    showGenerationNumbers: true,
-    enableMobileOptimization: true,
-    showNodeDetails: true
+const SettingsPage = ({ activeMenuItem = 'settings', onMenuClick, familyData = [] }) => {
+  const tenant = tenantService.getCurrentTenant();
+  const settingsKey = `puli_settings_${tenant?.id || 'default'}`;
+  const [settings, setSettings] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem(settingsKey)) || {
+        showSearchHistory: true,
+        autoCollapse: true,
+        showGenerationNumbers: true,
+        enableMobileOptimization: true,
+        showNodeDetails: true
+      };
+    } catch {
+      return { showSearchHistory: true, autoCollapse: true, showGenerationNumbers: true, enableMobileOptimization: true, showNodeDetails: true };
+    }
   });
   const [aboutVisible, setAboutVisible] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
 
   // 更新设置
   const updateSetting = (key, value) => {
-    setSettings(prev => ({
-      ...prev,
-      [key]: value
-    }));
+    setSettings(prev => {
+      const next = { ...prev, [key]: value };
+      localStorage.setItem(settingsKey, JSON.stringify(next));
+      return next;
+    });
     message.success('设置已更新');
   };
 
-  // 重置家谱数据
-  const resetFamilyData = async () => {
-    Modal.confirm({
-      title: '确认重置家谱数据',
-      icon: <ExclamationCircleOutlined />,
-      content: (
-        <div>
-          <p>此操作将：</p>
-          <ul style={{ paddingLeft: 20, margin: '8px 0' }}>
-            <li>清除当前数据库中的所有家谱数据</li>
-            <li>基于原始 familyData.js 文件重新加载默认数据</li>
-            <li>清除所有前端缓存</li>
-            <li>重新初始化内存中的数据</li>
-          </ul>
-          <p style={{ color: '#f5222d', fontSize: '12px', marginTop: '12px' }}>
-            ⚠️ 此操作不可逆，请确认后再操作！
-          </p>
-        </div>
-      ),
-      okText: '确认重置',
-      cancelText: '取消',
-      okType: 'danger',
-      onOk: async () => {
-        await performDataReset();
-      }
-    });
-  };
-
-  // 执行数据重置
-  const performDataReset = async () => {
+  const clearLocalCache = async () => {
     setResetLoading(true);
     try {
-      console.log('🔄 开始重置家谱数据...');
-      
-      // 1. 调用后端API重置数据库数据
-      const response = await fetch('http://localhost:3003/api/reinit-default-data', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      const result = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(result.message || `HTTP ${response.status}: 重置失败`);
-      }
-
-      console.log('✅ 后端数据重置成功:', result.message);
-
-      // 2. 清除前端所有相关缓存
-      try {
-        // 清除前端服务的内存缓存
-        const familyDataService = (await import('../../services/familyDataService')).default;
-        familyDataService.clearAllCache();
-
-        console.log('🗑️ 已清除所有前端内存缓存');
-      } catch (cacheError) {
-        console.warn('清除缓存时出现警告:', cacheError);
-      }
-
-      // 3. 触发全局数据刷新事件
-      if (window.dispatchEvent) {
-        window.dispatchEvent(new CustomEvent('familyDataUpdated', {
-          detail: {
-            tenantId: 'default',
-            action: 'reset',
-            timestamp: new Date().toISOString()
-          }
-        }));
-      }
-
-      message.success('家谱数据重置成功！页面将自动刷新以加载最新数据');
-      
-      // 4. 延迟刷新页面，确保用户看到成功消息
-      setTimeout(() => {
-        window.location.reload();
-      }, 1500);
-      
-    } catch (error) {
-      console.error('❌ 重置家谱数据失败:', error);
-      message.error(`重置失败: ${error.message}`);
+      const familyDataService = (await import('../../services/familyDataService')).default;
+      familyDataService.clearAllCache();
+      message.success('本机缓存已清除，在线家谱数据不受影响');
     } finally {
       setResetLoading(false);
     }
+  };
+
+  const exportData = () => {
+    const blob = new Blob([JSON.stringify({ tenant, familyData, exportedAt: new Date().toISOString() }, null, 2)], { type: 'application/json;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${tenant?.name || '我的家谱'}-${new Date().toISOString().slice(0, 10)}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
   // 设置项配置
@@ -182,18 +126,18 @@ const SettingsPage = ({ activeMenuItem = 'settings', onMenuClick }) => {
       title: '导出数据',
       description: '导出家谱数据为JSON格式',
       type: 'button',
-      action: () => message.info('数据导出功能')
+      action: exportData
     }
   ];
 
   // 数据管理选项
   const dataManagementItems = [
     {
-      key: 'resetData',
-      title: '重置家谱数据',
-      description: '基于原始 familyData.js 重置所有数据',
-      type: 'danger',
-      action: resetFamilyData
+      key: 'clearCache',
+      title: '清除本机缓存',
+      description: '不会删除云端家谱数据',
+      type: 'normal',
+      action: clearLocalCache
     }
   ];
 
@@ -209,11 +153,11 @@ const SettingsPage = ({ activeMenuItem = 'settings', onMenuClick }) => {
             <Space direction="vertical" size="small" style={{ width: '100%' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Title level={4} style={{ margin: 0 }}>
-                  穆氏家族
+                  {tenant?.name || '我的家谱'}
                 </Title>
-                <Tag color="blue">muff</Tag>
+                <Tag color="green">默认私密</Tag>
               </div>
-              <Text type="secondary">现代化的家族谱系管理平台</Text>
+              <Text type="secondary">只有受邀成员可以查看和续录</Text>
             </Space>
           </Card>
 
@@ -247,19 +191,19 @@ const SettingsPage = ({ activeMenuItem = 'settings', onMenuClick }) => {
               <div className="stat-item">
                 <Text type="secondary">家族成员总数</Text>
                 <br />
-                <Text strong style={{ fontSize: 18 }}>689 人</Text>
+                <Text strong style={{ fontSize: 18 }}>{familyData.length} 人</Text>
               </div>
               <Divider style={{ margin: '12px 0' }} />
               <div className="stat-item">
                 <Text type="secondary">传承代数</Text>
                 <br />
-                <Text strong style={{ fontSize: 18 }}>20 代</Text>
+                <Text strong style={{ fontSize: 18 }}>{new Set(familyData.map((person) => person.g_rank).filter(Boolean)).size} 代</Text>
               </div>
               <Divider style={{ margin: '12px 0' }} />
               <div className="stat-item">
                 <Text type="secondary">数据版本</Text>
                 <br />
-                <Text strong>v0.2.0</Text>
+                <Text strong>自动保存版本记录</Text>
               </div>
             </Space>
           </Card>
@@ -331,7 +275,7 @@ const SettingsPage = ({ activeMenuItem = 'settings', onMenuClick }) => {
 
         {/* 关于对话框 */}
         <Modal
-          title="关于家谱系统"
+          title={`关于${BRAND.name}`}
           open={aboutVisible}
           onCancel={() => setAboutVisible(false)}
           footer={[
@@ -342,16 +286,16 @@ const SettingsPage = ({ activeMenuItem = 'settings', onMenuClick }) => {
         >
           <Space direction="vertical" size="middle">
             <div>
-              <Title level={4}>家谱系统 v0.2.0</Title>
+              <Title level={4}>{BRAND.name}数字家谱</Title>
               <Paragraph>
-                现代化的家族谱系管理平台，支持移动端底部Tab导航、可视化展示、智能搜索等功能。
+                {BRAND.description} 家谱默认私密，数据可以随时导出。
               </Paragraph>
             </div>
 
             <div>
               <Title level={5}>技术栈</Title>
               <Text>
-                React 18 + Ant Design 5 + React Flow + Node.js + MongoDB
+                React 18 + Ant Design 5 + React Flow + Prisma + PostgreSQL
               </Text>
             </div>
 

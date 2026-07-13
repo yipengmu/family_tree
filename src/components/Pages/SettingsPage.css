@@ -35,7 +35,7 @@
 }
 
 .settings-icon {
-  color: #8b5cf6;
+  color: var(--pine);
   font-size: 18px;
   display: flex;
   align-items: center;
@@ -78,8 +78,8 @@
 }
 
 .control-button:hover {
-  border-color: #8b5cf6;
-  background: #faf9ff;
+  border-color: var(--pine);
+  background: #f7faf7;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(139, 92, 246, 0.15);
 }
@@ -123,7 +123,7 @@
 .about-button {
   height: 56px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  background: linear-gradient(135deg, var(--pine-light), var(--pine));
   border: none;
   color: white;
   font-weight: 600;
@@ -132,7 +132,7 @@
 }
 
 .about-button:hover {
-  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  background: linear-gradient(135deg, var(--pine), #10322c);
   transform: translateY(-1px);
   box-shadow: 0 8px 16px rgba(139, 92, 246, 0.3);
   color: white;
@@ -140,13 +140,23 @@
 
 /* 响应式设计 */
 @media (max-width: 768px) {
+  .settings-page { padding: 0 0 calc(86px + env(safe-area-inset-bottom)); }
   .settings-container {
-    padding: 0 16px;
+    padding: 2px 2px 0;
+    gap: 10px;
   }
   
   .settings-card {
-    border-radius: 12px;
+    border-radius: 11px;
+    box-shadow: none;
   }
+
+  .settings-card .ant-card-head { min-height: 44px; padding: 0 14px; }
+  .settings-card .ant-card-head-title { font-size: 14px; }
+  .settings-card .ant-card-body { padding: 12px 14px; }
+  .settings-list-item { padding: 13px 0; }
+  .settings-description { font-size: 11px; }
+  .stat-item { padding: 3px 0; }
   
   .control-button {
     min-height: 48px;
@@ -173,7 +183,7 @@
 }
 
 .settings-list-item .ant-switch-checked {
-  background-color: #8b5cf6;
+  background-color: var(--pine);
 }
 
 .settings-list-item .ant-switch:focus {

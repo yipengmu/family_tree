@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Sidebar from './Sidebar.js';
 import MainContent from './MainContent.js';
+import MobileBottomNav from './MobileBottomNav.js';
 import './AppLayout.css';
 
 const AppLayout = ({
@@ -65,6 +66,7 @@ const AppLayout = ({
           onSearch={onSearch}
           onSearchSelect={onSearchSelect}
           sidebarCollapsed={sidebarCollapsed}
+          showSearch={activeMenuItem === 'tree'}
         >
           {/* 移动端菜单按钮 */}
           <button
@@ -80,6 +82,7 @@ const AppLayout = ({
           {children}
         </MainContent>
       </div>
+      <MobileBottomNav activeItem={activeMenuItem} onMenuClick={handleMenuClick} />
     </div>
   );
 };
