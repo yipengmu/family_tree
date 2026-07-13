@@ -3,6 +3,7 @@
 /tests
 /server
 /scripts
+!/scripts/vercel-build.js
 /family_dump.sql
 /prisma/dev.db
 /server/data
