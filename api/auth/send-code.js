@@ -1,60 +1,7 @@
 // Vercel Serverless Function for Send Verification Code API
 // 统一使用 Prisma + PostgreSQL 数据库
 import prisma, { ensureConnection } from '../../lib/prisma.js';
-
-// 邮件发送函数 - 支持 Resend API
-async function sendEmail({ to, subject, text, html }) {
-  const resendApiKey = process.env.RESEND_API_KEY;
-  
-  console.log('[邮件发送] 检查 RESEND_API_KEY:', resendApiKey ? '已配置 (' + resendApiKey.substring(0, 10) + '...)' : '未配置');
-  
-  if (!resendApiKey) {
-    throw new Error('RESEND_API_KEY 未配置');
-  }
-  
-  // 获取发件人地址，如果是公共邮箱域名（未在Resend验证），自动回退到默认地址
-  let fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
-  const publicDomains = ['gmail.com', 'qq.com', 'outlook.com', 'hotmail.com', '163.com', '126.com', 'yahoo.com'];
-  const emailDomain = fromEmail.split('@')[1]?.toLowerCase();
-  if (publicDomains.includes(emailDomain)) {
-    console.log('[邮件发送] 检测到公共邮箱域名，自动切换到 Resend 默认发件地址');
-    fromEmail = 'onboarding@resend.dev';
-  }
-  console.log('[邮件发送] 发件人:', fromEmail);
-  console.log('[邮件发送] 收件人:', to);
-  
-  try {
-    const response = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${resendApiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: fromEmail,
-        to: to,
-        subject: subject,
-        text: text,
-        html: html,
-      }),
-    });
-    
-    console.log('[邮件发送] Resend API 响应状态:', response.status);
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('[邮件发送] Resend API 错误:', errorText);
-      throw new Error(`Resend API 错误: ${errorText}`);
-    }
-    
-    const result = await response.json();
-    console.log('[邮件发送] 成功:', result);
-    return result;
-  } catch (error) {
-    console.error('[邮件发送] 请求异常:', error.message);
-    throw error;
-  }
-}
+import { isTencentMailConfigured, sendVerificationEmail } from '../../lib/tencentMail.js';
 
 export default async function handler(req, res) {
   // 设置CORS头
@@ -86,6 +33,13 @@ export default async function handler(req, res) {
   }
 
   try {
+    if (!isTencentMailConfigured()) {
+      return res.status(503).json({
+        success: false,
+        error: '腾讯云邮件服务未配置，请联系管理员'
+      });
+    }
+
     // 检查 DATABASE_URL 是否配置
     if (!process.env.DATABASE_URL) {
       console.error('[验证码] DATABASE_URL 未配置！');
@@ -96,8 +50,6 @@ export default async function handler(req, res) {
     await ensureConnection();
 
     // 检查是否已在60秒内发送过验证码
-    const now = Date.now();
-    
     // 检查速率限制
     const recentRateLimit = await prisma.verificationCode.findFirst({
       where: {
@@ -137,7 +89,7 @@ export default async function handler(req, res) {
     const code = crypto.randomInt(100000, 999999).toString();
 
     // 开始数据库事务
-    const transactionResult = await prisma.$transaction([
+    await prisma.$transaction([
       // 删除过期的验证码
       prisma.verificationCode.deleteMany({
         where: {
@@ -167,48 +119,31 @@ export default async function handler(req, res) {
       })
     ]);
 
-    // 检查 Resend API 是否配置
-    const isResendConfigured = process.env.RESEND_API_KEY;
-    console.log('[验证码] 环境检查 - RESEND_API_KEY:', isResendConfigured ? '已配置 (' + isResendConfigured.substring(0, 10) + '...)' : '未配置');
-    console.log('[验证码] 所有环境变量:', Object.keys(process.env).filter(k => k.includes('RESEND') || k.includes('EMAIL')));
-    console.log('[验证码] NODE_ENV:', process.env.NODE_ENV);
-    console.log('[验证码] VERCEL_ENV:', process.env.VERCEL_ENV);
-    console.log('[验证码] 生成的验证码:', code);
-
-    if (isResendConfigured) {
-      // 使用 Resend 发送邮件
-      try {
-        await sendEmail({
-          to: email,
-          subject: `家谱创作工具 - ${purpose === 'register' ? '注册' : '密码重置'}验证码`,
-          text: `您的验证码是: ${code}，有效期5分钟。如果不是本人操作，请忽略此邮件。`,
-          html: `<p>您的验证码是: <strong>${code}</strong>，有效期5分钟。</p><p>如果不是本人操作，请忽略此邮件。</p>`,
-        });
-        
-        res.status(200).json({
-          success: true,
-          message: '验证码已发送',
-          timestamp: new Date().toISOString()
-        });
-      } catch (emailError) {
-        console.error('Resend 邮件发送失败:', emailError);
-        res.status(200).json({
-          success: true,
-          message: '验证码已生成（邮件发送失败，请检查配置）',
-          timestamp: new Date().toISOString()
-        });
-      }
-    } else {
-      // 未配置邮件服务
-      console.log(`⚠️ Resend 未配置，验证码: ${code} (有效期5分钟) - 仅用于开发调试`);
-      res.status(200).json({
-        success: true,
-        message: process.env.NODE_ENV === 'development' 
-          ? '验证码已生成（开发环境，验证码: ' + code + '）' 
-          : '验证码已生成（邮件服务未配置）',
-          timestamp: new Date().toISOString()
+    try {
+      await sendVerificationEmail({ to: email, code, purpose });
+    } catch (emailError) {
+      // 邮件失败时清理已写入的验证码，避免用户收到无效验证码。
+      await prisma.verificationCode.deleteMany({
+        where: {
+          email,
+          OR: [
+            { code, purpose },
+            { code: 'RATE_LIMIT', purpose: 'rate_limit' },
+          ],
+        },
+      });
+      console.error('[验证码] 腾讯云邮件发送失败:', emailError.message);
+      return res.status(502).json({
+        success: false,
+        error: '验证码邮件发送失败，请稍后重试'
       });
     }
+
+    return res.status(200).json({
+      success: true,
+      message: '验证码已发送',
+      timestamp: new Date().toISOString()
+    });
   } catch (error) {
     console.error('发送验证码错误:', error);
     res.status(500).json({

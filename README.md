@@ -1,319 +1,178 @@
-# 🌳 穆氏家谱 - 在线可视化系统
+# 🌳 穆氏家谱 / Cyber Family Tree
 
-<p align="center">
-  <img src="src/res/img/mulogo.png" alt="穆氏家谱" width="120" />
-</p>
+一个基于 React Flow 的在线家谱可视化与家族资料整理系统。
 
-<p align="center">
-  <strong>一个基于 React Flow 构建的现代化家谱可视化系统</strong>
-</p>
+> 当前版本已经具备可运行的 React 前端、Vercel Serverless API、本地 Express 服务、Prisma/PostgreSQL、用户认证、多租户雏形、OSS 图片上传和通义千问 OCR。本文同时区分“已实现”和“规划中”，避免把愿景误写成现状。
 
-<p align="center">
-  <a href="https://tatababa.top">在线演示</a> •
-  <a href="#-快速开始">快速开始</a> •
-  <a href="#-功能特性">功能特性</a> •
-  <a href="#-api-文档">API 文档</a> •
-  <a href="#-部署指南">部署指南</a>
-</p>
+在线演示：[tatababa.top](https://tatababa.top)
 
-<p align="center">
-  <img src="https://img.shields.io/badge/React-18.2-blue?logo=react" alt="React" />
-  <img src="https://img.shields.io/badge/Express-5.x-green?logo=express" alt="Express" />
-  <img src="https://img.shields.io/badge/Prisma-5.x-purple?logo=prisma" alt="Prisma" />
-  <img src="https://img.shields.io/badge/Deploy-Vercel-black?logo=vercel" alt="Vercel" />
-  <img src="https://img.shields.io/coderabbit/prs/github/yipengmu/family_tree?labelColor=171717&color=FF570A&label=CodeRabbit+Reviews" alt="CodeRabbit Reviews" />
-</p>
+## 产品定位
 
----
+当前产品核心是：**让用户浏览、搜索、维护和可视化家谱数据。**
 
-## ✨ 功能特性
+更适合的长期定位是：**以家谱关系为入口、以家庭记忆和资料传承为差异化的隐私优先协作档案。**
 
-- 🌳 **高性能可视化** - 使用 React Flow 处理大型家谱数据（支持 600+ 成员，20+ 代深度）
-- 🔍 **智能搜索** - 支持按姓名、职位、地点等多维度搜索
-- 📊 **代数筛选** - 可按代数范围筛选显示内容
-- 🎨 **交互式界面** - 支持缩放、平移、节点点击查看详情
-- 📱 **响应式设计** - 适配桌面端和移动端
-- 👥 **多租户支持** - 支持多个家族数据隔离管理
-- 🔐 **用户认证** - 完整的注册、登录、邮箱验证功能
-- 🤖 **AI OCR** - 集成通义千问，支持家谱图片智能识别
-- ☁️ **云端存储** - 支持阿里云 OSS 图片上传
+“赛博”可以作为品牌表达，但用户真正需要的是：创建简单、家人愿意参与、资料不丢失、隐私可控、数据可带走。
 
-## 🛠️ 技术栈
+## 已有能力
 
-| 分类 | 技术 |
-|------|------|
-| **前端框架** | React 18 |
-| **可视化引擎** | React Flow 11 |
-| **UI 组件库** | Ant Design 5 |
-| **布局算法** | Dagre |
-| **后端框架** | Express 5 |
-| **数据库 ORM** | Prisma 5 |
-| **数据库** | PostgreSQL (Neon) |
-| **部署平台** | Vercel (Serverless) |
+- React 18 + Ant Design 5 单页应用。
+- React Flow 11 + Dagre 家谱图，支持缩放、平移、布局方向和节点详情。
+- 姓名/职位/地点搜索、代数筛选、智能折叠和移动端适配。
+- 游客浏览默认穆家家谱。
+- 邮箱验证码注册、登录、JWT 会话和个人资料读取。
+- 多租户/家族空间选择、创建、切换和删除流程雏形。
+- Prisma + PostgreSQL/Neon 数据持久化。
+- Vercel Serverless API 与本地 Express 开发服务。
+- 阿里云 OSS 图片上传和通义千问家谱图片 OCR。
+- LocalStorage/IndexedDB 缓存与搜索历史。
 
-## 🚀 快速开始
+## 架构图
 
-### 环境要求
+```mermaid
+flowchart LR
+  U[浏览器 React SPA] --> V[静态资源 / Vercel]
+  U --> A[Vercel Serverless API]
+  U -.本地开发.-> E[Express :3003]
+  A --> P[Prisma Client]
+  P --> D[(PostgreSQL / Neon)]
+  E --> P
+  E --> Q[通义千问 OCR 代理]
+  U --> O[阿里云 OSS]
+  U --> C[LocalStorage / IndexedDB]
+```
 
-- Node.js 18+
-- npm 或 yarn
-- PostgreSQL 数据库（推荐使用 [Neon](https://neon.tech) 免费 Serverless PostgreSQL）
+生产环境由 Vercel 提供 React 构建产物和 `api/**/*.js` Serverless Functions；本地 `npm run dev` 同时启动 React 开发服务器和 Express。结构化家谱数据进入 PostgreSQL，图片进入 OSS，浏览器保留缓存与搜索历史。
 
-### 安装步骤
+当前系统存在两条运行时路径，后续应统一 API 契约和数据访问层，避免本地 Express 与 Vercel API 的行为逐渐分叉。
+
+## 技术栈
+
+| 层次 | 技术 |
+| --- | --- |
+| 前端 | React 18、React Router、Ant Design 5 |
+| 家谱可视化 | React Flow 11、Dagre |
+| 生产 API | Vercel Serverless Functions |
+| 本地 API | Express 5 |
+| 数据访问 | Prisma 5 |
+| 数据库 | PostgreSQL，推荐 Neon |
+| 媒体 | 阿里云 OSS |
+| OCR | 阿里云通义千问 |
+| 部署 | Vercel |
+
+## 快速开始
+
+环境要求：Node.js 18+、npm、PostgreSQL 数据库。
 
 ```bash
-# 1. 克隆项目
 git clone https://github.com/yipengmu/family_tree.git
 cd family_tree
-
-# 2. 安装依赖
 npm install --legacy-peer-deps
-
-# 3. 配置环境变量
 cp .env.example .env
-# 编辑 .env 文件，填入必要配置
-
-# 4. 初始化数据库
+# 填写 DATABASE_URL、DATABASE_URL_UNPOOLED、JWT_SECRET 等配置
 npx prisma generate
 npx prisma db push
-
-# 5. 启动开发服务器
 npm run dev
 ```
 
-### 访问地址
+- 前端：http://localhost:3000
+- 本地 API：http://localhost:3003
+- 健康检查：http://localhost:3003/health
 
-- **前端**: http://localhost:3000
-- **后端 API**: http://localhost:3003
-- **健康检查**: http://localhost:3003/health
+生产构建：
 
-## 📁 项目结构
-
+```bash
+npm run vercel-build
 ```
+
+### Vercel 注册邮件配置
+
+在腾讯云 SES 控制台完成发信域名验证、发信地址和邮件模板审核后，在 Vercel 项目的 Production/Preview 环境变量中配置：
+
+```bash
+TENCENTCLOUD_SECRET_ID=腾讯云SecretId
+TENCENTCLOUD_SECRET_KEY=腾讯云SecretKey
+TENCENT_SES_REGION=ap-guangzhou
+TENCENT_SES_FROM_EMAIL=noreply@mail.your-domain.com
+TENCENT_SES_TEMPLATE_ID=腾讯云审核通过的模板ID
+TENCENT_SES_SUBJECT=家谱创作工具验证码
+```
+
+邮件模板中配置 `{{code}}` 和 `{{purpose}}` 两个变量。腾讯云 SES 的验证码邮件使用 `SendEmail` API 和触发类邮件类型，服务端通过 Node.js SDK 调用，密钥不会进入前端。配置完成后重新部署，再调用 `/api/auth/send-code` 验证邮件链路。详细配置见 [腾讯云 SES 发送邮件文档](https://cloud.tencent.com/document/api/1288/51034) 和 [发信域名验证文档](https://cloud.tencent.com/document/product/1288/60652)。
+
+## 目录结构
+
+```text
 family_tree/
-├── api/                    # Vercel Serverless Functions
-│   ├── auth/              # 认证相关 API
-│   │   ├── login.js       # 登录
-│   │   ├── register.js    # 注册
-│   │   ├── send-code.js   # 发送验证码
-│   │   └── verify-code.js # 验证码校验
-│   ├── family-data/       # 家谱数据 API
-│   ├── tenants/           # 租户管理 API
-│   └── user/              # 用户信息 API
-│
-├── server/                 # Express 本地开发服务器
-│   ├── app.js             # 服务器入口
-│   ├── models/            # 数据模型
-│   └── services/          # 业务逻辑服务
-│
-├── src/                    # React 前端源码
-│   ├── components/        # React 组件
-│   │   ├── Layout/        # 布局组件
-│   │   ├── Pages/         # 页面组件
-│   │   ├── UI/            # 通用 UI 组件
-│   │   ├── FamilyTreeFlow.js  # 家谱可视化核心
-│   │   └── FamilyMemberNode.js # 成员节点组件
-│   ├── services/          # 前端服务层
-│   ├── utils/             # 工具函数
-│   └── data/              # 静态数据
-│
-├── prisma/                 # Prisma 数据库配置
-│   └── schema.prisma      # 数据库模型定义
-│
-├── scripts/                # 工具脚本
-├── tests/                  # 测试文件
-├── docs/                   # 项目文档
-└── vercel.json            # Vercel 部署配置
+├── src/                  # React 前端、页面、家谱图和服务层
+├── api/                  # Vercel Serverless API
+├── server/               # 本地 Express 服务与 OCR 代理
+├── prisma/               # Prisma schema
+├── lib/                  # Prisma 客户端等共享运行时代码
+├── public/               # 静态资源
+├── scripts/              # 数据库、部署和调试脚本
+├── tests/                # 集成、端到端和调试测试
+├── docs/                 # 历史修复记录和专题文档
+├── SPEC.md               # 当前产品与技术规格
+└── vercel.json           # Vercel 构建和路由配置
 ```
 
-## 📡 API 文档
+## 主要 API
 
-### 认证 API
-
-| 方法 | 端点 | 描述 |
-|------|------|------|
-| POST | `/api/auth/register` | 用户注册 |
-| POST | `/api/auth/login` | 用户登录 |
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| POST | `/api/auth/register` | 注册并返回 JWT |
+| POST | `/api/auth/login` | 登录并返回 JWT |
 | POST | `/api/auth/send-code` | 发送邮箱验证码 |
 | POST | `/api/auth/verify-code` | 校验验证码 |
+| GET | `/api/user/profile` | 获取当前用户资料 |
+| GET | `/api/family-data` | 读取默认或租户家谱数据 |
+| POST | `/api/family-data` | 保存租户家谱数据 |
+| POST | `/api/family-data/save` | 保存家谱数据的兼容入口 |
+| GET/POST | `/api/tenants` | 获取或创建租户 |
+| GET/DELETE | `/api/tenants/:tenantId` | 获取或删除租户 |
+| GET | `/api/health` | API 健康检查 |
 
-### 家谱数据 API
+## 当前产品短板与定位问题
 
-| 方法 | 端点 | 描述 |
-|------|------|------|
-| GET | `/api/family-data` | 获取家谱数据 |
-| POST | `/api/family-data/save` | 保存家谱数据 |
-| GET | `/api/family-data/default` | 获取默认家谱 |
+### 1. 产品仍偏“可视化工具”，协作闭环不完整
 
-### 租户 API
+有家谱图、搜索和编辑入口，但缺少邀请、角色、待确认、评论、贡献记录和通知。现在更像一个人维护的数字家谱，距离“让更多家庭创建自己的家谱”还差参与机制。
 
-| 方法 | 端点 | 描述 |
-|------|------|------|
-| GET | `/api/tenants` | 获取租户列表 |
-| GET | `/api/tenants/:id` | 获取租户详情 |
+### 2. 多租户是功能雏形，不是完整权限系统
 
-### 请求/响应示例
+数据库有 `Tenant`，但没有用户与租户之间的 membership 表；部分接口只验证 JWT，不校验用户是否属于目标租户。创建租户的部分逻辑也只是返回对象或依赖本地缓存。需要优先补上 Owner/Editor/Contributor/Viewer 和每个租户的授权校验。
 
-```javascript
-// 登录请求
-POST /api/auth/login
-Content-Type: application/json
+### 3. 数据模型无法承载复杂真实家庭
 
-{
-  "email": "user@example.com",
-  "password": "your_password"
-}
+`FamilyData` 主要依赖 `g_father_id`、`g_mother_id`、`spouse` 和字符串字段。再婚、收养、监护、争议关系、多个来源和有效时间都难以表达。应逐步引入独立的 `Relationship`、`Fact`、`Event`、`Source` 和 `ReviewTask`。
 
-// 登录响应
-{
-  "success": true,
-  "token": "eyJhbGciOiJIUzI1NiIs...",
-  "user": {
-    "id": 1,
-    "name": "用户名",
-    "email": "user@example.com"
-  },
-  "message": "登录成功"
-}
-```
+### 4. 数据保存方式有丢失和协作冲突风险
 
-## 📊 数据模型
+保存接口会先删除某租户全部数据，再批量插入新数组；多人同时编辑时可能互相覆盖，也不利于审计和恢复。应改为事务化增量写入，并使用版本号或乐观锁。
 
-### 家谱成员 (FamilyData)
+### 5. 隐私与密钥安全需要立即处理
 
-| 字段 | 类型 | 描述 |
-|------|------|------|
-| `id` | Int | 自增主键 |
-| `person_id` | String | 业务唯一标识 |
-| `name` | String | 姓名 |
-| `g_rank` | Int | 世代数（第1代=1） |
-| `rank_index` | Int | 同代排序 |
-| `g_father_id` | String | 父亲 ID |
-| `sex` | String | 性别 (MAN/WOMAN) |
-| `official_position` | String | 职位/官职 |
-| `summary` | String | 简介 |
-| `birth_date` | String | 出生日期 |
-| `location` | String | 籍贯/居住地 |
+在世人物、身份证件、住址和联系方式不应默认公开。更严重的是，`REACT_APP_OSS_ACCESS_KEY_SECRET` 这类前端环境变量会进入浏览器构建产物，长期密钥不应放在客户端；应改为后端签名 URL 或 STS 临时凭证。生产环境也不应使用代码中的 fallback JWT secret。
 
-### JSON 数据格式
+### 6. OCR 有效率价值，但缺少“人工确认”边界
 
-```json
-{
-  "id": 1,
-  "name": "穆氏始祖",
-  "g_rank": 1,
-  "rank_index": 1,
-  "g_father_id": 0,
-  "sex": "MAN",
-  "adoption": "none",
-  "official_position": "始祖",
-  "summary": "穆氏家族始祖"
-}
-```
+OCR 很适合降低录入成本，但识别结果不能直接视为家族事实。需要保存原图、原始文本、结构化建议、操作者和确认状态，并允许逐条接受、修改或拒绝。
 
-## 🔧 环境变量配置
+### 7. 家谱图不是所有场景的最佳主界面
 
-```bash
-# 服务器端口
-PORT=3003
+成员数量增加后，连线、缩放和移动端操作会变复杂。列表、搜索、聚焦某一支系、关系路径和时间线应与图形视图并列，而不是让用户只能在大图上找人。
 
-# JWT 密钥（生产环境请使用强密钥）
-JWT_SECRET=your_secure_jwt_secret
+### 8. 缺少可持续回访的成果物
 
-# 数据库连接（PostgreSQL）
-DATABASE_URL=postgresql://user:pass@host:5432/dbname?sslmode=require
+用户创建家谱后，若没有家庭成员补充和可分享成果，很容易一次使用后流失。可以围绕“邀请长辈补充 → 确认资料 → 生成家族年鉴/纪念页”形成闭环。
 
-# 前端 API 地址（开发环境）
-REACT_APP_API_BASE_URL=http://localhost:3003
+## 建议优先级
 
-# 千问 API（可选，用于 OCR 功能）
-REACT_APP_QWEN_API_KEY=your_qwen_api_key
+1. 修复租户归属校验、JWT fallback secret 和 OSS 客户端长期密钥问题。
+2. 统一 Vercel API 与 Express 本地 API 的契约和数据访问层。
+3. 实现真实的租户 membership、角色权限和邀请流程。
+4. 在保留旧字段兼容性的前提下，引入关系、来源、版本和审核模型。
+5. 再做家庭协作、时间线、口述史和年鉴成果物。
 
-# 阿里云 OSS（可选，用于图片上传）
-REACT_APP_OSS_REGION=oss-cn-hangzhou
-REACT_APP_OSS_BUCKET=your-bucket-name
-REACT_APP_OSS_ACCESS_KEY_ID=your_access_key_id
-REACT_APP_OSS_ACCESS_KEY_SECRET=your_access_key_secret
-
-# 多租户配置
-REACT_APP_DEFAULT_TENANT_ID=default
-REACT_APP_ENABLE_MULTI_TENANT=true
-```
-
-## 🌐 部署指南
-
-### Vercel 部署（推荐）
-
-1. Fork 本项目到你的 GitHub
-2. 登录 [Vercel](https://vercel.com) 并导入项目
-3. 配置环境变量（参考上方环境变量配置）
-4. 点击部署
-
-### 环境变量设置
-
-在 Vercel 项目设置中添加以下环境变量：
-
-- `DATABASE_URL` - Neon/PostgreSQL 数据库连接字符串
-- `JWT_SECRET` - JWT 签名密钥
-- `REACT_APP_QWEN_API_KEY` - （可选）通义千问 API 密钥
-
-### 数据库设置
-
-推荐使用 [Neon](https://neon.tech) 免费 PostgreSQL 数据库：
-
-1. 注册 Neon 账号并创建数据库
-2. 获取连接字符串，填入 `DATABASE_URL`
-3. 运行 `npx prisma db push` 初始化表结构
-
-## 📝 开发脚本
-
-```bash
-# 启动前端开发服务器
-npm start
-
-# 启动后端服务器
-npm run server
-
-# 同时启动前后端（推荐）
-npm run dev
-
-# 构建生产版本
-npm run build
-
-# 数据库相关
-npm run db:push      # 推送 schema 到数据库
-npm run db:migrate   # 运行数据库迁移
-npm run db:studio    # 打开 Prisma Studio
-
-# 代码质量
-npm run lint         # ESLint 检查
-npm run format       # Prettier 格式化
-```
-
-## 🤝 贡献指南
-
-欢迎贡献代码！请遵循以下步骤：
-
-1. Fork 本项目
-2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 提交 Pull Request
-
-## 📄 开源协议
-
-本项目采用 [MIT License](LICENSE) 开源协议。
-
-## 🙏 致谢
-
-- [React Flow](https://reactflow.dev/) - 强大的图形可视化库
-- [Ant Design](https://ant.design/) - 优秀的 React UI 组件库
-- [Prisma](https://www.prisma.io/) - 现代化数据库 ORM
-- [Vercel](https://vercel.com/) - 出色的 Serverless 部署平台
-- [Neon](https://neon.tech/) - 免费的 Serverless PostgreSQL
-
----
-
-<p align="center">
-  Made with ❤️ by <a href="https://github.com/yipengmu">yipengmu</a>
-</p>
+完整产品与技术规格见 [SPEC.md](./SPEC.md)。历史修复记录见 [docs/README.md](./docs/README.md)。

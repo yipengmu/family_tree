@@ -18,7 +18,6 @@
     "lodash": "^4.17.21",
     "moment": "^2.30.1",
     "node-fetch": "^2.7.0",
-    "nodemailer": "^7.0.12",
     "pg": "^8.11.0",
     "prisma": "^5.0.0",
     "react": "^18.2.0",
@@ -27,6 +26,7 @@
     "react-scripts": "5.0.1",
     "reactflow": "^11.10.1",
     "redis": "^5.10.0",
+    "tencentcloud-sdk-nodejs-ses": "^4.1.266",
     "xlsx": "^0.18.5"
   },
   "scripts": {

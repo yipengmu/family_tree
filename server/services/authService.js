@@ -99,14 +99,30 @@ const sendVerificationCodeByEmail = async (email, purpose = 'register') => {
       return { success: true, message: '驗證碼已發送' };
     } catch (emailError) {
       console.error(`❌ 郵件發送失敗:`, emailError.message);
-      // 即使郵件發送失敗，也要保留驗證碼，但返回包含錯誤信息的成功響應
-      console.log(`⚠️ 驗證碼已生成但郵件發送失敗，驗證碼: ${code} (有效期5分鐘) - 僅用於開發調試`);
-      return { success: true, message: '驗證碼已生成（郵件發送失敗，驗證碼已保存供開發調試使用）', code: process.env.NODE_ENV === 'development' ? code : undefined };
+      // 邮件失败时清理验证码，避免接口返回成功但用户拿到无效验证码。
+      if (useRedis) {
+        await redisClient.del(codeKey);
+        await redisClient.del(rateLimitKey);
+      } else {
+        inMemoryStore.delete(codeKey);
+        rateLimitStore.delete(rateLimitKey);
+      }
+      throw new Error('验证码邮件发送失败，请稍后重试');
     }
   } else {
-    // 在開發環境中，如果沒有配置郵件服務，記錄驗證碼到控制台以便調試
-    console.log(`⚠️ 郵件服務未配置，驗證碼: ${code} (有效期5分鐘) - 僅用於開發調試`);
-    return { success: true, message: '驗證碼已生成（開發環境）', code: process.env.NODE_ENV === 'development' ? code : undefined };
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('⚠️ 邮件服务未配置，仅在开发环境生成验证码');
+      return { success: true, message: '验证码已生成（开发环境）', code };
+    }
+
+    if (useRedis) {
+      await redisClient.del(codeKey);
+      await redisClient.del(rateLimitKey);
+    } else {
+      inMemoryStore.delete(codeKey);
+      rateLimitStore.delete(rateLimitKey);
+    }
+    throw new Error('邮件服务未配置');
   }
 };
 
