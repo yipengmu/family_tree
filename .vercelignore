@@ -1,0 +1,14 @@
+# Local development and test-only files are not needed by the Vercel build.
+/docs
+/tests
+/server
+/scripts
+/family_dump.sql
+/prisma/dev.db
+/server/data
+
+# These are generated or local-only artifacts.
+/build
+/node_modules
+.DS_Store
+*.log
