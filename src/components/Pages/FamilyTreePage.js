@@ -77,7 +77,8 @@ const FamilyTreePage = ({
     // 检查用户是否已登录
     if (!isAuthenticated()) {
       if (onMenuClick) {
-        onMenuClick('register');
+        // 通过 create 入口保留“注册后继续创建”的意图，避免注册完成后回到示例家谱。
+        onMenuClick('create');
       }
     } else {
       // 如果已登录，直接进入创建页面
@@ -158,13 +159,13 @@ const FamilyTreePage = ({
               <span className="mobile-welcome-seal">谱</span>
               <span className="mobile-welcome-kicker">{BRAND.tagline}</span>
               <h1>让家人的名字<br />一代代留在谱里</h1>
-              <p>从自己开始，十分钟建立三代家谱；以后随时补充家族故事。默认私密。</p>
+              <p>先写下自己，再补充一位长辈；知道多少记多少，之后随时继续补充。默认私密。</p>
               <div className="mobile-welcome-steps" aria-label="创建步骤">
                 <span><i>一</i> 添加自己</span>
                 <b aria-hidden="true" />
                 <span><i>二</i> 补充长辈</span>
                 <b aria-hidden="true" />
-                <span><i>三</i> 邀请家人</span>
+                <span><i>三</i> 继续补充</span>
               </div>
               <Button type="primary" size="large" block onClick={handleCreateMyFamilyTree}>免费创建我的家谱</Button>
               <div className="mobile-welcome-secondary">
@@ -199,6 +200,17 @@ const FamilyTreePage = ({
             )}
           </div>
         </section>
+
+        {isDemoFamily && (
+          <section className="demo-create-guide" aria-label="创建自己的家谱">
+            <div>
+              <span>看懂示例之后，从自己开始</span>
+              <h2>没有纸质家谱，也能创建自己的第一份家谱</h2>
+              <p>只填一位家人的名字就能开始，之后再补充父母、祖辈和家族故事。</p>
+            </div>
+            <Button type="primary" onClick={handleCreateMyFamilyTree}>从自己开始</Button>
+          </section>
+        )}
 
         {localStorage.getItem('token') && familyData.length === 0 && !loading && (
           <section className="mobile-empty-family">

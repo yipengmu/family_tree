@@ -51,6 +51,22 @@ describe("first family onboarding", () => {
     });
   });
 
+  test("creates a first family with one known parent", () => {
+    const people = buildFirstFamily({
+      selfName: "陈一",
+      selfSex: "MAN",
+      fatherName: "陈父",
+    });
+
+    expect(people).toHaveLength(2);
+    expect(people.map((person) => person.name)).toEqual(["陈父", "陈一"]);
+    expect(people[1]).toMatchObject({
+      g_rank: 2,
+      g_father_id: people[0].id,
+      g_mother_id: null,
+    });
+  });
+
   test("counts only names that will become people", () => {
     expect(
       countFirstFamilyMembers({

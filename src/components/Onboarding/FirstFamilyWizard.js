@@ -12,8 +12,7 @@ import "./FirstFamilyWizard.css";
 
 const steps = [
   { title: "从你开始", hint: "先确定家谱中的起点" },
-  { title: "写下父母", hint: "不知道或暂时不想填，可以跳过" },
-  { title: "补到祖辈", hint: "知道多少写多少" },
+  { title: "补充一位长辈", hint: "知道谁就先写谁，不知道也可以跳过" },
 ];
 
 const getStoredUserName = () => {
@@ -28,8 +27,6 @@ function FirstFamilyWizard({ busy, familyName, onComplete, onExit }) {
   const [form] = Form.useForm();
   const [step, setStep] = useState(0);
   const [memberCount, setMemberCount] = useState(1);
-  const fatherName = Form.useWatch("fatherName", form);
-  const motherName = Form.useWatch("motherName", form);
 
   const goNext = async () => {
     if (step === 0) await form.validateFields(["selfName", "selfSex"]);
@@ -50,7 +47,7 @@ function FirstFamilyWizard({ busy, familyName, onComplete, onExit }) {
 
       <div className="first-family-shell">
         <section className="first-family-heading">
-          <span>建立第一版家谱</span>
+          <span>建立你的第一份家谱</span>
           <h1>{steps[step].title}</h1>
           <p>{steps[step].hint}</p>
           <Progress
@@ -124,64 +121,12 @@ function FirstFamilyWizard({ busy, familyName, onComplete, onExit }) {
               </Form.Item>
             </div>
             <p className="first-family-note">
-              只知道其中一位也可以继续，家谱不会替你猜测未知信息。
+              填写一位就能生成第一份家谱；不知道的资料以后再补充，家谱不会替你猜测未知信息。
             </p>
           </div>
-
-          <div hidden={step !== 2}>
-            {fatherName ? (
-              <fieldset className="first-family-branch">
-                <legend>{fatherName} 的父母</legend>
-                <div className="first-family-grid">
-                  <Form.Item name="paternalGrandfatherName" label="祖父姓名">
-                    <Input
-                      size="large"
-                      placeholder="不知道可留空"
-                      maxLength={30}
-                    />
-                  </Form.Item>
-                  <Form.Item name="paternalGrandmotherName" label="祖母姓名">
-                    <Input
-                      size="large"
-                      placeholder="不知道可留空"
-                      maxLength={30}
-                    />
-                  </Form.Item>
-                </div>
-              </fieldset>
-            ) : null}
-            {motherName ? (
-              <fieldset className="first-family-branch">
-                <legend>{motherName} 的父母</legend>
-                <div className="first-family-grid">
-                  <Form.Item name="maternalGrandfatherName" label="外祖父姓名">
-                    <Input
-                      size="large"
-                      placeholder="不知道可留空"
-                      maxLength={30}
-                    />
-                  </Form.Item>
-                  <Form.Item name="maternalGrandmotherName" label="外祖母姓名">
-                    <Input
-                      size="large"
-                      placeholder="不知道可留空"
-                      maxLength={30}
-                    />
-                  </Form.Item>
-                </div>
-              </fieldset>
-            ) : null}
-            {!fatherName && !motherName ? (
-              <div className="first-family-empty-branch">
-                <UserOutlined />
-                <strong>先从自己开始也很好</strong>
-                <span>生成后可以继续添加父母和祖辈。</span>
-              </div>
-            ) : null}
-            <p className="first-family-count">
-              即将生成包含 {memberCount || 1} 位家人的第一版家谱
-            </p>
-          </div>
+          <p className="first-family-count">
+            将先保存 {memberCount || 1} 位家人，之后可以继续补充祖辈和家族故事
+          </p>
 
           <footer className="first-family-actions">
             {step > 0 ? (
@@ -207,7 +152,7 @@ function FirstFamilyWizard({ busy, familyName, onComplete, onExit }) {
                 loading={busy}
                 icon={<CheckOutlined />}
               >
-                生成我的家谱
+                生成我的第一份家谱
               </Button>
             )}
           </footer>

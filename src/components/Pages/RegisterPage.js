@@ -3,6 +3,7 @@ import { Card, Form, Input, Button, message, Row, Col, Typography, Divider } fro
 import { ArrowLeftOutlined, UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons';
 import { useLocation, useNavigate } from 'react-router-dom';
 import AuthService from '../../services/authService.js';
+import tenantService from '../../services/tenantService.js';
 import BRAND from '../../constants/brand.js';
 
 const { Title, Text } = Typography;
@@ -68,6 +69,8 @@ const RegisterPage = () => {
 
       if (result.success) {
         message.success('注册成功');
+        // 注册接口会返回用户自己的家谱空间；立即切换租户并通知主应用，避免继续读写示例家谱。
+        if (result.tenant) tenantService.setCurrentTenant(result.tenant);
         navigate(location.state?.returnTo || '/', { replace: true });
       } else {
         message.error(result.error || '注册失败');

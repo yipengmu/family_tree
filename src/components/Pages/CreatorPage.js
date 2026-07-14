@@ -1020,7 +1020,7 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
       const firstFamily = buildFirstFamily(values);
       const saved = await saveToCurrentTenant(
         firstFamily,
-        `第一版家谱已建立，共记录 ${firstFamily.length} 位家人`,
+        `你的第一份家谱已开始，共记录 ${firstFamily.length} 位家人；接下来可以继续补充父母、祖辈和家族故事`,
       );
       if (saved) onMenuClick?.('tree');
     } catch (error) {
