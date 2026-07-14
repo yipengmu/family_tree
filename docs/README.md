@@ -1,20 +1,11 @@
-# 项目文档目录
+# docs 已废弃
 
-本目录包含项目的开发过程文档、架构说明和解决方案记录。
+本目录不再承载项目的正式产品、技术或 Agent 文档。过去的故障修复记录、临时方案和旧架构草案已清理，避免与当前实现冲突。
 
-## 文档分类
+请按以下入口阅读和维护项目：
 
-- `API_CONNECTION_FIX.md` - API连接问题修复记录
-- `ARCHITECTURE.md` - 系统架构设计文档
-- `BACKEND_SOLUTION_GUIDE.md` - 后端解决方案指南
-- `CACHE_MANAGER_FIX.md` - 缓存管理修复记录
-- `CLEANUP_SUMMARY.md` - 清理工作总结
-- `DATA_RESET_IMPLEMENTATION.md` - 数据重置实现方案
-- `DATA_SYNC_IMPLEMENTATION.md` - 数据同步实现方案
-- `FAMILY_DATA_STORE_IMPLEMENTATION.md` - 家谱数据存储实现方案
-- `FINAL_SOLUTION_SUMMARY.md` - 最终解决方案总结
-- `FRONTEND_DATA_PARSING_FIX.md` - 前端数据解析修复
-- `JSON_LOGGING_UPDATE_SUMMARY.md` - JSON日志更新总结
-- `JSON_PARSING_FIX.md` - JSON解析修复方案
-- `PROMPT_OPTIMIZATION_FIX.md` - 提示优化修复
-- `STATE_PERSISTENCE_FIX.md` - 状态持久化修复
+- [`README.md`](../README.md)：项目定位、运行方式、目录和参与方式。
+- [`SPEC.md`](../SPEC.md)：公益多账户家谱的产品、技术、隐私和 Agent 维护规格。
+- [`AGENTS.md`](../AGENTS.md)：代码修改、测试、安全和协作约束。
+
+新的长期规则应写入 `SPEC.md`；一次性调试信息应保留在代码、测试或提交记录中，不再新增 `docs/*_FIX.md` 或总结文档。

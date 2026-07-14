@@ -7,6 +7,17 @@ const root = __dirname;
 const buildDir = path.join(root, 'build');
 const markerPath = path.join(root, '.vercel-build-meta.json');
 
+// Keep the production database schema in sync before deploying API functions.
+// This must run even when the frontend build is reused from the cache.
+const migration = spawnSync('npx', ['prisma', 'migrate', 'deploy'], {
+  cwd: root,
+  env: process.env,
+  stdio: 'inherit',
+});
+
+if (migration.error) throw migration.error;
+if (migration.status !== 0) process.exit(migration.status || 1);
+
 const hash = crypto.createHash('sha256');
 const files = ['package.json', 'package-lock.json', 'craco.config.js'];
 
