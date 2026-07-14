@@ -1,0 +1,219 @@
+.first-family-page {
+  min-height: 100vh;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.first-family-topbar {
+  min-height: 58px;
+  display: grid;
+  grid-template-columns: 120px 1fr 120px;
+  align-items: center;
+  padding: 0 28px;
+  border-bottom: 1px solid var(--hairline);
+  background: rgba(255, 253, 247, 0.94);
+}
+
+.first-family-topbar button {
+  width: 40px;
+  height: 40px;
+  border: 0;
+  background: transparent;
+  color: var(--pine);
+  cursor: pointer;
+}
+
+.first-family-topbar > span:nth-child(2) {
+  overflow: hidden;
+  color: var(--ink);
+  font: 600 17px var(--serif);
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.first-family-private {
+  justify-self: end;
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.first-family-shell {
+  width: min(720px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 32px 0 56px;
+}
+
+.first-family-heading > span {
+  color: var(--cinnabar);
+  font-size: 12px;
+}
+
+.first-family-heading h1 {
+  margin: 10px 0 8px;
+  color: var(--ink);
+  font: 600 34px var(--serif);
+}
+
+.first-family-heading p {
+  margin: 0 0 16px;
+  color: var(--ink-soft);
+  font-size: 14px;
+}
+
+.first-family-heading .ant-progress {
+  margin-bottom: 24px;
+}
+
+.first-family-form {
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+}
+
+.first-family-form > div:not([hidden]) {
+  animation: first-family-enter 0.2s ease-out;
+}
+
+.first-family-form .ant-form-item-label > label {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.first-family-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.first-family-choice {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  width: min(320px, 100%);
+}
+
+.first-family-choice .ant-radio-button-wrapper {
+  text-align: center;
+}
+
+.first-family-note,
+.first-family-count {
+  margin: 4px 0 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+.first-family-branch {
+  margin: 0 0 12px;
+  padding: 10px 14px 0;
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+}
+
+.first-family-branch .ant-form-item {
+  margin-bottom: 14px;
+}
+
+.first-family-branch legend {
+  padding: 0 8px;
+  color: var(--pine);
+  font-weight: 600;
+}
+
+.first-family-empty-branch {
+  min-height: 150px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px dashed var(--hairline);
+  border-radius: 8px;
+  color: var(--ink-soft);
+}
+
+.first-family-empty-branch > span:first-child {
+  color: var(--pine);
+  font-size: 24px;
+}
+
+.first-family-empty-branch strong {
+  color: var(--ink);
+}
+
+.first-family-empty-branch span:last-child {
+  font-size: 12px;
+}
+
+.first-family-count {
+  margin-top: 8px;
+  text-align: center;
+}
+
+.first-family-actions {
+  margin-top: auto;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 16px;
+}
+
+@keyframes first-family-enter {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .first-family-topbar {
+    min-height: calc(56px + env(safe-area-inset-top));
+    grid-template-columns: 68px 1fr 68px;
+    padding: env(safe-area-inset-top) 10px 0;
+  }
+
+  .first-family-private {
+    font-size: 10px;
+  }
+
+  .first-family-shell {
+    width: calc(100% - 28px);
+    min-height: calc(100dvh - 56px - env(safe-area-inset-top));
+    display: flex;
+    flex-direction: column;
+    padding: 30px 0 calc(22px + env(safe-area-inset-bottom));
+  }
+
+  .first-family-heading h1 {
+    font-size: 28px;
+  }
+
+  .first-family-heading .ant-progress {
+    margin-bottom: 26px;
+  }
+
+  .first-family-form {
+    flex: 1;
+    min-height: 420px;
+  }
+
+  .first-family-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .first-family-actions {
+    position: sticky;
+    bottom: 0;
+    padding: 12px 0 calc(4px + env(safe-area-inset-bottom));
+    background: var(--paper);
+  }
+
+  .first-family-actions .ant-btn {
+    min-width: 118px;
+  }
+}

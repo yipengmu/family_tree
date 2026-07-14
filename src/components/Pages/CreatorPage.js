@@ -1,14 +1,16 @@
-import React, { useMemo, useState, useEffect, useRef } from 'react';
-import { message, Progress, Button, Space, Card, Row, Col, Typography, Modal, Tooltip, Input, Form, Select, Radio } from 'antd';
+import React, { useMemo, useState, useEffect } from 'react';
+import { message, Progress, Button, Space, Card, Row, Col, Typography, Modal, Tooltip, Input, Form, Select, Radio, Spin } from 'antd';
 import { ArrowLeftOutlined, PlusOutlined, CloudUploadOutlined, TableOutlined, SaveOutlined, DownloadOutlined, ScanOutlined, CameraOutlined, SettingOutlined, ExclamationCircleOutlined, DeleteOutlined, SearchOutlined, ClearOutlined } from '@ant-design/icons';
 import * as XLSX from 'xlsx';
 import AppLayout from '../Layout/AppLayout.js';
 import AntdFamilyTable from '../AntdFamilyTable.js';
+import FirstFamilyWizard from '../Onboarding/FirstFamilyWizard.js';
 import tencentOcrService from '../../services/tencentOcrService.js';
 import uploadService from '../../services/uploadService.js';
 import tenantService from '../../services/tenantService.js';
 import familyDataService from '../../services/familyDataService.js';
 import familyDataGenerator from '../../services/familyDataGenerator.js';
+import { buildFirstFamily } from '../../utils/firstFamily.js';
 import { normalizePersonLifeStatus } from '../../utils/personLifeStatus.js';
 import './CreatorPage.css';
 
@@ -24,7 +26,7 @@ const emptyRow = () => normalizePersonLifeStatus({
   id: '', name: '', g_rank: '', rank_index: '', g_father_id: '', official_position: '', summary: '', adoption: 'none', sex: 'MAN', g_mother_id: '', birth_date: '', id_card: '', face_img: '', photos: '', household_info: '', spouse: '', home_page: '', formal_name: '', location: '', childrens: ''
 }, true);
 
-function CreatorPage({ activeMenuItem = 'create', onMenuClick, startOnboarding = false }) {
+function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
   // 状态管理
   const [files, setFiles] = useState([]);
   const [previews, setPreviews] = useState([]);
@@ -35,6 +37,7 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick, startOnboarding =
   const [uploadProgress, setUploadProgress] = useState(0);
   const [ocrProgress, setOcrProgress] = useState(0);
   const [currentTenant, setCurrentTenant] = useState(null);
+  const [dataLoading, setDataLoading] = useState(true);
   const [uploadConfig, setUploadConfig] = useState(null);
   const [ocrConfig, setOcrConfig] = useState(null);
   
@@ -44,19 +47,6 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick, startOnboarding =
   const [mobilePersonModalVisible, setMobilePersonModalVisible] = useState(false);
   const [showMobileTable, setShowMobileTable] = useState(false);
   const [mobilePersonForm] = Form.useForm();
-  const hasStartedOnboarding = useRef(false);
-
-  useEffect(() => {
-    if (
-      startOnboarding
-      && !hasStartedOnboarding.current
-      && typeof window !== 'undefined'
-      && window.innerWidth <= 768
-    ) {
-      hasStartedOnboarding.current = true;
-      setMobilePersonModalVisible(true);
-    }
-  }, [startOnboarding]);
   
   // 重名检测相关状态
   const [duplicateModalVisible, setDuplicateModalVisible] = useState(false);
@@ -360,6 +350,7 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick, startOnboarding =
     if (currentTenant) {
       // 使用familyDataService的3层架构加载数据：内存缓存 → 数据库 → 原始familyData.js
       const loadDataFromService = async () => {
+        setDataLoading(true);
         try {
           console.log('🔄 使用familyDataService加载数据...', currentTenant.id);
           const data = await familyDataService.getFamilyData(false, currentTenant.id);
@@ -379,6 +370,8 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick, startOnboarding =
         } catch (error) {
           console.warn('⚠️ 加载数据失败:', error);
           setRows([]);
+        } finally {
+          setDataLoading(false);
         }
       };
       
@@ -395,7 +388,6 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick, startOnboarding =
   // 监听租户切换（优化版 - 保持数据状态）
   useEffect(() => {
     const unsubscribe = tenantService.onTenantChange(async (tenant) => {
-      const previousTenant = currentTenant;
       setCurrentTenant(tenant);
       
       // 租户切换时，不立即清空数据，而是保留现有数据状态
@@ -408,7 +400,7 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick, startOnboarding =
     });
 
     return unsubscribe;
-  }, [currentTenant]);
+  }, []);
 
   // 监听家谱数据更新事件，确保保存后数据管理页面能实时同步
   useEffect(() => {
@@ -421,18 +413,15 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick, startOnboarding =
         console.log('🔄 [CreatorPage] 检测到家谱数据更新，重新加载数据管理页面数据...');
         
         try {
-          // 从数据库重新加载最新数据
-          const response = await fetch(`http://localhost:3003/api/family-data/${tenantId}`);
-          const result = await response.json();
-          
-          if (response.ok && result.success && result.data && result.data.length > 0) {
-            console.log(`✅ [CreatorPage] 从数据库重新加载 ${result.data.length} 条记录`);
-            setRows(result.data);
+          const data = await familyDataService.getFamilyData(true, tenantId);
+          if (Array.isArray(data)) {
+            console.log(`✅ [CreatorPage] 重新加载 ${data.length} 条记录`);
+            setRows(data);
             
             // 数据重新加载时重新执行搜索（如果有搜索条件）
             if (searchText) {
               const searchTerm = searchText.toLowerCase().trim();
-              const filtered = result.data.filter(row => {
+              const filtered = data.filter(row => {
                 return (
                   (row.name && row.name.toLowerCase().includes(searchTerm)) ||
                   (row.official_position && row.official_position.toLowerCase().includes(searchTerm)) ||
@@ -446,14 +435,6 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick, startOnboarding =
               setFilteredRows(filtered);
             }
             
-            // 更新JSON输出
-            setTimeout(() => {
-              convertToJSON();
-            }, 100);
-            
-            message.success('数据已同步，表格已更新为最新内容');
-          } else {
-            console.log('📝 [CreatorPage] 数据库无数据或响应异常');
           }
         } catch (error) {
           console.error('❌ [CreatorPage] 重新加载数据失败:', error);
@@ -466,7 +447,7 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick, startOnboarding =
     return () => {
       window.removeEventListener('familyDataUpdated', handleDataUpdated);
     };
-  }, [currentTenant]);
+  }, [currentTenant, searchText]);
 
   // 已删除localStorage自动保存逻辑，数据仅存在于内存中
   // 用户需要手动点击“保存到数据库”按钮来持久化数据
@@ -1033,6 +1014,43 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick, startOnboarding =
       setBusy(false);
     }
   };
+
+  const handleFirstFamilyComplete = async (values) => {
+    try {
+      const firstFamily = buildFirstFamily(values);
+      const saved = await saveToCurrentTenant(
+        firstFamily,
+        `第一版家谱已建立，共记录 ${firstFamily.length} 位家人`,
+      );
+      if (saved) onMenuClick?.('tree');
+    } catch (error) {
+      message.error(error.message || '生成家谱失败，请重试');
+    }
+  };
+
+  if (dataLoading || !currentTenant) {
+    return (
+      <AppLayout activeMenuItem={activeMenuItem} onMenuClick={onMenuClick} immersiveMobile>
+        <div className="creator-loading">
+          <Spin size="large" />
+          <span>正在打开你的家谱...</span>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (!rows.some((row) => row.name && row.name.trim())) {
+    return (
+      <AppLayout activeMenuItem={activeMenuItem} onMenuClick={onMenuClick} immersiveMobile>
+        <FirstFamilyWizard
+          busy={busy}
+          familyName={currentTenant.name}
+          onComplete={handleFirstFamilyComplete}
+          onExit={() => onMenuClick?.('tree')}
+        />
+      </AppLayout>
+    );
+  }
 
 
   return (

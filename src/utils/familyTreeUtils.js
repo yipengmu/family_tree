@@ -61,7 +61,7 @@ export const convertToReactFlowData = (familyData, fullFamilyData = null, isColl
     nodeMap.set(person.id, node);
   });
   
-  // 创建边（父子关系）
+  // 创建边（父母与子女关系）
   familyData.forEach(person => {
     if (person.g_father_id && person.g_father_id !== 0) {
       const edge = {
@@ -84,6 +84,28 @@ export const convertToReactFlowData = (familyData, fullFamilyData = null, isColl
         }
       };
       edges.push(edge);
+    }
+
+    if (person.g_mother_id && person.g_mother_id !== 0) {
+      edges.push({
+        id: `edge-mother-${person.g_mother_id}-${person.id}`,
+        source: person.g_mother_id.toString(),
+        target: person.id.toString(),
+        type: 'straight',
+        animated: false,
+        style: {
+          stroke: 'hsl(8 40% 52%)',
+          strokeWidth: 2,
+          strokeLinecap: 'round',
+          strokeLinejoin: 'round',
+        },
+        markerEnd: {
+          type: 'arrowclosed',
+          color: 'hsl(8 40% 52%)',
+          width: 12,
+          height: 12,
+        }
+      });
     }
   });
   

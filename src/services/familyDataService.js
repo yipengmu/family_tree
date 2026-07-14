@@ -168,18 +168,25 @@ class FamilyDataService {
       }
     }
 
+    let databaseError = null;
     try {
       // 第2层：从数据库加载（带超时）- 仅对已登录用户
       console.log(`🗄️ [第2层] 尝试从数据库加载数据 (租户: ${tenantId})`);
       const dbData = await this.loadFamilyDataFromServer(tenantId);
-      
-      if (dbData && dbData.length > 0) {
+
+      if (Array.isArray(dbData)) {
         console.log(`✅ [第2层] 从数据库加载成功 (${dbData.length}条记录)`);
         return dbData;
       }
     } catch (error) {
+      databaseError = error;
       console.warn(`⚠️ [第2层] 数据库加载失败:`, error.message);
     }
+
+    const isPrivateTenant = isAuthenticated
+      && tenantId !== 'default'
+      && tenantId !== process.env.REACT_APP_DEFAULT_TENANT_ID;
+    if (isPrivateTenant && databaseError) throw databaseError;
 
     // 第3层：回退到原始数据文件
     console.log(`📁 [第3层] 回退到原始familyData.js`);

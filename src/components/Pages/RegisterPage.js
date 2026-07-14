@@ -68,10 +68,7 @@ const RegisterPage = () => {
 
       if (result.success) {
         message.success('注册成功');
-        navigate(location.state?.returnTo || '/', {
-          replace: true,
-          state: { onboarding: true }
-        });
+        navigate(location.state?.returnTo || '/', { replace: true });
       } else {
         message.error(result.error || '注册失败');
       }
@@ -108,8 +105,8 @@ const RegisterPage = () => {
         >
           <div style={{ textAlign: 'center', marginBottom: '24px' }}>
             <div className="auth-seal">{BRAND.seal}</div>
-            <Title level={2} style={{ marginBottom: '8px' }}>创建第一本数字家谱</Title>
-            <Text type="secondary">默认私密，只有受邀家人可以查看</Text>
+            <Title level={2} style={{ marginBottom: '8px' }}>{BRAND.tagline}</Title>
+            <Text type="secondary">从自己开始，快速记录父母、祖辈和家族故事；默认私密，只有受邀家人可以查看</Text>
           </div>
 
           <Form

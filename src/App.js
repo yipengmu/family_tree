@@ -332,7 +332,7 @@ function MainApp() {
             </div>
           );
         }
-        return <CreatorPage {...commonProps} startOnboarding={Boolean(location.state?.onboarding)} />;
+        return <CreatorPage {...commonProps} />;
       case 'discover':
         return <DiscoverPage {...commonProps} />;
       case 'login-required':

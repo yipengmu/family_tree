@@ -156,9 +156,9 @@ const FamilyTreePage = ({
           <section className="mobile-welcome" aria-label="欢迎使用谱里">
             <div className="mobile-welcome-paper">
               <span className="mobile-welcome-seal">谱</span>
-              <span className="mobile-welcome-kicker">年轻人的第一本数字家谱</span>
+              <span className="mobile-welcome-kicker">{BRAND.tagline}</span>
               <h1>让家人的名字<br />一代代留在谱里</h1>
-              <p>从自己开始，十分钟建立三代家谱。默认私密。</p>
+              <p>从自己开始，十分钟建立三代家谱；以后随时补充家族故事。默认私密。</p>
               <div className="mobile-welcome-steps" aria-label="创建步骤">
                 <span><i>一</i> 添加自己</span>
                 <b aria-hidden="true" />
