@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Button, Space, Tooltip, message, Input, InputNumber, Select, Modal } from 'antd';
 import { PlusOutlined, SaveOutlined, InfoCircleOutlined, EditOutlined } from '@ant-design/icons';
+import { isPersonAlive, normalizePersonLifeStatus, setPersonAlive } from '../utils/personLifeStatus.js';
 
 const { Option } = Select;
 
@@ -37,10 +38,10 @@ const AntdFamilyTable = ({
     console.log(`📊 当前最大ID: ${currentMaxId}, 新增数据: ${newData.length} 条`);
 
     // 处理新数据
-    const processedNewData = newData.map((item, index) => ({
+    const processedNewData = newData.map((item, index) => normalizePersonLifeStatus({
       key: item.id || `temp_${Date.now()}_${index}`,
       id: item.id || (currentMaxId + index + 1),
-      name: item.name || `未知姓名${index + 1}`,
+      name: item.name ?? '',
       g_rank: item.g_rank || 1,
       rank_index: item.rank_index || (index + 1),
       sex: item.sex || 'MAN',
@@ -49,8 +50,6 @@ const AntdFamilyTable = ({
       official_position: item.official_position || '',
       summary: item.summary || '',
       birth_date: item.birth_date || '',
-      dealth: item.dealth || '',
-      alive: item.alive !== undefined ? item.alive : (item.dealth === 'alive'), // 根据dealth字段推导 alive
       spouse: item.spouse || '',
       location: item.location || '',
       // 保留所有原始字段
@@ -481,7 +480,7 @@ const AntdFamilyTable = ({
         }
         
         // 如果 alive 字段未定义，根据 dealth 字段推断
-        const isAlive = text !== undefined ? text : (record.dealth === 'alive');
+        const isAlive = isPersonAlive(record);
         
         return (
           <span 
@@ -681,7 +680,9 @@ const AntdFamilyTable = ({
     const newData = tableData.map(item => {
       if (item.key === key) {
         // 如果数据发生变化，更新 updated_at 时间戳
-        const updatedItem = { ...item, [field]: normalizedValue };
+        const updatedItem = field === 'alive'
+          ? setPersonAlive(item, normalizedValue)
+          : { ...item, [field]: normalizedValue };
         
         // 检查是否有实际变化
         const hasChanged = item[field] !== normalizedValue;
@@ -721,7 +722,8 @@ const AntdFamilyTable = ({
       adoption: 'none',
       sex: 'MAN',
       birth_date: '',
-      dealth: '',
+      dealth: 'alive',
+      death_date: 'alive',
       alive: true, // 新加的人默认在世
       spouse: '',
       location: '',
@@ -736,7 +738,7 @@ const AntdFamilyTable = ({
       onDataChange(newData);
     }
     
-    message.success('已添加新行');
+    message.success('已添加一位家人，请补充姓名后保存');
   };
 
   // 导出Excel功能已迁移到CreatorPage的管理与发布弹框中
@@ -887,8 +889,8 @@ const AntdFamilyTable = ({
               fontSize: '14px',
               textAlign: 'center'
             }}>
-              <div style={{ marginBottom: '8px' }}>📝 暂无数据</div>
-              <div style={{ fontSize: '12px' }}>请上传图片进行OCR识别或手动添加</div>
+              <div style={{ marginBottom: '8px' }}>还没有录入家人</div>
+              <div style={{ fontSize: '12px' }}>先添加一位家人，或从旧家谱照片开始</div>
             </div>
           )
         }}

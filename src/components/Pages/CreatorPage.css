@@ -237,7 +237,18 @@
   .mobile-person-modal .ant-modal-title { color: var(--ink); font-family: var(--serif); font-size: 18px; }
   .mobile-person-modal .ant-modal-close { color: var(--ink-soft); }
   .mobile-person-modal .ant-modal-body { padding: 16px 18px 22px; }
+  .mobile-form-intro { margin: 0 0 18px; color: var(--ink-soft); font-size: 13px; line-height: 1.7; }
   .mobile-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .mobile-life-status { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
+  .mobile-life-status .ant-radio-button-wrapper { padding-inline: 10px; text-align: center; }
+  .mobile-more-fields { margin: 4px 0 18px; border: 1px solid var(--hairline); border-radius: 10px; background: rgba(247,243,232,.55); }
+  .mobile-more-fields summary { min-height: 46px; display: flex; align-items: center; padding: 0 14px; color: var(--pine); font-size: 13px; font-weight: 600; cursor: pointer; list-style: none; }
+  .mobile-more-fields summary::-webkit-details-marker { display: none; }
+  .mobile-more-fields summary::after { content: '＋'; margin-left: auto; color: var(--ink-soft); font-size: 16px; font-weight: 400; }
+  .mobile-more-fields[open] summary::after { content: '－'; }
+  .mobile-more-fields-content { padding: 4px 14px 2px; border-top: 1px solid var(--hairline); }
+  .mobile-form-submit { position: sticky; bottom: -22px; z-index: 1; margin: 0 -18px -22px; padding: 12px 18px calc(16px + env(safe-area-inset-bottom)); background: rgba(255,253,247,.97); border-top: 1px solid var(--hairline); backdrop-filter: blur(12px); }
+  .mobile-form-submit small { display: block; margin-top: 8px; color: var(--ink-soft); font-size: 10px; text-align: center; }
 
   .data-management-page .ant-modal { max-width: calc(100vw - 20px); margin: 0 10px; }
   .data-management-page .ant-modal-body .ant-space-horizontal { flex-wrap: wrap; }

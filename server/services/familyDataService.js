@@ -308,7 +308,11 @@ class FamilyDataService {
             official_position: item.official_position || null,
             summary: item.summary || null,
             birth_date: item.birth_date || null,
-            death_date: item.death_date || null,
+            death_date: item.alive === true
+              ? 'alive'
+              : (item.alive === false && (item.death_date === 'alive' || item.dealth === 'alive')
+                ? null
+                : (item.death_date ?? item.dealth ?? null)),
             spouse: item.spouse || null,
             location: item.location || null,
             formal_name: item.formal_name || null,
@@ -366,6 +370,8 @@ class FamilyDataService {
         summary: item.summary,
         birth_date: item.birth_date,
         death_date: item.death_date,
+        dealth: item.death_date,
+        alive: item.death_date === 'alive',
         spouse: item.spouse,
         location: item.location,
         formal_name: item.formal_name,

@@ -24,7 +24,9 @@ export const DEFAULT_FAMILY_MEMBER = {
   household_info: '',
   spouse: '',
   home_page: '',
-  dealth: null,
+  dealth: 'alive',
+  death_date: 'alive',
+  alive: true,
   formal_name: '',
   location: '',
   childrens: ''
@@ -70,7 +72,7 @@ export const ADOPTION_OPTIONS = [
 
 // 生死状态选项
 export const DEATH_STATUS_OPTIONS = [
-  { value: null, label: '在世' },
+  { value: 'alive', label: '在世' },
   { value: 'death', label: '已故' }
 ];
 

@@ -186,7 +186,7 @@ export const dataStats = {
   maleCount: ${data.filter(p => p.sex === 'MAN').length},
   femaleCount: ${data.filter(p => p.sex === 'WOMAN').length},
   withPosition: ${data.filter(p => p.official_position).length},
-  deceased: ${data.filter(p => p.dealth === 'dealth').length}
+  deceased: ${data.filter(p => p.alive === false || (p.alive === undefined && p.dealth !== 'alive')).length}
 };
 
 // 辅助函数
