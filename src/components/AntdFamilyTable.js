@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Space, Tooltip, message, Input, Select, Modal } from 'antd';
+import { Table, Button, Space, Tooltip, message, Input, InputNumber, Select, Modal } from 'antd';
 import { PlusOutlined, SaveOutlined, InfoCircleOutlined, EditOutlined } from '@ant-design/icons';
 
 const { Option } = Select;
@@ -14,7 +14,7 @@ const AntdFamilyTable = ({
   onSelectedRowsChange
 }) => {
   const [tableData, setTableData] = useState([]);
-  const [editingKey, setEditingKey] = useState('');
+  const [editingCell, setEditingCell] = useState(null);
   const [pageSize, setPageSize] = useState(50); // 添加分页大小状态
   
   // 使用父组件传递的多选状态，如果没有则使用内部状态
@@ -146,7 +146,7 @@ const AntdFamilyTable = ({
       key: 'name',
       width: 90,
       render: (text, record) => {
-        if (editingKey === record.key) {
+        if (editingCell?.key === record.key && editingCell.field === 'name') {
           return (
             <Input
               size="small"
@@ -160,7 +160,7 @@ const AntdFamilyTable = ({
         }
         return (
           <div 
-            onClick={() => setEditingKey(record.key)}
+            onClick={() => setEditingCell({ key: record.key, field: 'name' })}
             style={{ 
               cursor: 'pointer', 
               height: '28px',
@@ -188,21 +188,28 @@ const AntdFamilyTable = ({
       sorter: (a, b) => a.g_rank - b.g_rank,
       align: 'center',
       render: (text, record) => {
-        if (editingKey === record.key) {
+        if (editingCell?.key === record.key && editingCell.field === 'g_rank') {
           return (
-            <Input
+            <InputNumber
               size="small"
-              type="number"
-              defaultValue={text}
-              onPressEnter={(e) => handleSave(record.key, 'g_rank', parseInt(e.target.value))}
-              onBlur={(e) => handleSave(record.key, 'g_rank', parseInt(e.target.value))}
-              style={{ fontSize: '12px' }}
+              min={1}
+              precision={0}
+              defaultValue={text || 1}
+              autoFocus
+              controls={false}
+              onPressEnter={(e) => {
+                e.stopPropagation();
+                handleSave(record.key, 'g_rank', Number(e.target.value));
+              }}
+              onBlur={(e) => handleSave(record.key, 'g_rank', Number(e.target.value))}
+              onClick={(e) => e.stopPropagation()}
+              style={{ width: '100%', fontSize: '12px' }}
             />
           );
         }
         return (
           <span 
-            onClick={() => setEditingKey(record.key)}
+            onClick={() => setEditingCell({ key: record.key, field: 'g_rank' })}
             style={{ 
               cursor: 'pointer',
               display: 'inline-block',
@@ -230,21 +237,28 @@ const AntdFamilyTable = ({
       width: 50,
       align: 'center',
       render: (text, record) => {
-        if (editingKey === record.key) {
+        if (editingCell?.key === record.key && editingCell.field === 'rank_index') {
           return (
-            <Input
+            <InputNumber
               size="small"
-              type="number"
-              defaultValue={text}
-              onPressEnter={(e) => handleSave(record.key, 'rank_index', parseInt(e.target.value))}
-              onBlur={(e) => handleSave(record.key, 'rank_index', parseInt(e.target.value))}
-              style={{ fontSize: '12px' }}
+              min={1}
+              precision={0}
+              defaultValue={text || 1}
+              autoFocus
+              controls={false}
+              onPressEnter={(e) => {
+                e.stopPropagation();
+                handleSave(record.key, 'rank_index', Number(e.target.value));
+              }}
+              onBlur={(e) => handleSave(record.key, 'rank_index', Number(e.target.value))}
+              onClick={(e) => e.stopPropagation()}
+              style={{ width: '100%', fontSize: '12px' }}
             />
           );
         }
         return (
           <span 
-            onClick={() => setEditingKey(record.key)}
+            onClick={() => setEditingCell({ key: record.key, field: 'rank_index' })}
             style={{ 
               cursor: 'pointer',
               display: 'inline-block',
@@ -268,21 +282,28 @@ const AntdFamilyTable = ({
       width: 60,
       align: 'center',
       render: (text, record) => {
-        if (editingKey === record.key) {
+        if (editingCell?.key === record.key && editingCell.field === 'g_father_id') {
           return (
-            <Input
+            <InputNumber
               size="small"
-              type="number"
-              defaultValue={text}
-              onPressEnter={(e) => handleSave(record.key, 'g_father_id', parseInt(e.target.value) || 0)}
-              onBlur={(e) => handleSave(record.key, 'g_father_id', parseInt(e.target.value) || 0)}
-              style={{ fontSize: '12px' }}
+              min={0}
+              precision={0}
+              defaultValue={text || 0}
+              autoFocus
+              controls={false}
+              onPressEnter={(e) => {
+                e.stopPropagation();
+                handleSave(record.key, 'g_father_id', Number(e.target.value) || 0);
+              }}
+              onBlur={(e) => handleSave(record.key, 'g_father_id', Number(e.target.value) || 0)}
+              onClick={(e) => e.stopPropagation()}
+              style={{ width: '100%', fontSize: '12px' }}
             />
           );
         }
         return (
           <span 
-            onClick={() => setEditingKey(record.key)}
+            onClick={() => setEditingCell({ key: record.key, field: 'g_father_id' })}
             style={{ 
               cursor: 'pointer',
               display: 'inline-block',
@@ -307,12 +328,13 @@ const AntdFamilyTable = ({
       width: 50,
       align: 'center',
       render: (text, record) => {
-        if (editingKey === record.key) {
+        if (editingCell?.key === record.key && editingCell.field === 'sex') {
           return (
             <Select
               size="small"
               defaultValue={text}
               style={{ width: '100%', fontSize: '12px' }}
+              autoFocus
               onChange={(value) => handleSave(record.key, 'sex', value)}
             >
               <Option value="MAN">男</Option>
@@ -323,7 +345,7 @@ const AntdFamilyTable = ({
         const isMale = text === 'MAN';
         return (
           <span 
-            onClick={() => setEditingKey(record.key)}
+            onClick={() => setEditingCell({ key: record.key, field: 'sex' })}
             style={{ 
               cursor: 'pointer',
               display: 'inline-block',
@@ -352,12 +374,13 @@ const AntdFamilyTable = ({
       width: 60,
       align: 'center',
       render: (text, record) => {
-        if (editingKey === record.key) {
+        if (editingCell?.key === record.key && editingCell.field === 'adoption') {
           return (
             <Select
               size="small"
               defaultValue={text}
               style={{ width: '100%', fontSize: '12px' }}
+              autoFocus
               onChange={(value) => handleSave(record.key, 'adoption', value)}
             >
               <Option value="none">无</Option>
@@ -370,7 +393,7 @@ const AntdFamilyTable = ({
         const color = text === 'none' ? '#999' : '#fa8c16';
         return (
           <span 
-            onClick={() => setEditingKey(record.key)}
+            onClick={() => setEditingCell({ key: record.key, field: 'adoption' })}
             style={{ 
               cursor: 'pointer',
               fontSize: '11px',
@@ -393,20 +416,25 @@ const AntdFamilyTable = ({
       key: 'official_position',
       width: 120,
       render: (text, record) => {
-        if (editingKey === record.key) {
+        if (editingCell?.key === record.key && editingCell.field === 'official_position') {
           return (
             <Input
               size="small"
               defaultValue={text}
-              onPressEnter={(e) => handleSave(record.key, 'official_position', e.target.value)}
+              autoFocus
+              onPressEnter={(e) => {
+                e.stopPropagation();
+                handleSave(record.key, 'official_position', e.target.value);
+              }}
               onBlur={(e) => handleSave(record.key, 'official_position', e.target.value)}
+              onClick={(e) => e.stopPropagation()}
               style={{ fontSize: '12px' }}
             />
           );
         }
         return (
           <div 
-            onClick={() => setEditingKey(record.key)}
+            onClick={() => setEditingCell({ key: record.key, field: 'official_position' })}
             style={{ 
               cursor: 'pointer',
               height: '28px',
@@ -437,12 +465,13 @@ const AntdFamilyTable = ({
       ],
       onFilter: (value, record) => record.alive === value,
       render: (text, record) => {
-        if (editingKey === record.key) {
+        if (editingCell?.key === record.key && editingCell.field === 'alive') {
           return (
             <Select
               size="small"
               defaultValue={text}
               style={{ width: '100%', fontSize: '12px' }}
+              autoFocus
               onChange={(value) => handleSave(record.key, 'alive', value)}
             >
               <Option value={true}>在世</Option>
@@ -456,7 +485,7 @@ const AntdFamilyTable = ({
         
         return (
           <span 
-            onClick={() => setEditingKey(record.key)}
+            onClick={() => setEditingCell({ key: record.key, field: 'alive' })}
             style={{ 
               cursor: 'pointer',
               display: 'inline-block',
@@ -484,20 +513,25 @@ const AntdFamilyTable = ({
       key: 'spouse',
       width: 80,
       render: (text, record) => {
-        if (editingKey === record.key) {
+        if (editingCell?.key === record.key && editingCell.field === 'spouse') {
           return (
             <Input
               size="small"
               defaultValue={text}
-              onPressEnter={(e) => handleSave(record.key, 'spouse', e.target.value)}
+              autoFocus
+              onPressEnter={(e) => {
+                e.stopPropagation();
+                handleSave(record.key, 'spouse', e.target.value);
+              }}
               onBlur={(e) => handleSave(record.key, 'spouse', e.target.value)}
+              onClick={(e) => e.stopPropagation()}
               style={{ fontSize: '12px' }}
             />
           );
         }
         return (
           <div 
-            onClick={() => setEditingKey(record.key)}
+            onClick={() => setEditingCell({ key: record.key, field: 'spouse' })}
             style={{ 
               cursor: 'pointer',
               height: '28px',
@@ -522,25 +556,28 @@ const AntdFamilyTable = ({
       key: 'summary',
       width: 140,
       render: (text, record) => {
-        if (editingKey === record.key) {
+        if (editingCell?.key === record.key && editingCell.field === 'summary') {
           return (
             <Input.TextArea
               size="small"
               defaultValue={text}
               autoSize={{ minRows: 1, maxRows: 1 }}
+              autoFocus
               onPressEnter={(e) => {
+                e.stopPropagation();
                 if (!e.shiftKey) {
-                  handleSave(record.key, 'summary', e.target.value)
+                  handleSave(record.key, 'summary', e.target.value);
                 }
               }}
               onBlur={(e) => handleSave(record.key, 'summary', e.target.value)}
+              onClick={(e) => e.stopPropagation()}
               style={{ fontSize: '12px', resize: 'none' }}
             />
           );
         }
         return (
           <div 
-            onClick={() => setEditingKey(record.key)}
+            onClick={() => setEditingCell({ key: record.key, field: 'summary' })}
             style={{ 
               cursor: 'pointer',
               height: '28px',
@@ -638,18 +675,21 @@ const AntdFamilyTable = ({
 
   // 保存编辑
   const handleSave = (key, field, value) => {
+    const normalizedValue = ['g_rank', 'rank_index', 'g_father_id'].includes(field)
+      ? (Number.isFinite(Number(value)) ? Number(value) : 0)
+      : value;
     const newData = tableData.map(item => {
       if (item.key === key) {
         // 如果数据发生变化，更新 updated_at 时间戳
-        const updatedItem = { ...item, [field]: value };
+        const updatedItem = { ...item, [field]: normalizedValue };
         
         // 检查是否有实际变化
-        const hasChanged = item[field] !== value;
+        const hasChanged = item[field] !== normalizedValue;
         
         if (hasChanged) {
           // 添加更新时间戳
           updatedItem.updated_at = new Date().toISOString();
-          console.log(`📝 字段更新: ${field} = ${value}, 更新时间: ${updatedItem.updated_at}`);
+          console.log(`📝 字段更新: ${field} = ${normalizedValue}, 更新时间: ${updatedItem.updated_at}`);
         }
         
         return updatedItem;
@@ -658,7 +698,7 @@ const AntdFamilyTable = ({
     });
     
     setTableData(newData);
-    setEditingKey('');
+    setEditingCell(null);
     
     if (onDataChange) {
       onDataChange(newData);
