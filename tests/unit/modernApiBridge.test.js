@@ -39,6 +39,14 @@ test("typed API router loads only the requested route and caches it", async () =
         loaded.push("slow");
         return { default: (req, res) => res.json({ type: req.query.type }) };
       },
+      nested: async () => {
+        loaded.push("nested");
+        return {
+          default: {
+            default: (req, res) => res.json({ type: req.query.type }),
+          },
+        };
+      },
     },
     { defaultType: "fast", notFoundMessage: "missing" },
   );
@@ -56,12 +64,14 @@ test("typed API router loads only the requested route and caches it", async () =
 
   await router({ query: {} }, res);
   await router({ query: { type: "fast" } }, res);
+  await router({ query: { type: "nested" } }, res);
   await router({ query: { type: "missing" } }, res);
 
-  assert.deepEqual(loaded, ["fast"]);
+  assert.deepEqual(loaded, ["fast", "nested"]);
   assert.deepEqual(responses, [
     { code: 200, payload: { type: undefined } },
     { code: 200, payload: { type: "fast" } },
+    { code: 200, payload: { type: "nested" } },
     { code: 404, payload: { success: false, error: "missing" } },
   ]);
 });
@@ -86,6 +96,17 @@ test("maps story routes and preserves route parameters", () => {
       modulePath: "api/story.js",
       query: { type: "person-events" },
       params: { personId: "p-1" },
+    },
+  );
+});
+
+test("maps legacy tenant-specific family data paths", () => {
+  assert.deepEqual(
+    createModernApiBridge.resolveModernRoute("/api/family-data/tenant-1"),
+    {
+      modulePath: "api/family.js",
+      query: { type: "data" },
+      params: { tenantId: "tenant-1" },
     },
   );
 });

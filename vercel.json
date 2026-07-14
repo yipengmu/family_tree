@@ -22,6 +22,10 @@
       "destination": "/api/family?type=save"
     },
     {
+      "source": "/api/family-data/:tenantId",
+      "destination": "/api/family?type=data&tenantId=:tenantId"
+    },
+    {
       "source": "/api/family-data",
       "destination": "/api/family?type=data"
     },

@@ -28,6 +28,7 @@ function resolveModernRoute(requestPath) {
     if (!id) return route("api/family.js", { type: "data" });
     if (id === "default") return route("api/family.js", { type: "default" });
     if (id === "save") return route("api/family.js", { type: "save" });
+    return route("api/family.js", { type: "data" }, { tenantId: id });
   }
   if (resource === "tenants") {
     if (!id) return route("api/tenant.js", { type: "collection" });
@@ -78,13 +79,27 @@ function resolveModernRoute(requestPath) {
   return null;
 }
 
+function resolveRouteHandler(routeModule) {
+  let candidate = routeModule;
+  for (let depth = 0; depth < 3; depth += 1) {
+    if (typeof candidate === "function") return candidate;
+    if (!candidate || typeof candidate !== "object") break;
+    candidate = candidate.default || candidate.handler;
+  }
+  return null;
+}
+
 function createModernApiBridge({ importer } = {}) {
   const load =
     importer ||
     (async (modulePath) => {
       const absolutePath = path.resolve(__dirname, "..", modulePath);
       const module = await import(pathToFileURL(absolutePath).href);
-      return module.default || module;
+      const handler = resolveRouteHandler(module);
+      if (!handler) {
+        throw new TypeError(`${modulePath} did not export a function handler`);
+      }
+      return handler;
     });
   const moduleCache = new Map();
 
