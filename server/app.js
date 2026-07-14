@@ -17,6 +17,7 @@ require('dotenv').config();
 // 导入数据库服务
 const familyDataService = require('./services/familyDataService');
 const tenantService = require('./services/tenantService');
+const createModernApiBridge = require('./modernApiBridge');
 
 // 导入用户认证相关模块
 const User = require('./models/user');
@@ -94,6 +95,9 @@ app.use((req, res, next) => {
   console.log(`[${getTimestamp()}] ${req.method} ${req.path}`);
   next();
 });
+
+// 本地开发与 Vercel 共用同一套 api/*.js handler；旧端点只保留为兼容兜底。
+app.use(createModernApiBridge());
 
 // 初始化用户表
 User.initializeTable().then(() => {

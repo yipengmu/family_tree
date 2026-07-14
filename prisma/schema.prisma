@@ -50,6 +50,7 @@ model Tenant {
   events       Event[]
   aiJobs       AiProcessingJob[]
   auditLogs    AuditLog[]
+  cloudUsage   CloudUsage[]
 
   @@map("tenants")
 }
@@ -291,6 +292,25 @@ model AuditLog {
   @@index([tenant_id, entity_type, entity_id])
   @@index([actor_user_id, created_at])
   @@map("audit_logs")
+}
+
+model CloudUsage {
+  id              String   @id @default(cuid())
+  tenant_id       String?
+  provider        String
+  metric          String
+  quantity        Float
+  unit            String
+  estimated_cost  Float?
+  period_start    DateTime
+  metadata        String?
+  created_at      DateTime @default(now())
+
+  tenant Tenant? @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+
+  @@index([provider, metric, period_start])
+  @@index([tenant_id, period_start])
+  @@map("cloud_usage")
 }
 
 model FamilyConfig {

@@ -40,6 +40,7 @@
     "cors-proxy": "node cors-proxy-server.js",
     "build": "react-scripts build",
     "test": "react-scripts test",
+    "test:unit": "node --test tests/unit/*.test.js",
     "eject": "react-scripts eject",
     "postinstall": "prisma generate",
     "vercel-build": "node vercel-build.js",

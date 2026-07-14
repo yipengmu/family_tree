@@ -30,7 +30,7 @@
 - 用户与家谱空间的真实归属关系，Owner/Editor/Contributor/Viewer 角色基础。
 - Prisma + PostgreSQL/Neon 数据持久化。
 - Vercel Serverless API 与本地 Express 开发服务。
-- 服务端签名的阿里云 OSS 图片上传（长期密钥不进入浏览器）和通义千问 OCR 代理。
+- 服务端签名的腾讯云 COS 媒体上传（长期密钥不进入浏览器）、腾讯 OCR/ASR 与 TokenHub 故事整理。
 - 家谱保存事务、数据快照与乐观版本冲突保护。
 - LocalStorage/IndexedDB 缓存与搜索历史。
 
@@ -45,12 +45,12 @@ flowchart LR
   P --> D[(PostgreSQL / Neon)]
   E --> P
   E --> Q[通义千问 OCR 代理]
-  A --> S[OSS 一次性上传签名]
-  U -->|限时 PUT URL| O[阿里云 OSS]
+  A --> S[COS 一次性上传签名]
+  U -->|限时 PUT URL| O[腾讯云 COS 私有桶]
   U --> C[LocalStorage / IndexedDB]
 ```
 
-生产环境由 Vercel 提供 React 构建产物和 `api/**/*.js` Serverless Functions；本地 `npm run dev` 同时启动 React 开发服务器和 Express。结构化家谱数据进入 PostgreSQL，图片进入 OSS，浏览器保留缓存与搜索历史。
+生产环境由 Vercel 提供 React 构建产物和 `api/**/*.js` Serverless Functions；本地 `npm run dev` 同时启动 React 开发服务器和 Express，并复用同一套 API handler。结构化家谱数据进入 PostgreSQL，媒体进入 COS 私有桶，浏览器保留缓存与搜索历史。
 
 当前系统存在两条运行时路径，后续应统一 API 契约和数据访问层，避免本地 Express 与 Vercel API 的行为逐渐分叉。
 
@@ -64,7 +64,7 @@ flowchart LR
 | 本地 API | Express 5 |
 | 数据访问 | Prisma 5 |
 | 数据库 | PostgreSQL，推荐 Neon |
-| 媒体 | 阿里云 OSS |
+| 媒体 | 腾讯云 COS |
 | OCR | 阿里云通义千问 |
 | 部署 | Vercel |
 
@@ -162,7 +162,7 @@ family_tree/
 
 ### 5. 密钥已收口，人物级隐私仍需产品化
 
-生产环境缺少 `JWT_SECRET` 会直接拒绝认证；OSS 与通义千问长期密钥改为服务端变量。下一阶段需把“在世人物、未成年人、住址、联系方式”的字段级可见性真正落实到 API 输出。
+生产环境缺少 `JWT_SECRET` 会直接拒绝认证；COS、腾讯 OCR/ASR 与 TokenHub 长期密钥只存在服务端变量。下一阶段需把“在世人物、未成年人、住址、联系方式”的字段级可见性真正落实到 API 输出。
 
 ### 6. OCR 有效率价值，但缺少“人工确认”边界
 

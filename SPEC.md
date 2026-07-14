@@ -29,10 +29,10 @@
 - 邮箱验证码注册、登录、JWT 会话和个人信息读取。
 - `TenantMembership` 绑定用户与家谱，核心接口执行角色校验。
 - 家谱保存使用事务、版本快照和乐观冲突检查。
-- OSS 上传使用服务端限时签名，浏览器不持有长期密钥。
+- COS 上传使用服务端限时签名，浏览器不持有长期密钥。
 - Prisma + PostgreSQL 数据持久化；Vercel Serverless API。
 - 本地 Express 服务，承载本地开发 API、OCR 代理和兼容逻辑。
-- 阿里云 OSS 图片上传；通义千问 OCR 识别家谱图片并生成结构化数据。
+- 腾讯云 COS 媒体存储；腾讯 OCR 保存原始文字；TokenHub 视觉模型生成结构化候选；腾讯 ASR 处理录音。
 - 浏览器缓存、LocalStorage 和 IndexedDB 搜索历史。
 
 ### 当前不应对外承诺为完整能力
@@ -125,8 +125,8 @@ flowchart LR
   P --> D[(PostgreSQL / Neon)]
   E --> P
   E --> Q[通义千问 OCR 代理]
-  A --> S[OSS 限时上传签名]
-  U --> O[阿里云 OSS 直传]
+  A --> S[COS 限时上传签名]
+  U --> O[腾讯云 COS 直传]
   U --> C[LocalStorage / IndexedDB 缓存]
 ```
 
@@ -135,13 +135,13 @@ flowchart LR
 - 生产路径：React 构建产物由 Vercel 提供，`api/**/*.js` 作为 Serverless Functions，Prisma 访问 Neon PostgreSQL。
 - 本地路径：`npm run dev` 同时启动 Create React App 和 Express；前端通过 proxy 访问 `localhost:3003`。
 - 数据流：前端先读取默认数据或缓存，再异步请求租户数据；保存时向 API 提交租户下的整批数组。
-- 媒体流：前端向服务端申请五分钟有效的 PUT URL 后直传 OSS；长期密钥只在服务端。
+- 媒体流：前端向服务端申请五分钟有效的 PUT URL 后直传 COS；读取时再次鉴权并生成短时 GET URL，长期密钥只在服务端。
 - OCR 流：图片上传后由本地 Express 代理调用通义千问，再返回结构化候选数据。
 
 ## 7. 安全、隐私与可靠性要求
 
 - 生产环境禁止使用代码内 fallback JWT secret，缺失时应启动失败。
-- 不得把 `REACT_APP_OSS_ACCESS_KEY_SECRET` 等长期 OSS 密钥打进浏览器构建产物。
+- 不得把 `TENCENTCLOUD_SECRET_KEY`、COS 或 TokenHub 密钥打进浏览器构建产物。
 - 所有租户读写接口都要校验 membership/owner，不得只校验 JWT 有效性。
 - 在世人物、未成年人、住址、联系方式和证件信息默认私密。
 - 保存操作采用事务、校验和版本号，避免“先删后插”造成数据丢失。
@@ -152,7 +152,7 @@ flowchart LR
 
 ### P0：收敛现有系统（本轮已完成主体）
 
-已完成：通用品牌与主框架、租户归属校验、生产 JWT 强制配置、服务端 OSS 签名、整谱事务与版本冲突保护。待完成：本地 Express 与 Vercel API 运行入口统一、字段级隐私输出和接口回归测试。
+已完成：通用品牌与主框架、租户归属校验、生产 JWT 强制配置、服务端 COS 签名、整谱事务与版本冲突保护、本地 Express 与 Vercel API handler 统一入口、基础云服务用量记录。待完成：字段级隐私输出和接口回归测试。
 
 ### P1：可用的个人家谱
 

@@ -10,8 +10,92 @@
   },
   "rewrites": [
     {
-      "source": "/api/(.*)",
-      "destination": "/api/$1"
+      "source": "/api/auth/:type",
+      "destination": "/api/auth?type=:type"
+    },
+    {
+      "source": "/api/family-data/default",
+      "destination": "/api/family?type=default"
+    },
+    {
+      "source": "/api/family-data/save",
+      "destination": "/api/family?type=save"
+    },
+    {
+      "source": "/api/family-data",
+      "destination": "/api/family?type=data"
+    },
+    {
+      "source": "/api/tenants/:tenantId/members",
+      "destination": "/api/tenant?type=members&tenantId=:tenantId"
+    },
+    {
+      "source": "/api/tenants/:tenantId",
+      "destination": "/api/tenant?type=item&tenantId=:tenantId"
+    },
+    {
+      "source": "/api/tenants",
+      "destination": "/api/tenant?type=collection"
+    },
+    {
+      "source": "/api/invitations/accept",
+      "destination": "/api/tenant?type=accept-invitation"
+    },
+    {
+      "source": "/api/invitations",
+      "destination": "/api/tenant?type=invite"
+    },
+    {
+      "source": "/api/events/:eventId",
+      "destination": "/api/story?type=event&eventId=:eventId"
+    },
+    {
+      "source": "/api/memories/:memoryId/process",
+      "destination": "/api/story?type=memory-process&memoryId=:memoryId"
+    },
+    {
+      "source": "/api/memories/:memoryId/publish",
+      "destination": "/api/story?type=memory-publish&memoryId=:memoryId"
+    },
+    {
+      "source": "/api/memories/:memoryId",
+      "destination": "/api/story?type=memory&memoryId=:memoryId"
+    },
+    {
+      "source": "/api/people/:personId/events",
+      "destination": "/api/story?type=person-events&personId=:personId"
+    },
+    {
+      "source": "/api/people/:personId/memories",
+      "destination": "/api/story?type=person-memories&personId=:personId"
+    },
+    {
+      "source": "/api/media/:assetId/complete",
+      "destination": "/api/media?type=complete&assetId=:assetId"
+    },
+    {
+      "source": "/api/media/:assetId/url",
+      "destination": "/api/media?type=url&assetId=:assetId"
+    },
+    {
+      "source": "/api/media/sign-upload",
+      "destination": "/api/media?type=sign-upload"
+    },
+    {
+      "source": "/api/uploads/sign",
+      "destination": "/api/media?type=upload"
+    },
+    {
+      "source": "/api/qwen/ocr",
+      "destination": "/api/ocr"
+    },
+    {
+      "source": "/api/tencent/ocr",
+      "destination": "/api/ocr"
+    },
+    {
+      "source": "/api/user/profile",
+      "destination": "/api/user?type=profile"
     },
     {
       "source": "/((?!api/).*)",
