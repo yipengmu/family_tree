@@ -1393,7 +1393,7 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick, startOnboarding =
 
         {/* 数据管理功能弹框 */}
         <Modal
-          title="保存与导出"
+          title="保存"
           open={managementModalVisible}
           onCancel={() => setManagementModalVisible(false)}
           footer={null}
@@ -1418,7 +1418,7 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick, startOnboarding =
                   </Button>
                   
                   <div style={{ fontSize: '12px', color: '#666', textAlign: 'center' }}>
-                    保存后可在“看家谱”中查看；
+                    保存后可在“看家谱”中查看
                   </div>
                 </Space>
               </div>
