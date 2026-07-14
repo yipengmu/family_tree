@@ -1418,7 +1418,7 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick, startOnboarding =
                   </Button>
                   
                   <div style={{ fontSize: '12px', color: '#666', textAlign: 'center' }}>
-                    保存后可在“看家谱”中查看；家谱默认私密，仅授权家人可见。
+                    保存后可在“看家谱”中查看；
                   </div>
                 </Space>
               </div>
@@ -1433,22 +1433,6 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick, startOnboarding =
                     disabled={!rows.length}
                   >
                     导出Excel
-                  </Button>
-                  
-                  <Button
-                    icon={<DownloadOutlined />}
-                    onClick={downloadJSON}
-                    disabled={!rows.length}
-                  >
-                    导出JSON
-                  </Button>
-                  
-                  <Button
-                    icon={<DownloadOutlined />}
-                    onClick={generateFamilyDataFile}
-                    disabled={!rows.length}
-                  >
-                    生成FamilyData
                   </Button>
                 </Space>
               </div>
