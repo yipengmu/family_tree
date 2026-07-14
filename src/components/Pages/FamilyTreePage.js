@@ -1,11 +1,13 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { ReactFlowProvider } from 'reactflow';
 import FamilyTreeFlow from '../FamilyTreeFlow.js';
+import FamilyJourneyPlayer from '../FamilyJourneyPlayer.js';
 import AppLayout from '../Layout/AppLayout.js';
 import { Button } from 'antd';
 import './FamilyTreePage.css';
 import tenantService from '../../services/tenantService.js';
 import BRAND from '../../constants/brand.js';
+import { buildFamilyJourney, filterFamilyByGeneration } from '../../utils/familyJourney.js';
 
 const FamilyTreePage = ({
   familyData,
@@ -26,6 +28,20 @@ const FamilyTreePage = ({
   const familyTreeRef = useRef(null);
   const currentTenant = tenantService.getCurrentTenant();
   const familyName = currentTenant?.isDefault ? BRAND.demoFamilyName : (currentTenant?.name || '我的家谱');
+  const isDemoFamily = currentTenant?.isDefault && !localStorage.getItem('token');
+  const journey = useMemo(() => buildFamilyJourney(familyData), [familyData]);
+  const [journeyStatus, setJourneyStatus] = useState('idle');
+  const [journeyGeneration, setJourneyGeneration] = useState(null);
+  const isJourneyActive = isDemoFamily && journeyStatus !== 'idle';
+  const currentJourneyStep = useMemo(() => {
+    if (!journey.steps.length) return null;
+    return journey.steps.find((step) => step.generation === journeyGeneration)
+      || journey.steps[journey.steps.length - 1];
+  }, [journey.steps, journeyGeneration]);
+  const displayedFamilyData = useMemo(() => {
+    if (!isJourneyActive || !journeyGeneration) return familyData;
+    return filterFamilyByGeneration(familyData, journeyGeneration);
+  }, [familyData, isJourneyActive, journeyGeneration]);
 
   // 检查用户是否已登录
   const isAuthenticated = () => {
@@ -76,6 +92,55 @@ const FamilyTreePage = ({
     setShowMobileWelcome(false);
   };
 
+  const startJourney = useCallback(() => {
+    if (!journey.steps.length) return;
+    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (reduceMotion) {
+      setJourneyGeneration(journey.maxGeneration);
+      setJourneyStatus('complete');
+      localStorage.setItem('puli_demo_journey_seen', 'true');
+      return;
+    }
+    setJourneyGeneration(journey.minGeneration);
+    setJourneyStatus('playing');
+  }, [journey.maxGeneration, journey.minGeneration, journey.steps.length]);
+
+  const finishJourney = useCallback(() => {
+    setJourneyGeneration(journey.maxGeneration);
+    setJourneyStatus('complete');
+    localStorage.setItem('puli_demo_journey_seen', 'true');
+  }, [journey.maxGeneration]);
+
+  useEffect(() => {
+    if (journeyStatus !== 'playing' || !currentJourneyStep) return undefined;
+    const currentIndex = journey.steps.findIndex(
+      (step) => step.generation === currentJourneyStep.generation
+    );
+    if (currentIndex >= journey.steps.length - 1) {
+      finishJourney();
+      return undefined;
+    }
+
+    const timer = window.setTimeout(() => {
+      setJourneyGeneration(journey.steps[currentIndex + 1].generation);
+    }, 720);
+    return () => window.clearTimeout(timer);
+  }, [currentJourneyStep, finishJourney, journey.steps, journeyStatus]);
+
+  useEffect(() => {
+    if (
+      !isDemoFamily
+      || showMobileWelcome
+      || !familyData.length
+      || journeyStatus !== 'idle'
+      || localStorage.getItem('puli_demo_journey_seen') === 'true'
+      || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    ) return undefined;
+
+    const timer = window.setTimeout(startJourney, 1000);
+    return () => window.clearTimeout(timer);
+  }, [familyData.length, isDemoFamily, journeyStatus, showMobileWelcome, startJourney]);
+
   return (
     <AppLayout
       activeMenuItem={activeMenuItem}
@@ -91,9 +156,9 @@ const FamilyTreePage = ({
           <section className="mobile-welcome" aria-label="欢迎使用谱里">
             <div className="mobile-welcome-paper">
               <span className="mobile-welcome-seal">谱</span>
-              <span className="mobile-welcome-kicker">互联网人的第一本数字家谱</span>
+              <span className="mobile-welcome-kicker">年轻人的第一本数字家谱</span>
               <h1>让家人的名字<br />一代代留在谱里</h1>
-              <p>从自己开始，十分钟建立三代家谱。默认私密，只有受邀家人可以查看。</p>
+              <p>从自己开始，十分钟建立三代家谱。默认私密。</p>
               <div className="mobile-welcome-steps" aria-label="创建步骤">
                 <span><i>一</i> 添加自己</span>
                 <b aria-hidden="true" />
@@ -103,7 +168,7 @@ const FamilyTreePage = ({
               </div>
               <Button type="primary" size="large" block onClick={handleCreateMyFamilyTree}>免费创建我的家谱</Button>
               <div className="mobile-welcome-secondary">
-                <button type="button" onClick={dismissMobileWelcome}>先看看穆氏示范家谱</button>
+                <button type="button" onClick={dismissMobileWelcome}>先看看作者家的示例家谱效果</button>
                 <button type="button" onClick={() => onMenuClick?.('login')}>登录</button>
               </div>
             </div>
@@ -173,14 +238,39 @@ const FamilyTreePage = ({
         )}
 
         {/* 家谱组件容器 */}
-        <div className="family-tree-wrapper">
+        <div className={`family-tree-wrapper ${isJourneyActive ? 'journey-active' : ''}`}>
+          {isDemoFamily && currentJourneyStep && (
+            <FamilyJourneyPlayer
+              familyName={familyName}
+              totalMembers={familyData.length}
+              steps={journey.steps}
+              status={journeyStatus}
+              currentStep={currentJourneyStep}
+              onStart={startJourney}
+              onPause={() => setJourneyStatus('paused')}
+              onResume={() => setJourneyStatus('playing')}
+              onSkip={finishJourney}
+              onRestart={startJourney}
+              onClose={() => {
+                setJourneyStatus('idle');
+                setJourneyGeneration(null);
+                localStorage.setItem('puli_demo_journey_seen', 'true');
+              }}
+              onSeek={(stepIndex) => {
+                setJourneyStatus('paused');
+                setJourneyGeneration(journey.steps[stepIndex].generation);
+              }}
+            />
+          )}
           <ReactFlowProvider>
             <FamilyTreeFlow
               ref={familyTreeRef}
-              familyData={familyData}
+              familyData={displayedFamilyData}
               loading={loading}
               error={error}
               onDataUpdate={handleTreeDataUpdate}
+              presentationMode={isJourneyActive}
+              presentationStep={journeyGeneration}
             />
           </ReactFlowProvider>
         </div>

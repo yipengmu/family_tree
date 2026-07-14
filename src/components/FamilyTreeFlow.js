@@ -41,7 +41,14 @@ const nodeTypes = {
   familyMember: FamilyMemberNode,
 };
 
-const FamilyTreeFlow = forwardRef(({ familyData, loading = false, error = null, onDataUpdate }, ref) => {
+const FamilyTreeFlow = forwardRef(({
+  familyData,
+  loading = false,
+  error = null,
+  onDataUpdate,
+  presentationMode = false,
+  presentationStep = null
+}, ref) => {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -322,8 +329,12 @@ const FamilyTreeFlow = forwardRef(({ familyData, loading = false, error = null, 
       let filteredData;
       let targetPerson = null;
 
+    // 家族发展演示需要完整展示当前已展开世代，不应用日常浏览的智能折叠。
+    if (presentationMode) {
+      filteredData = familyData;
+      setCollapseStats(null);
     // 应用搜索（优先处理搜索逻辑）
-    if (searchTerm && typeof searchTerm === 'string' && searchTerm.trim()) {
+    } else if (searchTerm && typeof searchTerm === 'string' && searchTerm.trim()) {
       const searchResult = searchWithPathTree(familyData, searchTerm);
       targetPerson = searchResult.targetPerson;
       setSearchTargetPerson(targetPerson);
@@ -420,7 +431,7 @@ const FamilyTreeFlow = forwardRef(({ familyData, loading = false, error = null, 
 
     // 调试第20代成员显示
     debug20thGeneration();
-  }, [familyData, searchTerm, generationRange, layoutDirection, setNodes, setEdges, isShowingAll, isSmartCollapseEnabled, currentUser, expandedNodes, debug20thGeneration, isNameProtectionEnabled, searchTargetPerson]);
+  }, [familyData, searchTerm, generationRange, layoutDirection, setNodes, setEdges, isShowingAll, isSmartCollapseEnabled, currentUser, expandedNodes, debug20thGeneration, isNameProtectionEnabled, searchTargetPerson, presentationMode]);
 
   // 添加日志功能
   const logViewportInfo = useCallback(() => {
@@ -494,6 +505,20 @@ const FamilyTreeFlow = forwardRef(({ familyData, loading = false, error = null, 
   useEffect(() => {
     processData();
   }, [processData]);
+
+  // 演示模式下随世代展开平滑缩放，始终让用户保有家族全局概览。
+  useEffect(() => {
+    if (!presentationMode || !nodes.length) return undefined;
+    const timer = setTimeout(() => {
+      fitView({
+        padding: isMobile ? 0.08 : 0.14,
+        duration: 620,
+        minZoom: 0.02,
+        maxZoom: isMobile ? 0.8 : 1
+      });
+    }, 120);
+    return () => clearTimeout(timer);
+  }, [fitView, isMobile, nodes.length, presentationMode, presentationStep]);
 
   // 添加一个状态来跟踪是否已经执行过初始居中
   const [hasInitialCentered, setHasInitialCentered] = useState(false);
@@ -1020,7 +1045,7 @@ const FamilyTreeFlow = forwardRef(({ familyData, loading = false, error = null, 
             },
           }}
           proOptions={{ hideAttribution: true }}
-          minZoom={isMobile ? 0.3 : 0.2}
+          minZoom={presentationMode ? 0.02 : (isMobile ? 0.3 : 0.2)}
           maxZoom={isMobile ? 2 : 3}
           defaultViewport={{
             x: 0,

@@ -159,6 +159,19 @@
     grid-template-columns: 1fr;
     gap: 16px;
   }
+
+  .app-layout.immersive-mobile .sidebar-wrapper,
+  .app-layout.immersive-mobile .sidebar-overlay,
+  .app-layout.immersive-mobile .mobile-menu-btn,
+  .app-layout.immersive-mobile .mobile-bottom-nav,
+  .app-layout.immersive-mobile .main-content > .header {
+    display: none;
+  }
+
+  .app-layout.immersive-mobile .content-container {
+    height: 100dvh;
+    padding: 0;
+  }
 }
 
 /* 全局样式重置 */

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card, Form, Input, Button, message, Row, Col, Typography, Divider } from 'antd';
-import { UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import { ArrowLeftOutlined, UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons';
+import { useLocation, useNavigate } from 'react-router-dom';
 import AuthService from '../../services/authService.js';
 import BRAND from '../../constants/brand.js';
 
@@ -13,6 +13,7 @@ const RegisterPage = () => {
   const [codeLoading, setCodeLoading] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const navigate = useNavigate();
+  const location = useLocation();
 
   // 发送验证码
   const sendVerificationCode = async () => {
@@ -67,8 +68,10 @@ const RegisterPage = () => {
 
       if (result.success) {
         message.success('注册成功');
-        // 跳转到首页
-        navigate('/');
+        navigate(location.state?.returnTo || '/', {
+          replace: true,
+          state: { onboarding: true }
+        });
       } else {
         message.error(result.error || '注册失败');
       }
@@ -82,11 +85,19 @@ const RegisterPage = () => {
 
   // 处理登录跳转
   const handleGoToLogin = () => {
-    navigate('/login');
+    navigate('/login', { state: location.state });
+  };
+
+  const handleBack = () => {
+    navigate(location.state?.from || '/');
   };
 
   return (
     <div className="auth-page">
+      <button type="button" className="auth-back-button" onClick={handleBack} aria-label="返回示范家谱">
+        <ArrowLeftOutlined />
+        <span>返回家谱</span>
+      </button>
       <div style={{ width: '100%', maxWidth: '400px', padding: '20px' }}>
         <Card className="auth-card"
           style={{ 

@@ -7,7 +7,7 @@ import CreatorPage from './components/Pages/CreatorPage.js';
 import DiscoverPage from './components/Pages/DiscoverPage.js';
 import familyDataService from './services/familyDataService.js';
 import tenantService from './services/tenantService.js';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import LoginPage from './components/Pages/LoginPage.js';
 import RegisterPage from './components/Pages/RegisterPage.js';
 import MyPage from './components/Pages/MyPage.js';
@@ -30,7 +30,13 @@ function MainApp() {
   const [error, setError] = useState(null);
   const [validationResult, setValidationResult] = useState(null);
   const [mobile, setMobile] = useState(isMobile());
-  const [currentPage, setCurrentPage] = useState('tree'); // 新增页面状态
+  const location = useLocation();
+  const navigate = useNavigate();
+  const pageFromPath = () => {
+    const pageKey = location.pathname.split('/').filter(Boolean)[0];
+    return pageKey || 'tree';
+  };
+  const [currentPage, setCurrentPage] = useState(pageFromPath);
   const [currentTenant, setCurrentTenant] = useState(null);
 
   // 检查用户是否已登录
@@ -42,17 +48,36 @@ function MainApp() {
   // 处理菜单点击
   const handleMenuClick = (menuKey) => {
     if (!isAuthenticated() && menuKey === 'create') {
-      setCurrentPage('register');
+      navigate('/register', { state: { from: '/', returnTo: '/create' } });
       return;
     }
     // 如果用户未登录且不在游客模式，且点击的是需要登录的功能，则跳转到登录页
     if (!isAuthenticated() && !['tree', 'discover', 'mine', 'login', 'register'].includes(menuKey)) {
-      setCurrentPage('login-required');
+      navigate('/login', { state: { from: location.pathname, returnTo: `/${menuKey}` } });
       return;
     }
-    
-    setCurrentPage(menuKey);
+
+    if (menuKey === 'login' || menuKey === 'register') {
+      navigate(`/${menuKey}`, { state: { from: location.pathname } });
+      return;
+    }
+
+    const path = menuKey === 'tree' ? '/' : `/${menuKey}`;
+    navigate(path);
   };
+
+  useEffect(() => {
+    setCurrentPage(pageFromPath());
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (!isAuthenticated() && currentPage === 'create') {
+      navigate('/register', {
+        replace: true,
+        state: { from: '/', returnTo: '/create' }
+      });
+    }
+  }, [currentPage, navigate]);
 
   // 监听窗口大小变化
   useEffect(() => {
@@ -245,7 +270,7 @@ function MainApp() {
               <h2 style={{ color: '#1e293b', marginBottom: '16px' }}>需要登录</h2>
               <p>此功能需要登录才能使用</p>
               <button 
-                onClick={() => setCurrentPage('login')}
+                onClick={() => handleMenuClick('login')}
                 style={{
                   marginTop: '16px',
                   padding: '8px 16px',
@@ -278,7 +303,7 @@ function MainApp() {
               <p>要创建您自己的家谱，请先注册账号</p>
               <div style={{ marginTop: '16px', display: 'flex', gap: '12px', justifyContent: 'center' }}>
                 <button 
-                  onClick={() => setCurrentPage('login')}
+                  onClick={() => handleMenuClick('login')}
                   style={{
                     padding: '8px 16px',
                     backgroundColor: '#1890ff',
@@ -291,7 +316,7 @@ function MainApp() {
                   登录
                 </button>
                 <button 
-                  onClick={() => setCurrentPage('register')}
+                  onClick={() => handleMenuClick('register')}
                   style={{
                     padding: '8px 16px',
                     backgroundColor: '#52c41a',
@@ -307,13 +332,9 @@ function MainApp() {
             </div>
           );
         }
-        return <CreatorPage {...commonProps} />;
+        return <CreatorPage {...commonProps} startOnboarding={Boolean(location.state?.onboarding)} />;
       case 'discover':
         return <DiscoverPage {...commonProps} />;
-      case 'login':
-        return <LoginPage />;
-      case 'register':
-        return <RegisterPage />;
       case 'login-required':
         return (
           <div style={{
@@ -326,7 +347,7 @@ function MainApp() {
             <p>此功能需要登录才能使用</p>
             <div style={{ marginTop: '16px', display: 'flex', gap: '12px', justifyContent: 'center' }}>
               <button 
-                onClick={() => setCurrentPage('login')}
+                onClick={() => handleMenuClick('login')}
                 style={{
                   padding: '8px 16px',
                   backgroundColor: '#1890ff',
@@ -339,7 +360,7 @@ function MainApp() {
                 登录
               </button>
               <button 
-                onClick={() => setCurrentPage('register')}
+                onClick={() => handleMenuClick('register')}
                 style={{
                   padding: '8px 16px',
                   backgroundColor: '#52c41a',

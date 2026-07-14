@@ -22,9 +22,11 @@
 
 - React 18 + Ant Design 5 单页应用。
 - React Flow 11 + Dagre 家谱图，支持缩放、平移、布局方向和节点详情。
+- 穆氏示范家谱支持从明代至当代的代际展开动画，可暂停、拖动时间轴和回到全景。
 - 姓名/职位/地点搜索、代数筛选、智能折叠和移动端适配。
 - 游客只读浏览“穆氏示范家谱”。
 - 邮箱验证码注册、登录、JWT 会话和个人资料读取。
+- 移动端新用户可从示范家谱进入注册并直接续录第一位家人，全屏流程始终提供返回家谱入口。
 - 用户与家谱空间的真实归属关系，Owner/Editor/Contributor/Viewer 角色基础。
 - Prisma + PostgreSQL/Neon 数据持久化。
 - Vercel Serverless API 与本地 Express 开发服务。

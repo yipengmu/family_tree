@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card, Form, Input, Button, message, Row, Typography, Divider } from 'antd';
-import { LockOutlined, MailOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import { ArrowLeftOutlined, LockOutlined, MailOutlined } from '@ant-design/icons';
+import { useLocation, useNavigate } from 'react-router-dom';
 import AuthService from '../../services/authService.js';
 import BRAND from '../../constants/brand.js';
 
@@ -13,6 +13,7 @@ const LoginPage = () => {
   const [codeLoading, setCodeLoading] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const navigate = useNavigate();
+  const location = useLocation();
 
   // 发送验证码
   const sendVerificationCode = async (purpose = 'login') => {
@@ -65,8 +66,7 @@ const LoginPage = () => {
 
       if (result.success) {
         message.success('登录成功');
-        // 跳转到首页
-        navigate('/');
+        navigate(location.state?.returnTo || '/', { replace: true });
       } else {
         message.error(result.error || '登录失败');
       }
@@ -80,11 +80,19 @@ const LoginPage = () => {
 
   // 处理注册跳转
   const handleGoToRegister = () => {
-    navigate('/register');
+    navigate('/register', { state: location.state });
+  };
+
+  const handleBack = () => {
+    navigate(location.state?.from || '/');
   };
 
   return (
     <div className="auth-page">
+      <button type="button" className="auth-back-button" onClick={handleBack} aria-label="返回家谱">
+        <ArrowLeftOutlined />
+        <span>返回家谱</span>
+      </button>
       <div style={{ width: '100%', maxWidth: '400px', padding: '20px' }}>
         <Card className="auth-card"
           style={{ 

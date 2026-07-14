@@ -63,9 +63,9 @@ const MyPage = ({ activeMenuItem = 'mine', onMenuClick, familyData = [] }) => {
 
         {!authenticated ? (
           <section className="my-guest-card">
-            <span className="my-card-kicker">家谱默认私密</span>
-            <h2>创建一份只属于家人的数字家谱</h2>
-            <p>从自己开始记录，慢慢补齐父母与祖辈。只有你邀请的人才能查看。</p>
+            <span className="my-card-kicker">默认私密</span>
+            <h2>创建一份属于家人的数字家谱</h2>
+            <p>从自己开始记录，慢慢补齐父母与祖辈。</p>
             <Button type="primary" block size="large" onClick={() => onMenuClick?.('register')}>免费创建家谱</Button>
             <Button type="text" block onClick={() => onMenuClick?.('login')}>已有账号，去登录</Button>
           </section>

@@ -4,22 +4,29 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
 model User {
-  id          Int      @id @default(autoincrement())
-  username    String
-  email       String   @unique
-  password_hash String
-  is_active   Boolean  @default(true)
-  created_at  DateTime @default(now())
-  last_login_at DateTime?
-  wechat_openid String? @unique // 根据项目规范，添加微信openid字段
-  memberships  TenantMembership[]
-  
+  id                 Int                @id @default(autoincrement())
+  username           String
+  email              String             @unique
+  password_hash      String
+  is_active          Boolean            @default(true)
+  created_at         DateTime           @default(now())
+  last_login_at      DateTime?
+  wechat_openid      String?            @unique // 根据项目规范，添加微信openid字段
+  memberships        TenantMembership[]
+  sentInvitations    Invitation[]       @relation("InvitationSender")
+  createdMemories    Memory[]           @relation("MemoryCreator")
+  createdMediaAssets MediaAsset[]       @relation("MediaCreator")
+  createdEvents      Event[]            @relation("EventCreator")
+  updatedEvents      Event[]            @relation("EventUpdater")
+  eventRevisions     EventRevision[]    @relation("RevisionActor")
+  auditLogs          AuditLog[]         @relation("AuditActor")
+
   @@map("users")
 }
 
@@ -31,13 +38,19 @@ model Tenant {
   updated_at  DateTime @updatedAt
   settings    String   @default("{}")
   status      String   @default("active")
-  
+
   // 添加反向关系
-  familyData    FamilyData[]
-  familyConfig  FamilyConfig[]
-  dataVersions  DataVersion[]
-  memberships   TenantMembership[]
-  
+  familyData   FamilyData[]
+  familyConfig FamilyConfig[]
+  dataVersions DataVersion[]
+  memberships  TenantMembership[]
+  invitations  Invitation[]
+  memories     Memory[]
+  mediaAssets  MediaAsset[]
+  events       Event[]
+  aiJobs       AiProcessingJob[]
+  auditLogs    AuditLog[]
+
   @@map("tenants")
 }
 
@@ -59,65 +72,253 @@ model TenantMembership {
 }
 
 model FamilyData {
-  id             Int      @id @default(autoincrement())
-  tenant_id      String
-  person_id      String   // 根据规范，保留业务person_id
-  name           String
-  g_rank         Int      // 世代数
-  rank_index     Int      // 同代排序
-  g_father_id    String?  // 父亲的person_id
-  g_mother_id    String?  // 母亲的person_id
-  sex            String?  @default("MAN")
-  adoption       String?  @default("none")
+  id                Int      @id @default(autoincrement())
+  tenant_id         String
+  person_id         String // 根据规范，保留业务person_id
+  name              String
+  g_rank            Int // 世代数
+  rank_index        Int // 同代排序
+  g_father_id       String? // 父亲的person_id
+  g_mother_id       String? // 母亲的person_id
+  sex               String?  @default("MAN")
+  adoption          String?  @default("none")
   official_position String?
-  summary        String?
-  birth_date     String?
-  death_date     String?
-  spouse         String?
-  location       String?
-  formal_name    String?
-  id_card        String?
-  face_img       String?  @default("")
-  photos         String?
-  household_info String?
-  home_page      String?
-  childrens      String?
-  created_at     DateTime @default(now())
-  updated_at     DateTime @updatedAt
-  
+  summary           String?
+  birth_date        String?
+  death_date        String?
+  spouse            String?
+  location          String?
+  formal_name       String?
+  id_card           String?
+  face_img          String?  @default("")
+  photos            String?
+  household_info    String?
+  home_page         String?
+  childrens         String?
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
   // 关联租户
-  tenant         Tenant   @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
-  
-  @@map("family_data")
+  tenant   Tenant   @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  memories Memory[]
+  events   Event[]
+
   @@unique([tenant_id, person_id]) // 确保在同一个租户内person_id唯一
+  @@map("family_data")
+}
+
+model Invitation {
+  id          String    @id @default(cuid())
+  tenant_id   String
+  email       String
+  role        String    @default("CONTRIBUTOR")
+  token_hash  String    @unique
+  status      String    @default("PENDING")
+  invited_by  Int
+  expires_at  DateTime
+  accepted_at DateTime?
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+
+  tenant  Tenant @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  inviter User   @relation("InvitationSender", fields: [invited_by], references: [id], onDelete: Cascade)
+
+  @@index([tenant_id, status])
+  @@index([email, status])
+  @@map("invitations")
+}
+
+model Memory {
+  id                 String    @id @default(cuid())
+  tenant_id          String
+  person_id          String
+  created_by         Int
+  title              String?
+  raw_text           String?
+  corrected_text     String?
+  transcript_raw     String?
+  transcript_details String?
+  visibility         String    @default("FAMILY")
+  status             String    @default("DRAFT")
+  published_at       DateTime?
+  deleted_at         DateTime?
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @updatedAt
+
+  tenant  Tenant            @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  person  FamilyData        @relation(fields: [tenant_id, person_id], references: [tenant_id, person_id], onDelete: Cascade)
+  creator User              @relation("MemoryCreator", fields: [created_by], references: [id], onDelete: Restrict)
+  assets  MediaAsset[]
+  sources EventSource[]
+  aiJobs  AiProcessingJob[]
+
+  @@index([tenant_id, person_id, status])
+  @@index([created_by, status])
+  @@map("memories")
+}
+
+model MediaAsset {
+  id               String    @id @default(cuid())
+  tenant_id        String
+  person_id        String?
+  memory_id        String?
+  created_by       Int
+  kind             String
+  object_key       String    @unique
+  original_name    String?
+  content_type     String
+  file_size        Int
+  duration_seconds Float?
+  checksum_sha256  String?
+  status           String    @default("PENDING")
+  deleted_at       DateTime?
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
+
+  tenant  Tenant            @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  memory  Memory?           @relation(fields: [memory_id], references: [id], onDelete: Cascade)
+  creator User              @relation("MediaCreator", fields: [created_by], references: [id], onDelete: Restrict)
+  aiJobs  AiProcessingJob[]
+
+  @@index([tenant_id, person_id])
+  @@index([memory_id, kind])
+  @@map("media_assets")
+}
+
+model Event {
+  id             String    @id @default(cuid())
+  tenant_id      String
+  person_id      String
+  created_by     Int
+  updated_by     Int
+  title          String
+  narrative      String
+  event_type     String    @default("OTHER")
+  time_text      String?
+  start_date     DateTime?
+  end_date       DateTime?
+  sort_year      Int?
+  date_precision String    @default("UNKNOWN")
+  location       String?
+  is_highlight   Boolean   @default(false)
+  visibility     String    @default("FAMILY")
+  status         String    @default("PUBLISHED")
+  published_at   DateTime  @default(now())
+  deleted_at     DateTime?
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @updatedAt
+
+  tenant    Tenant          @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  person    FamilyData      @relation(fields: [tenant_id, person_id], references: [tenant_id, person_id], onDelete: Cascade)
+  creator   User            @relation("EventCreator", fields: [created_by], references: [id], onDelete: Restrict)
+  updater   User            @relation("EventUpdater", fields: [updated_by], references: [id], onDelete: Restrict)
+  sources   EventSource[]
+  revisions EventRevision[]
+
+  @@index([tenant_id, person_id, status, sort_year])
+  @@index([created_by, status])
+  @@map("events")
+}
+
+model EventSource {
+  id           String  @id @default(cuid())
+  event_id     String
+  memory_id    String
+  source_quote String?
+  start_ms     Int?
+  end_ms       Int?
+
+  event  Event  @relation(fields: [event_id], references: [id], onDelete: Cascade)
+  memory Memory @relation(fields: [memory_id], references: [id], onDelete: Cascade)
+
+  @@unique([event_id, memory_id])
+  @@map("event_sources")
+}
+
+model AiProcessingJob {
+  id               String   @id @default(cuid())
+  tenant_id        String
+  memory_id        String?
+  asset_id         String?
+  kind             String
+  provider         String   @default("TENCENT")
+  provider_task_id String?
+  status           String   @default("PENDING")
+  input_snapshot   String?
+  output_snapshot  String?
+  error_message    String?
+  attempts         Int      @default(0)
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  tenant Tenant      @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  memory Memory?     @relation(fields: [memory_id], references: [id], onDelete: Cascade)
+  asset  MediaAsset? @relation(fields: [asset_id], references: [id], onDelete: Cascade)
+
+  @@index([tenant_id, status, kind])
+  @@index([memory_id, kind])
+  @@map("ai_processing_jobs")
+}
+
+model EventRevision {
+  id            String   @id @default(cuid())
+  event_id      String
+  actor_user_id Int
+  action        String
+  snapshot      String
+  created_at    DateTime @default(now())
+
+  event Event @relation(fields: [event_id], references: [id], onDelete: Cascade)
+  actor User  @relation("RevisionActor", fields: [actor_user_id], references: [id], onDelete: Restrict)
+
+  @@index([event_id, created_at])
+  @@map("event_revisions")
+}
+
+model AuditLog {
+  id            String   @id @default(cuid())
+  tenant_id     String
+  actor_user_id Int
+  action        String
+  entity_type   String
+  entity_id     String
+  metadata      String?
+  created_at    DateTime @default(now())
+
+  tenant Tenant @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  actor  User   @relation("AuditActor", fields: [actor_user_id], references: [id], onDelete: Restrict)
+
+  @@index([tenant_id, entity_type, entity_id])
+  @@index([actor_user_id, created_at])
+  @@map("audit_logs")
 }
 
 model FamilyConfig {
-  id          Int      @id @default(autoincrement())
-  tenant_id   String
-  config_key  String
+  id           Int      @id @default(autoincrement())
+  tenant_id    String
+  config_key   String
   config_value String?
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
-  
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
   // 关联租户
-  tenant      Tenant   @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
-  
-  @@map("family_config")
+  tenant Tenant @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+
   @@unique([tenant_id, config_key]) // 确保在同一个租户内配置键唯一
+  @@map("family_config")
 }
 
 model DataVersion {
-  id              Int      @id @default(autoincrement())
-  tenant_id       String
-  version_number  Int
-  data_snapshot   String   // JSON格式的数据快照
-  description     String?
-  created_at      DateTime @default(now())
-  
+  id             Int      @id @default(autoincrement())
+  tenant_id      String
+  version_number Int
+  data_snapshot  String // JSON格式的数据快照
+  description    String?
+  created_at     DateTime @default(now())
+
   // 关联租户
-  tenant          Tenant   @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
-  
+  tenant Tenant @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+
   @@unique([tenant_id, version_number])
   @@map("data_versions")
 }
@@ -126,10 +327,10 @@ model VerificationCode {
   id         Int      @id @default(autoincrement())
   email      String
   code       String
-  purpose    String   // 'register', 'reset', 'rate_limit' 等
+  purpose    String // 'register', 'reset', 'rate_limit' 等
   expires_at DateTime
   created_at DateTime @default(now())
-  
-  @@map("verification_codes")
+
   @@index([email])
+  @@map("verification_codes")
 }

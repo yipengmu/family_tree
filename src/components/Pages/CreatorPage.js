@@ -1,10 +1,10 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { message, Progress, Button, Space, Card, Row, Col, Typography, Modal, Tooltip, Input, Form, Select, Radio } from 'antd';
-import { PlusOutlined, CloudUploadOutlined, TableOutlined, SaveOutlined, DownloadOutlined, ScanOutlined, CameraOutlined, SettingOutlined, ExclamationCircleOutlined, DeleteOutlined, SearchOutlined, ClearOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, PlusOutlined, CloudUploadOutlined, TableOutlined, SaveOutlined, DownloadOutlined, ScanOutlined, CameraOutlined, SettingOutlined, ExclamationCircleOutlined, DeleteOutlined, SearchOutlined, ClearOutlined } from '@ant-design/icons';
 import * as XLSX from 'xlsx';
 import AppLayout from '../Layout/AppLayout.js';
 import AntdFamilyTable from '../AntdFamilyTable.js';
-import qwenOcrService from '../../services/qwenOcrService.js';
+import tencentOcrService from '../../services/tencentOcrService.js';
 import uploadService from '../../services/uploadService.js';
 import tenantService from '../../services/tenantService.js';
 import familyDataService from '../../services/familyDataService.js';
@@ -24,7 +24,7 @@ const emptyRow = () => normalizePersonLifeStatus({
   id: '', name: '', g_rank: '', rank_index: '', g_father_id: '', official_position: '', summary: '', adoption: 'none', sex: 'MAN', g_mother_id: '', birth_date: '', id_card: '', face_img: '', photos: '', household_info: '', spouse: '', home_page: '', formal_name: '', location: '', childrens: ''
 }, true);
 
-function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
+function CreatorPage({ activeMenuItem = 'create', onMenuClick, startOnboarding = false }) {
   // 状态管理
   const [files, setFiles] = useState([]);
   const [previews, setPreviews] = useState([]);
@@ -44,6 +44,19 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
   const [mobilePersonModalVisible, setMobilePersonModalVisible] = useState(false);
   const [showMobileTable, setShowMobileTable] = useState(false);
   const [mobilePersonForm] = Form.useForm();
+  const hasStartedOnboarding = useRef(false);
+
+  useEffect(() => {
+    if (
+      startOnboarding
+      && !hasStartedOnboarding.current
+      && typeof window !== 'undefined'
+      && window.innerWidth <= 768
+    ) {
+      hasStartedOnboarding.current = true;
+      setMobilePersonModalVisible(true);
+    }
+  }, [startOnboarding]);
   
   // 重名检测相关状态
   const [duplicateModalVisible, setDuplicateModalVisible] = useState(false);
@@ -606,13 +619,13 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
         });
       }, 300);
 
-      console.log('📤 调用qwenOcrService.recognizeFamilyTree...');
+      console.log('📤 调用腾讯云 OCR 与视觉模型识别家谱...');
 
       // 设置前端超时控制（比后端稍长一些）
       const frontendTimeoutMs = 100000; // 100秒超时，给后端足够时间调用千问API
       console.log(`⏰ 设置前端超时时间: ${frontendTimeoutMs}ms (${frontendTimeoutMs / 1000}秒)`);
 
-      const ocrPromise = qwenOcrService.recognizeFamilyTree(imageUrls, tenantId);
+      const ocrPromise = tencentOcrService.recognizeFamilyTree(imageUrls, tenantId);
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => {
           reject(new Error(`OCR识别超时 (${frontendTimeoutMs / 1000}秒)，请检查网络连接或减少图片数量`));
@@ -1023,8 +1036,18 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
 
 
   return (
-    <AppLayout activeMenuItem={activeMenuItem} onMenuClick={onMenuClick}>
+    <AppLayout activeMenuItem={activeMenuItem} onMenuClick={onMenuClick} immersiveMobile>
       <div className="data-management-page">
+        <header className="mobile-creation-header">
+          <button type="button" onClick={() => onMenuClick?.('tree')} aria-label="返回家谱">
+            <ArrowLeftOutlined />
+          </button>
+          <div>
+            <strong>续家谱</strong>
+            <span>内容自动保存在你的家谱空间</span>
+          </div>
+          <span aria-hidden="true" />
+        </header>
         <section className="mobile-continue-hub">
           <div className="mobile-continue-heading">
             <span>续家谱</span>

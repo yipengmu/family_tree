@@ -1,0 +1,228 @@
+.journey-launcher,
+.family-journey-player {
+  position: absolute;
+  z-index: 30;
+  border: 1px solid rgba(255, 253, 247, 0.18);
+  color: #fffdf6;
+  background: linear-gradient(
+    145deg,
+    rgba(19, 57, 50, 0.96),
+    rgba(31, 74, 65, 0.94)
+  );
+  box-shadow: 0 16px 40px rgba(23, 63, 56, 0.22);
+  backdrop-filter: blur(16px);
+}
+
+.journey-launcher {
+  top: 14px;
+  left: 14px;
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  align-items: center;
+  gap: 11px;
+  width: min(310px, calc(100% - 28px));
+  padding: 10px 12px;
+  border-radius: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+.journey-launcher-mark {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 10px;
+  background: var(--cinnabar);
+  font: 20px var(--serif);
+}
+.journey-launcher strong,
+.journey-launcher small {
+  display: block;
+}
+.journey-launcher strong {
+  font: 600 14px var(--serif);
+  letter-spacing: 0.03em;
+}
+.journey-launcher small {
+  margin-top: 3px;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 10px;
+}
+
+.family-journey-player {
+  left: 18px;
+  bottom: 18px;
+  width: min(390px, calc(100% - 36px));
+  padding: 15px 16px 14px;
+  border-radius: 16px;
+}
+.family-journey-player.complete {
+  background: linear-gradient(
+    145deg,
+    rgba(139, 58, 42, 0.96),
+    rgba(91, 45, 37, 0.95)
+  );
+}
+.journey-player-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #d8b46b;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+}
+.journey-player-topline button {
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+}
+.journey-player-copy {
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  align-items: center;
+  gap: 12px;
+  margin: 7px 0 14px;
+}
+.journey-era-orb {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(216, 180, 107, 0.45);
+  border-radius: 50%;
+  color: #f0dba8;
+  background: rgba(216, 180, 107, 0.08);
+  font: 600 17px var(--serif);
+}
+.journey-era-orb.modern {
+  border-color: rgba(255, 255, 255, 0.34);
+  color: #fffdf6;
+}
+.journey-player-copy h2 {
+  margin: 0;
+  color: #fffdf6;
+  font: 600 18px/1.35 var(--serif);
+}
+.journey-player-copy p {
+  margin: 4px 0 0;
+  color: rgba(255, 255, 255, 0.64);
+  font-size: 11px;
+}
+.journey-timeline input {
+  width: 100%;
+  height: 18px;
+  margin: 0;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+.journey-timeline input::-webkit-slider-runnable-track {
+  height: 3px;
+  border-radius: 3px;
+  background: linear-gradient(
+    90deg,
+    #d8b46b var(--journey-progress),
+    rgba(255, 255, 255, 0.16) var(--journey-progress)
+  );
+}
+.journey-timeline input::-webkit-slider-thumb {
+  width: 13px;
+  height: 13px;
+  margin-top: -5px;
+  appearance: none;
+  border: 2px solid #173f38;
+  border-radius: 50%;
+  background: #f0dba8;
+  box-shadow: 0 0 0 2px rgba(240, 219, 168, 0.22);
+}
+.journey-timeline input::-moz-range-track {
+  height: 3px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.16);
+}
+.journey-timeline input::-moz-range-progress {
+  height: 3px;
+  background: #d8b46b;
+}
+.journey-timeline input::-moz-range-thumb {
+  width: 13px;
+  height: 13px;
+  border: 2px solid #173f38;
+  border-radius: 50%;
+  background: #f0dba8;
+}
+.journey-timeline-labels {
+  display: flex;
+  justify-content: space-between;
+  color: rgba(255, 255, 255, 0.42);
+  font-size: 9px;
+}
+.journey-player-actions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 11px;
+}
+.journey-player-actions button {
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  cursor: pointer;
+}
+.journey-primary-action {
+  border: 1px solid #d8b46b;
+  background: #d8b46b;
+  color: #173f38;
+}
+.journey-secondary-action {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.78);
+}
+.journey-player-actions small {
+  margin-left: auto;
+  color: rgba(255, 255, 255, 0.38);
+  font-size: 8px;
+}
+
+@media (max-width: 768px) {
+  .journey-launcher {
+    top: 10px;
+    left: 10px;
+  }
+  .family-journey-player {
+    right: 9px;
+    bottom: 9px;
+    left: 9px;
+    width: auto;
+    padding: 13px 14px 12px;
+  }
+  .journey-player-copy {
+    grid-template-columns: 42px 1fr;
+    margin-bottom: 10px;
+  }
+  .journey-era-orb {
+    width: 42px;
+    height: 42px;
+    font-size: 15px;
+  }
+  .journey-player-copy h2 {
+    font-size: 16px;
+  }
+  .journey-player-actions small {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .journey-launcher,
+  .family-journey-player {
+    backdrop-filter: none;
+  }
+}

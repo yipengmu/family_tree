@@ -12,7 +12,8 @@ const AppLayout = ({
   nodes = [],
   statistics = null,
   onSearch,
-  onSearchSelect
+  onSearchSelect,
+  immersiveMobile = false
 }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false); // 移动端侧边栏状态
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false); // 桌面端侧边栏收起状态
@@ -36,7 +37,7 @@ const AppLayout = ({
   };
 
   return (
-    <div className="app-layout">
+    <div className={`app-layout ${immersiveMobile ? 'immersive-mobile' : ''}`}>
       {/* 主体布局 */}
       <div style={{ display: 'flex', flex: 1 }}>
         {/* 移动端遮罩 */}
