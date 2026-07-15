@@ -33,8 +33,15 @@ describe("family journey panorama framing", () => {
 
   test("keeps following the focused mainline while the journey is playing", () => {
     expect(source).toMatch(
-      /const focusNode = nodes\.find\([\s\S]*?setCenter\(\s*focusNode\.position\.x/,
+      /const focusNode = nodes\.find\([\s\S]*?setCenter\(\s*centerX/,
     );
+  });
+
+  test("centers the mobile journey on the visible tree bounds horizontally", () => {
+    expect(source).toMatch(
+      /const visibleBounds = getNodesBounds\([\s\S]*?const centerX = isMobile[\s\S]*?visibleBounds\.x \+ visibleBounds\.width \/ 2/,
+    );
+    expect(source).toMatch(/: focusNode\.position\.x \+ 100/);
   });
 
   test("auto-fits a personal tree when its nodes or canvas size change", () => {

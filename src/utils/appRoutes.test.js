@@ -25,7 +25,7 @@ describe("app route helpers", () => {
     expect(getAppPath("create")).toBe("/app/create");
   });
 
-  it("keeps unauthenticated creation behind registration", () => {
+  it("keeps the marketing create path behind registration", () => {
     expect(getCreatePath(false)).toBe("/register");
     expect(getCreatePath(true)).toBe("/app/create");
   });

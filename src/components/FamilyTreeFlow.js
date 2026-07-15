@@ -634,9 +634,19 @@ const FamilyTreeFlow = forwardRef(({
         (node) => node.data.id === presentationFocusId,
       );
       if (!focusNode) return;
+      const visibleBounds = getNodesBounds(
+        nodes.map((node) => ({
+          ...node,
+          width: isMobile ? 100 : 200,
+          height: 80,
+        })),
+      );
+      const centerX = isMobile
+        ? visibleBounds.x + visibleBounds.width / 2
+        : focusNode.position.x + 100;
 
       setCenter(
-        focusNode.position.x + 100,
+        centerX,
         focusNode.position.y + (isMobile ? 145 : 100),
         {
           zoom: isMobile ? 0.62 : 0.78,

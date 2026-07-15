@@ -58,7 +58,7 @@ function MainApp({ demoMode = false }) {
   // 处理菜单点击
   const handleMenuClick = (menuKey) => {
     if (!isAuthenticated() && menuKey === "create") {
-      navigate("/register", {
+      navigate("/login", {
         state: { from: location.pathname, returnTo: "/app/create" },
       });
       return;
@@ -98,14 +98,12 @@ function MainApp({ demoMode = false }) {
   }, [location.pathname]);
 
   useEffect(() => {
-    document.title = demoMode
-      ? `${BRAND.demoFamilyName}`
-      : `我的家谱`;
+    document.title = demoMode ? `${BRAND.demoFamilyName}` : `我的家谱`;
   }, [demoMode]);
 
   useEffect(() => {
     if (!isAuthenticated() && currentPage === "create") {
-      navigate("/register", {
+      navigate("/login", {
         replace: true,
         state: { from: location.pathname, returnTo: "/app/create" },
       });

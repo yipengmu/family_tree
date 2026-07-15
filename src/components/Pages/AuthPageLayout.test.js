@@ -30,12 +30,10 @@ describe("authentication page layout", () => {
     expect(stylesheet).toContain(".auth-back-button:focus-visible");
   });
 
-  test("keeps the brand at the start of the topbar and links it home", () => {
-    expect(layoutSource).toMatch(
-      /<header className="auth-topbar">[\s\S]*?<Link className="auth-brand" to="\/"/,
-    );
-    expect(layoutSource).toContain('aria-label="谱里官网首页"');
-    expect(stylesheet).toContain(".auth-brand:focus-visible");
+  test("keeps the return action as the only topbar navigation", () => {
+    expect(layoutSource).not.toContain("auth-brand");
+    expect(layoutSource).not.toContain("auth-seal");
+    expect(stylesheet).toContain("justify-content: flex-start;");
   });
 
   test("uses compact desktop spacing so the footer remains in view", () => {

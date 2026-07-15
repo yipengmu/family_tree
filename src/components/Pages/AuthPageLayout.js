@@ -1,8 +1,6 @@
 import React from "react";
 import { ArrowLeftOutlined } from "@ant-design/icons";
 import { Card, Typography } from "antd";
-import { Link } from "react-router-dom";
-import BRAND from "../../constants/brand.js";
 import "./AuthPageLayout.css";
 
 const { Title, Text } = Typography;
@@ -17,16 +15,6 @@ const AuthPageLayout = ({
 }) => (
   <div className="auth-page">
     <header className="auth-topbar">
-      <Link className="auth-brand" to="/" aria-label="谱里官网首页">
-        <span className="auth-brand-seal" aria-hidden="true">
-          {BRAND.seal}
-        </span>
-        <span className="auth-brand-copy">
-          <strong>{BRAND.name}</strong>
-          <small>{BRAND.tagline}</small>
-        </span>
-      </Link>
-
       <button
         type="button"
         className="auth-back-button"
@@ -65,9 +53,6 @@ const AuthPageLayout = ({
 
       <Card className="auth-card">
         <div className="auth-heading">
-          <div className="auth-seal" aria-hidden="true">
-            {BRAND.seal}
-          </div>
           <Title level={2}>{title}</Title>
           <Text type="secondary">{subtitle}</Text>
         </div>

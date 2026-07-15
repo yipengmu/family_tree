@@ -105,7 +105,7 @@ const FamilyTreePage = ({
     // 检查用户是否已登录
     if (!isAuthenticated()) {
       if (onMenuClick) {
-        // 通过 create 入口保留“注册后继续创建”的意图，避免注册完成后回到示例家谱。
+        // 通过 create 入口保留“登录后继续创建”的意图，避免登录完成后回到示例家谱。
         onMenuClick("create");
       }
     } else {

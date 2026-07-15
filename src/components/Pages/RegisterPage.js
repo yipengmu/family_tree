@@ -109,13 +109,9 @@ const RegisterPage = () => {
     navigate(location.state?.from || "/");
   };
 
-  const backLabel = location.state?.from?.startsWith("/app")
-    ? "返回家谱"
-    : "返回官网";
-
   return (
     <AuthPageLayout
-      backLabel={backLabel}
+      backLabel="返回"
       onBack={handleBack}
       title={BRAND.tagline}
       subtitle="从自己开始记录。默认私密，仅受邀家人可见。"

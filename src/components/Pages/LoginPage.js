@@ -80,13 +80,9 @@ const LoginPage = () => {
     navigate(location.state?.from || "/");
   };
 
-  const backLabel = location.state?.from?.startsWith("/app")
-    ? "返回家谱"
-    : "返回官网";
-
   return (
     <AuthPageLayout
-      backLabel={backLabel}
+      backLabel="返回"
       onBack={handleBack}
       title="回到谱里"
       subtitle="继续整理你们家的名字与故事"
@@ -111,11 +107,7 @@ const LoginPage = () => {
           className="login-account-field"
           extra={
             <div className="login-account-history-note">
-              <Text type="secondary">
-                {loginAccounts.length > 0
-                  ? "可选择本机成功登录过的账号；仅保存邮箱，不保存密码。"
-                  : "成功登录后仅在本机保存邮箱，不保存密码。"}
-              </Text>
+              <Text type="secondary"> </Text>
               {loginAccounts.length > 0 ? (
                 <Button type="link" onClick={handleClearAccountHistory}>
                   清除历史
