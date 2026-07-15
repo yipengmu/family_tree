@@ -178,15 +178,6 @@ const MarketingHomePage = () => {
             <a href="#product" onClick={() => setNavOpen(false)}>
               产品能力
             </a>
-            <a href="#story" onClick={() => setNavOpen(false)}>
-              真实故事
-            </a>
-            <a href="#trust" onClick={() => setNavOpen(false)}>
-              隐私与开源
-            </a>
-            <a href="#wechat" onClick={() => recordCommunityIntent("family")}>
-              共创计划
-            </a>
           </nav>
 
           <div className="site-header-actions">
@@ -378,6 +369,33 @@ const MarketingHomePage = () => {
               </article>
             ))}
           </div>
+
+          <div className="product-trust" id="trust">
+            <div className="product-trust-heading">
+              <span className="site-kicker">资料属于家庭，而不是平台</span>
+              <h2>放心记录，也能随时带走</h2>
+              <p>
+                家庭资料默认私密；AI 和 OCR 只帮助整理草稿，不能替家人确认事实。
+              </p>
+            </div>
+            <div className="trust-grid">
+              {trustItems.map((item) => (
+                <article key={item.title}>
+                  <span className="trust-icon" aria-hidden="true">
+                    {item.icon}
+                  </span>
+                  <div>
+                    <h3>{item.title}</h3>
+                    <p>{item.copy}</p>
+                  </div>
+                </article>
+              ))}
+            </div>
+            <p className="trust-ai-note">
+              <BookOutlined /> AI 和 OCR
+              只能帮助整理草稿，不能自动替家人确认事实。
+            </p>
+          </div>
         </section>
 
         <section className="site-story-section" id="story">
@@ -412,69 +430,18 @@ const MarketingHomePage = () => {
               </article>
             </div>
           </div>
-        </section>
-
-        <section className="site-section life-section">
-          <div className="life-copy">
-            <span className="site-status-tag">正在共创</span>
-            <span className="site-kicker">下一里程碑</span>
-            <h2>让名字，慢慢长出生平</h2>
-            <p>
-              家谱不应该只有姓名和连线。我们正在设计人物生平，把照片、工作、手艺、兴趣和家人讲述，整理成可以逐年补充的家庭记录。
-            </p>
+          <div className="story-next-step">
+            <div>
+              <span className="site-status-tag">正在共创</span>
+              <strong>让名字，慢慢长出生平</strong>
+              <p>
+                把照片、工作、手艺和家人讲述，整理成可以逐年补充的家庭记录。
+              </p>
+            </div>
             <a href="#wechat" onClick={() => recordCommunityIntent("family")}>
-              参与人物生平共创 <ArrowRightOutlined />
+              参与共创 <ArrowRightOutlined />
             </a>
           </div>
-          <div className="life-file" aria-label="人物生平档案示意">
-            <div className="life-file-head">
-              <span>人物档案 · 家庭私密</span>
-              <LockOutlined />
-            </div>
-            <div className="life-file-person">
-              <div aria-hidden="true">祖</div>
-              <span>
-                <strong>一位家人的一生</strong>
-                <small>姓名之外，还有经历与讲述</small>
-              </span>
-            </div>
-            <ol>
-              <li>
-                <time>青年</time>
-                <span>在老家学习并开始工作</span>
-              </li>
-              <li>
-                <time>后来</time>
-                <span>掌握一门手艺，照顾一家人</span>
-              </li>
-              <li>
-                <time>今天</time>
-                <span>由家人继续补充照片和故事</span>
-              </li>
-            </ol>
-          </div>
-        </section>
-
-        <section className="site-section trust-section" id="trust">
-          <div className="site-section-heading is-centered">
-            <span className="site-kicker">资料属于家庭，而不是平台</span>
-            <h2>保存家族记忆，首先要守住信任</h2>
-          </div>
-          <div className="trust-grid">
-            {trustItems.map((item) => (
-              <article key={item.title}>
-                <span className="trust-icon" aria-hidden="true">
-                  {item.icon}
-                </span>
-                <h3>{item.title}</h3>
-                <p>{item.copy}</p>
-              </article>
-            ))}
-          </div>
-          <p className="trust-ai-note">
-            <BookOutlined /> AI 和 OCR
-            只能帮助整理草稿，不能自动替家人确认事实。
-          </p>
         </section>
 
         <section className="site-section wechat-section" id="wechat">
@@ -485,6 +452,10 @@ const MarketingHomePage = () => {
               <p>
                 关注公众号“塔塔爸爸”，告诉我你家现在有哪些资料、最想先记录谁。产品会在真实使用中继续完善。
               </p>
+              <button type="button" onClick={() => beginCreate("final-cta")}>
+                {authenticated ? "继续整理我的家谱" : "免费创建我的家谱"}
+                <ArrowRightOutlined />
+              </button>
               <div className="wechat-keywords">
                 <span>
                   回复 <strong>家谱</strong>
@@ -506,17 +477,6 @@ const MarketingHomePage = () => {
               <strong>微信扫码关注“塔塔爸爸”</strong>
               <small>无法扫码时，可在微信搜索公众号名称</small>
             </div>
-          </div>
-        </section>
-
-        <section className="site-final-cta">
-          <div>
-            <span className="site-kicker">现在开始，还来得及</span>
-            <h2>先写下一个名字，再慢慢问回一个家庭的故事</h2>
-            <button type="button" onClick={() => beginCreate("final-cta")}>
-              {authenticated ? "继续整理我的家谱" : "免费创建我的家谱"}
-              <ArrowRightOutlined />
-            </button>
           </div>
         </section>
       </main>

@@ -42,7 +42,7 @@ const Sidebar = ({
     },
     {
       key: "settings",
-      label: "设置",
+      label: "家谱设置",
       icon: <SettingOutlined />,
       onClick: () => navigate("/app/settings"),
     },
@@ -91,7 +91,7 @@ const Sidebar = ({
     {
       key: "settings",
       icon: <SettingOutlined />,
-      label: "家族设置",
+      label: "家谱设置",
       path: "/app/settings",
     },
   ];
@@ -102,7 +102,11 @@ const Sidebar = ({
       id="sidebar"
     >
       {/* Logo */}
-      <Link className="logo logo-home-link" to="/" aria-label="返回谱里产品官网">
+      <Link
+        className="logo logo-home-link"
+        to="/"
+        aria-label="返回谱里产品官网"
+      >
         <div className="logo-icon" aria-hidden="true">
           {BRAND.seal}
         </div>

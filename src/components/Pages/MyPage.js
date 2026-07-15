@@ -127,7 +127,7 @@ const MyPage = ({ activeMenuItem = "mine", onMenuClick, familyData = [] }) => {
                 </span>
                 <span>
                   <strong>家谱设置</strong>
-                  <small>隐私、视图与基本信息</small>
+                  <small>隐私、数据与家谱概况</small>
                 </span>
                 <RightOutlined />
               </button>

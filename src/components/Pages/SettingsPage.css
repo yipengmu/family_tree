@@ -1,33 +1,115 @@
-/* 设置页面样式 */
 .settings-page {
   height: 100%;
   overflow: auto;
-  padding-bottom: 80px; /* 为底部Tab留出空间 */
+  padding-bottom: 40px;
 }
 
 .settings-container {
-  max-width: 600px;
+  width: min(100%, 1080px);
   margin: 0 auto;
+}
+
+.settings-page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 32px;
+  margin-bottom: 18px;
+}
+
+.settings-page-header .ant-typography {
+  margin-bottom: 0;
+}
+
+.settings-page-header h2.ant-typography {
+  margin: 2px 0 4px;
+  color: #172b25;
+  font-size: 28px;
+}
+
+.settings-page-header p.ant-typography {
+  color: #64748b;
+}
+
+.settings-kicker {
+  color: var(--pine);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.settings-family-summary {
+  min-width: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 12px 14px;
+  border: 1px solid #dfe7e3;
+  border-radius: 12px;
+  background: #fbfcfb;
+}
+
+.settings-family-summary div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.settings-family-summary strong {
+  color: #172b25;
+  font-size: 15px;
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.85fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.settings-side-column {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
 .settings-card {
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
-  transition: all 0.3s ease;
+  border: 1px solid #dfe7e3;
+  border-radius: 14px;
+  box-shadow: 0 6px 20px rgba(25, 50, 42, 0.05);
 }
 
-.settings-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+.settings-card .ant-card-head {
+  min-height: 48px;
+  padding: 0 18px;
+  border-color: #edf1ef;
 }
 
-/* 设置列表项 */
+.settings-card .ant-card-head-title {
+  color: #263d35;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.settings-card .ant-card-body {
+  padding: 16px 18px;
+}
+
+.settings-card-extra {
+  color: var(--pine);
+  font-size: 18px;
+}
+
+.settings-card-intro {
+  margin: 0 0 4px !important;
+  color: #64748b;
+  font-size: 13px;
+}
+
 .settings-list-item {
-  padding: 16px 0;
-  border-bottom: 1px solid #f1f5f9;
+  padding: 17px 0;
+  border-bottom: 1px solid #edf1ef;
 }
 
 .settings-list-item:last-child {
@@ -35,194 +117,247 @@
 }
 
 .settings-icon {
-  color: var(--pine);
-  font-size: 18px;
+  width: 30px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  border-radius: 9px;
+  background: #eef5f1;
+  color: var(--pine);
+  font-size: 15px;
 }
 
 .settings-title {
-  font-weight: 600;
   color: #1e293b;
-  font-size: 15px;
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .settings-description {
   color: #64748b;
-  font-size: 13px;
-  line-height: 1.4;
+  font-size: 12px;
+  line-height: 1.45;
 }
 
-/* 统计项 */
-.stat-item {
-  text-align: center;
-  padding: 8px 0;
-}
-
-/* 控制按钮 */
-.control-button {
-  height: auto;
-  min-height: 56px;
-  border-radius: 12px;
-  text-align: left;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 16px;
-  border: 2px solid #e2e8f0;
-  background: white;
-  transition: all 0.3s ease;
-}
-
-.control-button:hover {
-  border-color: var(--pine);
-  background: #f7faf7;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.15);
-}
-
-/* 危险操作按钮样式 */
-.control-button.ant-btn-dangerous {
-  border-color: #ff7875;
-  background: #fff2f0;
-}
-
-.control-button.ant-btn-dangerous:hover {
-  border-color: #ff4d4f;
-  background: #ffebe6;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(255, 77, 79, 0.2);
-}
-
-.control-button.ant-btn-dangerous .control-title {
-  color: #cf1322;
-}
-
-.control-button.ant-btn-dangerous .control-description {
-  color: #a8071a;
-}
-
-.control-title {
-  font-weight: 600;
-  color: #1e293b;
-  font-size: 15px;
-  margin-bottom: 4px;
-}
-
-.control-description {
-  font-size: 13px;
-  color: #64748b;
-  font-weight: normal;
-  line-height: 1.4;
-}
-
-/* 关于按钮 */
-.about-button {
-  height: 56px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, var(--pine-light), var(--pine));
-  border: none;
-  color: white;
-  font-weight: 600;
-  font-size: 16px;
-  transition: all 0.3s ease;
-}
-
-.about-button:hover {
-  background: linear-gradient(135deg, var(--pine), #10322c);
-  transform: translateY(-1px);
-  box-shadow: 0 8px 16px rgba(139, 92, 246, 0.3);
-  color: white;
-}
-
-/* 响应式设计 */
-@media (max-width: 768px) {
-  .settings-page { padding: 0 0 calc(86px + env(safe-area-inset-bottom)); }
-  .settings-container {
-    padding: 2px 2px 0;
-    gap: 10px;
-  }
-  
-  .settings-card {
-    border-radius: 11px;
-    box-shadow: none;
-  }
-
-  .settings-card .ant-card-head { min-height: 44px; padding: 0 14px; }
-  .settings-card .ant-card-head-title { font-size: 14px; }
-  .settings-card .ant-card-body { padding: 12px 14px; }
-  .settings-list-item { padding: 13px 0; }
-  .settings-description { font-size: 11px; }
-  .stat-item { padding: 3px 0; }
-  
-  .control-button {
-    min-height: 48px;
-    padding: 12px;
-  }
-  
-  .control-title {
-    font-size: 14px;
-  }
-  
-  .control-description {
-    font-size: 12px;
-  }
-  
-  .about-button {
-    height: 48px;
-    font-size: 15px;
-  }
-}
-
-/* 开关样式覆盖 */
 .settings-list-item .ant-switch {
-  background-color: #e2e8f0;
+  background-color: #cbd5e1;
 }
 
 .settings-list-item .ant-switch-checked {
   background-color: var(--pine);
 }
 
-.settings-list-item .ant-switch:focus {
-  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+.settings-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-/* 标签样式 */
-.settings-card .ant-tag {
+.stat-item {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 4px 8px;
+  border-right: 1px solid #edf1ef;
+  color: var(--pine);
+}
+
+.stat-item:last-child {
+  border-right: none;
+}
+
+.stat-item strong {
+  color: #172b25;
+  font-size: 22px;
+  line-height: 1.2;
+}
+
+.stat-item .anticon {
+  height: 26px;
+  display: flex;
+  align-items: center;
+  font-size: 19px;
+}
+
+.stat-item span {
+  color: #64748b;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.settings-data-card .ant-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.settings-action-button {
+  height: auto;
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 10px 14px;
+  border-radius: 10px;
+  text-align: left;
+}
+
+.settings-action-button > span:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.settings-action-button strong,
+.settings-maintenance-row strong {
+  color: #263d35;
+  font-size: 14px;
+}
+
+.settings-action-button small,
+.settings-maintenance-row span {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.settings-action-primary {
+  border-color: #b9cfc5;
+  background: #f4f8f6;
+  color: var(--pine);
+}
+
+.settings-action-primary:hover {
+  border-color: var(--pine) !important;
+  background: #eef5f1 !important;
+  color: var(--pine) !important;
+}
+
+.settings-maintenance-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #edf1ef;
+}
+
+.settings-maintenance-row > div {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.settings-maintenance-row .ant-btn {
+  flex: 0 0 auto;
   border-radius: 8px;
-  font-weight: 500;
-  padding: 4px 12px;
 }
 
-/* 分割线样式 */
-.settings-card .ant-divider {
-  border-color: #f1f5f9;
+.settings-about-button {
+  align-self: center;
+  color: #64748b;
 }
 
-/* 模态框样式覆盖 */
-.ant-modal-content {
+.settings-about-button:hover {
+  color: var(--pine) !important;
+  background: transparent !important;
+}
+
+.settings-about-modal .ant-modal-content {
   border-radius: 16px;
-  overflow: hidden;
 }
 
-.ant-modal-header {
-  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-  border-bottom: none;
-  padding: 20px 24px;
+.settings-about-modal .ant-modal-title {
+  color: #172b25;
 }
 
-.ant-modal-title {
-  color: white;
-  font-weight: 600;
+@media (max-width: 900px) {
+  .settings-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 0.8fr);
+  }
 }
 
-.ant-modal-close {
-  color: white;
-}
+@media (max-width: 768px) {
+  .settings-page {
+    padding: 0 0 calc(86px + env(safe-area-inset-bottom));
+  }
 
-.ant-modal-close:hover {
-  color: rgba(255, 255, 255, 0.8);
+  .settings-container {
+    padding: 2px 2px 0;
+  }
+
+  .settings-page-header {
+    display: block;
+    margin-bottom: 10px;
+    padding: 0 2px;
+  }
+
+  .settings-page-header > div:first-child {
+    display: none;
+  }
+
+  .settings-family-summary {
+    min-width: 0;
+    padding: 12px 14px;
+    border-radius: 11px;
+    background: #fff;
+  }
+
+  .settings-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .settings-side-column {
+    width: 100%;
+    gap: 10px;
+  }
+
+  .settings-card {
+    width: 100%;
+    border-radius: 11px;
+    box-shadow: none;
+  }
+
+  .settings-card .ant-card-head {
+    min-height: 44px;
+    padding: 0 14px;
+  }
+
+  .settings-card .ant-card-head-title {
+    font-size: 14px;
+  }
+
+  .settings-card .ant-card-body {
+    padding: 12px 14px;
+  }
+
+  .settings-list-item {
+    padding: 13px 0;
+  }
+
+  .settings-description {
+    font-size: 11px;
+  }
+
+  .stat-item {
+    padding: 3px 6px;
+  }
+
+  .stat-item strong {
+    font-size: 19px;
+  }
+
+  .settings-action-button {
+    min-height: 52px;
+  }
+
+  .settings-maintenance-row span {
+    font-size: 11px;
+  }
 }

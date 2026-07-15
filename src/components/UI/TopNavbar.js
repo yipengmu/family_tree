@@ -26,7 +26,7 @@ const TopNavbar = ({ currentPage, onMenuClick }) => {
     },
     {
       key: "settings",
-      label: "设置",
+      label: "家谱设置",
       onClick: () => navigate("/app/settings"),
     },
     {
