@@ -122,6 +122,21 @@ test("maps legacy tenant-specific family data paths", () => {
   );
 });
 
+test("maps person collection and item paths without stealing story routes", () => {
+  assert.deepEqual(
+    createModernApiBridge.resolveModernRoute("/api/people"),
+    { modulePath: "api/people.js", query: { type: "collection" }, params: {} },
+  );
+  assert.deepEqual(
+    createModernApiBridge.resolveModernRoute("/api/people/p-1"),
+    { modulePath: "api/people.js", query: { type: "item" }, params: { personId: "p-1" } },
+  );
+  assert.equal(
+    createModernApiBridge.resolveModernRoute("/api/people/p-1/events").modulePath,
+    "api/story.js",
+  );
+});
+
 test("bridge loads a handler once and passes rewrite query values", async () => {
   const loaded = [];
   const bridge = createModernApiBridge({

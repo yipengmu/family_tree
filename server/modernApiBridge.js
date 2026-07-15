@@ -118,11 +118,17 @@ function createModernApiBridge({ importer } = {}) {
         handler = await load(resolved.modulePath);
         moduleCache.set(resolved.modulePath, handler);
       }
-      req.query = {
+      const mergedQuery = {
         ...(req.query || {}),
         ...resolved.params,
         ...resolved.query,
       };
+      Object.defineProperty(req, "query", {
+        configurable: true,
+        enumerable: true,
+        writable: true,
+        value: mergedQuery,
+      });
       return handler(req, res);
     } catch (error) {
       console.error("统一 API handler 加载或执行失败:", error);
