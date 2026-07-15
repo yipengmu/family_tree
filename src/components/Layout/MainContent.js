@@ -1,5 +1,4 @@
 import React from "react";
-import { HomeOutlined } from "@ant-design/icons";
 import { Link } from "react-router-dom";
 import FamilySearchBar from "../UI/FamilySearchBar.js";
 import "./MainContent.css";
@@ -22,10 +21,14 @@ const MainContent = ({
     >
       {/* 顶部导航栏 - 简化为仅搜索功能 */}
       <header className={`header ${showSearch ? "" : "no-search"}`}>
-        <div className="mobile-header-identity" aria-label={BRAND.name}>
+        <Link
+          className="mobile-header-identity"
+          to={OFFICIAL_SITE_PATH}
+          aria-label="打开谱里产品官网"
+        >
           <span>{BRAND.seal}</span>
           <b>{BRAND.name}</b>
-        </div>
+        </Link>
         <div className="header-brandline">
           <span className="header-eyebrow">{BRAND.tagline}</span>
           <span className="header-divider" aria-hidden="true" />
@@ -46,14 +49,6 @@ const MainContent = ({
             />
           </div>
         )}
-        <Link
-          className="mobile-official-link"
-          to={OFFICIAL_SITE_PATH}
-          aria-label="打开谱里产品官网"
-          title="产品官网"
-        >
-          <HomeOutlined />
-        </Link>
       </header>
 
       {/* 主要内容区域 */}

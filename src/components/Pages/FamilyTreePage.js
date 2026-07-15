@@ -258,7 +258,10 @@ const FamilyTreePage = ({
                 onClick={handleCreateMyFamilyTree}
                 className="create-family-btn"
               >
-                从自己开始
+                <span className="create-family-btn-eyebrow">
+                  没有纸质家谱，也能
+                </span>
+                <span>从自己开始</span>
               </Button>
             ) : !localStorage.getItem("token") ? (
               <Button

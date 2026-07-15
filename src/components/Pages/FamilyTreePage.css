@@ -25,6 +25,7 @@
   display: grid;
   grid-template-columns: auto auto;
   align-items: baseline;
+  justify-self: start;
   column-gap: 12px;
 }
 .family-context-kicker {
@@ -96,6 +97,9 @@
   font-size: 13px;
   font-weight: 500;
   line-height: 1;
+}
+.create-family-btn-eyebrow {
+  display: none;
 }
 .family-context-actions .create-family-btn:hover {
   border-color: var(--pine-light) !important;
@@ -185,9 +189,9 @@
 @media (max-width: 768px) {
   .family-context-bar {
     min-height: 0;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 8px 10px;
-    padding: 0 2px 8px;
+    grid-template-columns: minmax(0, 1fr) 116px;
+    gap: 10px;
+    padding: 0 0 8px;
   }
   .family-context-copy {
     column-gap: 10px;
@@ -203,30 +207,28 @@
     font-size: 10px;
   }
   .family-context-guide {
-    grid-column: 1 / -1;
-    grid-row: 2;
-    padding: 7px 10px;
-    border-top: 1px solid var(--hairline);
-    border-left: 0;
-    border-radius: 8px;
-    background: rgba(255, 253, 247, 0.72);
-  }
-  .family-context-guide > span,
-  .family-context-guide p {
     display: none;
   }
-  .family-context-guide h2 {
-    margin: 0;
-    font: 600 13px/1.35 var(--serif);
-  }
   .family-context-actions .create-family-btn {
-    min-width: 0;
-    height: 36px !important;
-    padding: 0 11px !important;
-    font-size: 11px;
+    width: 116px;
+    min-width: 116px;
+    height: 48px !important;
+    padding: 6px 8px !important;
+    display: inline-flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12px;
+  }
+  .create-family-btn-eyebrow {
+    display: block;
+    font-size: 9px;
+    font-weight: 400;
+    letter-spacing: 0;
+    opacity: 0.78;
   }
   .family-context-actions {
     grid-column: 2;
+    justify-self: end;
   }
   .family-tree-page {
     height: 100%;

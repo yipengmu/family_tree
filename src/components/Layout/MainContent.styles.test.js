@@ -26,12 +26,14 @@ describe("main content desktop header layout", () => {
     );
   });
 
-  test("offers a top-right official website link on mobile", () => {
-    expect(component).toContain('className="mobile-official-link"');
+  test("links the mobile brand identity to the official website", () => {
+    expect(component).toContain('className="mobile-header-identity"');
     expect(component).toContain("to={OFFICIAL_SITE_PATH}");
     expect(component).toContain('aria-label="打开谱里产品官网"');
+    expect(component).not.toContain('className="mobile-official-link"');
+    expect(component).not.toContain("HomeOutlined");
     expect(stylesheet).toMatch(
-      /@media\s*\(max-width:\s*768px\)[\s\S]*?\.mobile-official-link\s*\{[^}]*display:\s*inline-flex;/s,
+      /@media\s*\(max-width:\s*768px\)[\s\S]*?\.mobile-header-identity\s*\{[^}]*display:\s*inline-flex;/s,
     );
   });
 });

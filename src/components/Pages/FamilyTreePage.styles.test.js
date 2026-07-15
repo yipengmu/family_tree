@@ -82,6 +82,16 @@ describe("family journey animation styles", () => {
     expect(pageSource).toContain('className="family-context-guide"');
     expect(pageSource).not.toContain('className="demo-create-guide"');
     expect(pageSource).not.toContain('className="privacy-badge"');
+    expect(pageSource).toContain('className="create-family-btn-eyebrow"');
+    expect(stylesheet).toMatch(
+      /@media\s*\(max-width:\s*768px\)[\s\S]*?\.family-context-guide\s*\{[^}]*display:\s*none;/s,
+    );
+    expect(stylesheet).toMatch(
+      /@media\s*\(max-width:\s*768px\)[\s\S]*?\.create-family-btn-eyebrow\s*\{[^}]*display:\s*block;/s,
+    );
+    expect(stylesheet).toMatch(
+      /\.family-context-copy\s*\{[^}]*justify-self:\s*start;/s,
+    );
   });
 
   test("keeps the family call to action on one consistent button style", () => {
