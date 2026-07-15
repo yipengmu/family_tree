@@ -65,12 +65,14 @@
   width: min(390px, calc(100% - 36px));
   padding: 15px 16px 14px;
   border-radius: 16px;
-  transition: background 0.45s ease, border-color 0.45s ease;
+  transition:
+    background 0.45s ease,
+    border-color 0.45s ease;
 }
 
 .family-journey-player::before,
 .family-journey-player::after {
-  content: '';
+  content: "";
   position: absolute;
   z-index: 0;
   pointer-events: none;
@@ -93,51 +95,116 @@
 }
 
 .family-journey-player.era-ming {
-  background: linear-gradient(145deg, rgba(18, 63, 52, 0.97), rgba(35, 84, 67, 0.96));
+  background: linear-gradient(
+    145deg,
+    rgba(18, 63, 52, 0.97),
+    rgba(35, 84, 67, 0.96)
+  );
 }
 
 .family-journey-player.era-ming::before {
   background:
-    radial-gradient(circle at 88% 19%, transparent 0 27px, rgba(232, 211, 157, 0.11) 28px 29px, transparent 30px),
-    radial-gradient(circle at 94% 22%, transparent 0 42px, rgba(232, 211, 157, 0.08) 43px 44px, transparent 45px),
-    linear-gradient(120deg, transparent 0 71%, rgba(255, 255, 255, 0.035) 71% 72%, transparent 72%);
+    radial-gradient(
+      circle at 88% 19%,
+      transparent 0 27px,
+      rgba(232, 211, 157, 0.11) 28px 29px,
+      transparent 30px
+    ),
+    radial-gradient(
+      circle at 94% 22%,
+      transparent 0 42px,
+      rgba(232, 211, 157, 0.08) 43px 44px,
+      transparent 45px
+    ),
+    linear-gradient(
+      120deg,
+      transparent 0 71%,
+      rgba(255, 255, 255, 0.035) 71% 72%,
+      transparent 72%
+    );
 }
 
 .family-journey-player.era-qing {
   --journey-accent: #d2ba7b;
-  background: linear-gradient(145deg, rgba(41, 68, 61, 0.97), rgba(72, 81, 61, 0.96));
+  background: linear-gradient(
+    145deg,
+    rgba(41, 68, 61, 0.97),
+    rgba(72, 81, 61, 0.96)
+  );
 }
 
 .family-journey-player.era-qing::before {
   background:
-    linear-gradient(45deg, transparent 46%, rgba(232, 211, 157, 0.07) 47% 49%, transparent 50%),
-    linear-gradient(-45deg, transparent 46%, rgba(232, 211, 157, 0.06) 47% 49%, transparent 50%),
-    radial-gradient(circle at 10% 110%, rgba(216, 180, 107, 0.14), transparent 42%);
-  background-size: 32px 32px, 32px 32px, auto;
+    linear-gradient(
+      45deg,
+      transparent 46%,
+      rgba(232, 211, 157, 0.07) 47% 49%,
+      transparent 50%
+    ),
+    linear-gradient(
+      -45deg,
+      transparent 46%,
+      rgba(232, 211, 157, 0.06) 47% 49%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 10% 110%,
+      rgba(216, 180, 107, 0.14),
+      transparent 42%
+    );
+  background-size:
+    32px 32px,
+    32px 32px,
+    auto;
 }
 
 .family-journey-player.era-republic {
   --journey-accent: #d8c790;
-  background: linear-gradient(145deg, rgba(45, 62, 69, 0.97), rgba(66, 76, 78, 0.96));
+  background: linear-gradient(
+    145deg,
+    rgba(45, 62, 69, 0.97),
+    rgba(66, 76, 78, 0.96)
+  );
 }
 
 .family-journey-player.era-republic::before {
   background:
-    repeating-linear-gradient(90deg, transparent 0 21px, rgba(255, 255, 255, 0.045) 22px, transparent 23px),
-    linear-gradient(115deg, rgba(216, 199, 144, 0.08), transparent 38% 68%, rgba(216, 199, 144, 0.055));
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 21px,
+      rgba(255, 255, 255, 0.045) 22px,
+      transparent 23px
+    ),
+    linear-gradient(
+      115deg,
+      rgba(216, 199, 144, 0.08),
+      transparent 38% 68%,
+      rgba(216, 199, 144, 0.055)
+    );
 }
 
 .family-journey-player.era-modern {
   --journey-accent: #ead39a;
-  background: linear-gradient(145deg, rgba(117, 57, 44, 0.97), rgba(151, 72, 52, 0.96));
+  background: linear-gradient(
+    145deg,
+    rgba(117, 57, 44, 0.97),
+    rgba(151, 72, 52, 0.96)
+  );
 }
 
 .family-journey-player.era-modern::before {
   background:
     linear-gradient(rgba(255, 245, 222, 0.045) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 245, 222, 0.045) 1px, transparent 1px),
-    radial-gradient(circle at 82% 24%, rgba(255, 235, 190, 0.12), transparent 24%);
-  background-size: 28px 28px, 28px 28px, auto;
+    radial-gradient(
+      circle at 82% 24%,
+      rgba(255, 235, 190, 0.12),
+      transparent 24%
+    );
+  background-size:
+    28px 28px,
+    28px 28px,
+    auto;
 }
 
 .family-journey-player.era-complete {
@@ -151,8 +218,17 @@
 
 .family-journey-player.era-complete::before {
   background:
-    radial-gradient(circle at 86% 18%, transparent 0 34px, rgba(255, 239, 202, 0.09) 35px 36px, transparent 37px),
-    repeating-linear-gradient(0deg, transparent 0 13px, rgba(255, 255, 255, 0.022) 14px);
+    radial-gradient(
+      circle at 86% 18%,
+      transparent 0 34px,
+      rgba(255, 239, 202, 0.09) 35px 36px,
+      transparent 37px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent 0 13px,
+      rgba(255, 255, 255, 0.022) 14px
+    );
 }
 .journey-player-topline {
   display: flex;

@@ -5,47 +5,229 @@
   padding: 10px 0 90px;
   overflow: auto;
 }
-.my-page-header { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
-.my-page-seal { width: 48px; height: 48px; display: grid; place-items: center; border-radius: 8px; background: var(--cinnabar); color: #fffaf0; font: 24px var(--serif); box-shadow: inset 0 0 0 3px rgba(255,255,255,.14); }
-.my-page-header p { margin: 0 0 2px; color: var(--ink-soft); font-size: 11px; letter-spacing: .1em; }
-.my-page-header h1 { margin: 0; color: var(--ink); font: 600 22px/1.3 var(--serif); }
+.my-page-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.my-page-seal {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--cinnabar);
+  color: #fffaf0;
+  font: 24px var(--serif);
+  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.14);
+}
+.my-page-header p {
+  margin: 0 0 2px;
+  color: var(--ink-soft);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+}
+.my-page-header h1 {
+  margin: 0;
+  color: var(--ink);
+  font: 600 22px/1.3 var(--serif);
+}
 .my-guest-card,
 .my-family-card,
-.my-menu-card { border: 1px solid var(--hairline); border-radius: 12px; background: rgba(255,253,247,.92); box-shadow: 0 8px 24px rgba(35,53,47,.06); }
-.my-guest-card { padding: 28px; text-align: center; }
-.my-guest-card h2 { margin: 8px 0 10px; font: 600 24px/1.35 var(--serif); color: var(--ink); }
-.my-guest-card p { margin: 0 auto 22px; max-width: 440px; color: var(--ink-soft); line-height: 1.75; }
-.my-card-kicker { color: var(--cinnabar); font-size: 11px; letter-spacing: .12em; }
-.my-family-card { padding: 18px; margin-bottom: 14px; }
-.my-family-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-.my-family-card h2 { margin: 4px 0 0; color: var(--ink); font: 600 21px var(--serif); }
-.my-private-pill { padding: 5px 9px; border-radius: 999px; background: rgba(23,63,56,.08); color: var(--pine); font-size: 11px; white-space: nowrap; }
-.my-family-stats { display: grid; grid-template-columns: repeat(2, 1fr); margin: 18px 0; border-block: 1px solid rgba(35,53,47,.09); }
-.my-family-stats div { padding: 14px 10px; display: flex; align-items: baseline; justify-content: center; gap: 6px; }
-.my-family-stats div + div { border-left: 1px solid rgba(35,53,47,.09); }
-.my-family-stats strong { color: var(--pine); font: 600 22px var(--serif); }
-.my-family-stats span { color: var(--ink-soft); font-size: 11px; }
-.my-family-card .tenant-selector.ink-theme .ant-select-selector { border-color: var(--hairline) !important; background: rgba(23,63,56,.05) !important; color: var(--ink) !important; }
+.my-menu-card {
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  background: rgba(255, 253, 247, 0.92);
+  box-shadow: 0 8px 24px rgba(35, 53, 47, 0.06);
+}
+.my-guest-card {
+  padding: 28px;
+  text-align: center;
+}
+.my-guest-card h2 {
+  margin: 8px 0 10px;
+  font: 600 24px/1.35 var(--serif);
+  color: var(--ink);
+}
+.my-guest-card p {
+  margin: 0 auto 22px;
+  max-width: 440px;
+  color: var(--ink-soft);
+  line-height: 1.75;
+}
+.my-card-kicker {
+  color: var(--cinnabar);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+}
+.my-family-card {
+  padding: 18px;
+  margin-bottom: 14px;
+}
+.my-family-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.my-family-card h2 {
+  margin: 4px 0 0;
+  color: var(--ink);
+  font: 600 21px var(--serif);
+}
+.my-private-pill {
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: rgba(23, 63, 56, 0.08);
+  color: var(--pine);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.my-family-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  margin: 18px 0;
+  border-block: 1px solid rgba(35, 53, 47, 0.09);
+}
+.my-family-stats div {
+  padding: 14px 10px;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 6px;
+}
+.my-family-stats div + div {
+  border-left: 1px solid rgba(35, 53, 47, 0.09);
+}
+.my-family-stats strong {
+  color: var(--pine);
+  font: 600 22px var(--serif);
+}
+.my-family-stats span {
+  color: var(--ink-soft);
+  font-size: 11px;
+}
+.my-family-card .tenant-selector.ink-theme .ant-select-selector {
+  border-color: var(--hairline) !important;
+  background: rgba(23, 63, 56, 0.05) !important;
+  color: var(--ink) !important;
+}
 .my-family-card .tenant-selector.ink-theme .ant-select-selection-item,
 .my-family-card .tenant-selector.ink-theme .ant-select-selection-placeholder,
-.my-family-card .tenant-selector.ink-theme .ant-select-arrow { color: var(--ink) !important; }
-.my-menu-card { overflow: hidden; }
-.my-menu-card button { width: 100%; min-height: 68px; display: grid; grid-template-columns: 38px 1fr 16px; align-items: center; gap: 10px; padding: 10px 16px; border: 0; border-bottom: 1px solid rgba(35,53,47,.08); background: transparent; text-align: left; color: var(--ink); }
-.my-menu-card button:last-child { border-bottom: 0; }
-.my-menu-icon { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 10px; background: rgba(23,63,56,.08); color: var(--pine); font-size: 17px; }
-.my-menu-card strong { display: block; font-size: 14px; font-weight: 600; }
-.my-menu-card small { display: block; margin-top: 3px; color: var(--ink-soft); font-size: 11px; }
-.my-menu-card > button > .anticon { color: #a0aaa5; font-size: 11px; }
-.my-logout-button { width: 100%; min-height: 44px; margin-top: 14px; border: 0; border-radius: 10px; background: rgba(166,70,50,.07); color: var(--cinnabar); }
-.my-page-footnote { margin: 24px 0 0; text-align: center; color: #9a9f9c; font-size: 10px; }
+.my-family-card .tenant-selector.ink-theme .ant-select-arrow {
+  color: var(--ink) !important;
+}
+.my-menu-card {
+  overflow: hidden;
+}
+.my-menu-card button {
+  width: 100%;
+  min-height: 68px;
+  display: grid;
+  grid-template-columns: 38px 1fr 16px;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border: 0;
+  border-bottom: 1px solid rgba(35, 53, 47, 0.08);
+  background: transparent;
+  text-align: left;
+  color: var(--ink);
+}
+.my-menu-card button:last-child {
+  border-bottom: 0;
+}
+.my-menu-icon {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: rgba(23, 63, 56, 0.08);
+  color: var(--pine);
+  font-size: 17px;
+}
+.my-menu-card strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+}
+.my-menu-card small {
+  display: block;
+  margin-top: 3px;
+  color: var(--ink-soft);
+  font-size: 11px;
+}
+.my-menu-card > button > .anticon {
+  color: #a0aaa5;
+  font-size: 11px;
+}
+.my-logout-button {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 14px;
+  border: 0;
+  border-radius: 10px;
+  background: rgba(166, 70, 50, 0.07);
+  color: var(--cinnabar);
+}
+.my-page-footnote {
+  margin: 24px 0 0;
+  text-align: center;
+  color: #9a9f9c;
+  font-size: 10px;
+}
 
 @media (max-width: 768px) {
-  .my-page { padding: 4px 4px calc(86px + env(safe-area-inset-bottom)); }
-  .my-page-header { margin: 4px 4px 14px; }
-  .my-page-header h1 { font-size: 18px; }
-  .my-page-seal { width: 42px; height: 42px; font-size: 21px; }
-  .my-guest-card { padding: 28px 20px; }
-  .my-guest-card h2 { font-size: 22px; }
-  .my-family-card { padding: 16px; }
-  .my-menu-card button { min-height: 66px; }
+  .my-page {
+    padding: 2px 0 calc(74px + env(safe-area-inset-bottom));
+  }
+  .my-page-header {
+    margin: 2px 2px 12px;
+  }
+  .my-page-header h1 {
+    font-size: 18px;
+  }
+  .my-page-seal {
+    width: 42px;
+    height: 42px;
+    font-size: 21px;
+  }
+  .my-guest-card {
+    padding: 28px 20px;
+  }
+  .my-guest-card h2 {
+    font-size: 22px;
+  }
+  .my-family-card {
+    margin-bottom: 10px;
+    padding: 14px;
+  }
+  .my-family-stats {
+    margin: 14px 0;
+  }
+  .my-family-stats div {
+    padding: 11px 8px;
+  }
+  .my-menu-card button {
+    min-height: 58px;
+    padding: 8px 14px;
+  }
+  .my-menu-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
+  .my-menu-card small {
+    margin-top: 2px;
+    font-size: 10px;
+  }
+  .my-logout-button {
+    min-height: 42px;
+    margin-top: 10px;
+  }
+  .my-page-footnote {
+    margin-top: 16px;
+  }
 }

@@ -1,9 +1,13 @@
-import React, { useState } from 'react';
-import { Card, Form, Input, Button, message, Typography, Divider } from 'antd';
-import { ArrowLeftOutlined, LockOutlined, MailOutlined } from '@ant-design/icons';
-import { useLocation, useNavigate } from 'react-router-dom';
-import AuthService from '../../services/authService.js';
-import BRAND from '../../constants/brand.js';
+import React, { useState } from "react";
+import { Card, Form, Input, Button, message, Typography, Divider } from "antd";
+import {
+  ArrowLeftOutlined,
+  LockOutlined,
+  MailOutlined,
+} from "@ant-design/icons";
+import { useLocation, useNavigate } from "react-router-dom";
+import AuthService from "../../services/authService.js";
+import BRAND from "../../constants/brand.js";
 
 const { Title, Text } = Typography;
 
@@ -20,14 +24,14 @@ const LoginPage = () => {
       const result = await AuthService.login(values.email, values.password);
 
       if (result.success) {
-        message.success('登录成功');
-        navigate(location.state?.returnTo || '/', { replace: true });
+        message.success("登录成功");
+        navigate(location.state?.returnTo || "/", { replace: true });
       } else {
-        message.error(result.error || '登录失败');
+        message.error(result.error || "登录失败");
       }
     } catch (error) {
-      console.error('登录失败:', error);
-      message.error('登录失败，请检查网络连接');
+      console.error("登录失败:", error);
+      message.error("登录失败，请检查网络连接");
     } finally {
       setLoading(false);
     }
@@ -35,16 +39,21 @@ const LoginPage = () => {
 
   // 处理注册跳转
   const handleGoToRegister = () => {
-    navigate('/register', { state: location.state });
+    navigate("/register", { state: location.state });
   };
 
   const handleBack = () => {
-    navigate(location.state?.from || '/');
+    navigate(location.state?.from || "/");
   };
 
   return (
     <div className="auth-page">
-      <button type="button" className="auth-back-button" onClick={handleBack} aria-label="返回家谱">
+      <button
+        type="button"
+        className="auth-back-button"
+        onClick={handleBack}
+        aria-label="返回家谱"
+      >
         <ArrowLeftOutlined />
         <span>返回家谱</span>
       </button>
@@ -66,19 +75,19 @@ const LoginPage = () => {
             <Form.Item
               name="email"
               rules={[
-                { 
-                  required: true, 
-                  message: '请输入您的邮箱!' 
+                {
+                  required: true,
+                  message: "请输入您的邮箱!",
                 },
-                { 
-                  type: 'email', 
-                  message: '请输入有效的邮箱地址!' 
-                }
+                {
+                  type: "email",
+                  message: "请输入有效的邮箱地址!",
+                },
               ]}
             >
-              <Input 
-                prefix={<MailOutlined />} 
-                placeholder="邮箱地址" 
+              <Input
+                prefix={<MailOutlined />}
+                placeholder="邮箱地址"
                 size="large"
               />
             </Form.Item>
@@ -86,34 +95,39 @@ const LoginPage = () => {
             <Form.Item
               name="password"
               rules={[
-                { 
-                  required: true, 
-                  message: '请输入您的密码!' 
+                {
+                  required: true,
+                  message: "请输入您的密码!",
                 },
-                { 
-                  min: 6, 
-                  message: '密码至少需要6个字符!' 
-                }
+                {
+                  min: 6,
+                  message: "密码至少需要6个字符!",
+                },
               ]}
             >
-              <Input.Password 
-                prefix={<LockOutlined />} 
-                placeholder="密码" 
+              <Input.Password
+                prefix={<LockOutlined />}
+                placeholder="密码"
                 size="large"
               />
             </Form.Item>
 
             <Form.Item>
-              <Button type="link" onClick={() => navigate('/reset-password', { state: location.state })}>
+              <Button
+                type="link"
+                onClick={() =>
+                  navigate("/reset-password", { state: location.state })
+                }
+              >
                 忘记密码？
               </Button>
             </Form.Item>
 
             <Form.Item>
-              <Button 
-                type="primary" 
-                htmlType="submit" 
-                size="large" 
+              <Button
+                type="primary"
+                htmlType="submit"
+                size="large"
                 loading={loading}
                 block
               >
@@ -124,7 +138,7 @@ const LoginPage = () => {
 
           <Divider>或者</Divider>
 
-          <div style={{ textAlign: 'center' }}>
+          <div style={{ textAlign: "center" }}>
             <Text>没有账号？</Text>
             <Button type="link" onClick={handleGoToRegister}>
               立即注册

@@ -1,12 +1,12 @@
-import React from 'react';
+import React from "react";
 import {
   CaretRightOutlined,
   CloseOutlined,
   FastForwardOutlined,
   PauseOutlined,
   RedoOutlined,
-} from '@ant-design/icons';
-import './FamilyJourneyPlayer.css';
+} from "@ant-design/icons";
+import "./FamilyJourneyPlayer.css";
 
 const FamilyJourneyPlayer = ({
   familyName,
@@ -24,7 +24,7 @@ const FamilyJourneyPlayer = ({
 }) => {
   if (!steps.length) return null;
 
-  if (status === 'idle') {
+  if (status === "idle") {
     return (
       <button type="button" className="journey-launcher" onClick={onStart}>
         <span className="journey-launcher-mark" aria-hidden="true">
@@ -43,19 +43,22 @@ const FamilyJourneyPlayer = ({
     0,
     steps.findIndex((step) => step.generation === currentStep.generation),
   );
-  const complete = status === 'complete';
-  const eraKey = complete ? 'complete' : currentStep.era.key;
+  const complete = status === "complete";
+  const eraKey = complete ? "complete" : currentStep.era.key;
 
   return (
     <section
       className={`family-journey-player era-${eraKey}`}
-      data-era={complete ? '世系全景' : currentStep.era.label}
+      data-era={complete ? "世系全景" : currentStep.era.label}
       aria-live="polite"
     >
       <div className="journey-player-topline">
-        <span key={`topline-${complete ? 'complete' : currentStep.generation}`} className="journey-copy-transition">
+        <span
+          key={`topline-${complete ? "complete" : currentStep.generation}`}
+          className="journey-copy-transition"
+        >
           {complete
-            ? '世系全景'
+            ? "世系全景"
             : `${currentStep.era.label} · 约 ${currentStep.estimatedYear} 年`}
         </span>
         <button type="button" onClick={onClose} aria-label="关闭家族发展动画">
@@ -63,12 +66,15 @@ const FamilyJourneyPlayer = ({
         </button>
       </div>
 
-      <div key={`copy-${complete ? 'complete' : currentStep.generation}`} className="journey-player-copy journey-copy-transition">
+      <div
+        key={`copy-${complete ? "complete" : currentStep.generation}`}
+        className="journey-player-copy journey-copy-transition"
+      >
         <div
           className={`journey-era-orb ${currentStep.era.key}`}
           aria-hidden="true"
         >
-          {complete ? '今' : currentStep.generation}
+          {complete ? "今" : currentStep.generation}
         </div>
         <div>
           <h2>
@@ -92,7 +98,7 @@ const FamilyJourneyPlayer = ({
           value={activeIndex}
           onChange={(event) => onSeek(Number(event.target.value))}
           aria-label="选择家谱发展世代"
-          style={{ '--journey-progress': `${currentStep.progress}%` }}
+          style={{ "--journey-progress": `${currentStep.progress}%` }}
         />
         <div className="journey-timeline-labels" aria-hidden="true">
           <span>明</span>
@@ -111,7 +117,7 @@ const FamilyJourneyPlayer = ({
           >
             <RedoOutlined /> 再看一次
           </button>
-        ) : status === 'playing' ? (
+        ) : status === "playing" ? (
           <button
             type="button"
             className="journey-primary-action"

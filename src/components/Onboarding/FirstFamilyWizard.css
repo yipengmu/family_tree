@@ -185,20 +185,21 @@
     min-height: calc(100dvh - 56px - env(safe-area-inset-top));
     display: flex;
     flex-direction: column;
-    padding: 30px 0 calc(22px + env(safe-area-inset-bottom));
+    padding: 22px 0 calc(18px + env(safe-area-inset-bottom));
   }
 
   .first-family-heading h1 {
-    font-size: 28px;
+    margin-top: 7px;
+    font-size: 26px;
   }
 
   .first-family-heading .ant-progress {
-    margin-bottom: 26px;
+    margin-bottom: 20px;
   }
 
   .first-family-form {
     flex: 1;
-    min-height: 420px;
+    min-height: 390px;
   }
 
   .first-family-grid {
