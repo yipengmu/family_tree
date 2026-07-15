@@ -141,3 +141,13 @@
     overflow: hidden;
   }
 }
+
+@media (max-width: 360px) {
+  .mobile-header-identity {
+    gap: 0;
+  }
+
+  .mobile-header-identity b {
+    display: none;
+  }
+}

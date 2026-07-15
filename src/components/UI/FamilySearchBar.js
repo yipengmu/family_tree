@@ -161,7 +161,7 @@ const FamilySearchBar = ({
             className="count-info"
             aria-label={`当前已显示 ${visibleMemberCount} 位，共 ${totalMemberCount} 位族人`}
           >
-            <Text type="secondary" className="count-copy">
+            <Text type="secondary" className="count-copy" aria-hidden="true">
               <span className="count-prefix">已显示</span>
               <strong>{visibleMemberCount}</strong>
               <span aria-hidden="true">/</span>

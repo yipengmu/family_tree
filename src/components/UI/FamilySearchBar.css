@@ -14,6 +14,10 @@
   align-items: center;
 }
 
+.search-section .ant-select {
+  height: 34px;
+}
+
 .family-search-input {
   height: 34px;
   display: inline-flex;
@@ -124,6 +128,10 @@
     width: 100% !important;
   }
 
+  .search-section .ant-select {
+    height: 36px;
+  }
+
   .family-search-input {
     height: 36px;
   }
@@ -146,9 +154,17 @@
 }
 
 @media (max-width: 360px) {
-  .count-prefix,
   .count-suffix {
     display: none;
+  }
+
+  .count-prefix {
+    font-size: 0;
+  }
+
+  .count-prefix::after {
+    content: "显示";
+    font-size: 10px;
   }
 
   .count-info {
