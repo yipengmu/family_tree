@@ -228,6 +228,44 @@ class AuthService {
     }
   }
 
+  // 使用邮箱验证码重置密码
+  static async resetPassword(email, code, newPassword) {
+    try {
+      const baseUrl = process.env.REACT_APP_API_BASE_URL || (process.env.NODE_ENV === 'development' ? 'http://localhost:3003' : '');
+      const response = await fetch(`${baseUrl}/api/auth/reset-password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'omit',
+        cache: 'no-store',
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          code,
+          newPassword,
+        }),
+      });
+
+      let data = null;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        return { success: false, error: `服务器错误: ${response.status}` };
+      }
+
+      if (!response.ok) {
+        return { success: false, error: data.error || `HTTP ${response.status}` };
+      }
+
+      return data.success
+        ? { success: true, message: data.message }
+        : { success: false, error: data.error || '密码重置失败' };
+    } catch (error) {
+      console.error('密码重置失败:', error);
+      return { success: false, error: '密码重置失败，请检查网络连接' };
+    }
+  }
+
   // 获取当前用户信息
   static async getCurrentUser() {
     const token = localStorage.getItem('token');

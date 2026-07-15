@@ -406,6 +406,31 @@
   box-sizing: border-box;
 }
 
+/* 演示全景使用紧凑卡片，避免 624 人在深代被固定卡片宽度撑成一条横带。
+   点击节点仍可打开完整详情，浏览模式不受影响。 */
+.journey-flow-container .family-member-node {
+  min-width: 120px;
+  max-width: 120px;
+  font-size: 11px;
+}
+.journey-flow-container .member-card .ant-card-body {
+  padding: 7px 9px !important;
+}
+.journey-flow-container .member-header {
+  margin-bottom: 4px;
+}
+.journey-flow-container .member-position,
+.journey-flow-container .member-meta {
+  margin-top: 4px;
+  padding-top: 4px;
+}
+.journey-flow-container .name-text {
+  font-size: 12px;
+}
+.journey-flow-container .position-text {
+  font-size: 10px;
+}
+
 .family-tree-loading {
   display: flex;
   flex-direction: column;
@@ -590,6 +615,11 @@
 }
 
 @media (max-width: 768px) {
+  .journey-flow-container .family-member-node {
+    min-width: 100px;
+    max-width: 100px;
+  }
+
   .family-tree-container {
     height: 100vh;
     width: 100%; /* 确保占满宽度 */

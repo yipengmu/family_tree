@@ -19,6 +19,7 @@ import FamilyMemberNode from './FamilyMemberNode.js';
 import {
   convertToReactFlowData,
   getLayoutedElements,
+  getJourneyLayoutedNodes,
   filterByRank,
   getFamilyStatistics,
   searchWithPathTree
@@ -39,45 +40,6 @@ const { Text } = Typography;
 // 定义节点类型
 const nodeTypes = {
   familyMember: FamilyMemberNode,
-};
-
-const getJourneyLayoutedNodes = (nodes, pathIds) => {
-  const pathIdSet = new Set(pathIds.map(String));
-  const nodesByGeneration = new Map();
-
-  nodes.forEach((node) => {
-    const generation = Number(node.data.rank);
-    if (!nodesByGeneration.has(generation)) nodesByGeneration.set(generation, []);
-    nodesByGeneration.get(generation).push(node);
-  });
-
-  return [...nodesByGeneration.entries()].flatMap(([generation, generationNodes]) => {
-    const sortedNodes = [...generationNodes].sort(
-      (a, b) => Number(a.data.rankIndex || a.data.id) - Number(b.data.rankIndex || b.data.id),
-    );
-    const focusNode = sortedNodes.find((node) => pathIdSet.has(node.id));
-    const branchNodes = sortedNodes.filter((node) => node !== focusNode);
-
-    const positionedBranches = branchNodes.map((node, index) => {
-      const distance = Math.floor(index / 2) + 1;
-      const direction = index % 2 === 0 ? -1 : 1;
-      return {
-        ...node,
-        targetPosition: 'top',
-        sourcePosition: 'bottom',
-        position: { x: direction * distance * 280, y: (generation - 1) * 200 },
-      };
-    });
-
-    return focusNode
-      ? [{
-        ...focusNode,
-        targetPosition: 'top',
-        sourcePosition: 'bottom',
-        position: { x: 0, y: (generation - 1) * 200 },
-      }, ...positionedBranches]
-      : positionedBranches;
-  });
 };
 
 const FamilyTreeFlow = forwardRef(({
@@ -251,10 +213,13 @@ const FamilyTreeFlow = forwardRef(({
       { isNameProtectionEnabled },
     );
     return {
-      nodes: getJourneyLayoutedNodes(allNodes, presentationPathIds),
+      nodes: getJourneyLayoutedNodes(allNodes, presentationPathIds, {
+        nodeWidth: isMobile ? 100 : 120,
+        nodeGap: isMobile ? 8 : 12,
+      }),
       edges: allEdges,
     };
-  }, [familyData, isNameProtectionEnabled, presentationMode, presentationPathIds]);
+  }, [familyData, isMobile, isNameProtectionEnabled, presentationMode, presentationPathIds]);
 
   // 当nodes或statistics变化时，通知父组件
   useEffect(() => {
@@ -603,12 +568,15 @@ const FamilyTreeFlow = forwardRef(({
     processData();
   }, [processData]);
 
-  // 演示模式下沿穆茂到穆宁的主线逐代移动镜头，完成后再回到全景。
+  // 演示模式下沿穆茂到穆宁的主线逐代移动镜头，完成后仍以主线作为首屏取景基准。
   useEffect(() => {
     if (!presentationMode || !nodes.length) return undefined;
     const timer = setTimeout(() => {
       if (presentationComplete) {
+        const pathIdSet = new Set(presentationPathIds.map(String));
+        const mainlineNodes = nodes.filter(node => pathIdSet.has(String(node.id)));
         fitView({
+          nodes: mainlineNodes.length ? mainlineNodes : undefined,
           padding: isMobile ? 0.06 : 0.12,
           duration: 1100,
           minZoom: 0.02,
@@ -632,7 +600,7 @@ const FamilyTreeFlow = forwardRef(({
       );
     }, 80);
     return () => clearTimeout(timer);
-  }, [fitView, isMobile, nodes, presentationComplete, presentationFocusId, presentationMode, presentationStep, setCenter]);
+  }, [fitView, isMobile, nodes, presentationComplete, presentationFocusId, presentationMode, presentationPathIds, presentationStep, setCenter]);
 
   // 添加一个状态来跟踪是否已经执行过初始居中
   const [hasInitialCentered, setHasInitialCentered] = useState(false);
@@ -1134,7 +1102,7 @@ const FamilyTreeFlow = forwardRef(({
       </Drawer>
 
       {/* React Flow 图表 */}
-      <div className="flow-container">
+      <div className={`flow-container ${presentationMode ? 'journey-flow-container' : ''}`}>
         <ReactFlow
           nodes={nodes}
           edges={edges}

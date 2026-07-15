@@ -58,58 +58,137 @@ export const convertToReactFlowData = (familyData, fullFamilyData = null, isColl
     };
 
     nodes.push(node);
-    nodeMap.set(person.id, node);
+    nodeMap.set(String(person.id), node);
   });
   
-  // 创建边（父母与子女关系）
+  // 创建边（父母与子女关系）。过滤掉当前视图中不存在的父节点，
+  // 并按 source-target 去重，避免折叠/脏数据造成“幽灵线”或重复线。
+  const edgeKeys = new Set();
+  const addRelationshipEdge = (source, target, style) => {
+    const sourceId = String(source);
+    const targetId = String(target);
+    const edgeKey = `${sourceId}-${targetId}`;
+    if (!nodeMap.has(sourceId) || edgeKeys.has(edgeKey)) return;
+
+    edgeKeys.add(edgeKey);
+    edges.push({
+      id: `edge-${edgeKey}`,
+      source: sourceId,
+      target: targetId,
+      type: 'straight', // 使用直线连接，避免交错
+      animated: false,
+      style: {
+        ...style,
+        strokeWidth: 2,
+        strokeLinecap: 'round',
+        strokeLinejoin: 'round',
+      },
+      markerEnd: {
+        type: 'arrowclosed',
+        color: style.stroke,
+        width: 12,
+        height: 12,
+      }
+    });
+  };
+
   familyData.forEach(person => {
     if (person.g_father_id && person.g_father_id !== 0) {
-      const edge = {
-        id: `edge-${person.g_father_id}-${person.id}`,
-        source: person.g_father_id.toString(),
-        target: person.id.toString(),
-        type: 'straight',  // 使用直线连接，避免交错
-        animated: false,
-        style: {
-          stroke: 'hsl(215.4 16.3% 46.9%)',  // 使用统一的颜色
-          strokeWidth: 2,
-          strokeLinecap: 'round',
-          strokeLinejoin: 'round',
-        },
-        markerEnd: {
-          type: 'arrowclosed',
-          color: 'hsl(215.4 16.3% 46.9%)',
-          width: 12,
-          height: 12,
-        }
-      };
-      edges.push(edge);
+      addRelationshipEdge(person.g_father_id, person.id, {
+        stroke: 'hsl(215.4 16.3% 46.9%)',
+      });
     }
 
     if (person.g_mother_id && person.g_mother_id !== 0) {
-      edges.push({
-        id: `edge-mother-${person.g_mother_id}-${person.id}`,
-        source: person.g_mother_id.toString(),
-        target: person.id.toString(),
-        type: 'straight',
-        animated: false,
-        style: {
-          stroke: 'hsl(8 40% 52%)',
-          strokeWidth: 2,
-          strokeLinecap: 'round',
-          strokeLinejoin: 'round',
-        },
-        markerEnd: {
-          type: 'arrowclosed',
-          color: 'hsl(8 40% 52%)',
-          width: 12,
-          height: 12,
-        }
+      addRelationshipEdge(person.g_mother_id, person.id, {
+        stroke: 'hsl(8 40% 52%)',
       });
     }
   });
   
   return { nodes, edges };
+};
+
+/**
+ * 为家谱演示生成稳定的紧凑布局。
+ *
+ * 旧实现只按每代的数组下标左右交替摆放节点，导致不同父系支路互相穿插，
+ * 深代时会出现大量横跨画布的连线。这里按“从根到当前节点”的真实父系路径
+ * 排序，同一父系的后代始终保持相邻，同时让演示主线在每一代保持 x=0。
+ */
+export const getJourneyLayoutedNodes = (nodes, pathIds = [], options = {}) => {
+  const nodeWidth = options.nodeWidth || 200;
+  const nodeGap = options.nodeGap || 24;
+  const generationHeight = options.generationHeight || 200;
+  const pathIdSet = new Set(pathIds.map(String));
+  const nodeMap = new Map(nodes.map(node => [String(node.id), node]));
+  const nodesByGeneration = new Map();
+
+  nodes.forEach(node => {
+    const generation = Number(node.data.rank);
+    if (!Number.isFinite(generation)) return;
+    if (!nodesByGeneration.has(generation)) nodesByGeneration.set(generation, []);
+    nodesByGeneration.get(generation).push(node);
+  });
+
+  const getRoute = (node) => {
+    const route = [];
+    const visited = new Set();
+    let current = node;
+
+    while (current && !visited.has(current.id)) {
+      visited.add(current.id);
+      route.unshift([
+        Number(current.data.rankIndex) || Number.MAX_SAFE_INTEGER,
+        String(current.id),
+      ]);
+      const fatherId = current.data.fatherId;
+      current = fatherId ? nodeMap.get(String(fatherId)) : null;
+    }
+
+    return route;
+  };
+
+  const compareRoutes = (left, right) => {
+    const length = Math.max(left.length, right.length);
+    for (let index = 0; index < length; index += 1) {
+      const leftSegment = left[index];
+      const rightSegment = right[index];
+      if (!leftSegment) return -1;
+      if (!rightSegment) return 1;
+      if (leftSegment[0] !== rightSegment[0]) {
+        return leftSegment[0] - rightSegment[0];
+      }
+      if (leftSegment[1] !== rightSegment[1]) {
+        return leftSegment[1].localeCompare(rightSegment[1]);
+      }
+    }
+    return 0;
+  };
+
+  const generations = [...nodesByGeneration.keys()].sort((a, b) => a - b);
+  const minGeneration = generations[0] || 1;
+  const slotWidth = nodeWidth + nodeGap;
+
+  return generations.flatMap(generation => {
+    const generationNodes = [...nodesByGeneration.get(generation)].sort(
+      (left, right) => compareRoutes(getRoute(left), getRoute(right)),
+    );
+    const focusIndex = Math.max(
+      0,
+      generationNodes.findIndex(node => pathIdSet.has(String(node.id))),
+    );
+
+    return generationNodes.map((node, index) => ({
+      ...node,
+      targetPosition: 'top',
+      sourcePosition: 'bottom',
+      position: {
+        x: (index - focusIndex) * slotWidth,
+        y: (generation - minGeneration) * generationHeight,
+      },
+    }));
+  });
 };
 
 /**

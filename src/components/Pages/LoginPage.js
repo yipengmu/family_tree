@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, Form, Input, Button, message, Row, Typography, Divider } from 'antd';
+import { Card, Form, Input, Button, message, Typography, Divider } from 'antd';
 import { ArrowLeftOutlined, LockOutlined, MailOutlined } from '@ant-design/icons';
 import { useLocation, useNavigate } from 'react-router-dom';
 import AuthService from '../../services/authService.js';
@@ -10,53 +10,8 @@ const { Title, Text } = Typography;
 const LoginPage = () => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const [codeLoading, setCodeLoading] = useState(false);
-  const [countdown, setCountdown] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
-
-  // 发送验证码
-  const sendVerificationCode = async (purpose = 'login') => {
-    try {
-      const email = form.getFieldValue('email');
-      if (!email) {
-        message.error('请先输入邮箱地址');
-        return;
-      }
-
-      // 验证邮箱格式
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        message.error('请输入有效的邮箱地址');
-        return;
-      }
-
-      setCodeLoading(true);
-
-      const result = await AuthService.sendVerificationCode(email, purpose);
-
-      if (result.success) {
-        message.success(result.message);
-        setCountdown(60); // 开始60秒倒计时
-        const timer = setInterval(() => {
-          setCountdown((prev) => {
-            if (prev <= 1) {
-              clearInterval(timer);
-              return 0;
-            }
-            return prev - 1;
-          });
-        }, 1000);
-      } else {
-        message.error(result.error || '发送验证码失败');
-      }
-    } catch (error) {
-      console.error('发送验证码失败:', error);
-      message.error('发送验证码失败，请检查网络连接');
-    } finally {
-      setCodeLoading(false);
-    }
-  };
 
   // 处理登录
   const handleLogin = async (values) => {
@@ -155,19 +110,9 @@ const LoginPage = () => {
             </Form.Item>
 
             <Form.Item>
-              <Row justify="space-between" align="middle">
-                <Button 
-                  type="link" 
-                  onClick={() => sendVerificationCode('login')}
-                  loading={codeLoading}
-                  disabled={countdown > 0}
-                >
-                  {countdown > 0 ? `${countdown}秒后重发` : '点击开始验证'}
-                </Button>
-                <Button type="link" onClick={() => message.info('暂未实现密码重置功能')}>
-                  忘记密码？
-                </Button>
-              </Row>
+              <Button type="link" onClick={() => navigate('/reset-password', { state: location.state })}>
+                忘记密码？
+              </Button>
             </Form.Item>
 
             <Form.Item>

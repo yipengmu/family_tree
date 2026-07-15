@@ -10,6 +10,7 @@ import tenantService from './services/tenantService.js';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import LoginPage from './components/Pages/LoginPage.js';
 import RegisterPage from './components/Pages/RegisterPage.js';
+import ResetPasswordPage from './components/Pages/ResetPasswordPage.js';
 import MyPage from './components/Pages/MyPage.js';
 import BRAND from './constants/brand.js';
 // 导入测试工具（开发环境自动运行）
@@ -447,6 +448,7 @@ function App() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/*" element={
           <ProtectedRoute requireAuth={false}>
             <MainApp />
