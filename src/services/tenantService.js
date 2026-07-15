@@ -318,6 +318,28 @@ class TenantService {
     }
   }
 
+  async updatePrivacySettings(privacy, tenantId = null) {
+    const currentTenant = this.getCurrentTenant();
+    const currentTenantId = tenantId || currentTenant.id;
+    const token = localStorage.getItem('token');
+    if (!token || currentTenantId === this.defaultTenantId) {
+      throw new Error('示范家谱或未登录状态不能修改隐私设置');
+    }
+
+    const response = await fetch(`${this.baseURL}/api/tenants/${encodeURIComponent(currentTenantId)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ privacy }),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.error || `隐私设置保存失败: ${response.status}`);
+
+    const updated = result.tenant || { ...currentTenant, privacy };
+    this.setCurrentTenant(updated);
+    this.invalidateTenantListCache();
+    return updated;
+  }
+
   /**
    * 生成租户ID
    * @returns {string} - 租户ID

@@ -9,6 +9,7 @@ const AntdFamilyTable = ({
   data = [], 
   onDataChange, 
   onSave, 
+  onPersonUpdate,
   loading = false,
   selectedRowKeys: externalSelectedRowKeys,
   onSelectedRowKeysChange,
@@ -703,6 +704,11 @@ const AntdFamilyTable = ({
     
     if (onDataChange) {
       onDataChange(newData);
+    }
+
+    const original = tableData.find((item) => item.key === key);
+    if (original?.person_id && original[field] !== normalizedValue && onPersonUpdate) {
+      onPersonUpdate(original, field === 'alive' ? { alive: normalizedValue } : { [field]: normalizedValue });
     }
   };
 

@@ -798,26 +798,29 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
   };
 
   const addMobilePerson = async (values) => {
-    const newId = rows.length > 0 ? Math.max(...rows.map((row) => parseInt(row.id) || 0)) + 1 : 1;
     const father = rows.find((row) => String(row.id) === String(values.g_father_id));
     const generation = father ? Number(father.g_rank || 0) + 1 : (Number(values.g_rank) || 1);
     const newPerson = normalizePersonLifeStatus({
       ...emptyRow(),
       ...values,
-      id: newId,
       g_rank: generation,
       rank_index: rows.filter((row) => Number(row.g_rank) === generation).length + 1,
       g_father_id: values.g_father_id ? Number(values.g_father_id) || values.g_father_id : 0,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     }, true);
-    const nextRows = [...rows, newPerson];
-    const saved = await saveToCurrentTenant(nextRows, `${values.name} 已加入家谱`);
-    if (!saved) return;
-
-    setRows(nextRows);
-    setMobilePersonModalVisible(false);
-    mobilePersonForm.resetFields();
+    try {
+      setBusy(true);
+      const savedPerson = await familyDataService.createPerson(newPerson, currentTenant.id);
+      setRows((current) => [...current, savedPerson]);
+      setMobilePersonModalVisible(false);
+      mobilePersonForm.resetFields();
+      message.success(`${values.name} 已加入家谱，之后可以继续补充资料`);
+    } catch (error) {
+      message.error(`添加失败：${error.message}`);
+    } finally {
+      setBusy(false);
+    }
   };
 
 
@@ -1012,6 +1015,21 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
       return false;
     } finally {
       setBusy(false);
+    }
+  };
+
+  const updatePersonIncrementally = async (record, patch) => {
+    if (!currentTenant?.id || currentTenant.id === 'default' || !record?.person_id) return;
+    try {
+      const savedPerson = await familyDataService.updatePerson(record.person_id, patch, currentTenant.id);
+      setRows((current) => current.map((row) => row.person_id === savedPerson.person_id ? { ...row, ...savedPerson } : row));
+      message.success('这项资料已保存');
+    } catch (error) {
+      message.error(`保存失败：${error.message}`);
+      if (error.message.includes('更新')) {
+        const latest = await familyDataService.getFamilyData(true, currentTenant.id).catch(() => null);
+        if (Array.isArray(latest)) setRows(latest);
+      }
     }
   };
 
@@ -1217,6 +1235,7 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
             data={getCurrentDisplayData()}
             onDataChange={handleDataChange}
             onSave={saveToCurrentTenant}
+            onPersonUpdate={updatePersonIncrementally}
             loading={busy}
             selectedRowKeys={selectedRowKeys}
             onSelectedRowKeysChange={setSelectedRowKeys}

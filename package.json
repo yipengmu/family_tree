@@ -35,7 +35,7 @@
     "start": "react-scripts start",
     "server": "node server/app.js",
     "deploy-check": "node scripts/deploy-check.js",
-    "dev": "concurrently \"npm run server\" \"npm start\"",
+    "dev": "concurrently \"SERVER_PORT=3003 npm run server\" \"PORT=3000 npm start\"",
     "start:proxy": "node start-with-proxy.js",
     "cors-proxy": "node cors-proxy-server.js",
     "build": "react-scripts build",

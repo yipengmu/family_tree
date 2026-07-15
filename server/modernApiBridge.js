@@ -21,6 +21,7 @@ function resolveModernRoute(requestPath) {
   if (segments[0] !== "api") return null;
 
   const [, resource, id, action] = segments;
+  if (resource === "health" && !id) return route("api/health.js");
   if (resource === "auth" && id) return route("api/auth.js", { type: id });
   if (resource === "user" && id === "profile")
     return route("api/user.js", { type: "profile" });
@@ -58,11 +59,15 @@ function resolveModernRoute(requestPath) {
       );
     return route("api/story.js", { type: "memory" }, { memoryId: id });
   }
-  if (resource === "people" && id && action === "events") {
-    return route("api/story.js", { type: "person-events" }, { personId: id });
-  }
-  if (resource === "people" && id && action === "memories") {
-    return route("api/story.js", { type: "person-memories" }, { personId: id });
+  if (resource === "people") {
+    if (id && action === "events") {
+      return route("api/story.js", { type: "person-events" }, { personId: id });
+    }
+    if (id && action === "memories") {
+      return route("api/story.js", { type: "person-memories" }, { personId: id });
+    }
+    if (id) return route("api/people.js", { type: "item" }, { personId: id });
+    return route("api/people.js", { type: "collection" });
   }
   if (resource === "media") {
     if (id === "sign-upload")

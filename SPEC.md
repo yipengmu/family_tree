@@ -2,7 +2,7 @@
 
 版本：v1.0
 状态：MVP 后的公益多账户共创基线
-更新时间：2026-07-14
+更新时间：2026-07-15
 
 ## 1. 当前产品定义
 
@@ -35,7 +35,7 @@
 - 家谱保存使用事务、版本快照和乐观冲突检查。
 - COS 上传使用服务端限时签名，浏览器不持有长期密钥。
 - Prisma + PostgreSQL 数据持久化；Vercel Serverless API。
-- 本地 Express 服务，承载本地开发 API、OCR 代理和兼容逻辑。
+- 本地 Express 传输壳，只负责本地开发的 CORS、请求体解析和 `/api/*` 路由适配；业务逻辑与 Vercel 共用 `api/*.js` handler，不再维护 Express 认证、家谱或 OCR 副本。
 - 腾讯云 COS 媒体存储；腾讯 OCR 保存原始文字；TokenHub 视觉模型生成结构化候选；腾讯 ASR 处理录音。
 - 浏览器缓存、LocalStorage 和 IndexedDB 搜索历史。
 
@@ -125,7 +125,7 @@
 flowchart LR
   U[浏览器 React SPA] --> V[静态资源 / Vercel]
   U --> A[Vercel Serverless API]
-  U -.本地开发.-> E[Express :3003]
+  U -.本地开发.-> E[Express :3003 transport shell]
   A --> P[Prisma Client]
   P --> D[(PostgreSQL / Neon)]
   E --> P
@@ -138,10 +138,10 @@ flowchart LR
 ### 运行时说明
 
 - 生产路径：React 构建产物由 Vercel 提供，`api/**/*.js` 作为 Serverless Functions，Prisma 访问 Neon PostgreSQL。
-- 本地路径：`npm run dev` 同时启动 Create React App 和 Express；前端通过 proxy 访问 `localhost:3003`。
+- 本地路径：`npm run dev` 同时启动 Create React App 和 Express；Express 只把 `/api/*` 适配到与 Vercel 相同的 `api/*.js` handler，前端通过 proxy 访问 `localhost:3003`。
 - 数据流：前端先读取默认数据或缓存，再异步请求租户数据；保存时向 API 提交租户下的整批数组。
 - 媒体流：前端向服务端申请五分钟有效的 PUT URL 后直传 COS；读取时再次鉴权并生成短时 GET URL，长期密钥只在服务端。
-- OCR 流：图片上传后由本地 Express 代理调用通义千问，再返回结构化候选数据。
+- OCR 流：图片上传后由共享 OCR handler 调用云端 OCR/视觉服务，再返回结构化候选数据；本地 Express 不再单独实现 OCR。
 
 ## 7. 安全、隐私与可靠性要求
 
@@ -157,7 +157,7 @@ flowchart LR
 
 ### P0：收敛现有系统（本轮已完成主体）
 
-已完成：通用品牌与主框架、租户归属校验、生产 JWT 强制配置、服务端 COS 签名、整谱事务与版本冲突保护、本地 Express 与 Vercel API handler 统一入口、基础云服务用量记录。待完成：字段级隐私输出和接口回归测试。
+已完成：通用品牌与主框架、租户归属校验、生产 JWT 强制配置、服务端 COS 签名、整谱事务与版本冲突保护、membership 存量账号归属迁移、本地 Express 与 Vercel API handler 统一入口、基础云服务用量记录。待完成：字段级隐私输出和接口回归测试。
 
 ### P1：可用的个人家谱
 

@@ -74,6 +74,14 @@
       "destination": "/api/story?type=person-memories&personId=:personId"
     },
     {
+      "source": "/api/people/:personId",
+      "destination": "/api/people?type=item&personId=:personId"
+    },
+    {
+      "source": "/api/people",
+      "destination": "/api/people?type=collection"
+    },
+    {
       "source": "/api/media/:assetId/complete",
       "destination": "/api/media?type=complete&assetId=:assetId"
     },

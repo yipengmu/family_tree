@@ -648,6 +648,64 @@ class FamilyDataService {
     }
   }
 
+  async createPerson(person, tenantId = null) {
+    const currentTenantId = tenantId || tenantService.getCurrentTenant().id;
+    const token = localStorage.getItem('token');
+    if (!token) throw new Error('需要登录才能添加家谱人物');
+
+    const response = await fetch('/api/people', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+        'X-Tenant-ID': currentTenantId,
+      },
+      body: JSON.stringify({
+        tenantId: currentTenantId,
+        person,
+        expectedVersion: this.versions.get(currentTenantId) ?? 0,
+      }),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.error || `新增人物失败: ${response.status}`);
+
+    if (typeof result.version === 'number') this.versions.set(currentTenantId, result.version);
+    this.clearAllCache();
+    window.dispatchEvent(new CustomEvent('familyDataUpdated', {
+      detail: { tenantId: currentTenantId, dataCount: 1, timestamp: new Date().toISOString() },
+    }));
+    return result.person;
+  }
+
+  async updatePerson(personId, patch, tenantId = null) {
+    const currentTenantId = tenantId || tenantService.getCurrentTenant().id;
+    const token = localStorage.getItem('token');
+    if (!token) throw new Error('需要登录才能修改家谱人物');
+
+    const response = await fetch(`/api/people/${encodeURIComponent(personId)}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+        'X-Tenant-ID': currentTenantId,
+      },
+      body: JSON.stringify({
+        tenantId: currentTenantId,
+        ...patch,
+        expectedVersion: patch.expectedVersion ?? this.versions.get(currentTenantId) ?? 0,
+      }),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.error || `更新人物失败: ${response.status}`);
+
+    if (typeof result.version === 'number') this.versions.set(currentTenantId, result.version);
+    this.clearAllCache();
+    window.dispatchEvent(new CustomEvent('familyDataUpdated', {
+      detail: { tenantId: currentTenantId, personId: String(personId), timestamp: new Date().toISOString() },
+    }));
+    return result.person;
+  }
+
   /**
    * 强制刷新所有数据
    */

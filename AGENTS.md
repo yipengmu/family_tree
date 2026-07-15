@@ -26,7 +26,7 @@
 
 - `src/`：React 单页应用；页面和组件在 `src/components/`，API 客户端在 `src/services/`，通用逻辑在 `src/utils/`。
 - `api/`：生产环境的 Vercel Serverless Functions。
-- `server/`：本地 Express 运行时、OCR 代理和兼容处理器；必须与 `api/` 保持 API 契约一致。
+- `server/`：本地 Express 传输壳和 Vercel API 入口适配器；业务处理统一复用 `api/` 与 `lib/api-handlers/`。
 - `prisma/`：PostgreSQL schema 和数据库迁移。
 - `lib/`：共享运行时代码，例如 Prisma、认证和家谱数据处理。
 - `public/`：静态资源。

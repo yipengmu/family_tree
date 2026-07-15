@@ -87,6 +87,17 @@ test("maps Vercel-style media paths to the shared media handler", () => {
   );
 });
 
+test("maps the API health path to the shared health handler", () => {
+  assert.deepEqual(
+    createModernApiBridge.resolveModernRoute("/api/health"),
+    {
+      modulePath: "api/health.js",
+      query: {},
+      params: {},
+    },
+  );
+});
+
 test("maps story routes and preserves route parameters", () => {
   assert.deepEqual(
     createModernApiBridge.resolveModernRoute(

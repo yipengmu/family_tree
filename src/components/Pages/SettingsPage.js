@@ -7,7 +7,8 @@ import {
   SearchOutlined, 
   EyeOutlined, 
   MobileOutlined,
-  ReloadOutlined
+  ReloadOutlined,
+  SafetyCertificateOutlined,
 } from '@ant-design/icons';
 import AppLayout from '../Layout/AppLayout.js';
 import tenantService from '../../services/tenantService.js';
@@ -18,6 +19,15 @@ const { Title, Text, Paragraph } = Typography;
 
 const SettingsPage = ({ activeMenuItem = 'settings', onMenuClick, familyData = [] }) => {
   const tenant = tenantService.getCurrentTenant();
+  const canManagePrivacy = tenant?.role === 'OWNER';
+  const [privacy, setPrivacy] = useState(() => ({
+    living: {
+      birthDate: tenant?.privacy?.living?.birthDate || tenant?.settings?.privacy?.living?.birthDate || 'YEAR',
+      location: tenant?.privacy?.living?.location || tenant?.settings?.privacy?.living?.location || 'HIDDEN',
+      sensitiveFields: tenant?.privacy?.living?.sensitiveFields || tenant?.settings?.privacy?.living?.sensitiveFields || 'HIDDEN',
+    },
+  }));
+  const [privacyBusy, setPrivacyBusy] = useState(false);
   const settingsKey = `puli_settings_${tenant?.id || 'default'}`;
   const [settings, setSettings] = useState(() => {
     try {
@@ -43,6 +53,21 @@ const SettingsPage = ({ activeMenuItem = 'settings', onMenuClick, familyData = [
       return next;
     });
     message.success('设置已更新');
+  };
+
+  const updatePrivacy = async (key, value) => {
+    const next = { ...privacy, living: { ...privacy.living, [key]: value } };
+    setPrivacy(next);
+    setPrivacyBusy(true);
+    try {
+      await tenantService.updatePrivacySettings(next);
+      message.success('字段隐私设置已保存');
+    } catch (error) {
+      setPrivacy(privacy);
+      message.error(error.message);
+    } finally {
+      setPrivacyBusy(false);
+    }
   };
 
   const clearLocalCache = async () => {
@@ -159,6 +184,57 @@ const SettingsPage = ({ activeMenuItem = 'settings', onMenuClick, familyData = [
               </div>
               <Text type="secondary">只有受邀成员可以查看和续录</Text>
             </Space>
+          </Card>
+
+          <Card title="字段隐私" className="settings-card" extra={<SafetyCertificateOutlined style={{ color: 'var(--pine)' }} />}>
+            <Paragraph type="secondary" style={{ marginBottom: 8 }}>
+              家谱默认私密。这里控制非 Owner/Editor 看到的人物字段；原始资料仍保存在你的家谱空间。
+            </Paragraph>
+            <List
+              dataSource={[
+                {
+                  key: 'birthDate',
+                  title: '在世人物只显示出生年份',
+                  description: '访客和普通成员不会看到完整出生日期',
+                  checked: privacy.living.birthDate !== 'FULL',
+                  value: privacy.living.birthDate === 'FULL' ? 'FULL' : 'YEAR',
+                },
+                {
+                  key: 'location',
+                  title: '隐藏在世人物居住地',
+                  description: '避免住址和当前生活地点被扩散',
+                  checked: privacy.living.location === 'HIDDEN',
+                  value: privacy.living.location === 'HIDDEN' ? 'HIDDEN' : 'FAMILY',
+                },
+                {
+                  key: 'sensitiveFields',
+                  title: '隐藏证件、住址和照片字段',
+                  description: '仅 Owner/Editor 默认可见，普通成员不返回这些字段',
+                  checked: privacy.living.sensitiveFields !== 'FAMILY',
+                  value: privacy.living.sensitiveFields === 'FAMILY' ? 'FAMILY' : 'HIDDEN',
+                },
+              ]}
+              renderItem={(item) => (
+                <List.Item
+                  actions={[
+                    <Switch
+                      key={item.key}
+                      checked={item.checked}
+                      loading={privacyBusy}
+                      disabled={!canManagePrivacy}
+                      onChange={(checked) => updatePrivacy(item.key, item.key === 'birthDate' ? (checked ? 'YEAR' : 'FULL') : item.key === 'location' ? (checked ? 'HIDDEN' : 'FAMILY') : (checked ? 'HIDDEN' : 'FAMILY'))}
+                    />,
+                  ]}
+                  className="settings-list-item"
+                >
+                  <List.Item.Meta
+                    avatar={<span className="settings-icon"><SafetyCertificateOutlined /></span>}
+                    title={<span className="settings-title">{item.title}</span>}
+                    description={<span className="settings-description">{item.description}{!canManagePrivacy && '（仅 Owner 可修改）'}</span>}
+                  />
+                </List.Item>
+              )}
+            />
           </Card>
 
           {/* 显示设置 */}
