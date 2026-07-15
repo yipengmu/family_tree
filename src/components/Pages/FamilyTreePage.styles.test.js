@@ -37,4 +37,33 @@ describe("family journey animation styles", () => {
       /@keyframes\s+journey-copy-change\s*\{[^}]*transform\s*:/s,
     );
   });
+
+  test("keeps the modern and completed journey cards in the green palette", () => {
+    const modernStyles = journeyPlayerStylesheet.match(
+      /\.family-journey-player\.era-modern\s*\{([\s\S]*?)\n\}/,
+    );
+    const completeStyles = journeyPlayerStylesheet.match(
+      /\.family-journey-player\.era-complete\s*\{([\s\S]*?)\n\}/,
+    );
+
+    expect(modernStyles).not.toBeNull();
+    expect(completeStyles).not.toBeNull();
+    expect(modernStyles[1]).toContain("rgba(17, 82, 66, 0.97)");
+    expect(completeStyles[1]).toContain("rgba(17, 72, 56, 0.96)");
+    expect(modernStyles[1]).not.toContain("rgba(117, 57, 44, 0.97)");
+    expect(completeStyles[1]).not.toContain("rgba(139, 58, 42, 0.96)");
+  });
+
+  test("gives the journey launcher a dedicated circular play affordance", () => {
+    expect(journeyPlayerStylesheet).toContain(".journey-launcher-play {");
+    expect(journeyPlayerStylesheet).toMatch(
+      /\.journey-launcher-play\s*\{[^}]*border-radius:\s*50%/s,
+    );
+  });
+
+  test("keeps the demo creation guide aligned to the tree viewport", () => {
+    expect(stylesheet).toMatch(
+      /\.demo-create-guide\s*\{[^}]*width:\s*100%;[^}]*margin:\s*0 0 12px/s,
+    );
+  });
 });

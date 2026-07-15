@@ -1,25 +1,26 @@
-import React, { useState } from 'react';
-import Sidebar from './Sidebar.js';
-import MainContent from './MainContent.js';
-import MobileBottomNav from './MobileBottomNav.js';
-import './AppLayout.css';
+import React, { useState } from "react";
+import Sidebar from "./Sidebar.js";
+import MainContent from "./MainContent.js";
+import MobileBottomNav from "./MobileBottomNav.js";
+import "./AppLayout.css";
 
 const AppLayout = ({
   children,
-  activeMenuItem = 'tree',
+  activeMenuItem = "tree",
   onMenuClick,
   familyData = [],
   nodes = [],
   statistics = null,
   onSearch,
   onSearchSelect,
-  immersiveMobile = false
+  immersiveMobile = false,
+  demoMode = false,
 }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false); // 移动端侧边栏状态
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false); // 桌面端侧边栏收起状态
 
   const handleMenuClick = (menuKey) => {
-    console.log('Menu clicked:', menuKey);
+    console.log("Menu clicked:", menuKey);
     if (onMenuClick) {
       onMenuClick(menuKey);
     }
@@ -27,7 +28,7 @@ const AppLayout = ({
   };
 
   const toggleSidebar = () => {
-    console.log('📱 移动端菜单切换:', !sidebarOpen);
+    console.log("📱 移动端菜单切换:", !sidebarOpen);
     setSidebarOpen(!sidebarOpen);
   };
 
@@ -37,9 +38,9 @@ const AppLayout = ({
   };
 
   return (
-    <div className={`app-layout ${immersiveMobile ? 'immersive-mobile' : ''}`}>
+    <div className={`app-layout ${immersiveMobile ? "immersive-mobile" : ""}`}>
       {/* 主体布局 */}
-      <div style={{ display: 'flex', flex: 1 }}>
+      <div style={{ display: "flex", flex: 1 }}>
         {/* 移动端遮罩 */}
         {sidebarOpen && (
           <div
@@ -49,13 +50,16 @@ const AppLayout = ({
         )}
 
         {/* 侧边栏 */}
-        <div className={`sidebar-wrapper ${sidebarOpen ? 'open' : ''} ${sidebarCollapsed ? 'collapsed' : ''}`}>
+        <div
+          className={`sidebar-wrapper ${sidebarOpen ? "open" : ""} ${sidebarCollapsed ? "collapsed" : ""}`}
+        >
           <Sidebar
             activeItem={activeMenuItem}
             onMenuClick={handleMenuClick}
             collapsed={sidebarCollapsed}
             onToggleCollapse={toggleSidebarCollapse}
             open={sidebarOpen}
+            demoMode={demoMode}
           />
         </div>
 
@@ -67,7 +71,7 @@ const AppLayout = ({
           onSearch={onSearch}
           onSearchSelect={onSearchSelect}
           sidebarCollapsed={sidebarCollapsed}
-          showSearch={activeMenuItem === 'tree'}
+          showSearch={activeMenuItem === "tree"}
         >
           {/* 移动端菜单按钮 */}
           <button
@@ -83,7 +87,10 @@ const AppLayout = ({
           {children}
         </MainContent>
       </div>
-      <MobileBottomNav activeItem={activeMenuItem} onMenuClick={handleMenuClick} />
+      <MobileBottomNav
+        activeItem={activeMenuItem}
+        onMenuClick={handleMenuClick}
+      />
     </div>
   );
 };

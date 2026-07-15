@@ -25,7 +25,7 @@ const LoginPage = () => {
 
       if (result.success) {
         message.success("登录成功");
-        navigate(location.state?.returnTo || "/", { replace: true });
+        navigate(location.state?.returnTo || "/app", { replace: true });
       } else {
         message.error(result.error || "登录失败");
       }
@@ -46,16 +46,20 @@ const LoginPage = () => {
     navigate(location.state?.from || "/");
   };
 
+  const backLabel = location.state?.from?.startsWith("/app")
+    ? "返回家谱"
+    : "返回官网";
+
   return (
     <div className="auth-page">
       <button
         type="button"
         className="auth-back-button"
         onClick={handleBack}
-        aria-label="返回家谱"
+        aria-label={backLabel}
       >
         <ArrowLeftOutlined />
-        <span>返回家谱</span>
+        <span>{backLabel}</span>
       </button>
       <div className="auth-shell">
         <Card className="auth-card">

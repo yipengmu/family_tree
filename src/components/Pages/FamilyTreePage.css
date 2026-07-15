@@ -69,12 +69,15 @@
   font-size: 11px;
 }
 .family-context-actions .create-family-btn {
-  height: 34px;
-  padding: 0 15px !important;
+  height: 40px !important;
+  padding: 0 18px !important;
   border-color: var(--pine);
-  border-radius: 6px;
+  border-radius: 8px;
   background: var(--pine);
   color: #fffdf6;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
 }
 .family-context-actions .create-family-btn:hover {
   border-color: var(--pine-light) !important;
@@ -162,8 +165,8 @@
     display: none;
   }
   .family-context-actions .create-family-btn {
-    height: 30px !important;
-    padding: 0 10px !important;
+    height: 36px !important;
+    padding: 0 11px !important;
     font-size: 11px;
   }
   .family-tree-page {
@@ -191,12 +194,6 @@
 
 .guest-mode-text {
   white-space: nowrap;
-}
-
-.create-family-btn {
-  padding: 0 !important;
-  height: auto !important;
-  line-height: inherit !important;
 }
 
 /* 用户状态提示横幅 - 桌面端样式 */
@@ -259,14 +256,15 @@
 /* 响应式设计 */
 @media (max-width: 768px) {
   .family-tree-page {
-    height: calc(100vh - 120px); /* 移动端减少封面图片高度 */
+    height: 100%;
+    min-height: 0;
   }
 
   .family-tree-wrapper {
     border-radius: 12px;
     margin: 0; /* 移除负margin，让容器占满可用宽度 */
     width: 100%;
-    min-height: 400px;
+    min-height: 0;
     border: 1px solid var(--hairline);
     box-shadow: 0 7px 22px rgba(35, 53, 47, 0.06);
   }
@@ -301,7 +299,7 @@
     font-size: 11px;
   }
 
-  .create-family-btn {
+  .family-context-actions .create-family-btn {
     font-size: 11px !important;
   }
 }
@@ -319,7 +317,7 @@
     font-size: 10px;
   }
 
-  .create-family-btn {
+  .family-context-actions .create-family-btn {
     font-size: 10px !important;
   }
 }
@@ -331,9 +329,10 @@
 }
 
 .demo-create-guide {
-  width: min(1120px, calc(100% - 48px));
-  margin: 18px auto 0;
-  padding: 20px 24px;
+  width: 100%;
+  min-height: 78px;
+  margin: 0 0 12px;
+  padding: 13px 18px;
   align-items: center;
   justify-content: space-between;
   gap: 24px;
@@ -346,27 +345,30 @@
 .demo-create-guide > div {
   min-width: 0;
 }
-.demo-create-guide span {
+.demo-create-guide > div > span {
   color: var(--cinnabar);
-  font-size: 11px;
+  font-size: 10px;
   letter-spacing: 0.12em;
 }
 .demo-create-guide h2 {
-  margin: 7px 0 5px;
+  margin: 4px 0 2px;
   color: var(--ink);
-  font: 600 20px var(--serif);
+  font: 600 18px var(--serif);
 }
 .demo-create-guide p {
   margin: 0;
   color: var(--ink-soft);
-  font-size: 13px;
-  line-height: 1.7;
+  font-size: 12px;
+  line-height: 1.5;
 }
 .demo-create-guide .ant-btn {
   flex: 0 0 auto;
-  height: 42px;
-  padding: 0 22px;
+  height: 40px;
+  padding: 0 20px;
   border-radius: 8px;
+  color: #fffdf6 !important;
+  font-size: 13px;
+  font-weight: 500;
 }
 
 @media (min-width: 769px) {
@@ -376,6 +378,28 @@
 }
 
 @media (max-width: 768px) {
+  .demo-create-guide {
+    min-height: 54px;
+    margin: 0 0 8px;
+    padding: 8px 9px 8px 12px;
+    display: flex;
+    gap: 10px;
+    border-radius: 10px;
+  }
+  .demo-create-guide > div > span,
+  .demo-create-guide p {
+    display: none;
+  }
+  .demo-create-guide h2 {
+    margin: 0;
+    font: 600 14px/1.35 var(--serif);
+  }
+  .demo-create-guide .ant-btn {
+    height: 36px;
+    padding: 0 12px;
+    font-size: 11px;
+  }
+
   .mobile-welcome {
     position: fixed;
     inset: 0 0 calc(64px + env(safe-area-inset-bottom));

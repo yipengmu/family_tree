@@ -34,7 +34,9 @@ const FamilyJourneyPlayer = ({
           <strong>看家族如何生长</strong>
           <small>从明代到当代 · {steps.length} 代展开</small>
         </span>
-        <CaretRightOutlined aria-hidden="true" />
+        <span className="journey-launcher-play" aria-hidden="true">
+          <CaretRightOutlined />
+        </span>
       </button>
     );
   }

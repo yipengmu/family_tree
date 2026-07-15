@@ -19,6 +19,8 @@ const FamilySearchBar = ({
   const [searchInputValue, setSearchInputValue] = useState('');
   const [searchOptions, setSearchOptions] = useState([]);
   const searchTimeoutRef = useRef(null);
+  const visibleMemberCount = nodes.length;
+  const totalMemberCount = statistics?.totalMembers || familyData.length;
 
   // 简化初始化，不预加载搜索历史
   // useEffect 移除，清空我们不需要的初始化逻辑
@@ -155,9 +157,16 @@ const FamilySearchBar = ({
        {/* 移动端：家族数据总数与搜索框在同一行 */}
       {showStatus && (
         <div className="status-info">
-          <div className="count-info">
-            <Text type="secondary" style={{ fontSize: '11px' }}>
-              {nodes.length}/{statistics?.totalMembers || familyData.length}
+          <div
+            className="count-info"
+            aria-label={`当前已显示 ${visibleMemberCount} 位，共 ${totalMemberCount} 位族人`}
+          >
+            <Text type="secondary" className="count-copy">
+              <span className="count-prefix">已显示</span>
+              <strong>{visibleMemberCount}</strong>
+              <span aria-hidden="true">/</span>
+              <strong>{totalMemberCount}</strong>
+              <span className="count-suffix">位族人</span>
             </Text>
           </div>
         </div>

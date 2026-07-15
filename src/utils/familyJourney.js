@@ -4,7 +4,7 @@ const DEFAULT_GENERATION_SPAN = 26;
 const parseKnownYear = (person) => {
   const fields = [person.birth_date, person.death_date, person.dealth];
   for (const field of fields) {
-    const match = String(field || '').match(/(?:14|15|16|17|18|19|20)\d{2}/);
+    const match = String(field || "").match(/(?:14|15|16|17|18|19|20)\d{2}/);
     if (match) return Number(match[0]);
   }
   return null;
@@ -22,13 +22,13 @@ const inferStartYear = (familyData, minGeneration, maxGeneration) => {
   const founderText = familyData
     .filter((person) => Number(person.g_rank) === minGeneration)
     .map(
-      (person) => `${person.official_position || ''} ${person.summary || ''}`,
+      (person) => `${person.official_position || ""} ${person.summary || ""}`,
     )
-    .join(' ');
+    .join(" ");
 
-  if (founderText.includes('明')) return 1500;
-  if (founderText.includes('清')) return 1700;
-  if (founderText.includes('民国')) return 1912;
+  if (founderText.includes("明")) return 1500;
+  if (founderText.includes("清")) return 1700;
+  if (founderText.includes("民国")) return 1912;
 
   return (
     CURRENT_YEAR - (maxGeneration - minGeneration) * DEFAULT_GENERATION_SPAN
@@ -37,24 +37,22 @@ const inferStartYear = (familyData, minGeneration, maxGeneration) => {
 
 const getEra = (year) => {
   if (year < 1644)
-    return { key: 'ming', label: '明代', title: '一人立谱，根脉初生' };
+    return { key: "ming", label: "明代", title: "一人立谱，根脉初生" };
   if (year < 1912)
-    return { key: 'qing', label: '清代', title: '支系渐繁，名字相连' };
+    return { key: "qing", label: "清代", title: "支系渐繁，名字相连" };
   if (year < 1949)
-    return { key: 'republic', label: '民国', title: '岁月辗转，家族延展' };
-  return { key: 'modern', label: '当代', title: '枝叶相承，续写至今' };
+    return { key: "republic", label: "民国", title: "岁月辗转，家族延展" };
+  return { key: "modern", label: "当代", title: "枝叶相承，续写至今" };
 };
 
-export const buildJourneyFocusPath = (
-  familyData = [],
-  targetName = '穆宁',
-) => {
+export const buildJourneyFocusPath = (familyData = [], targetName = "穆宁") => {
   const personMap = new Map(familyData.map((person) => [person.id, person]));
   const namedTargets = familyData
     .filter((person) => person.name === targetName)
     .sort((a, b) => Number(b.g_rank) - Number(a.g_rank));
-  let currentPerson = namedTargets[0]
-    || [...familyData].sort((a, b) => Number(b.g_rank) - Number(a.g_rank))[0];
+  let currentPerson =
+    namedTargets[0] ||
+    [...familyData].sort((a, b) => Number(b.g_rank) - Number(a.g_rank))[0];
   const path = [];
   const visitedIds = new Set();
 
@@ -112,6 +110,23 @@ export const buildFamilyJourney = (familyData = []) => {
   });
 
   return { steps, minGeneration, maxGeneration, startYear };
+};
+
+export const getNextJourneyStepIndex = (steps = [], currentIndex = 0) => {
+  const lastIndex = steps.length - 1;
+  if (lastIndex <= 0 || currentIndex >= lastIndex) return lastIndex;
+
+  const currentGeneration = Number(steps[currentIndex]?.generation);
+  if (!Number.isFinite(currentGeneration) || currentGeneration < 10) {
+    return currentIndex + 1;
+  }
+
+  const nextGenerationIndex = steps.findIndex(
+    (step, index) =>
+      index > currentIndex && Number(step.generation) >= currentGeneration + 2,
+  );
+
+  return nextGenerationIndex === -1 ? lastIndex : nextGenerationIndex;
 };
 
 export const filterFamilyByGeneration = (familyData = [], generation) =>

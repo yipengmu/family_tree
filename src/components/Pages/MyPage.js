@@ -78,7 +78,7 @@ const MyPage = ({ activeMenuItem = "mine", onMenuClick, familyData = [] }) => {
           <section className="my-guest-card">
             <span className="my-card-kicker">默认私密</span>
             <h2>{BRAND.tagline}</h2>
-            <p>从自己开始记下父母与祖辈，让孩子看懂家从哪里来。</p>
+            <p>从自己开始，记下父母与祖辈</p>
             <Button
               type="primary"
               block
@@ -175,7 +175,7 @@ const MyPage = ({ activeMenuItem = "mine", onMenuClick, familyData = [] }) => {
           </>
         )}
 
-        <p className="my-page-footnote">把名字与故事留给家人，也留给以后。</p>
+        <p className="my-page-footnote">让孩子知道家从哪里来</p>
       </div>
     </AppLayout>
   );

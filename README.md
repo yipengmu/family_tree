@@ -4,7 +4,7 @@
 
 > 项目最初为穆氏家谱而建；现在穆氏家谱只是只读示范内容，产品面向所有希望从零建立、补录和长期保存家族记忆的家庭。产品目前处于 MVP 后的种子用户共创阶段。
 
-在线体验：[tree.tatababa.top](https://tree.tatababa.top)
+在线体验：[谱里产品官网](https://tree.tatababa.top)；[穆氏示范家谱](https://tree.tatababa.top/app/demo)
 
 项目欢迎种子用户加入共创，反馈真实家庭的建谱、补谱和协作需求。
 
@@ -24,6 +24,7 @@
 
 ## 已有能力
 
+- 面向桌面浏览与移动传播的产品官网，完整说明产品主张、双线建谱路径、隐私原则、开源与种子用户共创入口。
 - React 18 + Ant Design 5 单页应用。
 - React Flow 11 + Dagre 家谱图，支持缩放、平移、布局方向和节点详情。
 - 穆氏示范家谱支持从明代至当代的代际展开动画，可暂停、拖动时间轴和回到全景。
@@ -89,7 +90,9 @@ npm run db:migrate:deploy
 npm run dev
 ```
 
-- 前端：http://localhost:3000
+- 产品官网：http://localhost:3000
+- H5 产品：http://localhost:3000/app
+- 穆氏示范家谱：http://localhost:3000/app/demo
 - 本地 API：http://localhost:3003（与 Vercel 共用 `api/*.js` handler）
 - 健康检查：http://localhost:3003/health
 

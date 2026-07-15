@@ -20,6 +20,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import AuthService from "../../services/authService.js";
 import tenantService from "../../services/tenantService.js";
 import BRAND from "../../constants/brand.js";
+import { trackEvent } from "../../utils/analytics.js";
 
 const { Title, Text } = Typography;
 
@@ -89,9 +90,10 @@ const RegisterPage = () => {
 
       if (result.success) {
         message.success("注册成功");
+        trackEvent("registration_complete", { source: "register-page" });
         // 注册接口会返回用户自己的家谱空间；立即切换租户并通知主应用，避免继续读写示例家谱。
         if (result.tenant) tenantService.setCurrentTenant(result.tenant);
-        navigate(location.state?.returnTo || "/", { replace: true });
+        navigate(location.state?.returnTo || "/app/create", { replace: true });
       } else {
         message.error(result.error || "注册失败");
       }
@@ -112,16 +114,20 @@ const RegisterPage = () => {
     navigate(location.state?.from || "/");
   };
 
+  const backLabel = location.state?.from?.startsWith("/app")
+    ? "返回家谱"
+    : "返回官网";
+
   return (
     <div className="auth-page">
       <button
         type="button"
         className="auth-back-button"
         onClick={handleBack}
-        aria-label="返回示范家谱"
+        aria-label={backLabel}
       >
         <ArrowLeftOutlined />
-        <span>返回家谱</span>
+        <span>{backLabel}</span>
       </button>
       <div className="auth-shell">
         <Card className="auth-card">

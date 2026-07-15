@@ -42,6 +42,7 @@ import familyDataService from "../../services/familyDataService.js";
 import familyDataGenerator from "../../services/familyDataGenerator.js";
 import { buildFirstFamily } from "../../utils/firstFamily.js";
 import { normalizePersonLifeStatus } from "../../utils/personLifeStatus.js";
+import { trackEvent } from "../../utils/analytics.js";
 import "./CreatorPage.css";
 
 const { Title } = Typography;
@@ -1235,7 +1236,15 @@ function CreatorPage({ activeMenuItem = "create", onMenuClick }) {
         firstFamily,
         `你的第一份家谱已开始，共记录 ${firstFamily.length} 位家人；接下来可以继续补充父母、祖辈和家族故事`,
       );
-      if (saved) onMenuClick?.("tree");
+      if (saved) {
+        trackEvent("first_person_saved", { memberCount: firstFamily.length });
+        if (firstFamily.length > 1) {
+          trackEvent("first_relationship_created", {
+            memberCount: firstFamily.length,
+          });
+        }
+        onMenuClick?.("tree");
+      }
     } catch (error) {
       message.error(error.message || "生成家谱失败，请重试");
     }

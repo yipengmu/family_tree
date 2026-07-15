@@ -25,14 +25,28 @@
   top: 14px;
   left: 14px;
   display: grid;
-  grid-template-columns: 40px 1fr auto;
+  grid-template-columns: 40px 1fr 38px;
   align-items: center;
   gap: 11px;
   width: min(310px, calc(100% - 28px));
-  padding: 10px 12px;
+  min-height: 64px;
+  padding: 10px 11px 10px 12px;
   border-radius: 13px;
   text-align: left;
   cursor: pointer;
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease;
+}
+.journey-launcher:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 253, 247, 0.3);
+  box-shadow: 0 18px 44px rgba(23, 63, 56, 0.27);
+}
+.journey-launcher:focus-visible {
+  outline: 2px solid rgba(255, 253, 247, 0.92);
+  outline-offset: 3px;
 }
 .journey-launcher-mark {
   width: 40px;
@@ -56,6 +70,21 @@
   margin-top: 3px;
   color: rgba(255, 255, 255, 0.65);
   font-size: 10px;
+}
+.journey-launcher-play {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.07);
+  color: #fffdf6;
+  font-size: 13px;
+}
+.journey-launcher-play .anticon {
+  margin-left: 2px;
 }
 
 .family-journey-player {
@@ -125,11 +154,11 @@
 }
 
 .family-journey-player.era-qing {
-  --journey-accent: #d2ba7b;
+  --journey-accent: #c8d39e;
   background: linear-gradient(
     145deg,
-    rgba(41, 68, 61, 0.97),
-    rgba(72, 81, 61, 0.96)
+    rgba(37, 73, 56, 0.97),
+    rgba(61, 88, 65, 0.96)
   );
 }
 
@@ -159,11 +188,11 @@
 }
 
 .family-journey-player.era-republic {
-  --journey-accent: #d8c790;
+  --journey-accent: #afd2be;
   background: linear-gradient(
     145deg,
-    rgba(45, 62, 69, 0.97),
-    rgba(66, 76, 78, 0.96)
+    rgba(27, 69, 62, 0.97),
+    rgba(46, 86, 76, 0.96)
   );
 }
 
@@ -184,21 +213,21 @@
 }
 
 .family-journey-player.era-modern {
-  --journey-accent: #ead39a;
+  --journey-accent: #b9ddc0;
   background: linear-gradient(
     145deg,
-    rgba(117, 57, 44, 0.97),
-    rgba(151, 72, 52, 0.96)
+    rgba(17, 82, 66, 0.97),
+    rgba(28, 104, 81, 0.96)
   );
 }
 
 .family-journey-player.era-modern::before {
   background:
-    linear-gradient(rgba(255, 245, 222, 0.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 245, 222, 0.045) 1px, transparent 1px),
+    linear-gradient(rgba(224, 244, 226, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(224, 244, 226, 0.055) 1px, transparent 1px),
     radial-gradient(
       circle at 82% 24%,
-      rgba(255, 235, 190, 0.12),
+      rgba(185, 221, 192, 0.14),
       transparent 24%
     );
   background-size:
@@ -208,11 +237,11 @@
 }
 
 .family-journey-player.era-complete {
-  --journey-accent: #ead091;
+  --journey-accent: #c6d9a9;
   background: linear-gradient(
     145deg,
-    rgba(139, 58, 42, 0.96),
-    rgba(91, 45, 37, 0.95)
+    rgba(17, 72, 56, 0.96),
+    rgba(27, 91, 66, 0.95)
   );
 }
 
@@ -221,7 +250,7 @@
     radial-gradient(
       circle at 86% 18%,
       transparent 0 34px,
-      rgba(255, 239, 202, 0.09) 35px 36px,
+      rgba(213, 235, 198, 0.1) 35px 36px,
       transparent 37px
     ),
     repeating-linear-gradient(
@@ -285,8 +314,8 @@
   font: 600 17px var(--serif);
 }
 .journey-era-orb.modern {
-  border-color: rgba(255, 255, 255, 0.34);
-  color: #fffdf6;
+  border-color: rgba(200, 230, 204, 0.48);
+  color: var(--journey-accent);
 }
 .journey-player-copy h2 {
   margin: 0;
@@ -380,6 +409,7 @@
   .journey-launcher {
     top: 10px;
     left: 10px;
+    width: min(310px, calc(100% - 20px));
   }
   .family-journey-player {
     right: 9px;
@@ -402,6 +432,28 @@
   }
   .journey-player-actions small {
     display: none;
+  }
+}
+
+@media (max-width: 420px) {
+  .journey-launcher {
+    grid-template-columns: 36px 1fr 34px;
+    gap: 8px;
+    min-height: 58px;
+    padding: 8px 9px;
+  }
+  .journey-launcher-mark {
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+  }
+  .journey-launcher strong {
+    font-size: 13px;
+  }
+  .journey-launcher-play {
+    width: 32px;
+    height: 32px;
+    font-size: 12px;
   }
 }
 

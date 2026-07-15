@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "谱里",
+  "name": "谱里 · 年轻人的第一份家谱",
   "icons": [
     {
       "src": "favicon.ico",
@@ -8,8 +8,8 @@
       "type": "image/x-icon"
     }
   ],
-  "start_url": ".",
+  "start_url": "/app",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "theme_color": "#173f38",
+  "background_color": "#f7f3e8"
 }

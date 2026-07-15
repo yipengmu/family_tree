@@ -1,0 +1,29 @@
+.route-loading {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 14px;
+  color: var(--pine);
+  background: var(--paper);
+}
+
+.route-loading span {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 7px;
+  color: #fffaf0;
+  background: var(--cinnabar);
+  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.14);
+  font: 25px var(--serif);
+}
+
+.route-loading p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+}
