@@ -87,11 +87,17 @@
 }
 
 .journey-active .react-flow__node {
+  transition: transform .66s cubic-bezier(.22,.72,.25,1);
+}
+.journey-active .react-flow__node.journey-node-entering {
   animation: journey-node-reveal .55s cubic-bezier(.2,.75,.28,1) both;
 }
-.journey-active .react-flow__edge-path {
+.journey-active .react-flow__edge.journey-edge-entering .react-flow__edge-path {
   stroke-dasharray: 7 5;
   animation: journey-edge-grow .8s linear both;
+}
+.journey-active .react-flow__node.journey-mainline-focus .member-card {
+  box-shadow: 0 0 0 3px rgba(216, 180, 107, .34), 0 12px 28px rgba(23, 63, 56, .2);
 }
 @keyframes journey-node-reveal {
   from { opacity: 0; transform: translateY(-10px) scale(.92); }
@@ -104,7 +110,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .journey-active .react-flow__node,
-  .journey-active .react-flow__edge-path { animation: none; }
+  .journey-active .react-flow__edge-path { animation: none; transition: none; }
 }
 
 @media (max-width: 768px) {

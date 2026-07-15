@@ -7,7 +7,7 @@ import { Button } from 'antd';
 import './FamilyTreePage.css';
 import tenantService from '../../services/tenantService.js';
 import BRAND from '../../constants/brand.js';
-import { buildFamilyJourney, filterFamilyByGeneration } from '../../utils/familyJourney.js';
+import { buildFamilyJourney } from '../../utils/familyJourney.js';
 
 const FamilyTreePage = ({
   familyData,
@@ -30,6 +30,10 @@ const FamilyTreePage = ({
   const familyName = currentTenant?.isDefault ? BRAND.demoFamilyName : (currentTenant?.name || '我的家谱');
   const isDemoFamily = currentTenant?.isDefault && !localStorage.getItem('token');
   const journey = useMemo(() => buildFamilyJourney(familyData), [familyData]);
+  const journeyPathIds = useMemo(
+    () => journey.steps.map((step) => step.focusPersonId).filter(Boolean),
+    [journey.steps],
+  );
   const [journeyStatus, setJourneyStatus] = useState('idle');
   const [journeyGeneration, setJourneyGeneration] = useState(null);
   const isJourneyActive = isDemoFamily && journeyStatus !== 'idle';
@@ -38,10 +42,6 @@ const FamilyTreePage = ({
     return journey.steps.find((step) => step.generation === journeyGeneration)
       || journey.steps[journey.steps.length - 1];
   }, [journey.steps, journeyGeneration]);
-  const displayedFamilyData = useMemo(() => {
-    if (!isJourneyActive || !journeyGeneration) return familyData;
-    return filterFamilyByGeneration(familyData, journeyGeneration);
-  }, [familyData, isJourneyActive, journeyGeneration]);
 
   // 检查用户是否已登录
   const isAuthenticated = () => {
@@ -124,7 +124,7 @@ const FamilyTreePage = ({
 
     const timer = window.setTimeout(() => {
       setJourneyGeneration(journey.steps[currentIndex + 1].generation);
-    }, 720);
+    }, 960);
     return () => window.clearTimeout(timer);
   }, [currentJourneyStep, finishJourney, journey.steps, journeyStatus]);
 
@@ -277,12 +277,15 @@ const FamilyTreePage = ({
           <ReactFlowProvider>
             <FamilyTreeFlow
               ref={familyTreeRef}
-              familyData={displayedFamilyData}
+              familyData={familyData}
               loading={loading}
               error={error}
               onDataUpdate={handleTreeDataUpdate}
               presentationMode={isJourneyActive}
               presentationStep={journeyGeneration}
+              presentationFocusId={currentJourneyStep?.focusPersonId}
+              presentationPathIds={journeyPathIds}
+              presentationComplete={journeyStatus === 'complete'}
             />
           </ReactFlowProvider>
         </div>

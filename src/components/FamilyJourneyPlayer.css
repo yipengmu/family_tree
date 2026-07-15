@@ -87,6 +87,25 @@
   align-items: center;
   gap: 12px;
   margin: 7px 0 14px;
+  min-height: 56px;
+}
+.journey-copy-transition {
+  animation: journey-copy-change 0.52s cubic-bezier(0.22, 0.72, 0.25, 1) both;
+}
+@keyframes journey-copy-change {
+  0% {
+    opacity: 0;
+    transform: translateY(5px);
+    filter: blur(2px);
+  }
+  45% {
+    opacity: 0.72;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
 }
 .journey-era-orb {
   width: 48px;
@@ -224,5 +243,8 @@
   .journey-launcher,
   .family-journey-player {
     backdrop-filter: none;
+  }
+  .journey-copy-transition {
+    animation: none;
   }
 }

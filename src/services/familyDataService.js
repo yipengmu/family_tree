@@ -26,6 +26,9 @@ const CACHE_EXPIRY = {
   PROCESSED_DATA: 6 * 60 * 60 * 1000     // 6小时
 };
 
+// Neon/Vercel 首次唤醒可能需要几秒，3 秒会把正常冷启动误判为数据库故障。
+export const FAMILY_DATA_REQUEST_TIMEOUT_MS = 15 * 1000;
+
 // 内存缓存管理器
 class MemoryCacheManager {
   constructor() {
@@ -144,6 +147,15 @@ class FamilyDataService {
   }
 
   /**
+   * 只读取当前租户的内存缓存，不触发网络请求。
+   * 首屏需要区分“已有缓存的后台刷新”和“没有缓存的首次读取”，避免无缓存时重复请求。
+   */
+  getCachedFamilyData(tenantId = null) {
+    const currentTenantId = tenantId || tenantService.getCurrentTenant().id;
+    return memoryCache.get(getTenantCacheKey(CACHE_KEYS.FAMILY_DATA, currentTenantId));
+  }
+
+  /**
    * 数据加载回退机制
    * 第2层：尝试从数据库加载 → 第3层：回退到原始familyData.js
    * @param {string} tenantId - 租户ID
@@ -199,6 +211,7 @@ class FamilyDataService {
    * @returns {Promise<Array>} - 家谱数据
    */
   async loadFamilyDataFromServer(tenantId) {
+    let timeoutId;
     try {
       console.log(`🌐 开始从服务器加载家谱数据... (租户: ${tenantId})`);
       const startTime = Date.now();
@@ -221,7 +234,10 @@ class FamilyDataService {
       
       // 创建AbortController用于超时控制
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000); // 3秒超时（优化：减少超时时间以提高响应速度）
+      timeoutId = setTimeout(
+        () => controller.abort(),
+        FAMILY_DATA_REQUEST_TIMEOUT_MS,
+      );
 
       const headers = {
         'Content-Type': 'application/json',
@@ -243,8 +259,6 @@ class FamilyDataService {
         headers: headers,
         signal: controller.signal
       });
-
-      clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -268,12 +282,14 @@ class FamilyDataService {
 
       // 如果是超时错误，提供更友好的提示
       if (error.name === 'AbortError') {
-        console.warn(`⏰ 数据库请求超时 (租户: ${tenantId})`);
-        throw new Error('数据库连接超时，请检查后端服务是否正常运行');
+        console.warn(`⏰ 家谱数据请求超时 (租户: ${tenantId})`);
+        throw new Error('家谱数据请求超时，请稍后重试');
       }
 
       // 数据库加载失败，抛出错误让上层处理回退逻辑
       throw error;
+    } finally {
+      if (timeoutId) clearTimeout(timeoutId);
     }
   }
 

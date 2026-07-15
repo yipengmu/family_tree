@@ -107,8 +107,8 @@ function MainApp() {
         const currentTenantId = tenantId || tenantService.getCurrentTenant().id;
         console.log(`📖 [App] 加载家谱数据 - 租户: ${currentTenantId}`);
 
-        // 首先尝试从内存缓存快速加载（不等待数据库）
-        const cachedData = await familyDataService.getFamilyData(false, currentTenantId);
+        // 只读取内存缓存；没有缓存时让后续请求直接完成首次加载，避免首屏重复请求。
+        const cachedData = familyDataService.getCachedFamilyData(currentTenantId);
         
         // 立即设置缓存数据并停止loading状态，提升用户体验
         if (cachedData && cachedData.length > 0) {
@@ -119,14 +119,23 @@ function MainApp() {
           console.log(`⚡ [App] 使用缓存数据快速显示 (${cachedData.length} 条记录)`);
         }
 
-        // 强制刷新统一走 familyDataService，避免页面层与 API 契约分叉。
-        const latestData = await familyDataService.getFamilyData(true, currentTenantId);
+        // 无缓存时只请求一次；已有缓存时才后台强制刷新。
+        const latestData = await familyDataService.getFamilyData(
+          Boolean(cachedData),
+          currentTenantId,
+        );
         if (latestData && JSON.stringify(latestData) !== JSON.stringify(cachedData)) {
           setFamilyData(latestData);
           setValidationResult(validateFamilyData(latestData));
         }
         setLoading(false);
       } catch (err) {
+        // 已有可用缓存时，后台刷新失败不应让首屏退回错误页。
+        if (familyDataService.getCachedFamilyData(tenantId)) {
+          console.warn('后台刷新家谱数据失败，继续使用缓存:', err);
+          setLoading(false);
+          return;
+        }
         console.error('加载数据失败:', err);
         setError(err.message);
         message.error(`加载家谱数据失败: ${err.message}`);

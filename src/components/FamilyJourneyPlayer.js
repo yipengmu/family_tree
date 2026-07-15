@@ -51,7 +51,7 @@ const FamilyJourneyPlayer = ({
       aria-live="polite"
     >
       <div className="journey-player-topline">
-        <span>
+        <span key={`topline-${complete ? 'complete' : currentStep.generation}`} className="journey-copy-transition">
           {complete
             ? '世系全景'
             : `${currentStep.era.label} · 约 ${currentStep.estimatedYear} 年`}
@@ -61,7 +61,7 @@ const FamilyJourneyPlayer = ({
         </button>
       </div>
 
-      <div className="journey-player-copy">
+      <div key={`copy-${complete ? 'complete' : currentStep.generation}`} className="journey-player-copy journey-copy-transition">
         <div
           className={`journey-era-orb ${currentStep.era.key}`}
           aria-hidden="true"

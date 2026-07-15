@@ -41,13 +41,55 @@ const nodeTypes = {
   familyMember: FamilyMemberNode,
 };
 
+const getJourneyLayoutedNodes = (nodes, pathIds) => {
+  const pathIdSet = new Set(pathIds.map(String));
+  const nodesByGeneration = new Map();
+
+  nodes.forEach((node) => {
+    const generation = Number(node.data.rank);
+    if (!nodesByGeneration.has(generation)) nodesByGeneration.set(generation, []);
+    nodesByGeneration.get(generation).push(node);
+  });
+
+  return [...nodesByGeneration.entries()].flatMap(([generation, generationNodes]) => {
+    const sortedNodes = [...generationNodes].sort(
+      (a, b) => Number(a.data.rankIndex || a.data.id) - Number(b.data.rankIndex || b.data.id),
+    );
+    const focusNode = sortedNodes.find((node) => pathIdSet.has(node.id));
+    const branchNodes = sortedNodes.filter((node) => node !== focusNode);
+
+    const positionedBranches = branchNodes.map((node, index) => {
+      const distance = Math.floor(index / 2) + 1;
+      const direction = index % 2 === 0 ? -1 : 1;
+      return {
+        ...node,
+        targetPosition: 'top',
+        sourcePosition: 'bottom',
+        position: { x: direction * distance * 280, y: (generation - 1) * 200 },
+      };
+    });
+
+    return focusNode
+      ? [{
+        ...focusNode,
+        targetPosition: 'top',
+        sourcePosition: 'bottom',
+        position: { x: 0, y: (generation - 1) * 200 },
+      }, ...positionedBranches]
+      : positionedBranches;
+  });
+};
+
 const FamilyTreeFlow = forwardRef(({
   familyData,
   loading = false,
   error = null,
   onDataUpdate,
   presentationMode = false,
-  presentationStep = null
+  presentationStep = null,
+  presentationFocusId = null,
+  presentationPathIds = [],
+  presentationComplete = false
 }, ref) => {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -198,6 +240,22 @@ const FamilyTreeFlow = forwardRef(({
     return getFamilyStatistics(familyData);
   }, [familyData]);
 
+  // 624 人示范谱使用主线居中的线性布局，演示期间只计算一次。
+  // 每代切换只筛选这份稳定布局，避免手机主线程阻塞和节点跳位。
+  const presentationLayout = useMemo(() => {
+    if (!presentationMode || !familyData?.length) return null;
+    const { nodes: allNodes, edges: allEdges } = convertToReactFlowData(
+      familyData,
+      familyData,
+      false,
+      { isNameProtectionEnabled },
+    );
+    return {
+      nodes: getJourneyLayoutedNodes(allNodes, presentationPathIds),
+      edges: allEdges,
+    };
+  }, [familyData, isNameProtectionEnabled, presentationMode, presentationPathIds]);
+
   // 当nodes或statistics变化时，通知父组件
   useEffect(() => {
     if (onDataUpdate && nodes && statistics) {
@@ -329,7 +387,8 @@ const FamilyTreeFlow = forwardRef(({
       let filteredData;
       let targetPerson = null;
 
-    // 家族发展演示需要完整展示当前已展开世代，不应用日常浏览的智能折叠。
+    // 演示始终使用全谱的布局坐标，只隐藏尚未到达的世代。
+    // 这样新世代出现时，已有节点不会因重新布局而堆到根节点上。
     if (presentationMode) {
       filteredData = familyData;
       setCollapseStats(null);
@@ -413,25 +472,60 @@ const FamilyTreeFlow = forwardRef(({
       setSearchTargetPerson(null);
     }
 
-    // 转换为React Flow数据格式，并标记有被折叠子节点的节点
-    const { nodes: newNodes, edges: newEdges } = convertToReactFlowData(
-      filteredData,
-      familyData,
-      isShowingAll && isSmartCollapseEnabled,
-      { isNameProtectionEnabled }
-    );
-
-    // 应用布局
-    const layoutedNodes = getLayoutedElements(newNodes, newEdges, layoutDirection);
+    // 转换为 React Flow 数据。演示模式复用预计算的全谱布局。
+    const flowData = presentationMode && presentationLayout
+      ? presentationLayout
+      : convertToReactFlowData(
+        filteredData,
+        familyData,
+        isShowingAll && isSmartCollapseEnabled,
+        { isNameProtectionEnabled },
+      );
+    const newEdges = flowData.edges;
+    const allLayoutedNodes = presentationMode && presentationLayout
+      ? flowData.nodes
+      : getLayoutedElements(flowData.nodes, newEdges, layoutDirection);
+    const visibleNodeIds = presentationMode
+      ? new Set(
+        familyData
+          .filter((person) => Number(person.g_rank) <= Number(presentationStep))
+          .map((person) => person.id.toString()),
+      )
+      : null;
+    const layoutedNodes = presentationMode
+      ? allLayoutedNodes
+        .filter((node) => visibleNodeIds.has(node.id))
+        .map((node) => ({
+          ...node,
+          className: [
+            Number(node.data.rank) === Number(presentationStep)
+              ? 'journey-node-entering'
+              : '',
+            node.data.id === presentationFocusId ? 'journey-mainline-focus' : '',
+          ].filter(Boolean).join(' '),
+        }))
+      : allLayoutedNodes;
+    const visibleEdges = presentationMode
+      ? newEdges
+        .filter((edge) => visibleNodeIds.has(edge.source) && visibleNodeIds.has(edge.target))
+        .map((edge) => ({
+          ...edge,
+          className: Number(
+            allLayoutedNodes.find((node) => node.id === edge.target)?.data.rank,
+          ) === Number(presentationStep)
+            ? 'journey-edge-entering'
+            : '',
+        }))
+      : newEdges;
 
     setNodes(layoutedNodes);
-    setEdges(newEdges);
+    setEdges(visibleEdges);
 
     // 移除自动fitView，避免展开节点时视角跳转
 
     // 调试第20代成员显示
     debug20thGeneration();
-  }, [familyData, searchTerm, generationRange, layoutDirection, setNodes, setEdges, isShowingAll, isSmartCollapseEnabled, currentUser, expandedNodes, debug20thGeneration, isNameProtectionEnabled, searchTargetPerson, presentationMode]);
+  }, [familyData, searchTerm, generationRange, layoutDirection, setNodes, setEdges, isShowingAll, isSmartCollapseEnabled, currentUser, expandedNodes, debug20thGeneration, isNameProtectionEnabled, searchTargetPerson, presentationMode, presentationStep, presentationFocusId, presentationLayout]);
 
   // 添加日志功能
   const logViewportInfo = useCallback(() => {
@@ -506,26 +600,49 @@ const FamilyTreeFlow = forwardRef(({
     processData();
   }, [processData]);
 
-  // 演示模式下随世代展开平滑缩放，始终让用户保有家族全局概览。
+  // 演示模式下沿穆茂到穆宁的主线逐代移动镜头，完成后再回到全景。
   useEffect(() => {
     if (!presentationMode || !nodes.length) return undefined;
     const timer = setTimeout(() => {
-      fitView({
-        padding: isMobile ? 0.08 : 0.14,
-        duration: 620,
-        minZoom: 0.02,
-        maxZoom: isMobile ? 0.8 : 1
-      });
-    }, 120);
+      if (presentationComplete) {
+        fitView({
+          padding: isMobile ? 0.06 : 0.12,
+          duration: 1100,
+          minZoom: 0.02,
+          maxZoom: isMobile ? 0.8 : 1
+        });
+        return;
+      }
+
+      const focusNode = nodes.find(
+        (node) => node.data.id === presentationFocusId,
+      );
+      if (!focusNode) return;
+
+      setCenter(
+        focusNode.position.x + 100,
+        focusNode.position.y + (isMobile ? 145 : 100),
+        {
+          zoom: isMobile ? 0.62 : 0.78,
+          duration: 820,
+        },
+      );
+    }, 80);
     return () => clearTimeout(timer);
-  }, [fitView, isMobile, nodes.length, presentationMode, presentationStep]);
+  }, [fitView, isMobile, nodes, presentationComplete, presentationFocusId, presentationMode, presentationStep, setCenter]);
 
   // 添加一个状态来跟踪是否已经执行过初始居中
   const [hasInitialCentered, setHasInitialCentered] = useState(false);
 
   // 确保根节点穆茂在画布正中心（只在初始加载时执行一次）
   useEffect(() => {
-    if (nodes.length > 0 && !searchTerm && isShowingAll && !hasInitialCentered) {
+    if (
+      nodes.length > 0
+      && !presentationMode
+      && !searchTerm
+      && isShowingAll
+      && !hasInitialCentered
+    ) {
       const timer = setTimeout(() => {
         const reactFlow = reactFlowInstanceRef.current;
         if (reactFlow) {
@@ -558,7 +675,7 @@ const FamilyTreeFlow = forwardRef(({
 
       return () => clearTimeout(timer);
     }
-  }, [nodes, searchTerm, isShowingAll, isMobile, hasInitialCentered]);
+  }, [nodes, searchTerm, isShowingAll, isMobile, hasInitialCentered, presentationMode]);
 
 
 

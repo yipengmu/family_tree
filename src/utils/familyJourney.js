@@ -45,6 +45,28 @@ const getEra = (year) => {
   return { key: 'modern', label: '当代', title: '枝叶相承，续写至今' };
 };
 
+export const buildJourneyFocusPath = (
+  familyData = [],
+  targetName = '穆宁',
+) => {
+  const personMap = new Map(familyData.map((person) => [person.id, person]));
+  const namedTargets = familyData
+    .filter((person) => person.name === targetName)
+    .sort((a, b) => Number(b.g_rank) - Number(a.g_rank));
+  let currentPerson = namedTargets[0]
+    || [...familyData].sort((a, b) => Number(b.g_rank) - Number(a.g_rank))[0];
+  const path = [];
+  const visitedIds = new Set();
+
+  while (currentPerson && !visitedIds.has(currentPerson.id)) {
+    path.push(currentPerson);
+    visitedIds.add(currentPerson.id);
+    currentPerson = personMap.get(currentPerson.g_father_id);
+  }
+
+  return path.reverse();
+};
+
 export const buildFamilyJourney = (familyData = []) => {
   const generations = [
     ...new Set(
@@ -59,6 +81,10 @@ export const buildFamilyJourney = (familyData = []) => {
   const minGeneration = generations[0];
   const maxGeneration = generations[generations.length - 1];
   const startYear = inferStartYear(familyData, minGeneration, maxGeneration);
+  const focusPath = buildJourneyFocusPath(familyData);
+  const focusPersonByGeneration = new Map(
+    focusPath.map((person) => [Number(person.g_rank), person]),
+  );
 
   const steps = generations.map((generation, index) => {
     const rawYear =
@@ -71,6 +97,8 @@ export const buildFamilyJourney = (familyData = []) => {
 
     return {
       generation,
+      focusPersonId: focusPersonByGeneration.get(generation)?.id || null,
+      focusPersonName: focusPersonByGeneration.get(generation)?.name || null,
       estimatedYear,
       era,
       visibleCount: familyData.filter(
