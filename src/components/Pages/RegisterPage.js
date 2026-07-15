@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import {
-  Card,
   Form,
   Input,
   Button,
@@ -10,19 +9,15 @@ import {
   Typography,
   Divider,
 } from "antd";
-import {
-  ArrowLeftOutlined,
-  UserOutlined,
-  LockOutlined,
-  MailOutlined,
-} from "@ant-design/icons";
+import { UserOutlined, LockOutlined, MailOutlined } from "@ant-design/icons";
 import { useLocation, useNavigate } from "react-router-dom";
 import AuthService from "../../services/authService.js";
 import tenantService from "../../services/tenantService.js";
 import BRAND from "../../constants/brand.js";
 import { trackEvent } from "../../utils/analytics.js";
+import AuthPageLayout from "./AuthPageLayout.js";
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 const RegisterPage = () => {
   const [form] = Form.useForm();
@@ -119,152 +114,133 @@ const RegisterPage = () => {
     : "返回官网";
 
   return (
-    <div className="auth-page">
-      <button
-        type="button"
-        className="auth-back-button"
-        onClick={handleBack}
-        aria-label={backLabel}
+    <AuthPageLayout
+      backLabel={backLabel}
+      onBack={handleBack}
+      title={BRAND.tagline}
+      subtitle="从自己开始记录。默认私密，仅受邀家人可见。"
+      footer={
+        <>
+          <Text>已有账号？</Text>
+          <Button type="link" onClick={handleGoToLogin}>
+            立即登录
+          </Button>
+        </>
+      }
+    >
+      <Form
+        form={form}
+        name="register_form"
+        initialValues={{ remember: true }}
+        onFinish={handleRegister}
+        autoComplete="off"
       >
-        <ArrowLeftOutlined />
-        <span>{backLabel}</span>
-      </button>
-      <div className="auth-shell">
-        <Card className="auth-card">
-          <div className="auth-heading">
-            <div className="auth-seal">{BRAND.seal}</div>
-            <Title level={2}>{BRAND.tagline}</Title>
-            <Text type="secondary">
-              从自己开始记录。默认私密，仅受邀家人可见。
-            </Text>
-          </div>
+        <Form.Item
+          name="name"
+          rules={[
+            {
+              required: true,
+              message: "请输入您的姓名!",
+            },
+            {
+              max: 50,
+              message: "姓名不能超过50个字符!",
+            },
+          ]}
+        >
+          <Input prefix={<UserOutlined />} placeholder="姓名" size="large" />
+        </Form.Item>
 
-          <Form
-            form={form}
-            name="register_form"
-            initialValues={{ remember: true }}
-            onFinish={handleRegister}
-            autoComplete="off"
-          >
-            <Form.Item
-              name="name"
-              rules={[
-                {
-                  required: true,
-                  message: "请输入您的姓名!",
-                },
-                {
-                  max: 50,
-                  message: "姓名不能超过50个字符!",
-                },
-              ]}
-            >
-              <Input
-                prefix={<UserOutlined />}
-                placeholder="姓名"
-                size="large"
-              />
-            </Form.Item>
+        <Form.Item
+          name="email"
+          rules={[
+            {
+              required: true,
+              message: "请输入您的邮箱!",
+            },
+            {
+              type: "email",
+              message: "请输入有效的邮箱地址!",
+            },
+          ]}
+        >
+          <Input
+            prefix={<MailOutlined />}
+            placeholder="邮箱地址"
+            size="large"
+          />
+        </Form.Item>
 
-            <Form.Item
-              name="email"
-              rules={[
-                {
-                  required: true,
-                  message: "请输入您的邮箱!",
-                },
-                {
-                  type: "email",
-                  message: "请输入有效的邮箱地址!",
-                },
-              ]}
-            >
-              <Input
-                prefix={<MailOutlined />}
-                placeholder="邮箱地址"
-                size="large"
-              />
-            </Form.Item>
+        <Form.Item
+          name="password"
+          rules={[
+            {
+              required: true,
+              message: "请输入您的密码!",
+            },
+            {
+              min: 6,
+              message: "密码至少需要6个字符!",
+            },
+            {
+              max: 100,
+              message: "密码不能超过100个字符!",
+            },
+          ]}
+        >
+          <Input.Password
+            prefix={<LockOutlined />}
+            placeholder="密码"
+            size="large"
+          />
+        </Form.Item>
 
-            <Form.Item
-              name="password"
-              rules={[
-                {
-                  required: true,
-                  message: "请输入您的密码!",
-                },
-                {
-                  min: 6,
-                  message: "密码至少需要6个字符!",
-                },
-                {
-                  max: 100,
-                  message: "密码不能超过100个字符!",
-                },
-              ]}
-            >
-              <Input.Password
-                prefix={<LockOutlined />}
-                placeholder="密码"
-                size="large"
-              />
-            </Form.Item>
-
-            <Form.Item
-              name="code"
-              rules={[
-                {
-                  required: true,
-                  message: "请输入验证码!",
-                },
-                {
-                  pattern: /^\d{6}$/,
-                  message: "请输入6位数字验证码!",
-                },
-              ]}
-            >
-              <Row gutter={8}>
-                <Col span={16}>
-                  <Input placeholder="验证码" size="large" />
-                </Col>
-                <Col span={8}>
-                  <Button
-                    block
-                    size="large"
-                    onClick={sendVerificationCode}
-                    loading={codeLoading}
-                    disabled={countdown > 0}
-                  >
-                    {countdown > 0 ? `${countdown}s` : "获取"}
-                  </Button>
-                </Col>
-              </Row>
-            </Form.Item>
-
-            <Form.Item>
+        <Form.Item
+          name="code"
+          rules={[
+            {
+              required: true,
+              message: "请输入验证码!",
+            },
+            {
+              pattern: /^\d{6}$/,
+              message: "请输入6位数字验证码!",
+            },
+          ]}
+        >
+          <Row gutter={8}>
+            <Col span={16}>
+              <Input placeholder="验证码" size="large" />
+            </Col>
+            <Col span={8}>
               <Button
-                type="primary"
-                htmlType="submit"
-                size="large"
-                loading={loading}
                 block
+                size="large"
+                onClick={sendVerificationCode}
+                loading={codeLoading}
+                disabled={countdown > 0}
               >
-                创建账号
+                {countdown > 0 ? `${countdown}s` : "获取"}
               </Button>
-            </Form.Item>
-          </Form>
+            </Col>
+          </Row>
+        </Form.Item>
 
-          <Divider />
+        <Form.Item>
+          <Button
+            type="primary"
+            htmlType="submit"
+            size="large"
+            loading={loading}
+            block
+          >
+            创建账号
+          </Button>
+        </Form.Item>
+      </Form>
 
-          <div style={{ textAlign: "center" }}>
-            <Text>已有账号？</Text>
-            <Button type="link" onClick={handleGoToLogin}>
-              立即登录
-            </Button>
-          </div>
-        </Card>
-      </div>
-    </div>
+      <Divider />
+    </AuthPageLayout>
   );
 };
 

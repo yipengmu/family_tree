@@ -396,6 +396,7 @@
 }
 
 .flow-container {
+  position: relative;
   flex: 1;
   border-radius: 12px;
   overflow: hidden;
@@ -404,6 +405,74 @@
   background: hsl(0 0% 100%);
   width: 100%;
   box-sizing: border-box;
+}
+
+.journey-panorama-summary {
+  position: absolute;
+  z-index: 20;
+  top: 18px;
+  left: 50%;
+  width: min(660px, calc(100% - 36px));
+  padding: 14px 16px 12px;
+  transform: translateX(-50%);
+  border: 1px solid rgba(23, 63, 56, 0.14);
+  border-radius: 14px;
+  color: #173f38;
+  background:
+    linear-gradient(90deg, rgba(255, 253, 247, 0.96), rgba(247, 242, 226, 0.94)),
+    #fffdf7;
+  box-shadow: 0 12px 30px rgba(35, 53, 47, 0.09);
+  backdrop-filter: blur(12px);
+  pointer-events: none;
+}
+.journey-panorama-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 18px;
+}
+.journey-panorama-heading span {
+  color: #8d4938;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+}
+.journey-panorama-heading strong {
+  font: 600 21px/1.25 var(--serif);
+  letter-spacing: 0.04em;
+}
+.journey-panorama-facts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  margin-top: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(23, 63, 56, 0.09);
+  border-radius: 9px;
+  background: rgba(23, 63, 56, 0.09);
+}
+.journey-panorama-facts > span {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px;
+  padding: 7px 8px;
+  background: rgba(255, 253, 247, 0.92);
+  font-size: 11px;
+}
+.journey-panorama-facts strong {
+  font: 600 17px var(--serif);
+}
+.journey-panorama-facts small {
+  margin-left: 4px;
+  color: #7d806f;
+  font-size: 9px;
+}
+.journey-panorama-summary p {
+  margin: 9px 1px 0;
+  color: #6f7567;
+  font-size: 10px;
+  line-height: 1.55;
+  text-align: center;
 }
 
 /* 演示全景使用紧凑卡片，避免 624 人在深代被固定卡片宽度撑成一条横带。
@@ -618,6 +687,45 @@
   .journey-flow-container .family-member-node {
     min-width: 100px;
     max-width: 100px;
+  }
+
+  .journey-panorama-summary {
+    top: 14px;
+    width: min(350px, calc(100% - 28px));
+    padding: 12px 12px 10px;
+    border-radius: 12px;
+  }
+  .journey-panorama-heading {
+    display: block;
+    text-align: center;
+  }
+  .journey-panorama-heading span,
+  .journey-panorama-heading strong {
+    display: block;
+  }
+  .journey-panorama-heading strong {
+    margin-top: 3px;
+    font-size: 19px;
+  }
+  .journey-panorama-facts {
+    margin-top: 8px;
+  }
+  .journey-panorama-facts > span {
+    display: block;
+    padding: 6px 4px;
+    text-align: center;
+  }
+  .journey-panorama-facts strong,
+  .journey-panorama-facts small {
+    display: block;
+    margin: 0;
+  }
+  .journey-panorama-facts strong {
+    font-size: 15px;
+  }
+  .journey-panorama-summary p {
+    margin-top: 7px;
+    font-size: 9px;
   }
 
   .family-tree-container {

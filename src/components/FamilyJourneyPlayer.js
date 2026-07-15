@@ -12,6 +12,10 @@ const FamilyJourneyPlayer = ({
   familyName,
   totalMembers,
   steps,
+  startYear,
+  endYear,
+  yearSpan,
+  summary,
   status,
   currentStep,
   onStart,
@@ -81,16 +85,37 @@ const FamilyJourneyPlayer = ({
         <div>
           <h2>
             {complete
-              ? `${steps.length} 代相承，${totalMembers} 位族人`
+              ? `跨越约 ${yearSpan} 年，${steps.length} 代相承`
               : currentStep.era.title}
           </h2>
           <p>
             {complete
-              ? `${familyName}从一位先祖展开，最终汇成今天的家族全貌。`
+              ? `${familyName}约从 ${startYear} 年延展至 ${endYear} 年，共收录 ${totalMembers} 位族人。`
               : `第 ${currentStep.generation} 代 · 谱中已有 ${currentStep.visibleCount} 个名字`}
           </p>
         </div>
       </div>
+
+      {complete && (summary?.officials || summary?.scholars) ? (
+        <div className="journey-complete-summary">
+          {summary.officials > 0 && (
+            <span>
+              谱载职官 <strong>{summary.officials}</strong> 人
+            </span>
+          )}
+          {summary.scholars > 0 && (
+            <span>
+              功名记载 <strong>{summary.scholars}</strong> 人
+            </span>
+          )}
+          {summary.notableRole && (
+            <span>
+              {summary.notableRole.label}{" "}
+              <strong>{summary.notableRole.count}</strong>人
+            </span>
+          )}
+        </div>
+      ) : null}
 
       <div className="journey-timeline">
         <input
@@ -145,7 +170,7 @@ const FamilyJourneyPlayer = ({
             <FastForwardOutlined /> 看全景
           </button>
         )}
-        <small>年代按代际跨度推演</small>
+        <small>年份为代际推演估算</small>
       </div>
     </section>
   );

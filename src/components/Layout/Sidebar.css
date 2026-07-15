@@ -183,6 +183,23 @@
   min-width: 0; /* 允许弹性布局 */
 }
 
+.logo-home-link {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.logo-home-link:hover,
+.logo-home-link:focus-visible {
+  color: inherit;
+  text-decoration: none;
+}
+
+.logo-home-link:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.72);
+  outline-offset: -6px;
+}
+
 .logo-icon {
   width: 32px;
   height: 32px;

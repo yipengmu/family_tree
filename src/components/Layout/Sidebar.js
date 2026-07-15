@@ -11,7 +11,7 @@ import { Button, Dropdown, Space } from "antd";
 import TenantSelector from "../TenantSelector.js";
 import "./Sidebar.css";
 import AuthService from "../../services/authService.js";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import BRAND from "../../constants/brand.js";
 
 const Sidebar = ({
@@ -102,7 +102,7 @@ const Sidebar = ({
       id="sidebar"
     >
       {/* Logo */}
-      <div className="logo">
+      <Link className="logo logo-home-link" to="/" aria-label="返回谱里产品官网">
         <div className="logo-icon" aria-hidden="true">
           {BRAND.seal}
         </div>
@@ -112,7 +112,7 @@ const Sidebar = ({
             <div className="logo-subtitle">数字家谱</div>
           </div>
         )}
-      </div>
+      </Link>
 
       {/* 导航菜单 */}
       <nav>

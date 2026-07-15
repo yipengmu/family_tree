@@ -9,6 +9,8 @@ import ReactFlow, {
   useReactFlow,
   ConnectionLineType,
   MarkerType,
+  getNodesBounds,
+  getViewportForBounds,
 } from 'reactflow';
 import { Button, Card, Slider, Select, Space, Typography, Spin, Alert, Drawer, Divider, Switch } from 'antd';
 import {
@@ -51,7 +53,8 @@ const FamilyTreeFlow = forwardRef(({
   presentationStep = null,
   presentationFocusId = null,
   presentationPathIds = [],
-  presentationComplete = false
+  presentationComplete = false,
+  panorama = null
 }, ref) => {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -64,6 +67,7 @@ const FamilyTreeFlow = forwardRef(({
   const [showSearchAlert, setShowSearchAlert] = useState(true); // 控制搜索提示显示
   const [isSearchAlertFading, setIsSearchAlertFading] = useState(false); // 控制搜索提示淡出动画
   const searchAlertTimerRef = useRef(null); // 搜索提示定时器引用
+  const flowContainerRef = useRef(null);
 
   const [showAlert, setShowAlert] = useState(true); // 控制提示显示
   const reactFlowInstanceRef = useRef(null); // ReactFlow实例引用
@@ -78,7 +82,7 @@ const FamilyTreeFlow = forwardRef(({
   const [isSmartCollapseEnabled, setIsSmartCollapseEnabled] = useState(true);
   const [expandedNodes, setExpandedNodes] = useState(new Set()); // 用户手动展开的节点
 
-  const { fitView, setCenter, getViewport, getNodes } = useReactFlow();
+  const { fitView, setCenter, setViewport, getViewport, getNodes } = useReactFlow();
 
   // 移动端检测
   useEffect(() => {
@@ -568,19 +572,56 @@ const FamilyTreeFlow = forwardRef(({
     processData();
   }, [processData]);
 
-  // 演示模式下沿穆茂到穆宁的主线逐代移动镜头；完成后按全谱重新取景，
-  // 让左右支系共同决定视觉中心，避免主线位于幼子一侧时画面明显偏向一边。
+  // 演示模式下沿穆茂到穆宁的主线逐代移动镜头；完成后根据全部节点边界
+  // 计算确定性的全景视口，并居中在顶部摘要与底部结语卡之间。
   useEffect(() => {
     if (!presentationMode || !nodes.length) return undefined;
-    const timer = setTimeout(() => {
+    const timer = setTimeout(async () => {
       if (presentationComplete) {
-        fitView({
-          nodes,
-          padding: isMobile ? 0.08 : 0.14,
-          duration: 1100,
-          minZoom: 0.02,
-          maxZoom: isMobile ? 0.8 : 1
-        });
+        const flowContainer = flowContainerRef.current;
+        if (!flowContainer) return;
+        const bounds = getNodesBounds(
+          nodes.map((node) => ({
+            ...node,
+            width: isMobile ? 100 : 120,
+            height: 80,
+          })),
+        );
+        const fittedViewport = getViewportForBounds(
+          bounds,
+          flowContainer.clientWidth,
+          flowContainer.clientHeight,
+          0.02,
+          isMobile ? 0.8 : 1,
+          isMobile ? 0.06 : 0.1,
+        );
+        const containerRect = flowContainer.getBoundingClientRect();
+        const summaryRect = flowContainer
+          .querySelector('.journey-panorama-summary')
+          ?.getBoundingClientRect();
+        const playerRect = flowContainer
+          .closest('.family-tree-wrapper')
+          ?.querySelector('.family-journey-player')
+          ?.getBoundingClientRect();
+        const availableTop = summaryRect
+          ? summaryRect.bottom - containerRect.top + 12
+          : 12;
+        const availableBottom = playerRect
+          ? playerRect.top - containerRect.top - 12
+          : flowContainer.clientHeight - 12;
+        const availableCenter =
+          availableBottom > availableTop
+            ? (availableTop + availableBottom) / 2
+            : flowContainer.clientHeight / 2;
+        const boundsCenterY = bounds.y + bounds.height / 2;
+
+        await setViewport(
+          {
+            ...fittedViewport,
+            y: availableCenter - boundsCenterY * fittedViewport.zoom,
+          },
+          { duration: 900 },
+        );
         return;
       }
 
@@ -599,7 +640,7 @@ const FamilyTreeFlow = forwardRef(({
       );
     }, 80);
     return () => clearTimeout(timer);
-  }, [fitView, isMobile, nodes, presentationComplete, presentationFocusId, presentationMode, presentationStep, setCenter]);
+  }, [isMobile, nodes, presentationComplete, presentationFocusId, presentationMode, presentationStep, setCenter, setViewport]);
 
   // 添加一个状态来跟踪是否已经执行过初始居中
   const [hasInitialCentered, setHasInitialCentered] = useState(false);
@@ -1101,7 +1142,44 @@ const FamilyTreeFlow = forwardRef(({
       </Drawer>
 
       {/* React Flow 图表 */}
-      <div className={`flow-container ${presentationMode ? 'journey-flow-container' : ''}`}>
+      <div
+        ref={flowContainerRef}
+        className={`flow-container ${presentationMode ? 'journey-flow-container' : ''}`}
+      >
+        {presentationComplete && panorama && (
+          <aside className="journey-panorama-summary" aria-label="家族世系全景摘要">
+            <div className="journey-panorama-heading">
+              <span>世系全景 · 年代为推演估算</span>
+              <strong>
+                约 {panorama.startYear} — {panorama.endYear}
+              </strong>
+            </div>
+            <div className="journey-panorama-facts">
+              <span>
+                <strong>{panorama.yearSpan}</strong> 年
+                <small>时间跨度</small>
+              </span>
+              <span>
+                <strong>{panorama.generationCount}</strong> 代
+                <small>代际相承</small>
+              </span>
+              <span>
+                <strong>{panorama.totalMembers}</strong> 人
+                <small>谱中族人</small>
+              </span>
+            </div>
+            {(panorama.summary?.officials || panorama.summary?.scholars) && (
+              <p>
+                谱中记有职官 {panorama.summary.officials || 0} 人、功名{' '}
+                {panorama.summary.scholars || 0} 人
+                {panorama.summary.notableRole
+                  ? `，其中${panorama.summary.notableRole.label} ${panorama.summary.notableRole.count} 人`
+                  : ''}
+                。称谓均沿用原谱记载。
+              </p>
+            )}
+          </aside>
+        )}
         <ReactFlow
           nodes={nodes}
           edges={edges}

@@ -239,15 +239,28 @@ const FamilyTreePage = ({
               <i aria-hidden="true" />
               {statistics?.generationCount ||
                 statistics?.totalGenerations ||
+                journey.generationCount ||
                 "多"}{" "}
               代相承
             </span>
           </div>
+          {isDemoFamily && (
+            <div className="family-context-guide">
+              <span>看懂示例之后，从自己开始</span>
+              <h2>没有纸质家谱，也能创建自己的第一份家谱</h2>
+              <p>先记下一位家人，之后再补充父母、祖辈和家族故事。</p>
+            </div>
+          )}
           <div className="family-context-actions">
-            <span className="privacy-badge">
-              <span aria-hidden="true">◈</span> 默认私密
-            </span>
-            {!localStorage.getItem("token") ? (
+            {isDemoFamily ? (
+              <Button
+                type="primary"
+                onClick={handleCreateMyFamilyTree}
+                className="create-family-btn"
+              >
+                从自己开始
+              </Button>
+            ) : !localStorage.getItem("token") ? (
               <Button
                 type="primary"
                 onClick={handleCreateMyFamilyTree}
@@ -266,21 +279,6 @@ const FamilyTreePage = ({
             )}
           </div>
         </section>
-
-        {isDemoFamily && (
-          <section className="demo-create-guide" aria-label="创建自己的家谱">
-            <div>
-              <span>看懂示例之后，从自己开始</span>
-              <h2>没有纸质家谱，也能创建自己的第一份家谱</h2>
-              <p>
-                只填一位家人的名字就能开始，之后再补充父母、祖辈和家族故事。
-              </p>
-            </div>
-            <Button type="primary" onClick={handleCreateMyFamilyTree}>
-              从自己开始
-            </Button>
-          </section>
-        )}
 
         {localStorage.getItem("token") &&
           familyData.length === 0 &&
@@ -347,6 +345,10 @@ const FamilyTreePage = ({
               familyName={familyName}
               totalMembers={familyData.length}
               steps={journey.steps}
+              startYear={journey.startYear}
+              endYear={journey.endYear}
+              yearSpan={journey.yearSpan}
+              summary={journey.summary}
               status={journeyStatus}
               currentStep={currentJourneyStep}
               onStart={startJourney}
@@ -377,6 +379,15 @@ const FamilyTreePage = ({
               presentationFocusId={currentJourneyStep?.focusPersonId}
               presentationPathIds={journeyPathIds}
               presentationComplete={journeyStatus === "complete"}
+              panorama={{
+                familyName,
+                totalMembers: familyData.length,
+                generationCount: journey.generationCount,
+                startYear: journey.startYear,
+                endYear: journey.endYear,
+                yearSpan: journey.yearSpan,
+                summary: journey.summary,
+              }}
             />
           </ReactFlowProvider>
         </div>

@@ -89,8 +89,9 @@
 
 .family-journey-player {
   --journey-accent: #d8b46b;
-  left: 18px;
+  right: 18px;
   bottom: 18px;
+  left: auto;
   width: min(390px, calc(100% - 36px));
   padding: 15px 16px 14px;
   border-radius: 16px;
@@ -327,6 +328,24 @@
   color: rgba(255, 255, 255, 0.64);
   font-size: 11px;
 }
+.journey-complete-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: -4px 0 10px 60px;
+}
+.journey-complete-summary span {
+  padding: 4px 7px;
+  border: 1px solid rgba(213, 235, 198, 0.14);
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.64);
+  background: rgba(255, 255, 255, 0.045);
+  font-size: 9px;
+}
+.journey-complete-summary strong {
+  color: var(--journey-accent);
+  font-weight: 600;
+}
 .journey-timeline input {
   width: 100%;
   height: 18px;
@@ -429,6 +448,9 @@
   }
   .journey-player-copy h2 {
     font-size: 16px;
+  }
+  .journey-complete-summary {
+    margin-left: 54px;
   }
   .journey-player-actions small {
     display: none;

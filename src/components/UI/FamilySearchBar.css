@@ -16,6 +16,8 @@
 
 .search-section .ant-select {
   height: 34px;
+  display: flex;
+  align-items: center;
 }
 
 .family-search-input {
@@ -55,6 +57,10 @@
 .family-search-input input.ant-input {
   height: 32px;
   padding-block: 0;
+  line-height: 32px;
+}
+
+.family-search-input input.ant-input::placeholder {
   line-height: 32px;
 }
 

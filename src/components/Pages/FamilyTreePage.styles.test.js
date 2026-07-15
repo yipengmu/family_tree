@@ -2,6 +2,10 @@ import fs from "fs";
 import path from "path";
 
 describe("family journey animation styles", () => {
+  const pageSource = fs.readFileSync(
+    path.join(__dirname, "FamilyTreePage.js"),
+    "utf8",
+  );
   const stylesheet = fs.readFileSync(
     path.join(__dirname, "FamilyTreePage.css"),
     "utf8",
@@ -61,9 +65,50 @@ describe("family journey animation styles", () => {
     );
   });
 
-  test("keeps the demo creation guide aligned to the tree viewport", () => {
+  test("places the expanded journey card on the desktop right edge", () => {
+    expect(journeyPlayerStylesheet).toMatch(
+      /\.family-journey-player\s*\{[^}]*right:\s*18px;[^}]*left:\s*auto;/s,
+    );
+    expect(journeyPlayerStylesheet).toMatch(
+      /@media\s*\(max-width:\s*768px\)[\s\S]*?\.family-journey-player\s*\{[^}]*right:\s*9px;[^}]*left:\s*9px;/s,
+    );
+  });
+
+  test("merges the demo creation guide into the compact context bar", () => {
     expect(stylesheet).toMatch(
-      /\.demo-create-guide\s*\{[^}]*width:\s*100%;[^}]*margin:\s*0 0 12px/s,
+      /\.family-context-bar\s*\{[^}]*display:\s*grid;[^}]*grid-template-columns:/s,
+    );
+    expect(stylesheet).toContain(".family-context-guide {");
+    expect(pageSource).toContain('className="family-context-guide"');
+    expect(pageSource).not.toContain('className="demo-create-guide"');
+    expect(pageSource).not.toContain('className="privacy-badge"');
+  });
+
+  test("keeps the family call to action on one consistent button style", () => {
+    const actionClassMatches = pageSource.match(
+      /className="create-family-btn"/g,
+    );
+
+    expect(actionClassMatches).toHaveLength(3);
+    expect(stylesheet).toMatch(
+      /\.family-context-actions \.create-family-btn\s*\{[^}]*height:\s*42px !important;[^}]*border-radius:\s*10px/s,
+    );
+    expect(stylesheet).toMatch(
+      /\.family-context-actions\s*\{[^}]*grid-column:\s*3;/s,
+    );
+    expect(stylesheet).toMatch(
+      /@media\s*\(max-width:\s*768px\)[\s\S]*?\.family-context-actions\s*\{[^}]*grid-column:\s*2;/s,
+    );
+  });
+
+  test("styles the final panorama summary as a centered overlay", () => {
+    const flowStylesheet = fs.readFileSync(
+      path.join(__dirname, "../FamilyTreeFlow.css"),
+      "utf8",
+    );
+
+    expect(flowStylesheet).toMatch(
+      /\.journey-panorama-summary\s*\{[^}]*position:\s*absolute;[^}]*left:\s*50%;[^}]*transform:\s*translateX\(-50%\)/s,
     );
   });
 });

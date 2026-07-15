@@ -138,7 +138,6 @@ const FamilySearchBar = ({
           options={searchOptions}
           onSelect={handleSearchSelect}
           onSearch={handleSearchInput}
-          placeholder={placeholder}
           style={{ width: 180 }} // 减小宽度
           allowClear
           size="small" // 使用小尺寸
@@ -147,6 +146,7 @@ const FamilySearchBar = ({
         >
           <Input
             prefix={<SearchOutlined />}
+            placeholder={placeholder}
             onPressEnter={handleSearchSubmit}
             className="family-search-input"
             size="small"
