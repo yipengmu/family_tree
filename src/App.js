@@ -89,6 +89,10 @@ function MainApp({ demoMode = false }) {
     navigate(getPersonProfilePath(personId, options));
   };
 
+  const startPaternalGuide = () => {
+    navigate("/app/create?guide=paternal");
+  };
+
   useEffect(() => {
     setCurrentPage(pageFromPath());
   }, [location.pathname]);
@@ -312,6 +316,7 @@ function MainApp({ demoMode = false }) {
             currentTenant={currentTenant}
             demoMode={demoMode}
             onOpenPersonProfile={openPersonProfile}
+            onStartPaternalGuide={startPaternalGuide}
           />
         );
       case "person": {
@@ -438,6 +443,9 @@ function MainApp({ demoMode = false }) {
             {...commonProps}
             familyData={familyData}
             onOpenPersonProfile={openPersonProfile}
+            openPaternalGuide={
+              new URLSearchParams(location.search).get("guide") === "paternal"
+            }
           />
         );
       case "discover":
@@ -519,6 +527,7 @@ function MainApp({ demoMode = false }) {
             currentTenant={currentTenant}
             demoMode={demoMode}
             onOpenPersonProfile={openPersonProfile}
+            onStartPaternalGuide={startPaternalGuide}
           />
         );
     }

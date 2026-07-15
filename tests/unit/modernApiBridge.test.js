@@ -87,6 +87,17 @@ test("maps Vercel-style media paths to the shared media handler", () => {
   );
 });
 
+test("maps the multimodal family image parsing path", () => {
+  assert.deepEqual(
+    createModernApiBridge.resolveModernRoute("/api/tencent/image-parse"),
+    {
+      modulePath: "api/ocr.js",
+      query: {},
+      params: {},
+    },
+  );
+});
+
 test("maps the API health path to the shared health handler", () => {
   assert.deepEqual(
     createModernApiBridge.resolveModernRoute("/api/health"),

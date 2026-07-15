@@ -79,7 +79,10 @@ function resolveModernRoute(requestPath) {
   }
   if (resource === "uploads" && id === "sign")
     return route("api/media.js", { type: "upload" });
-  if ((resource === "qwen" || resource === "tencent") && id === "ocr")
+  if (
+    (resource === "qwen" || resource === "tencent") &&
+    (id === "ocr" || id === "image-parse")
+  )
     return route("api/ocr.js");
   return null;
 }

@@ -1043,3 +1043,39 @@
 .compact-search-alert .ant-alert-close-icon {
   font-size: 11px !important;
 }
+.mobile-person-action-drawer .ant-drawer-content {
+  border-radius: 18px 18px 0 0;
+  background: #fffdf7;
+}
+
+.mobile-person-action-drawer .ant-drawer-header {
+  border-bottom-color: rgba(35, 53, 47, 0.1);
+}
+
+.mobile-person-action-drawer .ant-drawer-title {
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 19px;
+}
+
+.mobile-person-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.mobile-person-actions p {
+  margin: 0 0 3px;
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.mobile-person-actions .ant-btn-primary {
+  border-color: var(--pine);
+  background: var(--pine);
+}
+
+.mobile-person-actions small {
+  color: var(--ink-soft);
+  font-size: 10px;
+  text-align: center;
+}

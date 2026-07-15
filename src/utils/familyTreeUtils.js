@@ -9,7 +9,10 @@ import dagre from 'dagre';
  * @returns {Object} - 包含nodes和edges的对象
  */
 export const convertToReactFlowData = (familyData, fullFamilyData = null, isCollapseMode = false, options = {}) => {
-  const { isNameProtectionEnabled = false } = options;
+  const {
+    isNameProtectionEnabled = false,
+    useFounderLabels = true,
+  } = options;
   const nodes = [];
   const edges = [];
   
@@ -53,7 +56,8 @@ export const convertToReactFlowData = (familyData, fullFamilyData = null, isColl
         location: person.location,
         childrens: person.childrens,
         hasCollapsedChildren, // 添加折叠状态标识
-        isNameProtectionEnabled // 添加姓名保护开关
+        isNameProtectionEnabled, // 添加姓名保护开关
+        useFounderLabels,
       }
     };
 

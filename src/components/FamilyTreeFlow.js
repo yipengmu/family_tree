@@ -55,7 +55,10 @@ const FamilyTreeFlow = forwardRef(({
   presentationPathIds = [],
   presentationComplete = false,
   panorama = null,
-  onOpenPersonProfile
+  onOpenPersonProfile,
+  onAddPaternalAncestor,
+  paternalAnchorId = null,
+  useFounderLabels = true
 }, ref) => {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -215,7 +218,7 @@ const FamilyTreeFlow = forwardRef(({
       familyData,
       familyData,
       false,
-      { isNameProtectionEnabled },
+      { isNameProtectionEnabled, useFounderLabels },
     );
     return {
       nodes: getJourneyLayoutedNodes(allNodes, presentationPathIds, {
@@ -224,7 +227,7 @@ const FamilyTreeFlow = forwardRef(({
       }),
       edges: allEdges,
     };
-  }, [familyData, isMobile, isNameProtectionEnabled, presentationMode, presentationPathIds]);
+  }, [familyData, isMobile, isNameProtectionEnabled, presentationMode, presentationPathIds, useFounderLabels]);
 
   // 当nodes或statistics变化时，通知父组件
   useEffect(() => {
@@ -449,7 +452,7 @@ const FamilyTreeFlow = forwardRef(({
         filteredData,
         familyData,
         isShowingAll && isSmartCollapseEnabled,
-        { isNameProtectionEnabled },
+        { isNameProtectionEnabled, useFounderLabels },
       );
     const newEdges = flowData.edges;
     const allLayoutedNodes = presentationMode && presentationLayout
@@ -498,7 +501,7 @@ const FamilyTreeFlow = forwardRef(({
 
     // 调试第20代成员显示
     debug20thGeneration();
-  }, [familyData, searchTerm, generationRange, layoutDirection, setNodes, setEdges, isShowingAll, isSmartCollapseEnabled, currentUser, expandedNodes, debug20thGeneration, isNameProtectionEnabled, searchTargetPerson, presentationMode, presentationStep, presentationFocusId, presentationLayout]);
+  }, [familyData, searchTerm, generationRange, layoutDirection, setNodes, setEdges, isShowingAll, isSmartCollapseEnabled, currentUser, expandedNodes, debug20thGeneration, isNameProtectionEnabled, searchTargetPerson, presentationMode, presentationStep, presentationFocusId, presentationLayout, useFounderLabels]);
 
   // 添加日志功能
   const logViewportInfo = useCallback(() => {
@@ -1142,6 +1145,51 @@ const FamilyTreeFlow = forwardRef(({
         </div>
       </Drawer>
 
+      <Drawer
+        title={selectedNode?.data?.name || "人物资料"}
+        placement="bottom"
+        height="auto"
+        onClose={() => setSelectedNode(null)}
+        open={Boolean(isMobile && selectedNode)}
+        className="mobile-person-action-drawer"
+        styles={{ body: { padding: '8px 18px 22px' } }}
+      >
+        {selectedNode && (
+          <div className="mobile-person-actions">
+            <p>
+              当前记录第 {selectedNode.data.rank} 代
+              {selectedNode.data.location
+                ? ` · ${selectedNode.data.location}`
+                : ''}
+            </p>
+            {onOpenPersonProfile && (
+              <Button
+                type="primary"
+                block
+                size="large"
+                onClick={() => onOpenPersonProfile(selectedNode.data.id)}
+              >
+                查看生平与家庭档案
+              </Button>
+            )}
+            {onAddPaternalAncestor &&
+              String(selectedNode.data.id) === String(paternalAnchorId) && (
+                <Button
+                  block
+                  size="large"
+                  onClick={() => {
+                    setSelectedNode(null);
+                    onAddPaternalAncestor();
+                  }}
+                >
+                  添加他的父亲
+                </Button>
+              )}
+            <small>关系与人物资料默认仅当前家谱成员可见</small>
+          </div>
+        )}
+      </Drawer>
+
       {/* React Flow 图表 */}
       <div
         ref={flowContainerRef}
@@ -1249,7 +1297,7 @@ const FamilyTreeFlow = forwardRef(({
           )}
 
           {/* 选中节点信息面板 */}
-          {selectedNode && (
+          {!isMobile && selectedNode && (
             <Panel position="top-right">
               <Card
                 title={selectedNode.data.name}

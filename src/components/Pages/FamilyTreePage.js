@@ -17,6 +17,7 @@ import {
   buildFamilyJourney,
   getNextJourneyStepIndex,
 } from "../../utils/familyJourney.js";
+import { getPaternalOnboardingState } from "../../utils/paternalOnboarding.js";
 
 const FamilyTreePage = ({
   familyData,
@@ -27,6 +28,7 @@ const FamilyTreePage = ({
   currentTenant: tenantOverride = null,
   demoMode = false,
   onOpenPersonProfile,
+  onStartPaternalGuide,
 }) => {
   // 状态管理
   const [nodes, setNodes] = useState([]);
@@ -45,6 +47,10 @@ const FamilyTreePage = ({
     : currentTenant?.name || "我的家谱";
   const isDemoFamily =
     currentTenant?.isDefault && (demoMode || !localStorage.getItem("token"));
+  const paternalOnboarding = useMemo(
+    () => getPaternalOnboardingState(familyData),
+    [familyData],
+  );
   const journey = useMemo(() => buildFamilyJourney(familyData), [familyData]);
   const journeyPathIds = useMemo(
     () => journey.steps.map((step) => step.focusPersonId).filter(Boolean),
@@ -275,14 +281,53 @@ const FamilyTreePage = ({
             ) : (
               <Button
                 type="primary"
-                onClick={() => onMenuClick && onMenuClick("create")}
+                onClick={() =>
+                  paternalOnboarding.complete
+                    ? onMenuClick?.("create")
+                    : onStartPaternalGuide?.()
+                }
                 className="create-family-btn"
               >
-                续录族人
+                {paternalOnboarding.complete
+                  ? "续录族人"
+                  : paternalOnboarding.nextActionLabel}
               </Button>
             )}
           </div>
         </section>
+
+        {!isDemoFamily &&
+          localStorage.getItem("token") &&
+          familyData.length > 0 && (
+            <section
+              className={`paternal-progress-banner ${paternalOnboarding.complete ? "complete" : ""}`}
+              aria-label={
+                paternalOnboarding.complete
+                  ? "父系四代已连接"
+                  : `父系四代进度：已连接 ${paternalOnboarding.completedGenerations} 代，共 4 代`
+              }
+            >
+              <span aria-hidden="true">谱</span>
+              <div>
+                <small>父系四代</small>
+                <strong>
+                  {paternalOnboarding.complete
+                    ? "四代主线已连接"
+                    : `已连接 ${paternalOnboarding.completedGenerations}/4 代`}
+                </strong>
+                <p>
+                  {paternalOnboarding.complete
+                    ? "接下来可以补充母亲、配偶、照片和人物故事"
+                    : paternalOnboarding.relationshipDescription}
+                </p>
+              </div>
+              {!paternalOnboarding.complete && (
+                <Button type="primary" onClick={onStartPaternalGuide}>
+                  {paternalOnboarding.nextActionLabel}
+                </Button>
+              )}
+            </section>
+          )}
 
         {localStorage.getItem("token") &&
           familyData.length === 0 &&
@@ -393,6 +438,12 @@ const FamilyTreePage = ({
                 summary: journey.summary,
               }}
               onOpenPersonProfile={onOpenPersonProfile}
+              onAddPaternalAncestor={onStartPaternalGuide}
+              paternalAnchorId={
+                paternalOnboarding.anchorPerson?.person_id ??
+                paternalOnboarding.anchorPerson?.id
+              }
+              useFounderLabels={isDemoFamily}
             />
           </ReactFlowProvider>
         </div>

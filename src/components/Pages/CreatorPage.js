@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useCallback, useMemo, useState, useEffect } from "react";
 import {
   message,
   Progress,
@@ -14,16 +14,15 @@ import {
   Form,
   Select,
   Radio,
+  Checkbox,
   Spin,
 } from "antd";
 import {
   ArrowLeftOutlined,
   PlusOutlined,
-  CloudUploadOutlined,
   TableOutlined,
   SaveOutlined,
   DownloadOutlined,
-  ScanOutlined,
   CameraOutlined,
   SettingOutlined,
   ExclamationCircleOutlined,
@@ -31,12 +30,13 @@ import {
   SearchOutlined,
   ClearOutlined,
   BookOutlined,
+  ApartmentOutlined,
 } from "@ant-design/icons";
 import * as XLSX from "xlsx";
 import AppLayout from "../Layout/AppLayout.js";
 import AntdFamilyTable from "../AntdFamilyTable.js";
 import FirstFamilyWizard from "../Onboarding/FirstFamilyWizard.js";
-import tencentOcrService from "../../services/tencentOcrService.js";
+import tencentImageAnalysisService from "../../services/tencentImageAnalysisService.js";
 import uploadService from "../../services/uploadService.js";
 import tenantService from "../../services/tenantService.js";
 import familyDataService from "../../services/familyDataService.js";
@@ -47,6 +47,11 @@ import {
   normalizePersonLifeStatus,
 } from "../../utils/personLifeStatus.js";
 import { trackEvent } from "../../utils/analytics.js";
+import {
+  addPaternalAncestor,
+  getLifeStatusFields,
+  getPaternalOnboardingState,
+} from "../../utils/paternalOnboarding.js";
 import "./CreatorPage.css";
 
 const { Title } = Typography;
@@ -108,34 +113,38 @@ function CreatorPage({
   activeMenuItem = "create",
   onMenuClick,
   onOpenPersonProfile,
+  openPaternalGuide = false,
 }) {
   // 状态管理
   const [files, setFiles] = useState([]);
   const [previews, setPreviews] = useState([]);
-  const [ossUrls, setOssUrls] = useState([]);
+  const [uploadedImages, setUploadedImages] = useState([]);
   const [rows, setRows] = useState([]);
   const [jsonOutput, setJsonOutput] = useState("");
   const [busy, setBusy] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [ocrProgress, setOcrProgress] = useState(0);
+  const [analysisProgress, setAnalysisProgress] = useState(0);
   const [currentTenant, setCurrentTenant] = useState(null);
   const [dataLoading, setDataLoading] = useState(true);
-  const [uploadConfig, setUploadConfig] = useState(null);
-  const [ocrConfig, setOcrConfig] = useState(null);
 
   // 弹框状态管理
-  const [ocrModalVisible, setOcrModalVisible] = useState(false);
+  const [imageParseModalVisible, setImageParseModalVisible] = useState(false);
   const [managementModalVisible, setManagementModalVisible] = useState(false);
   const [mobilePersonModalVisible, setMobilePersonModalVisible] =
     useState(false);
   const [archivePersonModalVisible, setArchivePersonModalVisible] =
     useState(false);
   const [archivePersonId, setArchivePersonId] = useState(null);
+  const [paternalAncestorModalVisible, setPaternalAncestorModalVisible] =
+    useState(false);
+  const [paternalNameUnknown, setPaternalNameUnknown] = useState(false);
+  const [paternalGuideAutoOpened, setPaternalGuideAutoOpened] = useState(false);
   const [showMobileTable, setShowMobileTable] = useState(false);
   const [editingMobilePerson, setEditingMobilePerson] = useState(null);
   const [mobileVisibleCount, setMobileVisibleCount] = useState(20);
   const [mobilePersonForm] = Form.useForm();
   const [mobileEditForm] = Form.useForm();
+  const [paternalAncestorForm] = Form.useForm();
 
   // 重名检测相关状态
   const [duplicateModalVisible, setDuplicateModalVisible] = useState(false);
@@ -143,7 +152,7 @@ function CreatorPage({
     newData: [],
     duplicates: [],
   });
-  const [pendingOcrData, setPendingOcrData] = useState(null);
+  const [pendingImageData, setPendingImageData] = useState(null);
 
   // 表格多选状态管理
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
@@ -161,6 +170,11 @@ function CreatorPage({
           value: row.id,
           label: `${row.name} · 第${row.g_rank || 1}代`,
         })),
+    [rows],
+  );
+
+  const paternalOnboarding = useMemo(
+    () => getPaternalOnboardingState(rows),
     [rows],
   );
 
@@ -197,6 +211,37 @@ function CreatorPage({
     setArchivePersonModalVisible(false);
     onOpenPersonProfile?.(archivePersonId, { capture });
   };
+
+  const openPaternalAncestorModal = useCallback(() => {
+    setPaternalNameUnknown(false);
+    paternalAncestorForm.setFieldsValue({
+      name: "",
+      nameUnknown: false,
+      lifeStatus: "unknown",
+    });
+    setPaternalAncestorModalVisible(true);
+  }, [paternalAncestorForm]);
+
+  useEffect(() => {
+    if (
+      !openPaternalGuide ||
+      paternalGuideAutoOpened ||
+      dataLoading ||
+      paternalOnboarding.complete ||
+      !paternalOnboarding.anchorPerson
+    ) {
+      return;
+    }
+    setPaternalGuideAutoOpened(true);
+    openPaternalAncestorModal();
+  }, [
+    dataLoading,
+    openPaternalGuide,
+    openPaternalAncestorModal,
+    paternalGuideAutoOpened,
+    paternalOnboarding.anchorPerson,
+    paternalOnboarding.complete,
+  ]);
 
   const openMobilePersonEditor = (person) => {
     setEditingMobilePerson(person);
@@ -246,8 +291,8 @@ function CreatorPage({
     return duplicates;
   };
 
-  // 处理OCR识别的数据（加入重名检测）
-  const processOcrData = (validatedData) => {
+  // 处理图片解析候选（加入重名检测）
+  const processImageCandidates = (validatedData) => {
     if (rows.length > 0) {
       // 检测重名
       const duplicates = detectDuplicateNames(validatedData);
@@ -258,7 +303,7 @@ function CreatorPage({
         // 显示重名确认对话框
         setDuplicateData({ newData: validatedData, duplicates });
         setDuplicateModalVisible(true);
-        setPendingOcrData(validatedData);
+        setPendingImageData(validatedData);
 
         message.warning(
           `发现 ${duplicates.length} 个重名人员，请确认是否继续添加`,
@@ -268,12 +313,12 @@ function CreatorPage({
     }
 
     // 没有重名，直接添加
-    addOcrDataToTable(validatedData);
+    addImageCandidatesToTable(validatedData);
     return true;
   };
 
-  // 将OCR数据添加到表格（不保存到数据库）
-  const addOcrDataToTable = (validatedData) => {
+  // 将图片解析候选添加到表格（不保存到数据库）
+  const addImageCandidatesToTable = (validatedData) => {
     if (rows.length > 0) {
       // 表格已有数据，追加模式
       console.log("📝 追加模式：合并新识别的数据到现有数据");
@@ -292,15 +337,15 @@ function CreatorPage({
     }
 
     // 数据仅保存在内存中（不保存到localStorage）
-    console.log("✅ OCR数据已添加到内存缓存，等待用户保存到数据库");
+    console.log("✅ 图片解析候选已加入内存，等待用户确认并保存");
   };
 
   // 确认添加重名数据
   const confirmAddDuplicates = () => {
-    if (pendingOcrData) {
-      addOcrDataToTable(pendingOcrData);
+    if (pendingImageData) {
+      addImageCandidatesToTable(pendingImageData);
       setDuplicateModalVisible(false);
-      setPendingOcrData(null);
+      setPendingImageData(null);
       setDuplicateData({ newData: [], duplicates: [] });
     }
   };
@@ -406,7 +451,7 @@ function CreatorPage({
   };
   const cancelAddDuplicates = () => {
     setDuplicateModalVisible(false);
-    setPendingOcrData(null);
+    setPendingImageData(null);
     setDuplicateData({ newData: [], duplicates: [] });
     message.info("已取消添加重名数据");
   };
@@ -534,13 +579,7 @@ function CreatorPage({
     const tenant = tenantService.getCurrentTenant();
     setCurrentTenant(tenant);
 
-    const uploadConf = uploadService.getUploadConfig();
-    console.log("✅ OSS客户端初始化 constructor11");
-
-    setUploadConfig(uploadConf);
-
-    // OCR 密钥仅由服务端持有，浏览器不再读取或判断长期密钥。
-    setOcrConfig({ configured: true, managedByServer: true });
+    console.log("✅ 图片上传与大模型解析均由服务端安全管理");
   }, []);
 
   // 修改为使用familyDataService的3层架构加载数据
@@ -581,7 +620,7 @@ function CreatorPage({
       // 初始化其他状态为空
       setFiles([]);
       setPreviews([]);
-      setOssUrls([]);
+      setUploadedImages([]);
       setJsonOutput("");
     }
   }, [currentTenant]);
@@ -672,9 +711,9 @@ function CreatorPage({
 
   // useEffect(() => {
   //   if (currentTenant) {
-  //     saveToStorage('ossUrls', ossUrls);
+  //     saveToStorage('uploadedImages', uploadedImages);
   //   }
-  // }, [ossUrls, currentTenant]);
+  // }, [uploadedImages, currentTenant]);
 
   // useEffect(() => {
   //   if (currentTenant) {
@@ -725,11 +764,144 @@ function CreatorPage({
     return searchText ? filteredRows : rows;
   };
 
-  // 选择文件，限制最多 10 张
-  const onPickFiles = (e) => {
-    const fileList = Array.from(e.target.files || []);
+  const applyImageCandidates = (parsed) => {
+    if (!Array.isArray(parsed) || !parsed.length) {
+      message.warning("大模型没有读出明确的人物信息，请换一张更清晰的照片");
+      return false;
+    }
 
-    // 验证文件
+    const currentTime = new Date().toISOString();
+    const candidates = parsed.filter((item) =>
+      String(item?.name || "").trim(),
+    );
+    const nextId =
+      Math.max(0, ...rows.map((row) => Number(row.id) || 0)) + 1;
+    const candidateIdMap = new Map(
+      candidates.map((item, index) => [String(item.id), nextId + index]),
+    );
+    const mappedRelationId = (value) =>
+      candidateIdMap.get(String(value)) || 0;
+    const validatedData = candidates.map((item, index) => ({
+        ...item,
+        id: nextId + index,
+        name: String(item.name).trim(),
+        g_rank: item.g_rank || 1,
+        rank_index: item.rank_index || index + 1,
+        sex: item.sex || "MAN",
+        adoption: item.adoption || "none",
+        g_father_id: mappedRelationId(item.g_father_id),
+        official_position: item.official_position || "",
+        summary: item.summary || null,
+        g_mother_id: mappedRelationId(item.g_mother_id) || null,
+        birth_date: item.birth_date || null,
+        id_card: null,
+        face_img: null,
+        photos: null,
+        household_info: null,
+        spouse: item.spouse || null,
+        home_page: null,
+        dealth: null,
+        formal_name: item.formal_name || null,
+        location: item.location || null,
+        childrens: null,
+        created_at: currentTime,
+        updated_at: currentTime,
+      }));
+
+    if (!validatedData.length) {
+      message.warning("大模型没有读出明确的人名，请换一张更清晰的照片");
+      return false;
+    }
+    processImageCandidates(validatedData);
+    setShowMobileTable(true);
+    return true;
+  };
+
+  // 上传原图到当前家谱的私有空间，并保留可追溯的对象键。
+  const uploadFamilyTreeImages = async (selectedFiles) => {
+    setUploadProgress(5);
+    const tenantId = currentTenant?.id || "default";
+    const progressInterval = setInterval(() => {
+      setUploadProgress((prev) => (prev >= 90 ? prev : prev + 8));
+    }, 250);
+    try {
+      const images = await uploadService.uploadFiles(selectedFiles, tenantId, {
+        returnDescriptors: true,
+      });
+      setUploadProgress(100);
+      return images;
+    } finally {
+      clearInterval(progressInterval);
+    }
+  };
+
+  // 腾讯 TokenHub 的 HY-Vision 模型直接理解图片，不再经过传统 OCR。
+  const runImageAnalysis = async (images) => {
+    setAnalysisProgress(5);
+    const tenantId = currentTenant?.id || "default";
+    const progressInterval = setInterval(() => {
+      setAnalysisProgress((prev) => (prev >= 90 ? prev : prev + 6));
+    }, 450);
+    const frontendTimeoutMs = 120000;
+    let timeoutId;
+    try {
+      const timeoutPromise = new Promise((_, reject) => {
+        timeoutId = setTimeout(() => {
+          reject(
+            new Error(
+              `大模型解析超时（${frontendTimeoutMs / 1000}秒），请减少图片数量后重试`,
+            ),
+          );
+        }, frontendTimeoutMs);
+      });
+      const result = await Promise.race([
+        tencentImageAnalysisService.parseFamilyTree(images, tenantId),
+        timeoutPromise,
+      ]);
+      setAnalysisProgress(100);
+      return result;
+    } finally {
+      clearInterval(progressInterval);
+      clearTimeout(timeoutId);
+    }
+  };
+
+  const handlePhotoImport = async (selectedFiles) => {
+    if (!selectedFiles.length || busy) return;
+
+    setBusy(true);
+    setUploadedImages([]);
+    setUploadProgress(0);
+    setAnalysisProgress(0);
+    try {
+      message.loading("正在安全上传家谱照片...", 0);
+      const images = await uploadFamilyTreeImages(selectedFiles);
+      setUploadedImages(images);
+      message.destroy();
+      message.loading("腾讯混元大模型正在理解人物与世系...", 0);
+      const parsed = await runImageAnalysis(images);
+      message.destroy();
+
+      if (applyImageCandidates(parsed)) {
+        setImageParseModalVisible(false);
+        message.success("解析完成，请核对人物和关系后再保存");
+      }
+    } catch (error) {
+      message.destroy();
+      setUploadProgress(0);
+      setAnalysisProgress(0);
+      const errorMessage = error.message || "未知错误";
+      message.error(`图片解析失败：${errorMessage}`, 10);
+      console.error("腾讯混元图片解析失败:", error);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // 手机和 PC 统一为选图后立即上传并解析。
+  const onPickFiles = (event) => {
+    const fileList = Array.from(event.target.files || []);
+    event.target.value = "";
     const validation = uploadService.validateFiles(fileList);
     if (!validation.isValid) {
       message.error(validation.errors.join("\n"));
@@ -737,244 +909,10 @@ function CreatorPage({
     }
 
     const list = fileList.slice(0, 10);
+    previews.forEach((url) => uploadService.revokePreviewUrl(url));
     setFiles(list);
-
-    // 创建预览URL
-    const previewUrls = list.map((f) => uploadService.createPreviewUrl(f));
-    setPreviews(previewUrls);
-  };
-
-  // 上传文件到OSS或服务器
-  const uploadToOSS = async (selectedFiles) => {
-    try {
-      setUploadProgress(0);
-      const tenantId = currentTenant?.id || "default";
-
-      // 模拟上传进度
-      const progressInterval = setInterval(() => {
-        setUploadProgress((prev) => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return prev;
-          }
-          return prev + Math.random() * 20;
-        });
-      }, 200);
-
-      const urls = await uploadService.uploadFiles(selectedFiles, tenantId);
-
-      clearInterval(progressInterval);
-      setUploadProgress(100);
-
-      return urls;
-    } catch (error) {
-      setUploadProgress(0);
-      throw error;
-    }
-  };
-
-  // 调用通义千问 OCR 识别家谱信息
-  const runQwenOCR = async (imageUrls) => {
-    try {
-      setOcrProgress(0);
-      const tenantId = currentTenant?.id || "default";
-
-      console.log("🔍 开始OCR识别详细流程:");
-      console.log("📸 图片URLs:", imageUrls);
-      console.log("🏢 租户ID:", tenantId);
-      console.log("🔐 OCR 由服务端安全代理");
-
-      // 验证图片URL可访问性
-      for (let i = 0; i < imageUrls.length; i++) {
-        const url = imageUrls[i];
-        console.log(`🌐 验证图片 ${i + 1} 可访问性: ${url}`);
-        try {
-          const response = await fetch(url, { method: "HEAD" });
-          console.log(`✅ 图片 ${i + 1} 可访问，状态: ${response.status}`);
-        } catch (error) {
-          console.error(`❌ 图片 ${i + 1} 无法访问:`, error.message);
-        }
-      }
-
-      // 模拟OCR进度
-      const progressInterval = setInterval(() => {
-        setOcrProgress((prev) => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return prev;
-          }
-          return prev + Math.random() * 15;
-        });
-      }, 300);
-
-      console.log("📤 调用腾讯云 OCR 与视觉模型识别家谱...");
-
-      // 设置前端超时控制（比后端稍长一些）
-      const frontendTimeoutMs = 100000; // 100秒超时，给后端足够时间调用千问API
-      console.log(
-        `⏰ 设置前端超时时间: ${frontendTimeoutMs}ms (${frontendTimeoutMs / 1000}秒)`,
-      );
-
-      const ocrPromise = tencentOcrService.recognizeFamilyTree(
-        imageUrls,
-        tenantId,
-      );
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => {
-          reject(
-            new Error(
-              `OCR识别超时 (${frontendTimeoutMs / 1000}秒)，请检查网络连接或减少图片数量`,
-            ),
-          );
-        }, frontendTimeoutMs);
-      });
-
-      const result = await Promise.race([ocrPromise, timeoutPromise]);
-
-      clearInterval(progressInterval);
-      setOcrProgress(100);
-
-      console.log("📥 OCR服务返回结果:");
-      console.log("📊 结果类型:", typeof result);
-      console.log("📊 是否为数组:", Array.isArray(result));
-      console.log("📊 数组长度:", result?.length || 0);
-      console.log("📊 完整结果:", result);
-
-      return result;
-    } catch (error) {
-      setOcrProgress(0);
-      console.error("❌ runQwenOCR 执行失败:", error);
-      console.error("❌ 错误类型:", error.constructor.name);
-      console.error("❌ 错误消息:", error.message);
-      console.error("❌ 错误堆栈:", error.stack);
-      throw error;
-    }
-  };
-
-  const handleUpload = async () => {
-    if (!files.length) {
-      message.warning("请先选择要上传的图片");
-      return;
-    }
-
-    setBusy(true);
-    try {
-      message.loading("正在上传图片...", 0);
-      const urls = await uploadToOSS(files);
-      message.destroy();
-
-      setOssUrls(urls);
-      if (urls.length) {
-        message.success(`成功上传 ${urls.length} 张图片`);
-        console.log("✅ 图片上传成功，可以进行OCR识别");
-      } else {
-        message.error("图片上传失败，请重试");
-      }
-    } catch (error) {
-      message.destroy();
-      message.error(`上传失败: ${error.message}`);
-      console.error("上传失败:", error);
-    } finally {
-      setBusy(false);
-      setUploadProgress(0);
-    }
-  };
-
-  const handleOCR = async () => {
-    if (!ossUrls.length) {
-      message.warning("请先上传图片");
-      return;
-    }
-
-    console.log("🚀 开始OCR识别流程...");
-    console.log("📸 待识别图片URLs:", ossUrls);
-    console.log("🏢 当前租户:", currentTenant);
-
-    setBusy(true);
-    try {
-      message.loading("正在识别图片中的家谱信息...", 0);
-      const parsed = await runQwenOCR(ossUrls);
-      message.destroy();
-
-      console.log("🎯 OCR识别结果:", parsed);
-      console.log("📊 识别到的记录数量:", parsed?.length || 0);
-
-      if (parsed && parsed.length > 0) {
-        console.log("✅ 设置识别数据到表格...");
-
-        // 确保数据格式正确
-        const currentTime = new Date().toISOString();
-        const validatedData = parsed.map((item, index) => ({
-          ...item,
-          // 确保必需字段存在
-          id: item.id || `temp_${Date.now()}_${index}`,
-          name: item.name || `未知姓名${index + 1}`,
-          g_rank: item.g_rank || 1,
-          rank_index: item.rank_index || index + 1,
-          sex: item.sex || "MAN",
-          adoption: item.adoption || "none",
-          g_father_id: item.g_father_id || 0,
-          official_position: item.official_position || "",
-          summary: item.summary || null,
-          g_mother_id: item.g_mother_id || null,
-          birth_date: item.birth_date || null,
-          id_card: item.id_card || null,
-          face_img: item.face_img || null,
-          photos: item.photos || null,
-          household_info: item.household_info || null,
-          spouse: item.spouse || null,
-          home_page: item.home_page || null,
-          dealth: item.dealth || null,
-          formal_name: item.formal_name || null,
-          location: item.location || null,
-          childrens: item.childrens || null,
-          // 添加时间戳
-          created_at: currentTime,
-          updated_at: currentTime,
-        }));
-
-        console.log("🔄 验证后的数据:", validatedData);
-
-        // 使用新的重名检测逻辑处理数据
-        processOcrData(validatedData);
-      } else {
-        console.log("⚠️ 未识别到数据，创建1行空白供手动编辑");
-        // 创建1行空登，方便手动编辑
-        const currentTime = new Date().toISOString();
-        const emptyRowData = [
-          {
-            ...emptyRow(),
-            id: 1,
-            created_at: currentTime,
-            updated_at: currentTime,
-          },
-        ];
-        setRows(emptyRowData);
-        message.warning("未识别到家谱信息，已创建空白表格供手动编辑");
-      }
-    } catch (error) {
-      message.destroy();
-
-      // 显示详细的错误信息
-      const errorMessage = error.message || "未知错误";
-      message.error(`OCR识别失败: ${errorMessage}`, 10); // 显示10秒
-
-      console.error("❌ OCR识别失败:", error);
-      console.error("❌ 错误堆栈:", error.stack);
-
-      // 如果是配置问题，给出具体建议
-      if (errorMessage.includes("API Key")) {
-        message.warning("请检查通义千问API Key配置", 8);
-      } else if (
-        errorMessage.includes("网络") ||
-        errorMessage.includes("timeout")
-      ) {
-        message.warning("网络连接问题，请检查网络或稍后重试", 8);
-      }
-    } finally {
-      setBusy(false);
-      setOcrProgress(0);
-    }
+    setPreviews(list.map((file) => uploadService.createPreviewUrl(file)));
+    handlePhotoImport(list);
   };
 
   // 数据变化处理（已删除localStorage保存）
@@ -1023,6 +961,7 @@ function CreatorPage({
   };
 
   const addMobilePerson = async (values) => {
+    const { lifeStatus = "unknown", ...personValues } = values;
     const father = rows.find(
       (row) => String(row.id) === String(values.g_father_id),
     );
@@ -1032,7 +971,8 @@ function CreatorPage({
     const newPerson = normalizePersonLifeStatus(
       {
         ...emptyRow(),
-        ...values,
+        ...personValues,
+        ...getLifeStatusFields(lifeStatus),
         g_rank: generation,
         rank_index:
           rows.filter((row) => Number(row.g_rank) === generation).length + 1,
@@ -1042,7 +982,7 @@ function CreatorPage({
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       },
-      true,
+      false,
     );
     try {
       setBusy(true);
@@ -1113,7 +1053,7 @@ function CreatorPage({
   // 生成并下载familyData文件
   const generateFamilyDataFile = async () => {
     if (!rows || rows.length === 0) {
-      message.warning("请先进行OCR识别或添加家谱数据");
+      message.warning("请先解析家谱照片或添加家谱数据");
       return;
     }
 
@@ -1126,7 +1066,7 @@ function CreatorPage({
         rows,
         tenantId,
         {
-          suffix: "qwen-ocr",
+          suffix: "image-parse",
           autoDownload: true,
           includeStats: true,
         },
@@ -1311,6 +1251,36 @@ function CreatorPage({
     }
   };
 
+  const savePaternalAncestor = async (values) => {
+    try {
+      const result = addPaternalAncestor(rows, values);
+      const generationCount = result.state.completedGenerations;
+      const saved = await saveToCurrentTenant(
+        result.familyData,
+        generationCount >= 4
+          ? "父系四代已连接，第一份近期家谱完成了"
+          : `已连接 ${generationCount}/4 代，家谱已向上生长一代`,
+      );
+      if (!saved) return;
+
+      const eventName =
+        generationCount >= 4
+          ? "fourth_generation_connected"
+          : "third_generation_connected";
+      trackEvent(eventName, {
+        generationCount,
+        memberCount: result.familyData.length,
+        pendingName: values.nameUnknown === true,
+      });
+      setPaternalAncestorModalVisible(false);
+      paternalAncestorForm.resetFields();
+      setPaternalNameUnknown(false);
+      onMenuClick?.("tree");
+    } catch (error) {
+      message.error(error.message || "添加祖辈失败，请重试");
+    }
+  };
+
   const updatePersonIncrementally = async (record, patch) => {
     if (
       !currentTenant?.id ||
@@ -1398,6 +1368,14 @@ function CreatorPage({
     );
   }
 
+  const mobileDisplayRows = getCurrentDisplayData();
+  const mobileGenerationValues = rows
+    .map((row) => Number(row.g_rank))
+    .filter((value) => Number.isFinite(value) && value > 0);
+  const mobileGenerationRange = mobileGenerationValues.length
+    ? `${Math.min(...mobileGenerationValues)}–${Math.max(...mobileGenerationValues)} 代`
+    : "世代待补充";
+
   return (
     <AppLayout
       activeMenuItem={activeMenuItem}
@@ -1413,24 +1391,58 @@ function CreatorPage({
           >
             <ArrowLeftOutlined />
           </button>
-          <div>
-            <strong>续家谱</strong>
-            <span>内容自动保存在你的家谱空间</span>
-          </div>
-          <span aria-hidden="true" />
+          <strong>续家谱</strong>
+          <span className="mobile-creation-spacer" aria-hidden="true" />
         </header>
         <section className="mobile-continue-hub">
           <div className="mobile-continue-heading">
-            <span>续家谱</span>
             <h1>把记得的，先记下来</h1>
             <p>
               {currentTenant?.name || "我的家谱"} · 已记录{" "}
               {rows.filter((row) => row.name).length} 位家人
             </p>
           </div>
+          {!paternalOnboarding.complete && paternalOnboarding.anchorPerson && (
+            <section
+              className="paternal-guide-card"
+              aria-label={`父系四代进度：已连接 ${paternalOnboarding.completedGenerations} 代，共 4 代`}
+            >
+              <div className="paternal-guide-heading">
+                <span className="paternal-guide-icon" aria-hidden="true">
+                  <ApartmentOutlined />
+                </span>
+                <div>
+                  <small>父系四代 · 已连接</small>
+                  <strong>
+                    {paternalOnboarding.completedGenerations}/4 代
+                  </strong>
+                </div>
+              </div>
+              <Progress
+                percent={(paternalOnboarding.completedGenerations / 4) * 100}
+                showInfo={false}
+                strokeColor="#d8b46b"
+                trailColor="rgba(255, 255, 255, 0.16)"
+                size="small"
+              />
+              <h2>下一步：{paternalOnboarding.nextActionLabel}</h2>
+              <p>{paternalOnboarding.relationshipDescription}</p>
+              <Button
+                type="primary"
+                size="large"
+                block
+                onClick={openPaternalAncestorModal}
+              >
+                {paternalOnboarding.nextActionLabel}
+              </Button>
+              <small className="paternal-guide-note">
+                每次只补一代，保存后立即看到家谱向上生长
+              </small>
+            </section>
+          )}
           <button
             type="button"
-            className="mobile-flow-card primary"
+            className={`mobile-flow-card ${paternalOnboarding.complete ? "primary" : ""}`}
             onClick={() => setMobilePersonModalVisible(true)}
           >
             <span className="mobile-flow-icon">
@@ -1459,7 +1471,7 @@ function CreatorPage({
           <button
             type="button"
             className="mobile-flow-card"
-            onClick={() => setOcrModalVisible(true)}
+            onClick={() => setImageParseModalVisible(true)}
           >
             <span className="mobile-flow-icon">
               <CameraOutlined />
@@ -1491,6 +1503,143 @@ function CreatorPage({
           >
             <SettingOutlined /> 备份、导出与更多管理
           </button>
+
+          {showMobileTable && (
+            <section
+              className="mobile-family-directory"
+              aria-label="查找与修改家人资料"
+            >
+              <div className="mobile-directory-head">
+                <div className="mobile-directory-summary">
+                  <span>家人资料</span>
+                  <strong>{currentTenant?.name || "我的家谱"}</strong>
+                  <p>
+                    已录 {rows.filter((row) => row.name).length} 位 ·{" "}
+                    {mobileGenerationRange}
+                  </p>
+                </div>
+                <div className="mobile-directory-menu" aria-label="资料操作">
+                  <button
+                    type="button"
+                    className="primary"
+                    onClick={() => setMobilePersonModalVisible(true)}
+                  >
+                    <PlusOutlined /> 添加家人
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setImageParseModalVisible(true)}
+                  >
+                    <CameraOutlined /> 照片录入
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setManagementModalVisible(true)}
+                  >
+                    <SaveOutlined /> 保存导出
+                  </button>
+                </div>
+              </div>
+
+              <div className="mobile-directory-search">
+                <Input
+                  aria-label="搜索家人资料"
+                  placeholder="搜索姓名、地点、备注"
+                  prefix={<SearchOutlined />}
+                  suffix={<span>{mobileDisplayRows.length} 位</span>}
+                  value={searchText}
+                  onChange={(event) => {
+                    handleSearch(event.target.value);
+                    setMobileVisibleCount(20);
+                  }}
+                  allowClear
+                />
+              </div>
+
+              <div className="mobile-person-list">
+                {mobileDisplayRows.length ? (
+                  mobileDisplayRows
+                    .slice(0, mobileVisibleCount)
+                    .map((person) => {
+                      const fatherName = person.g_father_id
+                        ? personNameById.get(String(person.g_father_id))
+                        : null;
+                      const supportingDetails = [
+                        fatherName ? `父亲：${fatherName}` : null,
+                        person.location || null,
+                        person.spouse ? `配偶：${person.spouse}` : null,
+                      ].filter(Boolean);
+                      const personKey = person.person_id ?? person.id;
+                      const lifeStatusUnknown =
+                        person.dealth === "unknown" ||
+                        person.death_date === "unknown";
+
+                      return (
+                        <button
+                          type="button"
+                          className="mobile-person-card"
+                          key={personKey}
+                          onClick={() => openMobilePersonEditor(person)}
+                          aria-label={`修改${person.name}的资料`}
+                        >
+                          <span
+                            className="mobile-person-avatar"
+                            aria-hidden="true"
+                          >
+                            {person.name?.slice(-1)}
+                          </span>
+                          <span className="mobile-person-card-copy">
+                            <span className="mobile-person-card-title">
+                              <strong>{person.name}</strong>
+                              <i>第 {person.g_rank || 1} 代</i>
+                              <i
+                                className={
+                                  isPersonAlive(person)
+                                    ? "alive"
+                                    : lifeStatusUnknown
+                                      ? "pending"
+                                      : ""
+                                }
+                              >
+                                {isPersonAlive(person)
+                                  ? "在世"
+                                  : lifeStatusUnknown
+                                    ? "待确认"
+                                    : "已故"}
+                              </i>
+                            </span>
+                            <small>
+                              {supportingDetails.length
+                                ? supportingDetails.join(" · ")
+                                : "资料待补充"}
+                            </small>
+                          </span>
+                          <span className="mobile-person-edit-label">修改</span>
+                        </button>
+                      );
+                    })
+                ) : (
+                  <div className="mobile-person-empty">
+                    <SearchOutlined />
+                    <span>没有找到匹配的家人</span>
+                    <button type="button" onClick={clearSearch}>
+                      清除搜索
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {mobileDisplayRows.length > mobileVisibleCount && (
+                <button
+                  type="button"
+                  className="mobile-directory-more"
+                  onClick={() => setMobileVisibleCount((count) => count + 20)}
+                >
+                  再显示 20 位家人
+                </button>
+              )}
+            </section>
+          )}
         </section>
 
         {/* 页面头部 */}
@@ -1527,7 +1676,7 @@ function CreatorPage({
 
         {/* 核心数据表格区域（带内置功能入口） */}
         <Card
-          className={`family-data-card ${showMobileTable ? "show-mobile-table" : ""}`}
+          className="family-data-card"
           title={
             <div
               style={{
@@ -1650,7 +1799,7 @@ function CreatorPage({
                     <Button
                       type="primary"
                       icon={<CameraOutlined />}
-                      onClick={() => setOcrModalVisible(true)}
+                      onClick={() => setImageParseModalVisible(true)}
                       size="small"
                     >
                       照片识别
@@ -1736,6 +1885,107 @@ function CreatorPage({
         </Modal>
 
         <Modal
+          title={paternalOnboarding.nextActionLabel || "父系四代已连接"}
+          open={paternalAncestorModalVisible}
+          onCancel={() => {
+            setPaternalAncestorModalVisible(false);
+            setPaternalNameUnknown(false);
+            paternalAncestorForm.resetFields();
+          }}
+          footer={null}
+          destroyOnClose
+          className="mobile-person-modal paternal-ancestor-modal"
+        >
+          <Form
+            form={paternalAncestorForm}
+            layout="vertical"
+            onFinish={savePaternalAncestor}
+            initialValues={{
+              name: "",
+              nameUnknown: false,
+              lifeStatus: "unknown",
+            }}
+          >
+            <div className="paternal-modal-progress">
+              <span>父系四代</span>
+              <strong>{paternalOnboarding.completedGenerations}/4 代</strong>
+            </div>
+            <h3 className="paternal-modal-relation">
+              {paternalOnboarding.relationshipDescription}
+            </h3>
+            <p className="mobile-form-intro">
+              姓名是唯一需要填写的资料；保存后关系和世代会自动调整。
+            </p>
+            <Form.Item
+              name="name"
+              label={`${paternalOnboarding.nextLabel || "祖辈"}姓名`}
+              dependencies={["nameUnknown"]}
+              rules={[
+                ({ getFieldValue }) => ({
+                  validator(_, value) {
+                    if (
+                      getFieldValue("nameUnknown") ||
+                      String(value || "").trim()
+                    ) {
+                      return Promise.resolve();
+                    }
+                    return Promise.reject(
+                      new Error("请填写姓名，或选择姓名待考"),
+                    );
+                  },
+                }),
+              ]}
+            >
+              <Input
+                size="large"
+                placeholder="请输入姓名"
+                autoFocus
+                maxLength={30}
+                disabled={paternalNameUnknown}
+              />
+            </Form.Item>
+            <Form.Item name="nameUnknown" valuePropName="checked">
+              <Checkbox
+                onChange={(event) => {
+                  const checked = event.target.checked;
+                  setPaternalNameUnknown(checked);
+                  if (checked) paternalAncestorForm.setFieldValue("name", "");
+                }}
+              >
+                暂时不知道姓名，先建立
+                {paternalOnboarding.nextLabel || "祖辈"}关系
+              </Checkbox>
+            </Form.Item>
+            <Form.Item name="lifeStatus" label="生存状态（可选）">
+              <Radio.Group
+                className="paternal-life-status"
+                optionType="button"
+                buttonStyle="solid"
+              >
+                <Radio.Button value="unknown">不确定</Radio.Button>
+                <Radio.Button value="living">在世</Radio.Button>
+                <Radio.Button value="deceased">已故</Radio.Button>
+              </Radio.Group>
+            </Form.Item>
+            <div className="paternal-fact-note">
+              默认保持“不确定”，谱里不会替你猜测家人的姓名或生存状态。
+            </div>
+            <div className="mobile-form-submit">
+              <Button
+                type="primary"
+                htmlType="submit"
+                size="large"
+                block
+                loading={busy}
+              >
+                保存并查看家谱生长
+              </Button>
+              <small>保存后自动返回家谱，不需要填写人物 ID 或世代</small>
+            </div>
+          </Form>
+        </Modal>
+
+        <Modal
           title="添加一位家人"
           open={mobilePersonModalVisible}
           onCancel={() => {
@@ -1750,7 +2000,11 @@ function CreatorPage({
             form={mobilePersonForm}
             layout="vertical"
             onFinish={addMobilePerson}
-            initialValues={{ sex: "MAN", alive: true, g_rank: 1 }}
+            initialValues={{
+              sex: "MAN",
+              lifeStatus: "unknown",
+              g_rank: 1,
+            }}
           >
             <p className="mobile-form-intro">
               先填姓名和关系就能入谱，其他资料以后随时补。
@@ -1777,14 +2031,15 @@ function CreatorPage({
                   ]}
                 />
               </Form.Item>
-              <Form.Item name="alive" label="是否在世">
+              <Form.Item name="lifeStatus" label="生存状态">
                 <Radio.Group
                   className="mobile-life-status"
                   optionType="button"
                   buttonStyle="solid"
                 >
-                  <Radio.Button value={true}>在世</Radio.Button>
-                  <Radio.Button value={false}>已故</Radio.Button>
+                  <Radio.Button value="unknown">不确定</Radio.Button>
+                  <Radio.Button value="living">在世</Radio.Button>
+                  <Radio.Button value="deceased">已故</Radio.Button>
                 </Radio.Group>
               </Form.Item>
             </div>
@@ -1852,136 +2107,209 @@ function CreatorPage({
           </Form>
         </Modal>
 
-        {/* OCR识别功能弹框 */}
+        <Modal
+          title={
+            editingMobilePerson
+              ? `修改 ${editingMobilePerson.name} 的资料`
+              : "修改资料"
+          }
+          open={Boolean(editingMobilePerson)}
+          onCancel={() => {
+            setEditingMobilePerson(null);
+            mobileEditForm.resetFields();
+          }}
+          footer={null}
+          destroyOnClose
+          className="mobile-person-modal mobile-edit-person-modal"
+        >
+          <Form
+            form={mobileEditForm}
+            layout="vertical"
+            onFinish={saveMobilePerson}
+          >
+            <p className="mobile-form-intro">
+              修改后会直接保存到当前私密家谱，不需要再操作横向表格。
+            </p>
+            <Form.Item
+              name="name"
+              label="姓名"
+              rules={[{ required: true, message: "请填写家人姓名" }]}
+            >
+              <Input size="large" maxLength={30} />
+            </Form.Item>
+            <div className="mobile-form-grid">
+              <Form.Item name="sex" label="性别">
+                <Select
+                  size="large"
+                  options={[
+                    { value: "MAN", label: "男" },
+                    { value: "WOMAN", label: "女" },
+                  ]}
+                />
+              </Form.Item>
+              <Form.Item name="alive" label="是否在世">
+                <Radio.Group
+                  className="mobile-life-status"
+                  optionType="button"
+                  buttonStyle="solid"
+                >
+                  <Radio.Button value={true}>在世</Radio.Button>
+                  <Radio.Button value={false}>已故</Radio.Button>
+                </Radio.Group>
+              </Form.Item>
+            </div>
+            <Form.Item name="g_father_id" label="父亲 / 所属支系">
+              <Select
+                size="large"
+                showSearch
+                allowClear
+                optionFilterProp="label"
+                options={fatherOptions.filter(
+                  (option) =>
+                    String(option.value) !==
+                    String(
+                      editingMobilePerson?.id ??
+                        editingMobilePerson?.person_id ??
+                        "",
+                    ),
+                )}
+                placeholder="输入姓名查找，也可以暂不关联"
+              />
+            </Form.Item>
+            <div className="mobile-form-grid">
+              <Form.Item name="g_rank" label="世代">
+                <Input size="large" type="number" min="1" inputMode="numeric" />
+              </Form.Item>
+              <Form.Item name="rank_index" label="同代排行">
+                <Input size="large" type="number" min="1" inputMode="numeric" />
+              </Form.Item>
+            </div>
+            <details className="mobile-more-fields">
+              <summary>出生、地点与更多资料</summary>
+              <div className="mobile-more-fields-content">
+                <Form.Item name="birth_date" label="出生时间">
+                  <Input size="large" placeholder="例如：1988年或1988-06-12" />
+                </Form.Item>
+                <Form.Item name="location" label="籍贯或居住地">
+                  <Input size="large" placeholder="例如：山东省临沂市" />
+                </Form.Item>
+                <Form.Item name="spouse" label="配偶">
+                  <Input size="large" />
+                </Form.Item>
+                <Form.Item name="official_position" label="职业或身份">
+                  <Input size="large" />
+                </Form.Item>
+                <Form.Item name="summary" label="人物记述">
+                  <Input.TextArea rows={4} maxLength={500} showCount />
+                </Form.Item>
+              </div>
+            </details>
+            <div className="mobile-form-submit">
+              <Button
+                type="primary"
+                htmlType="submit"
+                size="large"
+                block
+                loading={busy}
+              >
+                保存修改
+              </Button>
+              <small>保存后，家谱图与人物资料会同步更新</small>
+            </div>
+          </Form>
+        </Modal>
+
+        {/* 家谱照片大模型解析弹框 */}
         <Modal
           title="从家谱照片录入"
-          open={ocrModalVisible}
-          onCancel={() => setOcrModalVisible(false)}
+          open={imageParseModalVisible}
+          onCancel={() => {
+            if (!busy) setImageParseModalVisible(false);
+          }}
           footer={null}
           width={600}
           destroyOnClose
+          closable={!busy}
+          maskClosable={!busy}
+          keyboard={!busy}
+          className="family-photo-modal"
         >
-          <div style={{ padding: "16px 0" }}>
+          <div className="family-photo-import">
             <Space direction="vertical" style={{ width: "100%" }} size="large">
-              {/* 文件选择区域 */}
-              <div>
-                <h4>1. 选择家谱照片</h4>
+              <div className="family-photo-intro">
+                <h3>选择纸质家谱照片</h3>
+                <p>
+                  选完后会自动安全上传，并由腾讯混元大模型直接理解文字、版面和世系关系。
+                </p>
+              </div>
+
+              <label
+                className={`family-photo-picker ${busy ? "disabled" : ""}`}
+              >
+                <CameraOutlined />
+                <span>
+                  <strong>
+                    {busy ? "正在处理照片" : "从相册或电脑选择照片"}
+                  </strong>
+                  <small>支持 JPG、PNG、WebP，单张不超过 10MB</small>
+                </span>
                 <input
                   type="file"
                   multiple
                   accept="image/*"
                   onChange={onPickFiles}
                   disabled={busy}
-                  style={{ marginBottom: "12px", width: "100%" }}
                 />
-                {files.length > 0 && (
-                  <div
-                    style={{
-                      fontSize: "12px",
-                      color: "#666",
-                      marginBottom: "12px",
-                    }}
-                  >
-                    已选择 {files.length} 个文件
-                  </div>
-                )}
+              </label>
 
-                {/* 预览区域 */}
-                {files.length > 0 && (
+              {files.length > 0 && (
+                <div>
+                  <div className="family-photo-count">
+                    已选择 {files.length} 张照片
+                  </div>
                   <div className="preview-grid">
-                    {previews.map((src, i) => (
-                      <div className="preview" key={i}>
-                        <img src={src} alt={`预览${i + 1}`} />
+                    {previews.map((src, index) => (
+                      <div className="preview" key={src}>
+                        <img src={src} alt={`家谱照片预览${index + 1}`} />
                       </div>
                     ))}
                   </div>
-                )}
+                </div>
+              )}
 
-                {ossUrls.length > 0 && (
-                  <div
-                    style={{
-                      color: "#52c41a",
-                      fontSize: "12px",
-                      marginTop: "8px",
-                    }}
-                  >
-                    ✓ 已上传 {ossUrls.length} 张图片到云端
-                  </div>
-                )}
-              </div>
-
-              {/* 操作按钮区域 */}
-              <div>
-                <h4>2. 上传并识别</h4>
-                <Space>
-                  <Button
-                    type="primary"
-                    icon={<CloudUploadOutlined />}
-                    disabled={!files.length || busy}
-                    loading={busy && uploadProgress > 0}
-                    onClick={handleUpload}
-                  >
-                    {busy && uploadProgress > 0 ? "上传中..." : "上传照片"}
-                  </Button>
-
-                  <Button
-                    type="primary"
-                    icon={<ScanOutlined />}
-                    disabled={!ossUrls.length || busy}
-                    loading={busy && ocrProgress > 0}
-                    onClick={() => {
-                      handleOCR().then(() => {
-                        setOcrModalVisible(false);
-                        message.success("识别完成，请查看表格数据");
-                      });
-                    }}
-                  >
-                    {busy && ocrProgress > 0 ? "识别中..." : "识别照片"}
-                  </Button>
-
-                  <Button
-                    onClick={() => {
-                      // 如果表格为空，添加一行空数据
-                      if (rows.length === 0) {
-                        const emptyRowData = [
-                          {
-                            ...emptyRow(),
-                            id: 1,
-                          },
-                        ];
-                        setRows(emptyRowData);
-                      }
-                      setOcrModalVisible(false);
-                      message.info("已进入手动编辑模式");
-                    }}
-                  >
-                    手动编辑
-                  </Button>
-                </Space>
-              </div>
-
-              {/* 进度显示 */}
-              {uploadProgress > 0 && uploadProgress < 100 && (
-                <div>
-                  <h4>📄 上传进度</h4>
+              {busy && uploadProgress > 0 && analysisProgress === 0 && (
+                <div className="family-photo-progress" aria-live="polite">
+                  <strong>正在安全上传原图</strong>
+                  <span>原图会保存在当前家谱的私有空间</span>
                   <Progress
                     percent={Math.round(uploadProgress)}
                     status="active"
-                    strokeColor={{ "0%": "#108ee9", "100%": "#87d068" }}
+                    showInfo={false}
                   />
                 </div>
               )}
 
-              {ocrProgress > 0 && ocrProgress < 100 && (
-                <div>
-                  <h4>🤖 OCR识别进度</h4>
+              {busy && analysisProgress > 0 && (
+                <div className="family-photo-progress" aria-live="polite">
+                  <strong>大模型正在理解家谱</strong>
+                  <span>逐张读取人名、代际和连接关系，请稍候</span>
                   <Progress
-                    percent={Math.round(ocrProgress)}
+                    percent={Math.round(analysisProgress)}
                     status="active"
-                    strokeColor={{ "0%": "#722ed1", "100%": "#52c41a" }}
+                    showInfo={false}
                   />
                 </div>
               )}
+
+              {!busy && uploadedImages.length > 0 && (
+                <div className="family-photo-uploaded">
+                  已安全上传 {uploadedImages.length} 张照片，可重新选择再次解析
+                </div>
+              )}
+
+              <small className="family-photo-review-note">
+                大模型只生成待确认候选，不会自动改写已保存的家谱。
+              </small>
             </Space>
           </div>
         </Modal>

@@ -1,6 +1,6 @@
 /**
  * 家谱数据文件生成服务
- * 根据OCR识别结果自动生成独立的familyData-xx.js文件
+ * 根据家谱图片解析候选自动生成独立的familyData-xx.js文件
  */
 
 class FamilyDataGenerator {
@@ -9,7 +9,7 @@ class FamilyDataGenerator {
   }
 
   /**
-   * 根据OCR识别结果生成familyData文件
+   * 根据家谱图片解析候选生成familyData文件
    * @param {Array} familyData - 家谱数据
    * @param {string} tenantId - 租户ID
    * @param {Object} options - 生成选项
@@ -78,7 +78,7 @@ class FamilyDataGenerator {
    */
   generateFileName(tenantId, options = {}) {
     const timestamp = new Date().toISOString().split('T')[0].replace(/-/g, '');
-    const suffix = options.suffix || 'ocr';
+    const suffix = options.suffix || 'image-parse';
     return `familyData-${tenantId}-${suffix}-${timestamp}.js`;
   }
 
@@ -166,7 +166,7 @@ class FamilyDataGenerator {
     const header = `/**
  * 家谱数据文件 - ${tenantId}
  * 生成时间: ${timestamp}
- * 数据来源: OCR识别 (通义千问VL-Max)
+ * 数据来源: 腾讯混元大模型图片解析
  * 记录总数: ${data.length}
  * 世代分布: ${Object.keys(stats).map(g => `第${g}代(${stats[g]}人)`).join(', ')}
  */
@@ -219,7 +219,7 @@ export const getFamilyMembersByFather = (fatherId) => {
       tenantId,
       generatedAt: new Date().toISOString(),
       version: '1.0.0',
-      source: 'OCR识别 (通义千问VL-Max)',
+      source: '腾讯混元大模型图片解析',
       recordCount: data.length,
       generations: this.getGenerationStats(data),
       dataSchema: {

@@ -16,7 +16,8 @@ const FamilyMemberNode = ({ data, selected }) => {
     location,
     summary,
     hasCollapsedChildren,
-    isNameProtectionEnabled = false // 姓名保护开关，默认关闭
+    isNameProtectionEnabled = false, // 姓名保护开关，默认关闭
+    useFounderLabels = true,
   } = data;
 
   // 根据性别选择图标和颜色
@@ -64,7 +65,7 @@ const FamilyMemberNode = ({ data, selected }) => {
 
   // 判断是否为前3代祖先
   const isFoundingGeneration = () => {
-    return rank <= 3;
+    return useFounderLabels && rank <= 3;
   };
 
   // 获取前3代的特殊样式
@@ -138,6 +139,8 @@ const FamilyMemberNode = ({ data, selected }) => {
   const getLifeStatus = () => {
     if (death === 'alive') {
       return { text: '在世', color: 'success' };
+    } else if (death === 'unknown') {
+      return { text: '待确认', color: 'warning' };
     } else if (death === null || death === 'dealth') {
       return { text: '已故', color: 'default' };
     }

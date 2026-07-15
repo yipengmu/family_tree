@@ -27,7 +27,6 @@
     "reactflow": "^11.10.1",
     "redis": "^5.10.0",
     "tencentcloud-sdk-nodejs-asr": "^4.1.266",
-    "tencentcloud-sdk-nodejs-ocr": "^4.1.267",
     "tencentcloud-sdk-nodejs-ses": "^4.1.266",
     "xlsx": "^0.18.5"
   },

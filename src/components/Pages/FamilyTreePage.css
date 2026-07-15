@@ -107,6 +107,75 @@
   color: #fff !important;
 }
 
+.paternal-progress-banner {
+  min-height: 72px;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 13px;
+  margin: 0 0 10px;
+  padding: 11px 14px;
+  border: 1px solid rgba(216, 180, 107, 0.34);
+  border-radius: 13px;
+  background: linear-gradient(135deg, #173f38, #24584d);
+  color: #fffdf6;
+  box-shadow: 0 9px 24px rgba(23, 63, 56, 0.12);
+}
+
+.paternal-progress-banner > span {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(216, 180, 107, 0.48);
+  border-radius: 12px 12px 4px 4px;
+  color: #d8b46b;
+  font: 600 21px var(--serif);
+}
+
+.paternal-progress-banner small {
+  display: block;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+}
+
+.paternal-progress-banner strong {
+  display: block;
+  margin-top: 2px;
+  font: 600 16px var(--serif);
+}
+
+.paternal-progress-banner p {
+  margin: 2px 0 0;
+  color: rgba(255, 255, 255, 0.66);
+  font-size: 10px;
+}
+
+.paternal-progress-banner .ant-btn-primary {
+  border-color: #d8b46b;
+  background: #d8b46b;
+  color: #173f38;
+  font-weight: 700;
+}
+
+.paternal-progress-banner.complete {
+  border-color: rgba(23, 101, 74, 0.2);
+  background: linear-gradient(135deg, #f4ead5, #fffaf0);
+  color: var(--ink);
+  box-shadow: 0 7px 20px rgba(35, 53, 47, 0.07);
+}
+
+.paternal-progress-banner.complete > span {
+  border-color: rgba(154, 63, 47, 0.25);
+  color: var(--cinnabar);
+}
+
+.paternal-progress-banner.complete small,
+.paternal-progress-banner.complete p {
+  color: var(--ink-soft);
+}
+
 @media (max-width: 1200px) and (min-width: 769px) {
   .family-context-bar {
     grid-template-columns: minmax(200px, 0.7fr) minmax(280px, 1.2fr) auto;
@@ -233,6 +302,30 @@
   .family-tree-page {
     height: 100%;
     min-height: 0;
+  }
+  .paternal-progress-banner {
+    grid-template-columns: 38px minmax(0, 1fr) auto;
+    gap: 10px;
+    min-height: 66px;
+    padding: 9px 10px;
+  }
+  .paternal-progress-banner > span {
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+  }
+  .paternal-progress-banner strong {
+    font-size: 14px;
+  }
+  .paternal-progress-banner p {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .paternal-progress-banner .ant-btn {
+    min-height: 38px;
+    padding-inline: 10px;
+    font-size: 11px;
   }
 }
 

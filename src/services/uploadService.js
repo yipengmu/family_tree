@@ -47,7 +47,14 @@ class UploadService {
       if (!uploadResponse.ok) throw new Error(`${file.name} 上传失败`);
 
       options.onProgress?.(index, 100, file.name);
-      results.push(signed.fileUrl);
+      results.push(
+        options.returnDescriptors
+          ? {
+              url: signed.fileUrl,
+              objectKey: signed.objectKey,
+            }
+          : signed.fileUrl,
+      );
     }
     return results;
   }
