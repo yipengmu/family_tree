@@ -389,7 +389,7 @@
 @media (max-width: 768px) {
   .data-management-page {
     min-height: 100dvh;
-    padding: 0 14px calc(24px + env(safe-area-inset-bottom));
+    padding: 0 14px calc(96px + env(safe-area-inset-bottom));
     background: var(--paper);
     overflow: auto;
   }
@@ -597,10 +597,8 @@
 
   .mobile-directory-head {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 8px;
-    align-items: stretch;
-    padding: 11px 12px;
+    grid-template-columns: 1fr;
+    padding: 11px 12px 9px;
     background: linear-gradient(135deg, rgba(247, 243, 232, 0.92), #fffdf7);
   }
 
@@ -629,47 +627,6 @@
     margin: 5px 0 0;
     color: var(--ink-soft);
     font-size: 10px;
-  }
-
-  .mobile-directory-menu {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .mobile-directory-menu button {
-    min-height: 34px;
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    padding: 0 10px;
-    border: 1px solid rgba(35, 53, 47, 0.12);
-    border-radius: 8px;
-    background: rgba(255, 253, 247, 0.92);
-    color: var(--pine);
-    font-size: 11px;
-    text-align: left;
-  }
-
-  .mobile-directory-menu button.primary {
-    border-color: var(--pine);
-    background: var(--pine);
-    color: #fffdf7;
-  }
-
-  .mobile-directory-menu button.secondary {
-    min-width: 34px;
-    justify-content: center;
-    padding: 0 8px;
-    color: var(--ink-soft);
-  }
-
-  .mobile-directory-menu button.secondary:not(:hover) {
-    font-size: 0;
-  }
-
-  .mobile-directory-menu button.secondary .anticon {
-    font-size: 16px;
   }
 
   .mobile-directory-search {

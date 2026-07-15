@@ -25,7 +25,6 @@ describe("creator page mobile directory", () => {
 
   test("replaces the mobile horizontal table with a searchable card list", () => {
     expect(source).toContain('className="mobile-family-directory"');
-    expect(source).toContain('className="mobile-directory-menu"');
     expect(source).toContain('className="mobile-person-list"');
     expect(source).toContain('className="mobile-person-card"');
     expect(source).toContain("openMobilePersonEditor(person)");
@@ -33,15 +32,11 @@ describe("creator page mobile directory", () => {
       /@media\s*\(max-width:\s*768px\)[\s\S]*?\.family-data-card\s*\{[^}]*display:\s*none;/s,
     );
     expect(stylesheet).toMatch(
-      /\.mobile-directory-head\s*\{[^}]*display:\s*grid;[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s*auto;/s,
+      /\.mobile-directory-head\s*\{[^}]*display:\s*grid;[^}]*grid-template-columns:\s*1fr;/s,
     );
-    const directoryMenu = source.match(
-      /<div className="mobile-directory-menu"[\s\S]*?<\/div>/,
-    );
-    expect(directoryMenu).not.toBeNull();
-    expect(directoryMenu[0]).not.toContain("照片录入");
-    expect(directoryMenu[0]).not.toContain("保存导出");
-    expect(source).toContain('aria-label="打开更多家谱管理"');
+    expect(source).toContain('className="mobile-manage-link"');
+    expect(source).not.toContain('aria-label="打开更多家谱管理"');
+    expect(source).toContain("<strong>已录家人</strong>");
   });
 
   test("offers a focused mobile form for modifying a person", () => {

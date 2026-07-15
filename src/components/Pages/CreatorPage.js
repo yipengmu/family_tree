@@ -30,7 +30,6 @@ import {
   ClearOutlined,
   BookOutlined,
   ApartmentOutlined,
-  EllipsisOutlined,
 } from "@ant-design/icons";
 import AppLayout from "../Layout/AppLayout.js";
 import AntdFamilyTable from "../AntdFamilyTable.js";
@@ -1434,29 +1433,11 @@ function CreatorPage({
               <div className="mobile-directory-head">
                 <div className="mobile-directory-summary">
                   <span>家人资料</span>
-                  <strong>{currentTenant?.name || "我的家谱"}</strong>
+                  <strong>已录家人</strong>
                   <p>
-                    已录 {rows.filter((row) => row.name).length} 位 ·{" "}
+                    {rows.filter((row) => row.name).length} 位 ·{" "}
                     {mobileGenerationRange}
                   </p>
-                </div>
-                <div className="mobile-directory-menu" aria-label="资料操作">
-                  <button
-                    type="button"
-                    className="primary"
-                    onClick={() => setMobilePersonModalVisible(true)}
-                  >
-                    <PlusOutlined /> 添加家人
-                  </button>
-                  <button
-                    type="button"
-                    className="secondary"
-                    aria-label="打开更多家谱管理"
-                    title="备份、导出与更多管理"
-                    onClick={() => setManagementModalVisible(true)}
-                  >
-                    <EllipsisOutlined /> 更多
-                  </button>
                 </div>
               </div>
 

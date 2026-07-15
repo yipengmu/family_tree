@@ -343,6 +343,7 @@ function PersonProfilePage({
         activeMenuItem="person"
         onMenuClick={onMenuClick}
         familyData={familyData}
+        immersiveMobile
       >
         <main className="person-profile-page person-profile-missing">
           <div>
@@ -363,6 +364,7 @@ function PersonProfilePage({
       activeMenuItem="person"
       onMenuClick={onMenuClick}
       familyData={familyData}
+      immersiveMobile
     >
       <main className="person-profile-page">
         <button type="button" className="person-profile-back" onClick={onBack}>

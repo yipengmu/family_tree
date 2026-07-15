@@ -33,6 +33,12 @@ describe("person life archive flow", () => {
     );
   });
 
+  it("uses the immersive mobile shell so the profile fills the content area", () => {
+    expect(source).toMatch(
+      /activeMenuItem="person"[\s\S]*?familyData=\{familyData\}[\s\S]*?immersiveMobile/,
+    );
+  });
+
   it("starts the capture form directly without introductory prompts", () => {
     expect(source).not.toContain("story-intro");
     expect(source).not.toContain("story-prompts");
