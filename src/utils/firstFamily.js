@@ -14,8 +14,9 @@ const createPerson = ({
   location = "",
   alive,
   now,
-}) =>
-  normalizePersonLifeStatus(
+}) => {
+  const hasConfirmedLifeStatus = typeof alive === "boolean";
+  return normalizePersonLifeStatus(
     {
       id,
       name,
@@ -37,12 +38,15 @@ const createPerson = ({
       formal_name: "",
       location,
       childrens: "",
-      ...(typeof alive === "boolean" ? { alive } : {}),
+      ...(hasConfirmedLifeStatus
+        ? { alive }
+        : { dealth: "unknown", death_date: "unknown" }),
       created_at: now,
       updated_at: now,
     },
-    typeof alive === "boolean" ? alive : false,
+    hasConfirmedLifeStatus ? alive : false,
   );
+};
 
 export const countFirstFamilyMembers = (values = {}) => {
   const names = [values.selfName, values.fatherName, values.motherName];

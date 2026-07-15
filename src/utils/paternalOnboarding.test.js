@@ -25,10 +25,9 @@ const twoGenerationFamily = [
 
 describe("paternal onboarding", () => {
   test("finds the current paternal chain and the next guided relation", () => {
-    expect(buildPaternalChain(twoGenerationFamily).map((person) => person.name)).toEqual([
-      "本人",
-      "父亲",
-    ]);
+    expect(
+      buildPaternalChain(twoGenerationFamily).map((person) => person.name),
+    ).toEqual(["本人", "父亲"]);
     expect(getPaternalOnboardingState(twoGenerationFamily)).toMatchObject({
       completedGenerations: 2,
       targetGenerations: 4,
@@ -121,4 +120,3 @@ describe("paternal onboarding", () => {
     });
   });
 });
-

@@ -64,7 +64,11 @@ function resolveModernRoute(requestPath) {
       return route("api/story.js", { type: "person-events" }, { personId: id });
     }
     if (id && action === "memories") {
-      return route("api/story.js", { type: "person-memories" }, { personId: id });
+      return route(
+        "api/story.js",
+        { type: "person-memories" },
+        { personId: id },
+      );
     }
     if (id) return route("api/people.js", { type: "item" }, { personId: id });
     return route("api/people.js", { type: "collection" });

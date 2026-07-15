@@ -6,13 +6,22 @@ const personId = (person = {}) => String(person.person_id ?? person.id ?? "");
 
 const parentId = (person = {}) => {
   const value = person.g_father_id;
-  if (value === undefined || value === null || value === "" || value === 0 || value === "0") {
+  if (
+    value === undefined ||
+    value === null ||
+    value === "" ||
+    value === 0 ||
+    value === "0"
+  ) {
     return null;
   }
   return String(value);
 };
 
-const pickPaternalStartingPerson = (familyData = [], preferredPersonId = null) => {
+const pickPaternalStartingPerson = (
+  familyData = [],
+  preferredPersonId = null,
+) => {
   if (preferredPersonId !== null && preferredPersonId !== undefined) {
     const preferred = familyData.find(
       (person) => personId(person) === String(preferredPersonId),
@@ -20,10 +29,10 @@ const pickPaternalStartingPerson = (familyData = [], preferredPersonId = null) =
     if (preferred) return preferred;
   }
 
-  const parentIds = new Set(
-    familyData.map(parentId).filter(Boolean),
+  const parentIds = new Set(familyData.map(parentId).filter(Boolean));
+  const leaves = familyData.filter(
+    (person) => !parentIds.has(personId(person)),
   );
-  const leaves = familyData.filter((person) => !parentIds.has(personId(person)));
   const candidates = leaves.length ? leaves : familyData;
 
   return [...candidates].sort((left, right) => {
@@ -39,12 +48,13 @@ const pickPaternalStartingPerson = (familyData = [], preferredPersonId = null) =
   })[0];
 };
 
-export const buildPaternalChain = (familyData = [], preferredPersonId = null) => {
+export const buildPaternalChain = (
+  familyData = [],
+  preferredPersonId = null,
+) => {
   if (!Array.isArray(familyData) || !familyData.length) return [];
 
-  const byId = new Map(
-    familyData.map((person) => [personId(person), person]),
-  );
+  const byId = new Map(familyData.map((person) => [personId(person), person]));
   const chain = [];
   const visited = new Set();
   let current = pickPaternalStartingPerson(familyData, preferredPersonId);
@@ -180,4 +190,3 @@ export const addPaternalAncestor = (
     ),
   };
 };
-

@@ -95,6 +95,7 @@
 }
 
 .family-photo-picker {
+  position: relative;
   min-height: 86px;
   display: flex;
   align-items: center;
@@ -105,6 +106,7 @@
   background: rgba(247, 243, 232, 0.55);
   color: var(--pine);
   cursor: pointer;
+  overflow: hidden;
   transition:
     border-color 160ms ease,
     background 160ms ease;
@@ -113,6 +115,11 @@
 .family-photo-picker:hover {
   border-color: var(--pine);
   background: rgba(247, 243, 232, 0.9);
+}
+
+.family-photo-picker:focus-within {
+  outline: 3px solid rgba(23, 63, 56, 0.18);
+  outline-offset: 2px;
 }
 
 .family-photo-picker.disabled {
@@ -152,12 +159,11 @@
 
 .family-photo-picker input {
   position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  clip-path: inset(50%);
-  white-space: nowrap;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: inherit;
 }
 
 .family-photo-progress {
@@ -254,17 +260,6 @@
   margin: 4px 0 13px;
   color: var(--ink-soft);
   font-size: 12px;
-}
-
-.management-export-section {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.management-export-section p {
-  margin-bottom: 0;
 }
 
 .management-stats {

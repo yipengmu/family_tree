@@ -31,6 +31,7 @@ describe("first family onboarding", () => {
       g_rank: 2,
       g_father_id: byName["林河"].id,
       g_mother_id: byName["陈兰"].id,
+      death_date: "unknown",
     });
     expect(byName["周静"]).toMatchObject({
       g_rank: 2,

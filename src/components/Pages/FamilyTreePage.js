@@ -59,6 +59,10 @@ const FamilyTreePage = ({
   const [journeyStatus, setJourneyStatus] = useState("idle");
   const [journeyGeneration, setJourneyGeneration] = useState(null);
   const isJourneyActive = isDemoFamily && journeyStatus !== "idle";
+  const showContextAction =
+    isDemoFamily ||
+    !localStorage.getItem("token") ||
+    paternalOnboarding.complete;
   const currentJourneyStep = useMemo(() => {
     if (!journey.steps.length) return null;
     return (
@@ -237,7 +241,10 @@ const FamilyTreePage = ({
           </section>
         )}
 
-        <section className="family-context-bar" aria-label="当前家谱信息">
+        <section
+          className={`family-context-bar ${showContextAction ? "" : "family-context-bar--compact"}`}
+          aria-label="当前家谱信息"
+        >
           <div className="family-context-copy">
             <span className="family-context-kicker">世系总览</span>
             <h1>{familyName}</h1>
@@ -258,42 +265,38 @@ const FamilyTreePage = ({
               <p>先记下一位家人，之后再补充父母、祖辈和家族故事。</p>
             </div>
           )}
-          <div className="family-context-actions">
-            {isDemoFamily ? (
-              <Button
-                type="primary"
-                onClick={handleCreateMyFamilyTree}
-                className="create-family-btn"
-              >
-                <span className="create-family-btn-eyebrow">
-                  没有纸质家谱，也能
-                </span>
-                <span>从自己开始</span>
-              </Button>
-            ) : !localStorage.getItem("token") ? (
-              <Button
-                type="primary"
-                onClick={handleCreateMyFamilyTree}
-                className="create-family-btn"
-              >
-                创建我的家谱
-              </Button>
-            ) : (
-              <Button
-                type="primary"
-                onClick={() =>
-                  paternalOnboarding.complete
-                    ? onMenuClick?.("create")
-                    : onStartPaternalGuide?.()
-                }
-                className="create-family-btn"
-              >
-                {paternalOnboarding.complete
-                  ? "续录族人"
-                  : paternalOnboarding.nextActionLabel}
-              </Button>
-            )}
-          </div>
+          {showContextAction && (
+            <div className="family-context-actions">
+              {isDemoFamily ? (
+                <Button
+                  type="primary"
+                  onClick={handleCreateMyFamilyTree}
+                  className="create-family-btn"
+                >
+                  <span className="create-family-btn-eyebrow">
+                    没有纸质家谱，也能
+                  </span>
+                  <span>从自己开始</span>
+                </Button>
+              ) : !localStorage.getItem("token") ? (
+                <Button
+                  type="primary"
+                  onClick={handleCreateMyFamilyTree}
+                  className="create-family-btn"
+                >
+                  创建我的家谱
+                </Button>
+              ) : (
+                <Button
+                  type="primary"
+                  onClick={() => onMenuClick?.("create")}
+                  className="create-family-btn"
+                >
+                  续录族人
+                </Button>
+              )}
+            </div>
+          )}
         </section>
 
         {!isDemoFamily &&

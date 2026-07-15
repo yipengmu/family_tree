@@ -12,7 +12,7 @@ import {
 } from "@ant-design/icons";
 import { Link, useNavigate } from "react-router-dom";
 import BRAND from "../../constants/brand.js";
-import { getCreatePath } from "../../utils/appRoutes.js";
+import { getAppPath, getCreatePath } from "../../utils/appRoutes.js";
 import { trackEvent } from "../../utils/analytics.js";
 import "./MarketingHomePage.css";
 
@@ -20,17 +20,17 @@ const memoryScenes = [
   {
     index: "01",
     title: "照片还在，名字却没人知道",
-    copy: "一张老照片经过几次搬家，最后只剩“应该是太爷爷那一辈”的猜测。",
+    copy: "搬过几次家，照片里的人只剩一句“应该是太爷爷那一辈”。",
   },
   {
     index: "02",
-    title: "记得名字，却不知道他怎样生活",
-    copy: "职业、手艺、性格和走过的地方，常常没有进入传统的姓名与世系记录。",
+    title: "记得名字，不知道他怎样生活",
+    copy: "职业、手艺和走过的地方，常常没有被记下来。",
   },
   {
     index: "03",
     title: "故事散在不同家人的记忆里",
-    copy: "每个人知道一部分，却总想着以后再问、以后再整理。",
+    copy: "每个人知道一部分，却总想着以后再整理。",
   },
 ];
 
@@ -38,17 +38,17 @@ const capabilities = [
   {
     label: "看家谱",
     title: "从关系里看懂一家人",
-    copy: "浏览世系、搜索人物、聚焦支系，在名字之间找到清楚的代际脉络。",
+    copy: "浏览世系、搜索人物，在名字之间看清代际关系。",
   },
   {
     label: "续家谱",
     title: "知道多少，就先记下多少",
-    copy: "从一位家人开始，继续补充父母、祖辈、儿女和人物资料。",
+    copy: "从一位家人开始，再补充关系、照片和经历。",
   },
   {
     label: "管家谱",
     title: "让家庭资料长期留得住",
-    copy: "家谱默认私密保存，按家庭空间管理，并为导出、备份与迁移留出能力。",
+    copy: "默认私密保存，并为导出、备份与迁移留出能力。",
   },
 ];
 
@@ -56,39 +56,90 @@ const trustItems = [
   {
     icon: <LockOutlined />,
     title: "默认私密",
-    copy: "家谱不是公共社交资料。只有获得授权的家人才能访问家庭空间。",
+    copy: "只有获得授权的家人才能访问家庭空间。",
   },
   {
     icon: <SafetyCertificateOutlined />,
     title: "敏感信息受保护",
-    copy: "在世人物、未成年人、住址和联系方式默认不公开。",
+    copy: "在世人物、未成年人和联系方式默认不公开。",
   },
   {
     icon: <CloudDownloadOutlined />,
     title: "数据可以带走",
-    copy: "家庭资料应当能够导出、备份和迁移，不被单一平台锁住。",
+    copy: "支持导出、备份和迁移，不被单一平台锁住。",
   },
   {
     icon: <GithubOutlined />,
     title: "核心代码开源",
-    copy: "支持自行部署。需要部署指引时，可关注“塔塔爸爸”并回复“开源”。",
+    copy: "支持自行部署，回复“开源”可获取指引。",
   },
+];
+
+const pageSections = [
+  { id: "overview", label: "首页" },
+  { id: "why", label: "为什么记录" },
+  { id: "start", label: "如何开始" },
+  { id: "product", label: "产品与信任" },
+  { id: "story", label: "故事与共创" },
 ];
 
 const MarketingHomePage = () => {
   const navigate = useNavigate();
   const [navOpen, setNavOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState(pageSections[0].id);
   const authenticated = Boolean(localStorage.getItem("token"));
   const createPath = getCreatePath(authenticated);
   const createState = useMemo(
     () => ({ from: "/", returnTo: "/app/create" }),
     [],
   );
+  const appHomeState = useMemo(() => ({ from: "/" }), []);
 
   useEffect(() => {
     document.title = `${BRAND.name}｜${BRAND.tagline}`;
     trackEvent("homepage_view");
   }, []);
+
+  useEffect(() => {
+    const updateActiveSection = () => {
+      const readingLine = Math.min(window.innerHeight * 0.34, 320);
+      let currentSection = pageSections[0].id;
+
+      pageSections.forEach(({ id }) => {
+        const section = document.getElementById(id);
+
+        if (section && section.getBoundingClientRect().top <= readingLine) {
+          currentSection = id;
+        }
+      });
+
+      setActiveSection(currentSection);
+    };
+
+    updateActiveSection();
+    window.addEventListener("scroll", updateActiveSection, { passive: true });
+    window.addEventListener("resize", updateActiveSection);
+
+    return () => {
+      window.removeEventListener("scroll", updateActiveSection);
+      window.removeEventListener("resize", updateActiveSection);
+    };
+  }, []);
+
+  const jumpToSection = (event, id) => {
+    event.preventDefault();
+    const section = document.getElementById(id);
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+
+    section?.scrollIntoView({
+      behavior: reduceMotion ? "auto" : "smooth",
+      block: "start",
+    });
+    setActiveSection(id);
+    setNavOpen(false);
+  };
 
   const beginCreate = (source) => {
     const device = window.matchMedia("(max-width: 768px)").matches
@@ -99,6 +150,16 @@ const MarketingHomePage = () => {
     trackEvent("app_create_open", { source, device });
     setNavOpen(false);
     navigate(createPath, { state: createState });
+  };
+
+  const openMyFamily = (source) => {
+    const device = window.matchMedia("(max-width: 768px)").matches
+      ? "mobile"
+      : "desktop";
+
+    trackEvent("app_create_open", { source, device });
+    setNavOpen(false);
+    navigate(getAppPath("tree"), { state: appHomeState });
   };
 
   const openDemo = (source) => {
@@ -179,8 +240,42 @@ const MarketingHomePage = () => {
         </div>
       </header>
 
+      <aside className="site-page-progress" aria-label="页面阅读进度">
+        <span className="site-progress-title">页面导航</span>
+        <nav>
+          {pageSections.map((section, index) => {
+            const isActive = activeSection === section.id;
+
+            return (
+              <a
+                className={isActive ? "is-active" : ""}
+                href={`#${section.id}`}
+                aria-current={isActive ? "location" : undefined}
+                onClick={(event) => jumpToSection(event, section.id)}
+                key={section.id}
+              >
+                <span className="site-progress-index">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                <span className="site-progress-copy">{section.label}</span>
+              </a>
+            );
+          })}
+        </nav>
+        <small>
+          {String(
+            pageSections.findIndex(({ id }) => id === activeSection) + 1,
+          ).padStart(2, "0")}
+          /{String(pageSections.length).padStart(2, "0")}
+        </small>
+      </aside>
+
       <main id="main-content">
-        <section className="site-hero" aria-labelledby="hero-title">
+        <section
+          className="site-hero"
+          id="overview"
+          aria-labelledby="hero-title"
+        >
           <div className="site-hero-copy">
             <span className="site-kicker">{BRAND.tagline}</span>
             <h1 id="hero-title">
@@ -260,7 +355,7 @@ const MarketingHomePage = () => {
             <span className="site-kicker">为什么现在开始</span>
             <h2>家族记忆，很少在某一天突然消失</h2>
             <p>
-              它只是随着一次次“以后再问”，慢慢无人知晓。现在开始，不需要一次写完整。
+              它只是随着一次次“以后再问”，慢慢无人知晓。好在现在开始，还来得及。
             </p>
           </div>
           <div className="memory-scene-grid">
@@ -283,9 +378,7 @@ const MarketingHomePage = () => {
             <article className="family-path is-primary">
               <span className="path-label">多数年轻人的开始</span>
               <h3>从零建立，先记录身边四代</h3>
-              <p>
-                从本人开始，上到父母与祖父母，下到儿女。先连接一位家人，就有了第一条真实的家庭关系。
-              </p>
+              <p>从本人开始，先连接一位家人，再慢慢补充身边四代。</p>
               <div className="path-generations" aria-label="四代家庭范围示意">
                 <span>祖父母</span>
                 <i aria-hidden="true" />
@@ -302,9 +395,7 @@ const MarketingHomePage = () => {
             <article className="family-path">
               <span className="path-label">已有纸谱或资料</span>
               <h3>承接已有族谱，保存超长世系</h3>
-              <p>
-                把纸谱、Excel、照片和长辈记忆逐步连接起来。穆氏示范谱展示长代际族谱的浏览上限。
-              </p>
+              <p>把纸谱、Excel、照片和长辈记忆逐步数字化、检索和补充。</p>
               <div className="long-genealogy-line" aria-hidden="true">
                 {Array.from({ length: 13 }, (_, index) => (
                   <i key={index} />
@@ -362,9 +453,7 @@ const MarketingHomePage = () => {
             <div className="product-trust-heading">
               <span className="site-kicker">资料属于家庭，而不是平台</span>
               <h2>放心记录，也能随时带走</h2>
-              <p>
-                家庭资料默认私密；AI 和 OCR 只帮助整理草稿，不能替家人确认事实。
-              </p>
+              <p>默认私密、敏感信息受保护；AI 只整理草稿，不替家人确认事实。</p>
             </div>
             <div className="trust-grid">
               {trustItems.map((item) => (
@@ -394,10 +483,7 @@ const MarketingHomePage = () => {
                 “我做谱里，不是因为先看到了一个软件机会，而是因为开始询问父亲以后，才发现普通人的一生里，有那么多值得留下的细节。”
               </blockquote>
               <p>
-                我知道了曾祖父读《毛选》、做过兽医、会木工，也会制作家用木箍桶；也知道奶奶年轻时曾在老家教过小学。
-              </p>
-              <p>
-                如果没有人问起和记下，这些经历可能不会出现在任何一份家谱里。我会先长期记录自己的家庭，再邀请更多家庭一起共创。
+                询问父亲后，我才知道曾祖父做过兽医、会木工，奶奶年轻时还教过小学。普通生活，也值得留给下一代。
               </p>
             </div>
             <div className="story-records" aria-label="家庭口述记录示意">
@@ -422,9 +508,7 @@ const MarketingHomePage = () => {
             <div>
               <span className="site-status-tag">正在共创</span>
               <strong>让名字，慢慢长出生平</strong>
-              <p>
-                把照片、工作、手艺和家人讲述，整理成可以逐年补充的家庭记录。
-              </p>
+              <p>把照片、经历和家人讲述，整理成可逐年补充的记录。</p>
             </div>
             <a href="#wechat" onClick={() => recordCommunityIntent("family")}>
               参与共创 <ArrowRightOutlined />
@@ -438,7 +522,7 @@ const MarketingHomePage = () => {
               <span className="site-kicker">种子用户共创</span>
               <h2>这份家谱，会先从真实家庭里长出来</h2>
               <p>
-                关注公众号“塔塔爸爸”，告诉我你家现在有哪些资料、最想先记录谁。产品会在真实使用中继续完善。
+                关注“塔塔爸爸”，告诉我们你最想先记录谁，一起把产品做得更适合真实家庭。
               </p>
               <button type="button" onClick={() => beginCreate("final-cta")}>
                 {authenticated ? "继续整理我的家谱" : "免费创建我的家谱"}
@@ -503,7 +587,11 @@ const MarketingHomePage = () => {
       <button
         className="site-mobile-create"
         type="button"
-        onClick={() => beginCreate("mobile-sticky")}
+        onClick={() =>
+          authenticated
+            ? openMyFamily("mobile-sticky")
+            : beginCreate("mobile-sticky")
+        }
       >
         {authenticated ? "进入我的家谱" : "免费创建我的家谱"}
       </button>

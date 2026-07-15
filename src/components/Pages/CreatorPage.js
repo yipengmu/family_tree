@@ -22,7 +22,6 @@ import {
   PlusOutlined,
   TableOutlined,
   SaveOutlined,
-  DownloadOutlined,
   CameraOutlined,
   SettingOutlined,
   ExclamationCircleOutlined,
@@ -32,7 +31,6 @@ import {
   BookOutlined,
   ApartmentOutlined,
 } from "@ant-design/icons";
-import * as XLSX from "xlsx";
 import AppLayout from "../Layout/AppLayout.js";
 import AntdFamilyTable from "../AntdFamilyTable.js";
 import FirstFamilyWizard from "../Onboarding/FirstFamilyWizard.js";
@@ -244,11 +242,17 @@ function CreatorPage({
   ]);
 
   const openMobilePersonEditor = (person) => {
+    const lifeStatus =
+      person.dealth === "unknown" || person.death_date === "unknown"
+        ? "unknown"
+        : isPersonAlive(person)
+          ? "living"
+          : "deceased";
     setEditingMobilePerson(person);
     mobileEditForm.setFieldsValue({
       name: person.name || "",
       sex: person.sex || "MAN",
-      alive: isPersonAlive(person),
+      lifeStatus,
       g_rank: person.g_rank || 1,
       rank_index: person.rank_index || 1,
       g_father_id: person.g_father_id || undefined,
@@ -771,42 +775,38 @@ function CreatorPage({
     }
 
     const currentTime = new Date().toISOString();
-    const candidates = parsed.filter((item) =>
-      String(item?.name || "").trim(),
-    );
-    const nextId =
-      Math.max(0, ...rows.map((row) => Number(row.id) || 0)) + 1;
+    const candidates = parsed.filter((item) => String(item?.name || "").trim());
+    const nextId = Math.max(0, ...rows.map((row) => Number(row.id) || 0)) + 1;
     const candidateIdMap = new Map(
       candidates.map((item, index) => [String(item.id), nextId + index]),
     );
-    const mappedRelationId = (value) =>
-      candidateIdMap.get(String(value)) || 0;
+    const mappedRelationId = (value) => candidateIdMap.get(String(value)) || 0;
     const validatedData = candidates.map((item, index) => ({
-        ...item,
-        id: nextId + index,
-        name: String(item.name).trim(),
-        g_rank: item.g_rank || 1,
-        rank_index: item.rank_index || index + 1,
-        sex: item.sex || "MAN",
-        adoption: item.adoption || "none",
-        g_father_id: mappedRelationId(item.g_father_id),
-        official_position: item.official_position || "",
-        summary: item.summary || null,
-        g_mother_id: mappedRelationId(item.g_mother_id) || null,
-        birth_date: item.birth_date || null,
-        id_card: null,
-        face_img: null,
-        photos: null,
-        household_info: null,
-        spouse: item.spouse || null,
-        home_page: null,
-        dealth: null,
-        formal_name: item.formal_name || null,
-        location: item.location || null,
-        childrens: null,
-        created_at: currentTime,
-        updated_at: currentTime,
-      }));
+      ...item,
+      id: nextId + index,
+      name: String(item.name).trim(),
+      g_rank: item.g_rank || 1,
+      rank_index: item.rank_index || index + 1,
+      sex: item.sex || "MAN",
+      adoption: item.adoption || "none",
+      g_father_id: mappedRelationId(item.g_father_id),
+      official_position: item.official_position || "",
+      summary: item.summary || null,
+      g_mother_id: mappedRelationId(item.g_mother_id) || null,
+      birth_date: item.birth_date || null,
+      id_card: null,
+      face_img: null,
+      photos: null,
+      household_info: null,
+      spouse: item.spouse || null,
+      home_page: null,
+      dealth: null,
+      formal_name: item.formal_name || null,
+      location: item.location || null,
+      childrens: null,
+      created_at: currentTime,
+      updated_at: currentTime,
+    }));
 
     if (!validatedData.length) {
       message.warning("大模型没有读出明确的人名，请换一张更清晰的照片");
@@ -1004,9 +1004,11 @@ function CreatorPage({
   const saveMobilePerson = async (values) => {
     if (!editingMobilePerson) return;
 
+    const lifeFields = getLifeStatusFields(values.lifeStatus);
     const normalizedValues = normalizePersonLifeStatus({
       ...editingMobilePerson,
       ...values,
+      ...lifeFields,
       g_rank: Number(values.g_rank) || 1,
       rank_index: Number(values.rank_index) || 1,
       g_father_id: values.g_father_id
@@ -1017,7 +1019,7 @@ function CreatorPage({
     const patch = {
       name: normalizedValues.name,
       sex: normalizedValues.sex,
-      alive: values.alive,
+      ...lifeFields,
       g_rank: normalizedValues.g_rank,
       rank_index: normalizedValues.rank_index,
       g_father_id: normalizedValues.g_father_id,
@@ -1092,9 +1094,6 @@ function CreatorPage({
   // 旧的CSV导出功能已被Excel导出替代
   // const downloadCSV = (cols, data, filename) => { ... }
 
-  // 旧的exportExcels功能已被更完善的exportToExcel替代
-  // const exportExcels = () => { ... }
-
   // JSON 转换
   const convertToJSON = (sourceRows = rows) => {
     const result = sourceRows.map((r) => {
@@ -1131,84 +1130,6 @@ function CreatorPage({
     a.click();
     URL.revokeObjectURL(url);
     message.success("JSON文件下载成功");
-  };
-
-  // 导出Excel功能（从AntdFamilyTable迁移）
-  const exportToExcel = () => {
-    try {
-      if (!rows || rows.length === 0) {
-        message.warning("暂无数据可导出");
-        return;
-      }
-
-      // 准备数据
-      const exportData = rows.map((row) => ({
-        ID: row.id,
-        姓名: row.name,
-        世代: row.g_rank,
-        排行: row.rank_index,
-        父亲ID: row.g_father_id,
-        性别: row.sex === "MAN" ? "男" : "女",
-        收养:
-          row.adoption === "none"
-            ? "无"
-            : row.adoption === "adopted"
-              ? "收养"
-              : "寄养",
-        官职: row.official_position || "",
-        配偶: row.spouse || "",
-        备注: row.summary || "",
-        更新时间: (() => {
-          const displayTime = row.updated_at || row.created_at;
-          if (!displayTime) return "无记录";
-          try {
-            const date = new Date(displayTime);
-            if (isNaN(date.getTime())) return "无效时间";
-            const year = date.getFullYear();
-            const month = String(date.getMonth() + 1).padStart(2, "0");
-            const day = String(date.getDate()).padStart(2, "0");
-            const hours = String(date.getHours()).padStart(2, "0");
-            const minutes = String(date.getMinutes()).padStart(2, "0");
-            const seconds = String(date.getSeconds()).padStart(2, "0");
-            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-          } catch (error) {
-            return "格式错误";
-          }
-        })(),
-      }));
-
-      // 创建工作簿
-      const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.json_to_sheet(exportData);
-
-      // 设置列宽
-      const colWidths = [
-        { wch: 8 }, // ID
-        { wch: 12 }, // 姓名
-        { wch: 8 }, // 世代
-        { wch: 8 }, // 排行
-        { wch: 10 }, // 父亲ID
-        { wch: 8 }, // 性别
-        { wch: 8 }, // 收养
-        { wch: 15 }, // 官职
-        { wch: 12 }, // 配偶
-        { wch: 20 }, // 备注
-        { wch: 20 }, // 更新时间
-      ];
-      ws["!cols"] = colWidths;
-
-      XLSX.utils.book_append_sheet(wb, ws, "家谱数据");
-
-      // 下载文件
-      const tenantName = currentTenant?.name || "genealogy";
-      const fileName = `${tenantName}_家谱数据_${new Date().toISOString().split("T")[0]}.xlsx`;
-      XLSX.writeFile(wb, fileName);
-
-      message.success("Excel文件已导出");
-    } catch (error) {
-      console.error("导出Excel失败:", error);
-      message.error("导出Excel失败");
-    }
   };
 
   // 保存家谱数据到当前租户
@@ -1806,14 +1727,14 @@ function CreatorPage({
                     </Button>
                   </Tooltip>
 
-                  <Tooltip title="保存、备份和导出家谱资料">
+                  <Tooltip title="保存家谱资料">
                     <Button
                       type="primary"
                       icon={<SettingOutlined />}
                       onClick={() => setManagementModalVisible(true)}
                       size="small"
                     >
-                      保存与导出
+                      保存家谱
                     </Button>
                   </Tooltip>
                 </Space>
@@ -2147,14 +2068,15 @@ function CreatorPage({
                   ]}
                 />
               </Form.Item>
-              <Form.Item name="alive" label="是否在世">
+              <Form.Item name="lifeStatus" label="生存状态">
                 <Radio.Group
                   className="mobile-life-status"
                   optionType="button"
                   buttonStyle="solid"
                 >
-                  <Radio.Button value={true}>在世</Radio.Button>
-                  <Radio.Button value={false}>已故</Radio.Button>
+                  <Radio.Button value="unknown">不确定</Radio.Button>
+                  <Radio.Button value="living">在世</Radio.Button>
+                  <Radio.Button value="deceased">已故</Radio.Button>
                 </Radio.Group>
               </Form.Item>
             </div>
@@ -2316,7 +2238,7 @@ function CreatorPage({
 
         {/* 数据管理功能弹框 */}
         <Modal
-          title="保存与导出"
+          title="保存家谱"
           open={managementModalVisible}
           onCancel={() => setManagementModalVisible(false)}
           footer={null}
@@ -2345,20 +2267,6 @@ function CreatorPage({
                 size="large"
               >
                 保存修改
-              </Button>
-            </section>
-
-            <section className="management-section management-export-section">
-              <div>
-                <h4>导出备份</h4>
-                <p>下载 Excel 到本地，便于留存与整理</p>
-              </div>
-              <Button
-                icon={<DownloadOutlined />}
-                onClick={exportToExcel}
-                disabled={!rows.length}
-              >
-                导出 Excel
               </Button>
             </section>
 

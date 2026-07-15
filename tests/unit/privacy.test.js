@@ -27,3 +27,19 @@ test('keeps full fields for editors but forces public views to redact', async ()
   assert.equal(redactPerson(person, { role: 'EDITOR' }).id_card, 'secret');
   assert.equal(redactPerson(person, { role: 'EDITOR', publicView: true }).id_card, null);
 });
+
+test('protects an unconfirmed life status with the stricter living-person rules', async () => {
+  const { redactPerson } = await import('../../lib/privacy.js');
+  const person = {
+    name: '姓名待考',
+    death_date: 'unknown',
+    birth_date: '1950-05-01',
+    location: '杭州',
+    id_card: 'secret',
+  };
+
+  const redacted = redactPerson(person, { role: 'VIEWER' });
+  assert.equal(redacted.birth_date, '1950');
+  assert.equal(redacted.location, null);
+  assert.equal(redacted.id_card, null);
+});

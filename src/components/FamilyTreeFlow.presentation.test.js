@@ -36,4 +36,12 @@ describe("family journey panorama framing", () => {
       /const focusNode = nodes\.find\([\s\S]*?setCenter\(\s*focusNode\.position\.x/,
     );
   });
+
+  test("auto-fits a personal tree when its nodes or canvas size change", () => {
+    expect(source).toContain("getAdaptiveTreeFitOptions");
+    expect(source).toMatch(
+      /fitPersonalTreeToCanvas[\s\S]*?reactFlow\.fitView\([\s\S]*?visibleNodeSignature/,
+    );
+    expect(source).toContain("new ResizeObserver");
+  });
 });

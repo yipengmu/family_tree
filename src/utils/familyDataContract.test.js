@@ -41,6 +41,25 @@ describe("family data life-status contract", () => {
     expect(clientPerson.dealth).toBe("alive");
   });
 
+  test("preserves an explicitly unconfirmed life status", () => {
+    expect(
+      toDatabasePerson(
+        { ...basePerson, alive: false, death_date: "unknown" },
+        "tenant-1",
+      ).death_date,
+    ).toBe("unknown");
+
+    expect(
+      toClientPerson({
+        person_id: "1",
+        name: "姓名待考",
+        g_rank: 1,
+        rank_index: 1,
+        death_date: "unknown",
+      }),
+    ).toMatchObject({ alive: false, dealth: "unknown" });
+  });
+
   test("redacts sensitive fields for living people viewed by a viewer", () => {
     const person = {
       ...basePerson,

@@ -5,7 +5,7 @@
 
 class FamilyDataGenerator {
   constructor() {
-    this.baseDataPath = 'src/data';
+    this.baseDataPath = "src/data";
   }
 
   /**
@@ -17,25 +17,29 @@ class FamilyDataGenerator {
    */
   async generateFamilyDataFile(familyData, tenantId, options = {}) {
     try {
-      console.log('📝 开始生成家谱数据文件...');
-      console.log('📊 数据条数:', familyData.length);
-      console.log('🏢 租户ID:', tenantId);
+      console.log("📝 开始生成家谱数据文件...");
+      console.log("📊 数据条数:", familyData.length);
+      console.log("🏢 租户ID:", tenantId);
 
       // 1. 验证数据
       const validationResult = this.validateFamilyData(familyData);
       if (!validationResult.isValid) {
-        throw new Error(`数据验证失败: ${validationResult.errors.join(', ')}`);
+        throw new Error(`数据验证失败: ${validationResult.errors.join(", ")}`);
       }
 
       // 2. 生成文件名
       const fileName = this.generateFileName(tenantId, options);
-      console.log('📄 生成文件名:', fileName);
+      console.log("📄 生成文件名:", fileName);
 
       // 3. 处理数据
       const processedData = this.processDataForExport(familyData, tenantId);
 
       // 4. 生成文件内容
-      const fileContent = this.generateFileContent(processedData, tenantId, options);
+      const fileContent = this.generateFileContent(
+        processedData,
+        tenantId,
+        options,
+      );
 
       // 5. 生成元数据
       const metadata = this.generateMetadata(processedData, tenantId, fileName);
@@ -43,8 +47,8 @@ class FamilyDataGenerator {
       // 6. 创建下载链接（浏览器环境）
       const downloadInfo = this.createDownloadableFile(fileContent, fileName);
 
-      console.log('✅ 家谱数据文件生成完成');
-      
+      console.log("✅ 家谱数据文件生成完成");
+
       return {
         success: true,
         fileName,
@@ -54,18 +58,17 @@ class FamilyDataGenerator {
         stats: {
           totalRecords: processedData.length,
           generations: this.getGenerationStats(processedData),
-          maleCount: processedData.filter(p => p.sex === 'MAN').length,
-          femaleCount: processedData.filter(p => p.sex === 'WOMAN').length,
-        }
+          maleCount: processedData.filter((p) => p.sex === "MAN").length,
+          femaleCount: processedData.filter((p) => p.sex === "WOMAN").length,
+        },
       };
-
     } catch (error) {
-      console.error('❌ 生成家谱数据文件失败:', error);
+      console.error("❌ 生成家谱数据文件失败:", error);
       return {
         success: false,
         error: error.message,
         fileName: null,
-        fileContent: null
+        fileContent: null,
       };
     }
   }
@@ -77,8 +80,8 @@ class FamilyDataGenerator {
    * @returns {string} - 文件名
    */
   generateFileName(tenantId, options = {}) {
-    const timestamp = new Date().toISOString().split('T')[0].replace(/-/g, '');
-    const suffix = options.suffix || 'image-parse';
+    const timestamp = new Date().toISOString().split("T")[0].replace(/-/g, "");
+    const suffix = options.suffix || "image-parse";
     return `familyData-${tenantId}-${suffix}-${timestamp}.js`;
   }
 
@@ -89,34 +92,34 @@ class FamilyDataGenerator {
    */
   validateFamilyData(data) {
     const errors = [];
-    
+
     if (!Array.isArray(data)) {
-      errors.push('数据不是数组格式');
+      errors.push("数据不是数组格式");
       return { isValid: false, errors };
     }
 
     if (data.length === 0) {
-      errors.push('数据为空');
+      errors.push("数据为空");
       return { isValid: false, errors };
     }
 
-    const requiredFields = ['id', 'name', 'g_rank', 'sex'];
-    
+    const requiredFields = ["id", "name", "g_rank", "sex"];
+
     data.forEach((item, index) => {
-      requiredFields.forEach(field => {
+      requiredFields.forEach((field) => {
         if (!item.hasOwnProperty(field) || item[field] === undefined) {
           errors.push(`第${index + 1}条记录缺少必需字段: ${field}`);
         }
       });
 
-      if (typeof item.name !== 'string' || item.name.trim() === '') {
+      if (typeof item.name !== "string" || item.name.trim() === "") {
         errors.push(`第${index + 1}条记录的姓名无效`);
       }
     });
 
     return {
       isValid: errors.length === 0,
-      errors
+      errors,
     };
   }
 
@@ -128,15 +131,15 @@ class FamilyDataGenerator {
    */
   processDataForExport(data, tenantId) {
     return data.map((item, index) => ({
-      id: item.id || (index + 1),
+      id: item.id || index + 1,
       name: item.name || `未知姓名${index + 1}`,
       g_rank: item.g_rank || 1,
-      rank_index: item.rank_index || (index + 1),
+      rank_index: item.rank_index || index + 1,
       g_father_id: item.g_father_id || 0,
-      official_position: item.official_position || '',
+      official_position: item.official_position || "",
       summary: item.summary || null,
-      adoption: item.adoption || 'none',
-      sex: item.sex || 'MAN',
+      adoption: item.adoption || "none",
+      sex: item.sex || "MAN",
       g_mother_id: item.g_mother_id || null,
       birth_date: item.birth_date || null,
       id_card: item.id_card || null,
@@ -148,7 +151,7 @@ class FamilyDataGenerator {
       dealth: item.dealth || null,
       formal_name: item.formal_name || null,
       location: item.location || null,
-      childrens: item.childrens || null
+      childrens: item.childrens || null,
     }));
   }
 
@@ -162,18 +165,20 @@ class FamilyDataGenerator {
   generateFileContent(data, tenantId, options = {}) {
     const timestamp = new Date().toISOString();
     const stats = this.getGenerationStats(data);
-    
+
     const header = `/**
  * 家谱数据文件 - ${tenantId}
  * 生成时间: ${timestamp}
  * 数据来源: 腾讯混元大模型图片解析
  * 记录总数: ${data.length}
- * 世代分布: ${Object.keys(stats).map(g => `第${g}代(${stats[g]}人)`).join(', ')}
+ * 世代分布: ${Object.keys(stats)
+   .map((g) => `第${g}代(${stats[g]}人)`)
+   .join(", ")}
  */
 
 `;
 
-    const dataContent = `const dbJson = ${JSON.stringify(data, null, '\t')};
+    const dataContent = `const dbJson = ${JSON.stringify(data, null, "\t")};
 
 export default dbJson;
 
@@ -183,10 +188,10 @@ export const dataStats = {
   tenantId: '${tenantId}',
   generatedAt: '${timestamp}',
   generations: ${JSON.stringify(stats, null, 2)},
-  maleCount: ${data.filter(p => p.sex === 'MAN').length},
-  femaleCount: ${data.filter(p => p.sex === 'WOMAN').length},
-  withPosition: ${data.filter(p => p.official_position).length},
-  deceased: ${data.filter(p => p.alive === false || (p.alive === undefined && p.dealth !== 'alive')).length}
+  maleCount: ${data.filter((p) => p.sex === "MAN").length},
+  femaleCount: ${data.filter((p) => p.sex === "WOMAN").length},
+  withPosition: ${data.filter((p) => p.official_position).length},
+  deceased: ${data.filter((p) => p.alive === false || (p.alive === undefined && p.dealth !== "alive")).length}
 };
 
 // 辅助函数
@@ -218,20 +223,36 @@ export const getFamilyMembersByFather = (fatherId) => {
       fileName,
       tenantId,
       generatedAt: new Date().toISOString(),
-      version: '1.0.0',
-      source: '腾讯混元大模型图片解析',
+      version: "1.0.0",
+      source: "腾讯混元大模型图片解析",
       recordCount: data.length,
       generations: this.getGenerationStats(data),
       dataSchema: {
-        version: '1.0',
+        version: "1.0",
         fields: [
-          'id', 'name', 'g_rank', 'rank_index', 'g_father_id',
-          'official_position', 'summary', 'adoption', 'sex',
-          'g_mother_id', 'birth_date', 'id_card', 'face_img',
-          'photos', 'household_info', 'spouse', 'home_page',
-          'dealth', 'formal_name', 'location', 'childrens'
-        ]
-      }
+          "id",
+          "name",
+          "g_rank",
+          "rank_index",
+          "g_father_id",
+          "official_position",
+          "summary",
+          "adoption",
+          "sex",
+          "g_mother_id",
+          "birth_date",
+          "id_card",
+          "face_img",
+          "photos",
+          "household_info",
+          "spouse",
+          "home_page",
+          "dealth",
+          "formal_name",
+          "location",
+          "childrens",
+        ],
+      },
     };
   }
 
@@ -242,7 +263,7 @@ export const getFamilyMembersByFather = (fatherId) => {
    */
   getGenerationStats(data) {
     const stats = {};
-    data.forEach(person => {
+    data.forEach((person) => {
       const generation = person.g_rank || 1;
       stats[generation] = (stats[generation] || 0) + 1;
     });
@@ -257,22 +278,24 @@ export const getFamilyMembersByFather = (fatherId) => {
    */
   createDownloadableFile(content, fileName) {
     try {
-      const blob = new Blob([content], { type: 'text/javascript;charset=utf-8' });
+      const blob = new Blob([content], {
+        type: "text/javascript;charset=utf-8",
+      });
       const url = URL.createObjectURL(blob);
-      
+
       return {
         blob,
         url,
         fileName,
         size: blob.size,
         type: blob.type,
-        downloadReady: true
+        downloadReady: true,
       };
     } catch (error) {
-      console.error('❌ 创建下载文件失败:', error);
+      console.error("❌ 创建下载文件失败:", error);
       return {
         downloadReady: false,
-        error: error.message
+        error: error.message,
       };
     }
   }
@@ -283,26 +306,26 @@ export const getFamilyMembersByFather = (fatherId) => {
    */
   downloadFile(downloadInfo) {
     if (!downloadInfo.downloadReady) {
-      console.error('❌ 文件未准备好下载');
+      console.error("❌ 文件未准备好下载");
       return;
     }
 
     try {
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = downloadInfo.url;
       link.download = downloadInfo.fileName;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       // 清理URL对象
       setTimeout(() => {
         URL.revokeObjectURL(downloadInfo.url);
       }, 1000);
-      
-      console.log('✅ 文件下载已触发:', downloadInfo.fileName);
+
+      console.log("✅ 文件下载已触发:", downloadInfo.fileName);
     } catch (error) {
-      console.error('❌ 触发文件下载失败:', error);
+      console.error("❌ 触发文件下载失败:", error);
     }
   }
 
@@ -313,16 +336,16 @@ export const getFamilyMembersByFather = (fatherId) => {
    */
   async batchGenerateFiles(tenantDataList) {
     const results = [];
-    
+
     for (const tenantData of tenantDataList) {
       const result = await this.generateFamilyDataFile(
         tenantData.data,
         tenantData.tenantId,
-        tenantData.options
+        tenantData.options,
       );
       results.push(result);
     }
-    
+
     return results;
   }
 }

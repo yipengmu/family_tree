@@ -99,14 +99,11 @@ test("maps the multimodal family image parsing path", () => {
 });
 
 test("maps the API health path to the shared health handler", () => {
-  assert.deepEqual(
-    createModernApiBridge.resolveModernRoute("/api/health"),
-    {
-      modulePath: "api/health.js",
-      query: {},
-      params: {},
-    },
-  );
+  assert.deepEqual(createModernApiBridge.resolveModernRoute("/api/health"), {
+    modulePath: "api/health.js",
+    query: {},
+    params: {},
+  });
 });
 
 test("maps story routes and preserves route parameters", () => {
@@ -134,16 +131,22 @@ test("maps legacy tenant-specific family data paths", () => {
 });
 
 test("maps person collection and item paths without stealing story routes", () => {
-  assert.deepEqual(
-    createModernApiBridge.resolveModernRoute("/api/people"),
-    { modulePath: "api/people.js", query: { type: "collection" }, params: {} },
-  );
+  assert.deepEqual(createModernApiBridge.resolveModernRoute("/api/people"), {
+    modulePath: "api/people.js",
+    query: { type: "collection" },
+    params: {},
+  });
   assert.deepEqual(
     createModernApiBridge.resolveModernRoute("/api/people/p-1"),
-    { modulePath: "api/people.js", query: { type: "item" }, params: { personId: "p-1" } },
+    {
+      modulePath: "api/people.js",
+      query: { type: "item" },
+      params: { personId: "p-1" },
+    },
   );
   assert.equal(
-    createModernApiBridge.resolveModernRoute("/api/people/p-1/events").modulePath,
+    createModernApiBridge.resolveModernRoute("/api/people/p-1/events")
+      .modulePath,
     "api/story.js",
   );
 });

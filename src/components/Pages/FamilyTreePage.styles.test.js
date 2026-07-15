@@ -114,6 +114,29 @@ describe("family journey animation styles", () => {
     );
   });
 
+  test("keeps the guided ancestor action only in the progress banner", () => {
+    const contextActionStart = pageSource.indexOf(
+      'className="family-context-actions"',
+    );
+    const contextActionEnd = pageSource.indexOf(
+      "</section>",
+      contextActionStart,
+    );
+    const contextActionSource = pageSource.slice(
+      contextActionStart,
+      contextActionEnd,
+    );
+
+    expect(pageSource).toContain("const showContextAction =");
+    expect(contextActionSource).not.toContain(
+      "paternalOnboarding.nextActionLabel",
+    );
+    expect(pageSource).toMatch(
+      /className={`paternal-progress-banner[\s\S]*?paternalOnboarding\.nextActionLabel/,
+    );
+    expect(stylesheet).toContain(".family-context-bar--compact {");
+  });
+
   test("styles the final panorama summary as a centered overlay", () => {
     const flowStylesheet = fs.readFileSync(
       path.join(__dirname, "../FamilyTreeFlow.css"),

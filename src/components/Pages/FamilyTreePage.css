@@ -107,6 +107,10 @@
   color: #fff !important;
 }
 
+.family-context-bar--compact {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .paternal-progress-banner {
   min-height: 72px;
   display: grid;
@@ -261,6 +265,9 @@
     grid-template-columns: minmax(0, 1fr) 116px;
     gap: 10px;
     padding: 0 0 8px;
+  }
+  .family-context-bar--compact {
+    grid-template-columns: minmax(0, 1fr);
   }
   .family-context-copy {
     column-gap: 10px;

@@ -32,6 +32,7 @@ import {
   getCollapseStats,
   hasCollapsedChildren
 } from '../utils/familyTreeCollapse.js';
+import { getAdaptiveTreeFitOptions } from '../utils/familyTreeViewport.js';
 
 import 'reactflow/dist/style.css';
 import './FamilyTreeFlow.css';
@@ -646,51 +647,90 @@ const FamilyTreeFlow = forwardRef(({
     return () => clearTimeout(timer);
   }, [isMobile, nodes, presentationComplete, presentationFocusId, presentationMode, presentationStep, setCenter, setViewport]);
 
-  // 添加一个状态来跟踪是否已经执行过初始居中
-  const [hasInitialCentered, setHasInitialCentered] = useState(false);
+  const visibleNodeSignature = useMemo(
+    () => nodes.map((node) => node.id).sort().join('|'),
+    [nodes],
+  );
 
-  // 确保根节点穆茂在画布正中心（只在初始加载时执行一次）
+  const fitPersonalTreeToCanvas = useCallback((duration = 600) => {
+    const reactFlow = reactFlowInstanceRef.current;
+    const currentNodes = getNodes().filter((node) => !node.hidden);
+    if (!reactFlow || !currentNodes.length) return;
+
+    reactFlow.fitView({
+      nodes: currentNodes,
+      duration,
+      ...getAdaptiveTreeFitOptions(currentNodes.length, isMobile),
+    });
+  }, [getNodes, isMobile]);
+
+  // 用户自己的家谱按可见节点与画布尺寸自适应，新增祖辈后也重新取景。
   useEffect(() => {
     if (
-      nodes.length > 0
-      && !presentationMode
-      && !searchTerm
-      && isShowingAll
-      && !hasInitialCentered
+      !visibleNodeSignature
+      || presentationMode
+      || searchTerm
+      || !isShowingAll
+      || useFounderLabels
     ) {
-      const timer = setTimeout(() => {
-        const reactFlow = reactFlowInstanceRef.current;
-        if (reactFlow) {
-          // 找到根节点穆茂
-          const rootNode = nodes.find(node =>
-            node.data.rank === 1 && (node.data.name === '穆茂' || node.data.id === 1)
-          );
-
-          if (rootNode) {
-            console.log('🎯 找到根节点穆茂，设置画布正中心:', rootNode.position);
-
-            // 直接将根节点设置为画布中心
-            reactFlow.setCenter(rootNode.position.x, rootNode.position.y + 200, {
-              zoom: isMobile ? 0.45 : 0.7,  // 移动端初始缩放从0.6降到0.45，显示更多内容
-              duration: 800
-            });
-
-            console.log('✅ 根节点穆茂已设置为画布正中心');
-            setHasInitialCentered(true); // 标记已执行过初始居中
-          } else {
-            console.log('⚠️ 未找到根节点穆茂，使用fitView');
-            reactFlow.fitView({
-              padding: isMobile ? 0.15 : 0.2,
-              duration: 800
-            });
-            setHasInitialCentered(true); // 即使使用fitView也标记为已执行
-          }
-        }
-      }, 600); // 稍微延长等待时间确保节点完全渲染
-
-      return () => clearTimeout(timer);
+      return undefined;
     }
-  }, [nodes, searchTerm, isShowingAll, isMobile, hasInitialCentered, presentationMode]);
+
+    const timer = setTimeout(() => fitPersonalTreeToCanvas(), 160);
+    return () => clearTimeout(timer);
+  }, [
+    fitPersonalTreeToCanvas,
+    isShowingAll,
+    presentationMode,
+    searchTerm,
+    useFounderLabels,
+    visibleNodeSignature,
+  ]);
+
+  // 横竖屏切换或外层布局变化时，用新的可用空间重新计算缩放比例。
+  useEffect(() => {
+    const flowContainer = flowContainerRef.current;
+    if (
+      !flowContainer
+      || presentationMode
+      || searchTerm
+      || !isShowingAll
+      || useFounderLabels
+      || typeof ResizeObserver === 'undefined'
+    ) {
+      return undefined;
+    }
+
+    let timer;
+    let previousWidth = flowContainer.clientWidth;
+    let previousHeight = flowContainer.clientHeight;
+    const observer = new ResizeObserver(([entry]) => {
+      const { width, height } = entry.contentRect;
+      if (
+        Math.abs(width - previousWidth) < 12
+        && Math.abs(height - previousHeight) < 12
+      ) {
+        return;
+      }
+
+      previousWidth = width;
+      previousHeight = height;
+      clearTimeout(timer);
+      timer = setTimeout(() => fitPersonalTreeToCanvas(320), 120);
+    });
+
+    observer.observe(flowContainer);
+    return () => {
+      clearTimeout(timer);
+      observer.disconnect();
+    };
+  }, [
+    fitPersonalTreeToCanvas,
+    isShowingAll,
+    presentationMode,
+    searchTerm,
+    useFounderLabels,
+  ]);
 
 
 

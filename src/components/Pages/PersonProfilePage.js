@@ -19,14 +19,12 @@ import {
 import {
   Button,
   Card,
-  Checkbox,
   Empty,
   Input,
   message,
   Modal,
   Select,
   Spin,
-  Switch,
   Tag,
   Upload,
 } from "antd";
@@ -41,14 +39,6 @@ import { buildDirectLifeEvent } from "../../utils/lifeStory.js";
 import { isPersonAlive } from "../../utils/personLifeStatus.js";
 import "./PersonProfilePage.css";
 
-const prompts = [
-  "小时候最鲜明的记忆",
-  "求学或工作的经历",
-  "他怎样照顾家人",
-  "经历过的困难",
-  "最让你敬佩的选择",
-  "想留给后人的一句话",
-];
 const visibilityOptions = [
   { value: "FAMILY", label: "家谱成员可见" },
   { value: "PRIVATE", label: "仅自己可见" },
@@ -96,10 +86,8 @@ function PersonProfilePage({
   const [storyTime, setStoryTime] = useState("");
   const [storyLocation, setStoryLocation] = useState("");
   const [storyType, setStoryType] = useState("EVERYDAY");
-  const [storyHighlight, setStoryHighlight] = useState(false);
   const [visibility, setVisibility] = useState("FAMILY");
   const [photos, setPhotos] = useState([]);
-  const [drafts, setDrafts] = useState([]);
   const [busy, setBusy] = useState(false);
   const [processingLabel, setProcessingLabel] = useState("正在整理故事…");
   const [mediaUrls, setMediaUrls] = useState({});
@@ -256,20 +244,6 @@ function PersonProfilePage({
     }
   };
 
-  const pollProcessing = async (memoryId) => {
-    for (let attempt = 0; attempt < 100; attempt += 1) {
-      const result = await storyService.processMemory(memoryId);
-      if (result.status === "READY") return result.memory;
-      setProcessingLabel(
-        result.job?.kind === "TRANSCRIBE"
-          ? "正在听写原声…"
-          : "正在提炼生平纪事…",
-      );
-      await new Promise((resolve) => setTimeout(resolve, 3000));
-    }
-    throw new Error("处理时间较长，原始材料已经保存，请稍后重新打开");
-  };
-
   const saveSourceMaterial = async () => {
     const created = await storyService.createMemory(tenant.id, personId, {
       rawText,
@@ -313,7 +287,7 @@ function PersonProfilePage({
         timeText: storyTime,
         location: storyLocation,
         eventType: storyType,
-        isHighlight: storyHighlight,
+        isHighlight: false,
         visibility,
       });
     } catch (error) {
@@ -342,59 +316,6 @@ function PersonProfilePage({
     }
   };
 
-  const submitStory = async () => {
-    if (!audioFile && !rawText.trim()) {
-      message.warning("请录一段故事或填写文字");
-      return;
-    }
-    try {
-      setBusy(true);
-      setStage("processing");
-      setProcessingLabel(audioFile ? "正在听写原声…" : "正在提炼生平纪事…");
-      const memoryId = await saveSourceMaterial();
-      const memory = await pollProcessing(memoryId);
-      const extraction = memory.jobs.find(
-        (job) => job.kind === "EXTRACT_EVENTS" && job.status === "SUCCEEDED",
-      );
-      const extracted = extraction?.output?.events || [];
-      setDrafts(
-        extracted.map((event, index) => ({
-          ...event,
-          key: `${index}`,
-          selected: true,
-          visibility,
-        })),
-      );
-      setStage("review");
-    } catch (error) {
-      message.error(error.message);
-      setStage("capture");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const publishDrafts = async () => {
-    const selected = drafts.filter((draft) => draft.selected);
-    if (!selected.length) {
-      message.warning("请至少选择一条纪事");
-      return;
-    }
-    try {
-      setBusy(true);
-      const memoryId = await findLatestDraftMemory();
-      await storyService.publishMemory(memoryId, selected);
-      message.success("生平纪事已写入人物志");
-      closeStory();
-      await loadEvents();
-    } catch (error) {
-      message.error(error.message);
-    } finally {
-      setBusy(false);
-    }
-  };
-  const findLatestDraftMemory = async () => latestMemoryIdRef.current;
-
   const closeStory = () => {
     discardRecordingRef.current = true;
     stopRecording();
@@ -406,19 +327,11 @@ function PersonProfilePage({
     setStoryTime("");
     setStoryLocation("");
     setStoryType("EVERYDAY");
-    setStoryHighlight(false);
     setPhotos([]);
-    setDrafts([]);
     setSeconds(0);
     latestMemoryIdRef.current = null;
   };
 
-  const updateDraft = (index, field, value) =>
-    setDrafts((current) =>
-      current.map((draft, itemIndex) =>
-        itemIndex === index ? { ...draft, [field]: value } : draft,
-      ),
-    );
   const generationLabel = useMemo(
     () => (person?.g_rank ? `第 ${person.g_rank} 代` : "家谱成员"),
     [person?.g_rank],
@@ -608,25 +521,6 @@ function PersonProfilePage({
         >
           {stage === "capture" && (
             <>
-              <p className="story-intro">
-                先写下记得的部分就可以。文字、原声和照片会作为家庭档案保留；使用
-                AI 整理时，也必须由你确认后才会发布。
-              </p>
-              <div className="story-prompts">
-                {prompts.map((prompt) => (
-                  <button
-                    type="button"
-                    key={prompt}
-                    onClick={() =>
-                      setRawText((value) =>
-                        value ? `${value}\n${prompt}：` : `${prompt}：`,
-                      )
-                    }
-                  >
-                    {prompt}
-                  </button>
-                ))}
-              </div>
               <div className="story-basic-fields">
                 <Input
                   size="large"
@@ -651,57 +545,83 @@ function PersonProfilePage({
                     placeholder="发生地点（可选）"
                   />
                 </div>
-                <Select
-                  size="large"
-                  value={storyType}
-                  onChange={setStoryType}
-                  options={eventTypeOptions}
-                />
-              </div>
-              <Input.TextArea
-                rows={6}
-                value={rawText}
-                onChange={(event) => setRawText(event.target.value)}
-                maxLength={20000}
-                showCount
-                placeholder="写下发生了什么。记不清的时间、地点可以留空，也可以直接写“约”“听长辈说”或“待考”。"
-              />
-              <div className={`story-recorder ${recording ? "recording" : ""}`}>
-                <div className="story-wave">
-                  <SoundOutlined />
-                </div>
-                <strong>
-                  {String(Math.floor(seconds / 60)).padStart(2, "0")}:
-                  {String(seconds % 60).padStart(2, "0")}
-                </strong>
-                {!recording && !audioFile && (
-                  <Button
-                    type="primary"
-                    shape="round"
-                    icon={<AudioOutlined />}
-                    onClick={startRecording}
+                <fieldset className="story-type-field">
+                  <legend>经历类型</legend>
+                  <div
+                    className="story-type-tags"
+                    role="radiogroup"
+                    aria-label="经历类型"
                   >
-                    开始录音
-                  </Button>
-                )}
-                {recording && (
-                  <>
-                    <Button
-                      shape="circle"
-                      icon={paused ? <PlayCircleOutlined /> : <PauseOutlined />}
-                      onClick={togglePause}
-                    />
-                    <Button danger shape="round" onClick={stopRecording}>
-                      结束录音
-                    </Button>
-                  </>
-                )}
-                {audioFile && !recording && (
-                  <span className="story-recorded">
-                    已保留一段原声 · {(audioFile.size / 1024 / 1024).toFixed(1)}
-                    MB
-                  </span>
-                )}
+                    {eventTypeOptions.map((option) => (
+                      <button
+                        type="button"
+                        role="radio"
+                        aria-checked={storyType === option.value}
+                        className={storyType === option.value ? "selected" : ""}
+                        key={option.value}
+                        onClick={() => setStoryType(option.value)}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </fieldset>
+              </div>
+              <div className="story-narrative-field">
+                <Input.TextArea
+                  rows={6}
+                  value={rawText}
+                  onChange={(event) => setRawText(event.target.value)}
+                  maxLength={20000}
+                  showCount
+                  placeholder="写下发生了什么。记不清的时间、地点可以留空，也可以直接写“约”“听长辈说”或“待考”。"
+                />
+                <div
+                  className={`story-recorder ${recording ? "recording" : ""}`}
+                >
+                  <div className="story-recorder-status">
+                    <span className="story-wave">
+                      <SoundOutlined />
+                    </span>
+                    <strong>
+                      {String(Math.floor(seconds / 60)).padStart(2, "0")}:
+                      {String(seconds % 60).padStart(2, "0")}
+                    </strong>
+                    {audioFile && !recording && (
+                      <span className="story-recorded">
+                        已保留原声 · {(audioFile.size / 1024 / 1024).toFixed(1)}
+                        MB
+                      </span>
+                    )}
+                  </div>
+                  <div className="story-recorder-actions">
+                    {!recording && !audioFile && (
+                      <Button
+                        type="primary"
+                        shape="round"
+                        icon={<AudioOutlined />}
+                        onClick={startRecording}
+                      >
+                        录音
+                      </Button>
+                    )}
+                    {recording && (
+                      <>
+                        <Button
+                          shape="circle"
+                          icon={
+                            paused ? <PlayCircleOutlined /> : <PauseOutlined />
+                          }
+                          aria-label={paused ? "继续录音" : "暂停录音"}
+                          onClick={togglePause}
+                        />
+                        <Button danger shape="round" onClick={stopRecording}>
+                          结束
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
               <div className="story-attachments">
                 <Upload
@@ -725,13 +645,6 @@ function PersonProfilePage({
                     onChange={setVisibility}
                     options={visibilityOptions}
                   />
-                  <label>
-                    <Switch
-                      checked={storyHighlight}
-                      onChange={setStoryHighlight}
-                    />{" "}
-                    标记为重要经历
-                  </label>
                 </div>
               </div>
               <div className="story-submit-actions">
@@ -746,18 +659,7 @@ function PersonProfilePage({
                 >
                   保存为一条生平纪事
                 </Button>
-                <Button
-                  size="large"
-                  block
-                  loading={busy}
-                  disabled={!audioFile && !rawText.trim()}
-                  onClick={submitStory}
-                >
-                  用 AI 整理成多条草稿
-                </Button>
-                <small>
-                  直接保存不会调用 AI；所有内容默认保存在当前私密家谱。
-                </small>
+                <small>所有内容默认保存在当前私密家谱。</small>
               </div>
             </>
           )}
@@ -766,81 +668,6 @@ function PersonProfilePage({
               <Spin size="large" />
               <h3>{processingLabel}</h3>
               <p>原音和照片已经安全保存，请不要重复提交。</p>
-            </div>
-          )}
-          {stage === "review" && (
-            <div className="story-review">
-              <div className="story-review-heading">
-                <h3>请确认准备写入人物志的内容</h3>
-                <p>可以修改、取消选择；AI 不会自动发布。</p>
-              </div>
-              {drafts.length === 0 ? (
-                <Empty description="这段讲述暂时没有提取出明确事件，请补充更多时间或经历信息" />
-              ) : (
-                drafts.map((draft, index) => (
-                  <Card key={draft.key} className="story-draft-card">
-                    <Checkbox
-                      checked={draft.selected}
-                      onChange={(event) =>
-                        updateDraft(index, "selected", event.target.checked)
-                      }
-                    >
-                      写入人物志
-                    </Checkbox>
-                    <Input
-                      value={draft.title}
-                      onChange={(event) =>
-                        updateDraft(index, "title", event.target.value)
-                      }
-                      placeholder="事件标题"
-                    />
-                    <div className="story-draft-meta">
-                      <Input
-                        value={draft.timeText}
-                        onChange={(event) =>
-                          updateDraft(index, "timeText", event.target.value)
-                        }
-                        placeholder="约 1980 年代"
-                      />
-                      <Input
-                        value={draft.location}
-                        onChange={(event) =>
-                          updateDraft(index, "location", event.target.value)
-                        }
-                        placeholder="地点（可选）"
-                      />
-                    </div>
-                    <Input.TextArea
-                      rows={4}
-                      value={draft.narrative}
-                      onChange={(event) =>
-                        updateDraft(index, "narrative", event.target.value)
-                      }
-                    />
-                    <div className="story-draft-source">
-                      原话依据：{draft.sourceQuote || "未标明"}
-                    </div>
-                    <label>
-                      <Switch
-                        checked={draft.isHighlight}
-                        onChange={(checked) =>
-                          updateDraft(index, "isHighlight", checked)
-                        }
-                      />{" "}
-                      标记为闪光时刻
-                    </label>
-                  </Card>
-                ))
-              )}
-              <Button
-                type="primary"
-                size="large"
-                block
-                loading={busy}
-                onClick={publishDrafts}
-              >
-                确认并发布所选纪事
-              </Button>
             </div>
           )}
         </Modal>
