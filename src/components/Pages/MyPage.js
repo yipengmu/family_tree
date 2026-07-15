@@ -65,7 +65,7 @@ const MyPage = ({ activeMenuItem = 'mine', onMenuClick, familyData = [] }) => {
           <section className="my-guest-card">
             <span className="my-card-kicker">默认私密</span>
             <h2>{BRAND.tagline}</h2>
-            <p>从自己开始，快速记录父母、祖辈和家族故事，让孩子也能看懂家族从哪里来。</p>
+            <p>从自己开始记下父母与祖辈，让孩子看懂家从哪里来。</p>
             <Button type="primary" block size="large" onClick={() => onMenuClick?.('register')}>免费创建家谱</Button>
             <Button type="text" block onClick={() => onMenuClick?.('login')}>已有账号，去登录</Button>
           </section>
@@ -89,17 +89,17 @@ const MyPage = ({ activeMenuItem = 'mine', onMenuClick, familyData = [] }) => {
             <section className="my-menu-card" aria-label="家谱管理">
               <button type="button" onClick={() => onMenuClick?.('settings')}>
                 <span className="my-menu-icon"><SettingOutlined /></span>
-                <span><strong>家谱与显示设置</strong><small>隐私、视图和家谱信息</small></span>
+                <span><strong>家谱设置</strong><small>隐私、视图与基本信息</small></span>
                 <RightOutlined />
               </button>
               <button type="button" onClick={exportFamilyData}>
                 <span className="my-menu-icon"><CloudDownloadOutlined /></span>
-                <span><strong>导出家谱数据</strong><small>随时带走，不被平台锁定</small></span>
+                <span><strong>导出家谱</strong><small>下载备份，随时带走</small></span>
                 <RightOutlined />
               </button>
               <button type="button" onClick={() => message.info('成员邀请将在下一阶段开放')}>
                 <span className="my-menu-icon"><TeamOutlined /></span>
-                <span><strong>家族成员</strong><small>邀请家人共同续谱</small></span>
+                <span><strong>家族成员</strong><small>邀请家人一起续谱</small></span>
                 <RightOutlined />
               </button>
               <button type="button" onClick={() => message.info('家谱默认私密，在世人物信息受保护')}>
@@ -113,7 +113,7 @@ const MyPage = ({ activeMenuItem = 'mine', onMenuClick, familyData = [] }) => {
           </>
         )}
 
-        <p className="my-page-footnote">{BRAND.description}</p>
+        <p className="my-page-footnote">把名字与故事留给家人，也留给以后。</p>
       </div>
     </AppLayout>
   );

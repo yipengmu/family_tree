@@ -48,17 +48,11 @@ const LoginPage = () => {
         <ArrowLeftOutlined />
         <span>返回家谱</span>
       </button>
-      <div style={{ width: '100%', maxWidth: '400px', padding: '20px' }}>
-        <Card className="auth-card"
-          style={{ 
-            borderRadius: '10px',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
-          }}
-          bodyStyle={{ padding: '30px' }}
-        >
-          <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+      <div className="auth-shell">
+        <Card className="auth-card">
+          <div className="auth-heading">
             <div className="auth-seal">{BRAND.seal}</div>
-            <Title level={2} style={{ marginBottom: '8px' }}>回到谱里</Title>
+            <Title level={2}>回到谱里</Title>
             <Text type="secondary">继续整理你们家的名字与故事</Text>
           </div>
 

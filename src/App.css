@@ -83,6 +83,13 @@
     radial-gradient(circle at 85% 80%, rgba(166,70,50,.07), transparent 24%),
     linear-gradient(135deg, #f8f4e9 0%, #eee8d9 100%);
 }
+
+.auth-shell {
+  width: 100%;
+  max-width: 420px;
+  padding: 20px;
+}
+
 .auth-back-button {
   position: absolute;
   top: calc(14px + env(safe-area-inset-top));
@@ -102,18 +109,39 @@
   backdrop-filter: blur(10px);
 }
 .auth-back-button:hover { background: rgba(255, 253, 247, .96); }
-.auth-card.ant-card { border-radius: 10px; border: 1px solid rgba(35,53,47,.14); box-shadow: 0 20px 50px rgba(35,53,47,.10); }
+.auth-card.ant-card { border-radius: 14px; border: 1px solid rgba(35,53,47,.14); box-shadow: 0 20px 50px rgba(35,53,47,.10); }
+.auth-card .ant-card-body { padding: 30px; }
 .auth-card .ant-typography { font-family: var(--serif); color: var(--ink) !important; }
+.auth-heading { margin-bottom: 22px; text-align: center; }
+.auth-heading .ant-typography { margin: 0 0 7px !important; }
+.auth-heading .ant-typography-secondary { display: block; font-family: var(--sans); font-size: 13px; line-height: 1.7; }
 .auth-seal {
   width: 46px; height: 46px; margin: 0 auto 16px; display: grid; place-items: center;
   border: 1px solid rgba(255,255,255,.8); border-radius: 7px; background: var(--cinnabar);
   box-shadow: inset 0 0 0 3px rgba(255,255,255,.14); color: #fffaf0; font-family: var(--serif); font-size: 25px;
 }
 
+.auth-card .ant-form-item { margin-bottom: 16px; }
+.auth-card .ant-input-affix-wrapper,
+.auth-card .ant-input,
+.auth-card .ant-btn-lg { min-height: 46px; border-radius: 9px; }
+.auth-card .ant-divider { margin: 20px 0; color: var(--ink-soft); font-size: 12px; }
+.auth-card .ant-btn-link { min-height: 36px; padding-inline: 0; }
+
+/* Ant Design 弹层统一为纸张质感，避免不同页面互相污染主题。 */
+.ant-modal .ant-modal-content { overflow: hidden; border: 1px solid var(--hairline); border-radius: 14px; background: #fffdf7; box-shadow: 0 24px 64px rgba(35,53,47,.16); }
+.ant-modal .ant-modal-header { padding: 17px 20px; border-bottom: 1px solid var(--hairline); background: #fffdf7; }
+.ant-modal .ant-modal-title { color: var(--ink); font-family: var(--serif); font-size: 18px; }
+.ant-modal .ant-modal-close { color: var(--ink-soft); }
+
 @media (max-width: 480px) {
-  .auth-page { align-items: stretch; overflow-y: auto; }
-  .auth-page > div { margin: auto; padding: 72px 14px 24px !important; }
+  .auth-page { align-items: flex-start; overflow-y: auto; }
+  .auth-shell { max-width: 430px; margin: 0 auto; padding: 70px 14px 28px; }
   .auth-card .ant-card-body { padding: 24px 20px !important; }
+  .auth-heading { margin-bottom: 20px; }
+  .auth-seal { width: 42px; height: 42px; margin-bottom: 12px; font-size: 23px; }
+  .auth-heading .ant-typography { font-size: 25px; }
+  .auth-card .ant-form-item { margin-bottom: 14px; }
   .auth-back-button { position: fixed; }
   .app-header {
     padding: 0 12px;
@@ -470,9 +498,9 @@
   .sidebar { width: min(82vw, 300px); }
   .main-content { margin-left: 0; }
   .main-content .header { min-height: 52px; padding: 8px 10px; gap: 9px; }
-  .content-container { height: calc(100dvh - 52px - 64px - env(safe-area-inset-bottom)); padding: 8px; overflow: hidden; }
+  .content-container { height: calc(100dvh - 52px - 64px - env(safe-area-inset-bottom)); padding: 8px 10px 0; overflow: hidden; }
   .mobile-layout .main-content.no-search .header { display: none; }
-  .mobile-layout .main-content.no-search .content-container { height: calc(100dvh - 64px - env(safe-area-inset-bottom)); padding-top: 10px; }
+  .mobile-layout .main-content.no-search .content-container { height: calc(100dvh - 64px - env(safe-area-inset-bottom)); padding: 10px 12px 0; }
   .family-tree-page { height: 100%; min-height: 0; }
   .mobile-layout .react-flow { height: 100% !important; }
   .mobile-layout .ant-modal-content { border-radius: 14px; }

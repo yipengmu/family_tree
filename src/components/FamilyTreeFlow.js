@@ -568,16 +568,15 @@ const FamilyTreeFlow = forwardRef(({
     processData();
   }, [processData]);
 
-  // 演示模式下沿穆茂到穆宁的主线逐代移动镜头，完成后仍以主线作为首屏取景基准。
+  // 演示模式下沿穆茂到穆宁的主线逐代移动镜头；完成后按全谱重新取景，
+  // 让左右支系共同决定视觉中心，避免主线位于幼子一侧时画面明显偏向一边。
   useEffect(() => {
     if (!presentationMode || !nodes.length) return undefined;
     const timer = setTimeout(() => {
       if (presentationComplete) {
-        const pathIdSet = new Set(presentationPathIds.map(String));
-        const mainlineNodes = nodes.filter(node => pathIdSet.has(String(node.id)));
         fitView({
-          nodes: mainlineNodes.length ? mainlineNodes : undefined,
-          padding: isMobile ? 0.06 : 0.12,
+          nodes,
+          padding: isMobile ? 0.08 : 0.14,
           duration: 1100,
           minZoom: 0.02,
           maxZoom: isMobile ? 0.8 : 1
@@ -600,7 +599,7 @@ const FamilyTreeFlow = forwardRef(({
       );
     }, 80);
     return () => clearTimeout(timer);
-  }, [fitView, isMobile, nodes, presentationComplete, presentationFocusId, presentationMode, presentationPathIds, presentationStep, setCenter]);
+  }, [fitView, isMobile, nodes, presentationComplete, presentationFocusId, presentationMode, presentationStep, setCenter]);
 
   // 添加一个状态来跟踪是否已经执行过初始居中
   const [hasInitialCentered, setHasInitialCentered] = useState(false);

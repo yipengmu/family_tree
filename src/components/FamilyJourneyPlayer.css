@@ -2,6 +2,8 @@
 .family-journey-player {
   position: absolute;
   z-index: 30;
+  overflow: hidden;
+  isolation: isolate;
   border: 1px solid rgba(255, 253, 247, 0.18);
   color: #fffdf6;
   background: linear-gradient(
@@ -11,6 +13,12 @@
   );
   box-shadow: 0 16px 40px rgba(23, 63, 56, 0.22);
   backdrop-filter: blur(16px);
+}
+
+.journey-launcher > *,
+.family-journey-player > * {
+  position: relative;
+  z-index: 1;
 }
 
 .journey-launcher {
@@ -51,24 +59,106 @@
 }
 
 .family-journey-player {
+  --journey-accent: #d8b46b;
   left: 18px;
   bottom: 18px;
   width: min(390px, calc(100% - 36px));
   padding: 15px 16px 14px;
   border-radius: 16px;
+  transition: background 0.45s ease, border-color 0.45s ease;
 }
-.family-journey-player.complete {
+
+.family-journey-player::before,
+.family-journey-player::after {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.family-journey-player::before {
+  inset: 0;
+  opacity: 0.58;
+  transition: opacity 0.45s ease;
+}
+
+.family-journey-player::after {
+  content: attr(data-era);
+  right: 12px;
+  bottom: -18px;
+  color: rgba(255, 253, 247, 0.055);
+  font: 600 78px/1 var(--serif);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.family-journey-player.era-ming {
+  background: linear-gradient(145deg, rgba(18, 63, 52, 0.97), rgba(35, 84, 67, 0.96));
+}
+
+.family-journey-player.era-ming::before {
+  background:
+    radial-gradient(circle at 88% 19%, transparent 0 27px, rgba(232, 211, 157, 0.11) 28px 29px, transparent 30px),
+    radial-gradient(circle at 94% 22%, transparent 0 42px, rgba(232, 211, 157, 0.08) 43px 44px, transparent 45px),
+    linear-gradient(120deg, transparent 0 71%, rgba(255, 255, 255, 0.035) 71% 72%, transparent 72%);
+}
+
+.family-journey-player.era-qing {
+  --journey-accent: #d2ba7b;
+  background: linear-gradient(145deg, rgba(41, 68, 61, 0.97), rgba(72, 81, 61, 0.96));
+}
+
+.family-journey-player.era-qing::before {
+  background:
+    linear-gradient(45deg, transparent 46%, rgba(232, 211, 157, 0.07) 47% 49%, transparent 50%),
+    linear-gradient(-45deg, transparent 46%, rgba(232, 211, 157, 0.06) 47% 49%, transparent 50%),
+    radial-gradient(circle at 10% 110%, rgba(216, 180, 107, 0.14), transparent 42%);
+  background-size: 32px 32px, 32px 32px, auto;
+}
+
+.family-journey-player.era-republic {
+  --journey-accent: #d8c790;
+  background: linear-gradient(145deg, rgba(45, 62, 69, 0.97), rgba(66, 76, 78, 0.96));
+}
+
+.family-journey-player.era-republic::before {
+  background:
+    repeating-linear-gradient(90deg, transparent 0 21px, rgba(255, 255, 255, 0.045) 22px, transparent 23px),
+    linear-gradient(115deg, rgba(216, 199, 144, 0.08), transparent 38% 68%, rgba(216, 199, 144, 0.055));
+}
+
+.family-journey-player.era-modern {
+  --journey-accent: #ead39a;
+  background: linear-gradient(145deg, rgba(117, 57, 44, 0.97), rgba(151, 72, 52, 0.96));
+}
+
+.family-journey-player.era-modern::before {
+  background:
+    linear-gradient(rgba(255, 245, 222, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 245, 222, 0.045) 1px, transparent 1px),
+    radial-gradient(circle at 82% 24%, rgba(255, 235, 190, 0.12), transparent 24%);
+  background-size: 28px 28px, 28px 28px, auto;
+}
+
+.family-journey-player.era-complete {
+  --journey-accent: #ead091;
   background: linear-gradient(
     145deg,
     rgba(139, 58, 42, 0.96),
     rgba(91, 45, 37, 0.95)
   );
 }
+
+.family-journey-player.era-complete::before {
+  background:
+    radial-gradient(circle at 86% 18%, transparent 0 34px, rgba(255, 239, 202, 0.09) 35px 36px, transparent 37px),
+    repeating-linear-gradient(0deg, transparent 0 13px, rgba(255, 255, 255, 0.022) 14px);
+}
 .journey-player-topline {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  color: #d8b46b;
+  color: var(--journey-accent);
   font-size: 10px;
   letter-spacing: 0.12em;
 }
@@ -90,20 +180,20 @@
   min-height: 56px;
 }
 .journey-copy-transition {
-  animation: journey-copy-change 0.52s cubic-bezier(0.22, 0.72, 0.25, 1) both;
+  animation: journey-copy-change 0.58s ease both;
+  will-change: opacity, filter;
 }
 @keyframes journey-copy-change {
   0% {
     opacity: 0;
-    transform: translateY(5px);
-    filter: blur(2px);
+    filter: blur(3px);
   }
-  45% {
+  55% {
     opacity: 0.72;
+    filter: blur(0.8px);
   }
   100% {
     opacity: 1;
-    transform: translateY(0);
     filter: blur(0);
   }
 }
@@ -112,10 +202,10 @@
   height: 48px;
   display: grid;
   place-items: center;
-  border: 1px solid rgba(216, 180, 107, 0.45);
+  border: 1px solid color-mix(in srgb, var(--journey-accent) 48%, transparent);
   border-radius: 50%;
-  color: #f0dba8;
-  background: rgba(216, 180, 107, 0.08);
+  color: var(--journey-accent);
+  background: color-mix(in srgb, var(--journey-accent) 9%, transparent);
   font: 600 17px var(--serif);
 }
 .journey-era-orb.modern {
@@ -145,7 +235,7 @@
   border-radius: 3px;
   background: linear-gradient(
     90deg,
-    #d8b46b var(--journey-progress),
+    var(--journey-accent) var(--journey-progress),
     rgba(255, 255, 255, 0.16) var(--journey-progress)
   );
 }
@@ -156,7 +246,7 @@
   appearance: none;
   border: 2px solid #173f38;
   border-radius: 50%;
-  background: #f0dba8;
+  background: var(--journey-accent);
   box-shadow: 0 0 0 2px rgba(240, 219, 168, 0.22);
 }
 .journey-timeline input::-moz-range-track {
@@ -166,14 +256,14 @@
 }
 .journey-timeline input::-moz-range-progress {
   height: 3px;
-  background: #d8b46b;
+  background: var(--journey-accent);
 }
 .journey-timeline input::-moz-range-thumb {
   width: 13px;
   height: 13px;
   border: 2px solid #173f38;
   border-radius: 50%;
-  background: #f0dba8;
+  background: var(--journey-accent);
 }
 .journey-timeline-labels {
   display: flex;
@@ -195,8 +285,8 @@
   cursor: pointer;
 }
 .journey-primary-action {
-  border: 1px solid #d8b46b;
-  background: #d8b46b;
+  border: 1px solid var(--journey-accent);
+  background: var(--journey-accent);
   color: #173f38;
 }
 .journey-secondary-action {

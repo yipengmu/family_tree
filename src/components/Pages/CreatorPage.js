@@ -1430,68 +1430,55 @@ function CreatorPage({ activeMenuItem = 'create', onMenuClick }) {
 
         {/* 数据管理功能弹框 */}
         <Modal
-          title="保存"
+          title="保存与导出"
           open={managementModalVisible}
           onCancel={() => setManagementModalVisible(false)}
           footer={null}
           width={500}
           destroyOnClose
+          className="management-modal"
+          wrapClassName="management-modal-wrap"
         >
-          <div style={{ padding: '16px 0' }}>
-            <Space direction="vertical" style={{ width: '100%' }} size="large">
-              {/* 数据保存与发布 */}
+          <div className="management-sheet">
+            <section className="management-section management-save-section">
               <div>
-                <h4>保存当前修改</h4>
-                <Space direction="vertical" style={{ width: '100%' }} size="small">
-                  <Button
-                    type="primary"
-                    icon={<SaveOutlined />}
-                    loading={busy}
-                    onClick={() => saveToCurrentTenant()}
-                    disabled={!rows.length || rows.every(row => !row.name)}
-                    block
-                  >
-                    保存到家谱（{rows.filter(row => row.name && row.name.trim()).length} 位家人）
-                  </Button>
-                  
-                  <div style={{ fontSize: '12px', color: '#666', textAlign: 'center' }}>
-                    保存后可在“看家谱”中查看
-                  </div>
-                </Space>
+                <h4>保存家谱</h4>
+                <p>同步 {rows.filter(row => row.name && row.name.trim()).length} 位家人的最新资料</p>
               </div>
+              <Button
+                type="primary"
+                icon={<SaveOutlined />}
+                loading={busy}
+                onClick={() => saveToCurrentTenant()}
+                disabled={!rows.length || rows.every(row => !row.name)}
+                block
+                size="large"
+              >
+                保存修改
+              </Button>
+            </section>
 
-              {/* 数据导出 */}
+            <section className="management-section management-export-section">
               <div>
-                <h4>备份到本地</h4>
-                <Space style={{ width: '100%' }} size="small">
-                  <Button
-                    icon={<DownloadOutlined />}
-                    onClick={exportToExcel}
-                    disabled={!rows.length}
-                  >
-                    导出Excel
-                  </Button>
-                </Space>
+                <h4>导出备份</h4>
+                <p>下载 Excel 到本地，便于留存与整理</p>
               </div>
+              <Button
+                icon={<DownloadOutlined />}
+                onClick={exportToExcel}
+                disabled={!rows.length}
+              >
+                导出 Excel
+              </Button>
+            </section>
 
-              {/* 数据统计 */}
-              {rows.length > 0 && (
-                <div>
-                  <h4>📊 数据统计</h4>
-                  <div style={{ 
-                    backgroundColor: '#f8f9fa', 
-                    padding: '12px', 
-                    borderRadius: '6px',
-                    fontSize: '12px'
-                  }}>
-                    <div>总记录数: <strong>{rows.length}</strong></div>
-                    <div>有效记录: <strong>{rows.filter(row => row.name && row.name.trim()).length}</strong></div>
-                    <div>世代范围: <strong>{Math.min(...rows.map(item => item.g_rank || 1))} - {Math.max(...rows.map(item => item.g_rank || 1))}</strong></div>
-                    <div>男性: <strong>{rows.filter(row => row.sex === 'MAN').length}</strong> | 女性: <strong>{rows.filter(row => row.sex === 'WOMAN').length}</strong></div>
-                  </div>
-                </div>
-              )}
-            </Space>
+            {rows.length > 0 && (
+              <dl className="management-stats" aria-label="家谱数据概览">
+                <div><dt>有效家人</dt><dd>{rows.filter(row => row.name && row.name.trim()).length}</dd></div>
+                <div><dt>世代范围</dt><dd>{Math.min(...rows.map(item => item.g_rank || 1))}–{Math.max(...rows.map(item => item.g_rank || 1))}</dd></div>
+                <div><dt>总记录</dt><dd>{rows.length}</dd></div>
+              </dl>
+            )}
           </div>
         </Modal>
 

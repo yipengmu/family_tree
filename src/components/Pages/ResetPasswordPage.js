@@ -83,20 +83,11 @@ const ResetPasswordPage = () => {
         <ArrowLeftOutlined />
         <span>返回登录</span>
       </button>
-      <div style={{ width: "100%", maxWidth: "400px", padding: "20px" }}>
-        <Card
-          className="auth-card"
-          style={{
-            borderRadius: "10px",
-            boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
-          }}
-          bodyStyle={{ padding: "30px" }}
-        >
-          <div style={{ textAlign: "center", marginBottom: "24px" }}>
+      <div className="auth-shell">
+        <Card className="auth-card">
+          <div className="auth-heading">
             <div className="auth-seal">{BRAND.seal}</div>
-            <Title level={2} style={{ marginBottom: "8px" }}>
-              找回密码
-            </Title>
+            <Title level={2}>找回密码</Title>
             <Text type="secondary">通过注册邮箱验证后设置新密码</Text>
           </div>
 

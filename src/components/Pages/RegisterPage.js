@@ -98,18 +98,12 @@ const RegisterPage = () => {
         <ArrowLeftOutlined />
         <span>返回家谱</span>
       </button>
-      <div style={{ width: '100%', maxWidth: '400px', padding: '20px' }}>
-        <Card className="auth-card"
-          style={{ 
-            borderRadius: '10px',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
-          }}
-          bodyStyle={{ padding: '30px' }}
-        >
-          <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+      <div className="auth-shell">
+        <Card className="auth-card">
+          <div className="auth-heading">
             <div className="auth-seal">{BRAND.seal}</div>
-            <Title level={2} style={{ marginBottom: '8px' }}>{BRAND.tagline}</Title>
-            <Text type="secondary">从自己开始，快速记录父母、祖辈和家族故事；默认私密，只有受邀家人可以查看</Text>
+            <Title level={2}>{BRAND.tagline}</Title>
+            <Text type="secondary">从自己开始记录。默认私密，仅受邀家人可见。</Text>
           </div>
 
           <Form

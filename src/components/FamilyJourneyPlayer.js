@@ -44,10 +44,12 @@ const FamilyJourneyPlayer = ({
     steps.findIndex((step) => step.generation === currentStep.generation),
   );
   const complete = status === 'complete';
+  const eraKey = complete ? 'complete' : currentStep.era.key;
 
   return (
     <section
-      className={`family-journey-player ${complete ? 'complete' : ''}`}
+      className={`family-journey-player era-${eraKey}`}
+      data-era={complete ? '世系全景' : currentStep.era.label}
       aria-live="polite"
     >
       <div className="journey-player-topline">
