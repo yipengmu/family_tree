@@ -34,6 +34,7 @@
 - 新用户可从示范家谱进入注册；空家谱使用两步向导，先录入本人，再补充一位父母或长辈，保存后直接查看第一份家谱，并可继续补充祖辈和故事。
 - 用户与家谱空间的真实归属关系，Owner/Editor/Contributor/Viewer 角色基础。
 - 创建完成后可继续添加人物；已有人物的资料修改支持按人物增量保存，并继续使用版本冲突保护。
+- 移动端“续家谱”可按人物创建生平纪事：手写经历可直接发布，原始文字、录音和照片作为家庭档案依据保留；AI 整理只生成待人工确认的草稿。
 - 服务端按家谱隐私设置裁剪在世人物的出生日期、居住地、证件、住址和照片字段；Owner 可在设置页调整成员可见范围。
 - Prisma + PostgreSQL/Neon 数据持久化。
 - Vercel Serverless API 与本地 Express 开发服务。
@@ -144,28 +145,33 @@ family_tree/
 
 ## 主要 API
 
-| 方法             | 路径                       | 说明                         |
-| ---------------- | -------------------------- | ---------------------------- |
-| POST             | `/api/auth/register`       | 注册并返回 JWT               |
-| POST             | `/api/auth/login`          | 登录并返回 JWT               |
-| POST             | `/api/auth/send-code`      | 发送邮箱验证码               |
-| POST             | `/api/auth/verify-code`    | 校验验证码                   |
-| POST             | `/api/auth/reset-password` | 使用邮箱验证码重置密码       |
-| GET              | `/api/user/profile`        | 获取当前用户资料             |
-| GET              | `/api/family-data`         | 读取默认或租户家谱数据       |
-| POST             | `/api/family-data`         | 保存租户家谱数据             |
-| POST             | `/api/family-data/save`    | 保存家谱数据的兼容入口       |
-| GET/POST         | `/api/tenants`             | 获取或创建租户               |
-| GET/PATCH/DELETE | `/api/tenants/:tenantId`   | 获取、更新隐私设置或删除租户 |
-| POST             | `/api/people`              | 在家谱中增量新增人物         |
-| GET/PATCH        | `/api/people/:personId`    | 读取或增量修改人物           |
-| GET              | `/api/health`              | API 健康检查                 |
+| 方法             | 路径                              | 说明                         |
+| ---------------- | --------------------------------- | ---------------------------- |
+| POST             | `/api/auth/register`              | 注册并返回 JWT               |
+| POST             | `/api/auth/login`                 | 登录并返回 JWT               |
+| POST             | `/api/auth/send-code`             | 发送邮箱验证码               |
+| POST             | `/api/auth/verify-code`           | 校验验证码                   |
+| POST             | `/api/auth/reset-password`        | 使用邮箱验证码重置密码       |
+| GET              | `/api/user/profile`               | 获取当前用户资料             |
+| GET              | `/api/family-data`                | 读取默认或租户家谱数据       |
+| POST             | `/api/family-data`                | 保存租户家谱数据             |
+| POST             | `/api/family-data/save`           | 保存家谱数据的兼容入口       |
+| GET/POST         | `/api/tenants`                    | 获取或创建租户               |
+| GET/PATCH/DELETE | `/api/tenants/:tenantId`          | 获取、更新隐私设置或删除租户 |
+| POST             | `/api/people`                     | 在家谱中增量新增人物         |
+| GET/PATCH        | `/api/people/:personId`           | 读取或增量修改人物           |
+| GET              | `/api/people/:personId/events`    | 读取人物生平纪事             |
+| POST             | `/api/people/:personId/memories`  | 保存人物档案原始材料         |
+| GET/PATCH        | `/api/memories/:memoryId`         | 读取或修订档案草稿           |
+| POST             | `/api/memories/:memoryId/publish` | 人工确认后发布纪事           |
+| POST             | `/api/memories/:memoryId/process` | AI/ASR 整理档案草稿          |
+| GET              | `/api/health`                     | API 健康检查                 |
 
 ## 当前产品边界与下一阶段
 
 ### 1. 单人连续建谱已打通，协作闭环仍不完整
 
-有家谱图、搜索、增量新增和人物资料编辑入口，已经支持一个发起人独立建立和持续维护第一版家谱。邀请、成员管理、待确认、评论、贡献记录和通知仍不完整；这些能力用于第一版家谱产生后的补充和传播，不作为新用户开始建谱的前置条件。
+有家谱图、搜索、增量新增、人物资料编辑和首版人物生平创建入口，已经支持一个发起人独立建立并持续补充家谱。当前生平链路聚焦按人物记录一段经历、原始材料留存和人工确认发布；跨人物家庭档案、草稿箱、批量整理和成果页仍不完整。邀请、成员管理、待确认、评论、贡献记录和通知也尚未形成完整闭环。
 
 ### 2. 归属校验与存量账号迁移已补齐，邀请协作尚未完成
 

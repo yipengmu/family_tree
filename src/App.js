@@ -5,12 +5,18 @@ import FamilyTreePage from "./components/Pages/FamilyTreePage.js";
 import SettingsPage from "./components/Pages/SettingsPage.js";
 import CreatorPage from "./components/Pages/CreatorPage.js";
 import DiscoverPage from "./components/Pages/DiscoverPage.js";
+import PersonProfilePage from "./components/Pages/PersonProfilePage.js";
 import familyDataService from "./services/familyDataService.js";
 import tenantService from "./services/tenantService.js";
 import { useLocation, useNavigate } from "react-router-dom";
 import MyPage from "./components/Pages/MyPage.js";
 import BRAND from "./constants/brand.js";
-import { getAppPageFromPath, getAppPath } from "./utils/appRoutes.js";
+import {
+  getAppPageFromPath,
+  getAppPath,
+  getPersonIdFromPath,
+  getPersonProfilePath,
+} from "./utils/appRoutes.js";
 // 导入测试工具（开发环境自动运行）
 
 import "./App.css";
@@ -77,6 +83,10 @@ function MainApp({ demoMode = false }) {
     }
 
     navigate(getAppPath(menuKey));
+  };
+
+  const openPersonProfile = (personId, options = {}) => {
+    navigate(getPersonProfilePath(personId, options));
   };
 
   useEffect(() => {
@@ -301,8 +311,38 @@ function MainApp({ demoMode = false }) {
             validationResult={validationResult}
             currentTenant={currentTenant}
             demoMode={demoMode}
+            onOpenPersonProfile={openPersonProfile}
           />
         );
+      case "person": {
+        const personId = getPersonIdFromPath(location.pathname);
+        const person = familyData.find(
+          (item) => String(item.person_id ?? item.id) === String(personId),
+        );
+
+        if (!person) {
+          return (
+            <PersonProfilePage
+              person={null}
+              familyData={familyData}
+              onMenuClick={handleMenuClick}
+              onBack={() => navigate("/app")}
+            />
+          );
+        }
+
+        return (
+          <PersonProfilePage
+            person={person}
+            familyData={familyData}
+            onMenuClick={handleMenuClick}
+            onBack={() => navigate("/app")}
+            initialStoryOpen={
+              new URLSearchParams(location.search).get("capture") === "1"
+            }
+          />
+        );
+      }
       case "settings":
         // 如果用户未登录，显示登录提示
         if (!isAuthenticated()) {
@@ -393,7 +433,13 @@ function MainApp({ demoMode = false }) {
             </div>
           );
         }
-        return <CreatorPage {...commonProps} />;
+        return (
+          <CreatorPage
+            {...commonProps}
+            familyData={familyData}
+            onOpenPersonProfile={openPersonProfile}
+          />
+        );
       case "discover":
         return <DiscoverPage {...commonProps} />;
       case "login-required":
@@ -472,6 +518,7 @@ function MainApp({ demoMode = false }) {
             validationResult={validationResult}
             currentTenant={currentTenant}
             demoMode={demoMode}
+            onOpenPersonProfile={openPersonProfile}
           />
         );
     }

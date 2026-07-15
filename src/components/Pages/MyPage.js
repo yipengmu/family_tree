@@ -175,7 +175,7 @@ const MyPage = ({ activeMenuItem = "mine", onMenuClick, familyData = [] }) => {
           </>
         )}
 
-        <p className="my-page-footnote">让孩子知道家从哪里来</p>
+        <p className="my-page-footnote">让孩子知道家族从哪里来</p>
       </div>
     </AppLayout>
   );

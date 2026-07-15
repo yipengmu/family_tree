@@ -26,6 +26,7 @@ const FamilyTreePage = ({
   onMenuClick,
   currentTenant: tenantOverride = null,
   demoMode = false,
+  onOpenPersonProfile,
 }) => {
   // 状态管理
   const [nodes, setNodes] = useState([]);
@@ -391,6 +392,7 @@ const FamilyTreePage = ({
                 yearSpan: journey.yearSpan,
                 summary: journey.summary,
               }}
+              onOpenPersonProfile={onOpenPersonProfile}
             />
           </ReactFlowProvider>
         </div>

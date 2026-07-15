@@ -54,7 +54,8 @@ const FamilyTreeFlow = forwardRef(({
   presentationFocusId = null,
   presentationPathIds = [],
   presentationComplete = false,
-  panorama = null
+  panorama = null,
+  onOpenPersonProfile
 }, ref) => {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -1326,6 +1327,16 @@ const FamilyTreeFlow = forwardRef(({
                         {selectedNode.data.summary}
                       </p>
                     </div>
+                  )}
+                  {onOpenPersonProfile && (
+                    <Button
+                      type="primary"
+                      block
+                      style={{ marginTop: 14 }}
+                      onClick={() => onOpenPersonProfile(selectedNode.data.id)}
+                    >
+                      查看生平与家庭档案
+                    </Button>
                   )}
                 </div>
               </Card>

@@ -280,6 +280,56 @@
   background: #fffefb;
 }
 
+.login-account-field .ant-select {
+  width: 100%;
+  height: 46px;
+}
+
+.login-account-field .ant-select-selector,
+.login-account-field .ant-select-selection-wrap,
+.login-account-field .ant-select-selection-search {
+  height: 100%;
+}
+
+.login-account-field
+  .ant-input-affix-wrapper.ant-select-selection-search-input {
+  height: 46px;
+  min-height: 46px;
+}
+
+.login-account-field
+  .ant-input-affix-wrapper.ant-select-selection-search-input
+  > input.ant-input {
+  min-height: 0;
+}
+
+.login-account-history-note {
+  display: flex;
+  min-height: 28px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.auth-card .login-account-history-note .ant-typography {
+  color: var(--ink-soft) !important;
+  font-family: var(--sans);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.auth-card .login-account-history-note .ant-btn-link {
+  min-height: 28px;
+  flex: 0 0 auto;
+  font-size: 12px;
+}
+
+.login-account-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .auth-card .ant-btn-primary {
   border-color: var(--pine);
   background: var(--pine);

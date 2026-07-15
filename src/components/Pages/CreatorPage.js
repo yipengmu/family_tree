@@ -30,6 +30,7 @@ import {
   DeleteOutlined,
   SearchOutlined,
   ClearOutlined,
+  BookOutlined,
 } from "@ant-design/icons";
 import * as XLSX from "xlsx";
 import AppLayout from "../Layout/AppLayout.js";
@@ -41,7 +42,10 @@ import tenantService from "../../services/tenantService.js";
 import familyDataService from "../../services/familyDataService.js";
 import familyDataGenerator from "../../services/familyDataGenerator.js";
 import { buildFirstFamily } from "../../utils/firstFamily.js";
-import { normalizePersonLifeStatus } from "../../utils/personLifeStatus.js";
+import {
+  isPersonAlive,
+  normalizePersonLifeStatus,
+} from "../../utils/personLifeStatus.js";
 import { trackEvent } from "../../utils/analytics.js";
 import "./CreatorPage.css";
 
@@ -100,7 +104,11 @@ const emptyRow = () =>
     true,
   );
 
-function CreatorPage({ activeMenuItem = "create", onMenuClick }) {
+function CreatorPage({
+  activeMenuItem = "create",
+  onMenuClick,
+  onOpenPersonProfile,
+}) {
   // 状态管理
   const [files, setFiles] = useState([]);
   const [previews, setPreviews] = useState([]);
@@ -120,8 +128,14 @@ function CreatorPage({ activeMenuItem = "create", onMenuClick }) {
   const [managementModalVisible, setManagementModalVisible] = useState(false);
   const [mobilePersonModalVisible, setMobilePersonModalVisible] =
     useState(false);
+  const [archivePersonModalVisible, setArchivePersonModalVisible] =
+    useState(false);
+  const [archivePersonId, setArchivePersonId] = useState(null);
   const [showMobileTable, setShowMobileTable] = useState(false);
+  const [editingMobilePerson, setEditingMobilePerson] = useState(null);
+  const [mobileVisibleCount, setMobileVisibleCount] = useState(20);
   const [mobilePersonForm] = Form.useForm();
+  const [mobileEditForm] = Form.useForm();
 
   // 重名检测相关状态
   const [duplicateModalVisible, setDuplicateModalVisible] = useState(false);
@@ -149,6 +163,57 @@ function CreatorPage({ activeMenuItem = "create", onMenuClick }) {
         })),
     [rows],
   );
+
+  const archivePersonOptions = useMemo(
+    () =>
+      rows
+        .filter((row) => row.name && (row.person_id ?? row.id) !== undefined)
+        .map((row) => ({
+          value: String(row.person_id ?? row.id),
+          label: `${row.name} · 第${row.g_rank || 1}代`,
+        })),
+    [rows],
+  );
+
+  const personNameById = useMemo(() => {
+    const names = new Map();
+    rows.forEach((row) => {
+      if (!row.name) return;
+      if (row.id !== undefined && row.id !== null) {
+        names.set(String(row.id), row.name);
+      }
+      if (row.person_id !== undefined && row.person_id !== null) {
+        names.set(String(row.person_id), row.name);
+      }
+    });
+    return names;
+  }, [rows]);
+
+  const openArchivePerson = (capture = false) => {
+    if (!archivePersonId) {
+      message.warning("请先选择一位家人");
+      return;
+    }
+    setArchivePersonModalVisible(false);
+    onOpenPersonProfile?.(archivePersonId, { capture });
+  };
+
+  const openMobilePersonEditor = (person) => {
+    setEditingMobilePerson(person);
+    mobileEditForm.setFieldsValue({
+      name: person.name || "",
+      sex: person.sex || "MAN",
+      alive: isPersonAlive(person),
+      g_rank: person.g_rank || 1,
+      rank_index: person.rank_index || 1,
+      g_father_id: person.g_father_id || undefined,
+      birth_date: person.birth_date || "",
+      spouse: person.spouse || "",
+      location: person.location || "",
+      official_position: person.official_position || "",
+      summary: person.summary || "",
+    });
+  };
 
   // 数据持久化key (已删除localStorage逻辑)
   // const getStorageKey = (key) => {
@@ -996,6 +1061,55 @@ function CreatorPage({ activeMenuItem = "create", onMenuClick }) {
     }
   };
 
+  const saveMobilePerson = async (values) => {
+    if (!editingMobilePerson) return;
+
+    const normalizedValues = normalizePersonLifeStatus({
+      ...editingMobilePerson,
+      ...values,
+      g_rank: Number(values.g_rank) || 1,
+      rank_index: Number(values.rank_index) || 1,
+      g_father_id: values.g_father_id
+        ? Number(values.g_father_id) || values.g_father_id
+        : 0,
+      updated_at: new Date().toISOString(),
+    });
+    const patch = {
+      name: normalizedValues.name,
+      sex: normalizedValues.sex,
+      alive: values.alive,
+      g_rank: normalizedValues.g_rank,
+      rank_index: normalizedValues.rank_index,
+      g_father_id: normalizedValues.g_father_id,
+      birth_date: normalizedValues.birth_date || "",
+      spouse: normalizedValues.spouse || "",
+      location: normalizedValues.location || "",
+      official_position: normalizedValues.official_position || "",
+      summary: normalizedValues.summary || "",
+    };
+
+    try {
+      setBusy(true);
+      if (editingMobilePerson.person_id) {
+        const savedPerson = await updatePersonIncrementally(
+          editingMobilePerson,
+          patch,
+        );
+        if (!savedPerson) return;
+      } else {
+        const nextRows = rows.map((row) =>
+          row === editingMobilePerson ? { ...row, ...normalizedValues } : row,
+        );
+        const saved = await saveToCurrentTenant(nextRows, "人物资料已保存");
+        if (!saved) return;
+      }
+      setEditingMobilePerson(null);
+      mobileEditForm.resetFields();
+    } finally {
+      setBusy(false);
+    }
+  };
+
   // 生成并下载familyData文件
   const generateFamilyDataFile = async () => {
     if (!rows || rows.length === 0) {
@@ -1203,7 +1317,7 @@ function CreatorPage({ activeMenuItem = "create", onMenuClick }) {
       currentTenant.id === "default" ||
       !record?.person_id
     )
-      return;
+      return null;
     try {
       const savedPerson = await familyDataService.updatePerson(
         record.person_id,
@@ -1218,6 +1332,7 @@ function CreatorPage({ activeMenuItem = "create", onMenuClick }) {
         ),
       );
       message.success("这项资料已保存");
+      return savedPerson;
     } catch (error) {
       message.error(`保存失败：${error.message}`);
       if (error.message.includes("更新")) {
@@ -1226,6 +1341,7 @@ function CreatorPage({ activeMenuItem = "create", onMenuClick }) {
           .catch(() => null);
         if (Array.isArray(latest)) setRows(latest);
       }
+      return null;
     }
   };
 
@@ -1328,6 +1444,20 @@ function CreatorPage({ activeMenuItem = "create", onMenuClick }) {
           </button>
           <button
             type="button"
+            className="mobile-flow-card archive"
+            onClick={() => setArchivePersonModalVisible(true)}
+          >
+            <span className="mobile-flow-icon">
+              <BookOutlined />
+            </span>
+            <span>
+              <strong>记录生平与家庭档案</strong>
+              <small>写经历、留原声，也可以添加老照片</small>
+            </span>
+            <b>去记录</b>
+          </button>
+          <button
+            type="button"
             className="mobile-flow-card"
             onClick={() => setOcrModalVisible(true)}
           >
@@ -1384,7 +1514,14 @@ function CreatorPage({ activeMenuItem = "create", onMenuClick }) {
                 添加家人、补充资料，随时保存回家谱
               </p>
             </Col>
-            {/* 租户选择器已移至顶部全局导航栏 */}
+            <Col>
+              <Button
+                icon={<BookOutlined />}
+                onClick={() => setArchivePersonModalVisible(true)}
+              >
+                记录生平事迹
+              </Button>
+            </Col>
           </Row>
         </div>
 
@@ -1547,6 +1684,56 @@ function CreatorPage({ activeMenuItem = "create", onMenuClick }) {
             onSelectedRowsChange={setSelectedRows}
           />
         </Card>
+
+        <Modal
+          title="记录谁的生平？"
+          open={archivePersonModalVisible}
+          onCancel={() => setArchivePersonModalVisible(false)}
+          footer={null}
+          destroyOnClose
+          className="archive-person-modal"
+        >
+          <div className="archive-person-picker">
+            <div className="archive-picker-mark" aria-hidden="true">
+              志
+            </div>
+            <div>
+              <h3>先选一位家人</h3>
+              <p>
+                每段经历都会归入这个人的家庭档案，并保留原始文字、录音或照片作为依据。
+              </p>
+            </div>
+            <Select
+              size="large"
+              showSearch
+              autoFocus
+              value={archivePersonId}
+              onChange={setArchivePersonId}
+              optionFilterProp="label"
+              options={archivePersonOptions}
+              placeholder="输入姓名查找"
+              notFoundContent="还没有可选家人，请先添加一位家人"
+            />
+            <div className="archive-picker-actions">
+              <Button
+                size="large"
+                disabled={!archivePersonId}
+                onClick={() => openArchivePerson(false)}
+              >
+                查看已有档案
+              </Button>
+              <Button
+                type="primary"
+                size="large"
+                disabled={!archivePersonId}
+                onClick={() => openArchivePerson(true)}
+              >
+                开始记录
+              </Button>
+            </div>
+            <small>默认仅家谱成员可见，也可以设为仅自己可见。</small>
+          </div>
+        </Modal>
 
         <Modal
           title="添加一位家人"

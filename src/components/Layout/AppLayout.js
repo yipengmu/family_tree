@@ -18,6 +18,8 @@ const AppLayout = ({
 }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false); // 移动端侧边栏状态
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false); // 桌面端侧边栏收起状态
+  const navigationActiveItem =
+    activeMenuItem === "person" ? "tree" : activeMenuItem;
 
   const handleMenuClick = (menuKey) => {
     console.log("Menu clicked:", menuKey);
@@ -54,7 +56,7 @@ const AppLayout = ({
           className={`sidebar-wrapper ${sidebarOpen ? "open" : ""} ${sidebarCollapsed ? "collapsed" : ""}`}
         >
           <Sidebar
-            activeItem={activeMenuItem}
+            activeItem={navigationActiveItem}
             onMenuClick={handleMenuClick}
             collapsed={sidebarCollapsed}
             onToggleCollapse={toggleSidebarCollapse}
@@ -88,7 +90,7 @@ const AppLayout = ({
         </MainContent>
       </div>
       <MobileBottomNav
-        activeItem={activeMenuItem}
+        activeItem={navigationActiveItem}
         onMenuClick={handleMenuClick}
       />
     </div>

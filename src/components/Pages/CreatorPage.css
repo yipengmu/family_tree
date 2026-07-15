@@ -399,6 +399,14 @@
   .mobile-flow-card.primary b {
     color: #d8b46b;
   }
+  .mobile-flow-card.archive {
+    border-color: rgba(154, 63, 47, 0.2);
+    background: linear-gradient(135deg, #fffaf0, #f7eddd);
+  }
+  .mobile-flow-card.archive .mobile-flow-icon {
+    background: rgba(154, 63, 47, 0.1);
+    color: var(--cinnabar);
+  }
   .mobile-manage-link {
     min-height: 40px;
     margin-top: 1px;
@@ -532,6 +540,58 @@
   .data-management-page .ant-modal-body .ant-space-horizontal {
     flex-wrap: wrap;
   }
+
+  .archive-person-modal {
+    top: auto;
+    margin: 0 10px;
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+  }
+}
+
+.archive-person-picker {
+  display: grid;
+  gap: 18px;
+}
+
+.archive-picker-mark {
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(154, 63, 47, 0.22);
+  border-radius: 18px 18px 6px 6px;
+  background: #f8efe0;
+  color: var(--cinnabar);
+  font: 600 28px var(--serif);
+}
+
+.archive-person-picker h3 {
+  margin: 0;
+  color: var(--ink);
+  font: 600 20px var(--serif);
+}
+
+.archive-person-picker p {
+  margin: 6px 0 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.archive-person-picker > .ant-select {
+  width: 100%;
+}
+
+.archive-picker-actions {
+  display: grid;
+  grid-template-columns: 1fr 1.25fr;
+  gap: 10px;
+}
+
+.archive-person-picker > small {
+  color: var(--ink-soft);
+  font-size: 11px;
+  text-align: center;
 }
 
 @media (max-width: 768px) {
