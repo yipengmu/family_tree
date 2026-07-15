@@ -102,6 +102,13 @@ npm run dev
 npm run vercel-build
 ```
 
+需要把内置穆氏示范谱初始化到指定维护者的空白 Owner 家谱时，先执行只读检查；确认目标账号和数据量后再追加 `--apply`。该命令不会覆盖已有家谱，公开示范入口仍使用独立只读快照。
+
+```bash
+npm run demo:bind-maintainer -- --email <维护者邮箱>
+npm run demo:bind-maintainer -- --email <维护者邮箱> --apply
+```
+
 ### Vercel 注册邮件配置
 
 在腾讯云 SES 控制台完成发信域名验证、发信地址和邮件模板审核后，在 Vercel 项目的 Production/Preview 环境变量中配置：

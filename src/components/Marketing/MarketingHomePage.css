@@ -171,15 +171,19 @@
 
 .site-hero {
   width: min(1280px, calc(100% - 48px));
-  height: calc(100svh - 72px);
+  height: auto;
   min-height: 620px;
-  max-height: 780px;
+  box-sizing: border-box;
   display: grid;
   grid-template-columns: minmax(0, 0.9fr) minmax(500px, 1.1fr);
-  align-items: center;
+  align-items: start;
   gap: clamp(44px, 5vw, 76px);
   margin: 0 auto;
   padding: clamp(28px, 4vh, 42px) 0 clamp(32px, 5vh, 48px);
+}
+
+.site-hero-copy {
+  padding-top: 34px;
 }
 
 .site-hero-copy h1 {
@@ -295,6 +299,7 @@
 
 .site-hero-visual {
   min-height: 500px;
+  box-sizing: border-box;
   padding: 34px 34px 30px;
   position: relative;
   border: 1px solid rgba(36, 52, 47, 0.16);
@@ -459,9 +464,7 @@
 
 .site-section-heading h2,
 .two-step-start h2,
-.life-copy h2,
-.wechat-copy h2,
-.site-final-cta h2 {
+.wechat-copy h2 {
   margin: 13px 0 16px;
   color: var(--site-ink);
   font: 600 clamp(32px, 4vw, 50px) / 1.2 var(--serif);
@@ -470,7 +473,6 @@
 
 .site-section-heading p,
 .two-step-start p,
-.life-copy p,
 .wechat-copy p {
   margin: 0;
   color: var(--site-muted);
@@ -951,13 +953,6 @@
   text-decoration: none;
 }
 
-.life-section {
-  display: grid;
-  grid-template-columns: minmax(0, 0.82fr) minmax(460px, 1.18fr);
-  align-items: center;
-  gap: 100px;
-}
-
 .site-status-tag {
   width: max-content;
   display: block;
@@ -969,109 +964,6 @@
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.12em;
-}
-
-.life-copy > a {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 24px;
-  color: var(--site-pine);
-  font-size: 14px;
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.life-file {
-  padding: 32px;
-  position: relative;
-  border: 1px solid var(--site-line);
-  border-radius: 2px 20px 2px 2px;
-  background: var(--site-paper-light);
-  box-shadow: 0 24px 60px rgba(50, 60, 54, 0.12);
-}
-
-.life-file::after {
-  content: "内部档案";
-  position: absolute;
-  right: 24px;
-  bottom: 22px;
-  padding: 5px 8px;
-  border: 1px solid rgba(166, 70, 50, 0.35);
-  color: rgba(166, 70, 50, 0.72);
-  font: 10px var(--serif);
-  letter-spacing: 0.12em;
-  transform: rotate(-4deg);
-}
-
-.life-file-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--site-line);
-  color: var(--site-muted);
-  font-size: 11px;
-  letter-spacing: 0.06em;
-}
-
-.life-file-person {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 28px 0;
-}
-
-.life-file-person > div {
-  width: 58px;
-  height: 68px;
-  display: grid;
-  place-items: center;
-  border: 1px solid rgba(23, 63, 56, 0.18);
-  border-radius: 8px;
-  color: var(--site-pine);
-  background: #f0eadc;
-  font: 25px var(--serif);
-}
-
-.life-file-person strong,
-.life-file-person small {
-  display: block;
-}
-
-.life-file-person strong {
-  color: var(--site-pine);
-  font: 20px var(--serif);
-}
-
-.life-file-person small {
-  margin-top: 7px;
-  color: var(--site-muted);
-}
-
-.life-file ol {
-  margin: 0;
-  padding: 0 0 4px;
-  list-style: none;
-}
-
-.life-file li {
-  display: grid;
-  grid-template-columns: 68px 1fr;
-  gap: 16px;
-  padding: 16px 0;
-  position: relative;
-  border-top: 1px solid var(--site-line);
-}
-
-.life-file time {
-  color: var(--site-cinnabar);
-  font: 12px var(--serif);
-}
-
-.life-file li > span {
-  color: var(--site-muted);
-  font-size: 13px;
 }
 
 .trust-section {
@@ -1244,35 +1136,6 @@
   font-size: 10px;
 }
 
-.site-final-cta {
-  padding: 104px 24px;
-  text-align: center;
-  background:
-    linear-gradient(rgba(36, 52, 47, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(36, 52, 47, 0.035) 1px, transparent 1px),
-    var(--site-paper-deep);
-  background-size: 32px 32px;
-}
-
-.site-final-cta > div {
-  max-width: 850px;
-  margin: 0 auto;
-}
-
-.site-final-cta button {
-  min-height: 52px;
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 22px;
-  padding: 0 25px;
-  border: 1px solid var(--site-pine);
-  border-radius: 9px;
-  color: #fffdf7;
-  background: var(--site-pine);
-  cursor: pointer;
-}
-
 .site-footer {
   min-height: 190px;
   display: grid;
@@ -1422,8 +1285,7 @@
   }
 
   .two-step-start,
-  .site-story-inner,
-  .life-section {
+  .site-story-inner {
     gap: 54px;
   }
 
@@ -1490,6 +1352,7 @@
 
   .site-hero-copy {
     max-width: 700px;
+    padding-top: 0;
   }
 
   .site-hero-visual {
@@ -1515,7 +1378,6 @@
   .family-path-grid,
   .two-step-start,
   .site-story-inner,
-  .life-section,
   .wechat-card {
     grid-template-columns: 1fr;
   }
@@ -1538,10 +1400,6 @@
 
   .site-story-inner {
     gap: 52px;
-  }
-
-  .life-file {
-    max-width: 640px;
   }
 
   .wechat-card {
@@ -1652,9 +1510,7 @@
 
   .site-section-heading h2,
   .two-step-start h2,
-  .life-copy h2,
-  .wechat-copy h2,
-  .site-final-cta h2 {
+  .wechat-copy h2 {
     font-size: 32px;
   }
 
@@ -1766,14 +1622,6 @@
     grid-template-columns: auto 1fr;
   }
 
-  .life-section {
-    gap: 46px;
-  }
-
-  .life-file {
-    padding: 24px 20px;
-  }
-
   .trust-grid {
     grid-template-columns: 1fr;
   }
@@ -1808,10 +1656,6 @@
   .wechat-qr {
     width: 100%;
     max-width: 280px;
-  }
-
-  .site-final-cta {
-    padding: 80px 18px;
   }
 
   .site-footer {

@@ -73,6 +73,12 @@
   height: 100%;
   min-height: 0;
   align-items: center;
+  justify-content: flex-end;
+  gap: 18px;
+}
+
+.header-search .family-search-bar .search-section {
+  flex: 0 0 auto;
 }
 
 .content-container {
@@ -135,6 +141,14 @@
 
   .header-search {
     max-width: none;
+  }
+
+  .header-search .family-search-bar {
+    gap: 7px;
+  }
+
+  .header-search .family-search-bar .search-section {
+    flex: 1 1 auto;
   }
 
   .content-container {

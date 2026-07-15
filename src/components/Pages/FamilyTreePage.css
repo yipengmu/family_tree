@@ -13,7 +13,9 @@
 .family-context-bar {
   min-height: 84px;
   display: grid;
-  grid-template-columns: minmax(220px, 0.72fr) minmax(360px, 1.45fr) auto;
+  grid-template-columns:
+    minmax(220px, 320px) minmax(360px, 480px) minmax(0, 1fr)
+    auto;
   align-items: center;
   gap: 24px;
   padding: 0 4px 12px;
@@ -78,7 +80,7 @@
   line-height: 1.45;
 }
 .family-context-actions {
-  grid-column: 3;
+  grid-column: 4;
   display: flex;
   align-items: center;
   justify-self: end;
@@ -105,6 +107,9 @@
   .family-context-bar {
     grid-template-columns: minmax(200px, 0.7fr) minmax(280px, 1.2fr) auto;
     gap: 16px;
+  }
+  .family-context-actions {
+    grid-column: 3;
   }
   .family-context-guide {
     padding-inline: 14px;

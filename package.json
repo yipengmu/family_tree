@@ -50,6 +50,7 @@
     "db:migrate:deploy": "npx prisma migrate deploy",
     "db:studio": "npx prisma studio",
     "db:test": "node scripts/test-db-connection.js",
+    "demo:bind-maintainer": "node scripts/bind-demo-maintainer.js",
     "test-verification": "node scripts/test-verification.js",
     "test-oss": "node scripts/test-oss-connection.js",
     "test-ocr": "node scripts/test-ocr-data.js",

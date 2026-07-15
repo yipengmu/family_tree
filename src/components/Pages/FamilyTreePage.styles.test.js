@@ -94,7 +94,10 @@ describe("family journey animation styles", () => {
       /\.family-context-actions \.create-family-btn\s*\{[^}]*height:\s*42px !important;[^}]*border-radius:\s*10px/s,
     );
     expect(stylesheet).toMatch(
-      /\.family-context-actions\s*\{[^}]*grid-column:\s*3;/s,
+      /\.family-context-actions\s*\{[^}]*grid-column:\s*4;/s,
+    );
+    expect(stylesheet).toMatch(
+      /@media\s*\(max-width:\s*1200px\)\s*and\s*\(min-width:\s*769px\)[\s\S]*?\.family-context-actions\s*\{[^}]*grid-column:\s*3;/s,
     );
     expect(stylesheet).toMatch(
       /@media\s*\(max-width:\s*768px\)[\s\S]*?\.family-context-actions\s*\{[^}]*grid-column:\s*2;/s,
