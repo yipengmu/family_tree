@@ -505,14 +505,17 @@ const FamilyTreeFlow = forwardRef(({
           ].filter(Boolean).join(' '),
         }))
       : allLayoutedNodes;
+    const generationByNodeId = presentationMode
+      ? new Map(
+        allLayoutedNodes.map((node) => [node.id, Number(node.data.rank)]),
+      )
+      : null;
     const visibleEdges = presentationMode
       ? newEdges
         .filter((edge) => visibleNodeIds.has(edge.source) && visibleNodeIds.has(edge.target))
         .map((edge) => ({
           ...edge,
-          className: Number(
-            allLayoutedNodes.find((node) => node.id === edge.target)?.data.rank,
-          ) === Number(presentationStep)
+          className: generationByNodeId.get(edge.target) === Number(presentationStep)
             ? 'journey-edge-entering'
             : '',
         }))

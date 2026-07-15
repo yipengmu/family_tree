@@ -86,10 +86,7 @@
   background-size: 32px 32px, 32px 32px, auto;
 }
 
-.journey-active .react-flow__node {
-  transition: transform .66s cubic-bezier(.22,.72,.25,1);
-}
-.journey-active .react-flow__node.journey-node-entering {
+.journey-active .react-flow__node.journey-node-entering .family-member-node {
   animation: journey-node-reveal .55s cubic-bezier(.2,.75,.28,1) both;
 }
 .journey-active .react-flow__edge.journey-edge-entering .react-flow__edge-path {
@@ -109,7 +106,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .journey-active .react-flow__node,
+  .journey-active .react-flow__node .family-member-node,
   .journey-active .react-flow__edge-path { animation: none; transition: none; }
 }
 
