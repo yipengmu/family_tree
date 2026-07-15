@@ -33,8 +33,15 @@ describe("creator page mobile directory", () => {
       /@media\s*\(max-width:\s*768px\)[\s\S]*?\.family-data-card\s*\{[^}]*display:\s*none;/s,
     );
     expect(stylesheet).toMatch(
-      /\.mobile-directory-head\s*\{[^}]*display:\s*grid;[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s*112px;/s,
+      /\.mobile-directory-head\s*\{[^}]*display:\s*grid;[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s*auto;/s,
     );
+    const directoryMenu = source.match(
+      /<div className="mobile-directory-menu"[\s\S]*?<\/div>/,
+    );
+    expect(directoryMenu).not.toBeNull();
+    expect(directoryMenu[0]).not.toContain("照片录入");
+    expect(directoryMenu[0]).not.toContain("保存导出");
+    expect(source).toContain('aria-label="打开更多家谱管理"');
   });
 
   test("offers a focused mobile form for modifying a person", () => {

@@ -30,6 +30,7 @@ import {
   ClearOutlined,
   BookOutlined,
   ApartmentOutlined,
+  EllipsisOutlined,
 } from "@ant-design/icons";
 import AppLayout from "../Layout/AppLayout.js";
 import AntdFamilyTable from "../AntdFamilyTable.js";
@@ -1449,15 +1450,12 @@ function CreatorPage({
                   </button>
                   <button
                     type="button"
-                    onClick={() => setImageParseModalVisible(true)}
-                  >
-                    <CameraOutlined /> 照片录入
-                  </button>
-                  <button
-                    type="button"
+                    className="secondary"
+                    aria-label="打开更多家谱管理"
+                    title="备份、导出与更多管理"
                     onClick={() => setManagementModalVisible(true)}
                   >
-                    <SaveOutlined /> 保存导出
+                    <EllipsisOutlined /> 更多
                   </button>
                 </div>
               </div>

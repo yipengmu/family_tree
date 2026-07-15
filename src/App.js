@@ -99,8 +99,8 @@ function MainApp({ demoMode = false }) {
 
   useEffect(() => {
     document.title = demoMode
-      ? `${BRAND.demoFamilyName}｜${BRAND.name}`
-      : `我的家谱｜${BRAND.name}`;
+      ? `${BRAND.demoFamilyName}`
+      : `我的家谱`;
   }, [demoMode]);
 
   useEffect(() => {
