@@ -29,4 +29,19 @@ describe("authentication page layout", () => {
     expect(layoutSource).toContain("aria-label={backLabel}");
     expect(stylesheet).toContain(".auth-back-button:focus-visible");
   });
+
+  test("keeps the brand at the start of the topbar and links it home", () => {
+    expect(layoutSource).toMatch(
+      /<header className="auth-topbar">[\s\S]*?<Link className="auth-brand" to="\/"/,
+    );
+    expect(layoutSource).toContain('aria-label="谱里官网首页"');
+    expect(stylesheet).toContain(".auth-brand:focus-visible");
+  });
+
+  test("uses compact desktop spacing so the footer remains in view", () => {
+    expect(stylesheet).toContain("padding: 30px 38px 24px;");
+    expect(stylesheet).toContain(
+      "@media (min-width: 901px) and (max-height: 760px)",
+    );
+  });
 });

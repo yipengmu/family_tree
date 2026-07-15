@@ -42,6 +42,10 @@
   display: none;
 }
 
+.mobile-official-link {
+  display: none;
+}
+
 .header-eyebrow {
   color: var(--pine);
   font-family: var(--serif);
@@ -137,6 +141,25 @@
     color: var(--pine);
     font: 600 15px var(--serif);
     letter-spacing: 0.08em;
+  }
+
+  .mobile-official-link {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--hairline);
+    border-radius: 10px;
+    color: var(--pine);
+    background: rgba(255, 253, 247, 0.88);
+    font-size: 18px;
+    text-decoration: none;
+  }
+
+  .mobile-official-link:active {
+    background: var(--paper-deep);
   }
 
   .header-search {

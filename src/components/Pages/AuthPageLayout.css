@@ -4,7 +4,7 @@
   box-sizing: border-box;
   position: relative;
   overflow: hidden auto;
-  padding: 96px 28px 44px;
+  padding: 80px 28px 24px;
   background:
     radial-gradient(circle at 12% 14%, rgba(45, 92, 82, 0.13), transparent 30%),
     radial-gradient(
@@ -37,7 +37,7 @@
   align-items: center;
   justify-content: space-between;
   position: absolute;
-  top: calc(24px + env(safe-area-inset-top));
+  top: calc(16px + env(safe-area-inset-top));
   left: 50%;
   z-index: 2;
   transform: translateX(-50%);
@@ -78,6 +78,13 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
+  border-radius: 9px;
+  text-decoration: none;
+}
+
+.auth-brand:focus-visible {
+  outline: 3px solid rgba(166, 70, 50, 0.22);
+  outline-offset: 5px;
 }
 
 .auth-brand-seal,
@@ -120,7 +127,7 @@
 
 .auth-shell {
   width: min(1120px, 100%);
-  min-height: min(680px, calc(100dvh - 140px));
+  min-height: min(660px, calc(100dvh - 104px));
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(420px, 500px);
   align-items: center;
@@ -221,7 +228,7 @@
 }
 
 .auth-card .ant-card-body {
-  padding: 42px 44px 36px;
+  padding: 30px 38px 24px;
 }
 
 .auth-card .ant-typography {
@@ -230,7 +237,7 @@
 }
 
 .auth-heading {
-  margin-bottom: 28px;
+  margin-bottom: 20px;
   text-align: left;
 }
 
@@ -239,7 +246,7 @@
 }
 
 .auth-heading h2.ant-typography {
-  font-size: 30px;
+  font-size: 28px;
 }
 
 .auth-heading .ant-typography-secondary {
@@ -251,20 +258,20 @@
 }
 
 .auth-seal {
-  width: 44px;
-  height: 44px;
-  margin-bottom: 18px;
-  font-size: 24px;
+  width: 40px;
+  height: 40px;
+  margin-bottom: 12px;
+  font-size: 22px;
 }
 
 .auth-card .ant-form-item {
-  margin-bottom: 18px;
+  margin-bottom: 12px;
 }
 
 .auth-card .ant-input-affix-wrapper,
 .auth-card .ant-input,
 .auth-card .ant-btn-lg {
-  min-height: 48px;
+  min-height: 46px;
   border-radius: 10px;
 }
 
@@ -291,7 +298,7 @@
 }
 
 .auth-card .ant-divider {
-  margin: 22px 0 16px;
+  margin: 14px 0 10px;
   color: var(--ink-soft);
   font-size: 12px;
 }
@@ -324,6 +331,38 @@
 
   .auth-intro {
     display: none;
+  }
+}
+
+@media (min-width: 901px) and (max-height: 760px) {
+  .auth-page {
+    padding-top: 72px;
+    padding-bottom: 16px;
+  }
+
+  .auth-shell {
+    min-height: calc(100dvh - 88px);
+  }
+
+  .auth-intro {
+    padding-block: 16px;
+  }
+
+  .auth-intro h1 {
+    margin-block: 14px 16px;
+    font-size: 42px;
+  }
+
+  .auth-family-preview {
+    margin-top: 28px;
+  }
+
+  .auth-trust-list {
+    margin-top: 22px;
+  }
+
+  .auth-card .ant-card-body {
+    padding-block: 24px 20px;
   }
 }
 

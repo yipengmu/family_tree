@@ -4,8 +4,10 @@ import {
   Navigate,
   Route,
   Routes,
+  useLocation,
 } from "react-router-dom";
 import BRAND from "./constants/brand.js";
+import { shouldRedirectMobileHome } from "./utils/mobileEntry.js";
 import "./RouterApp.css";
 
 const MarketingHomePage = lazy(
@@ -25,11 +27,21 @@ const RouteLoading = () => (
   </div>
 );
 
+const HomeRoute = () => {
+  const location = useLocation();
+
+  if (shouldRedirectMobileHome(location.search)) {
+    return <Navigate to="/app" replace />;
+  }
+
+  return <MarketingHomePage />;
+};
+
 const RouterApp = () => (
   <Router>
     <Suspense fallback={<RouteLoading />}>
       <Routes>
-        <Route path="/" element={<MarketingHomePage />} />
+        <Route path="/" element={<HomeRoute />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />

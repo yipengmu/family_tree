@@ -10,14 +10,11 @@ import {
   MenuOutlined,
   SafetyCertificateOutlined,
 } from "@ant-design/icons";
-import { QRCode } from "antd";
 import { Link, useNavigate } from "react-router-dom";
 import BRAND from "../../constants/brand.js";
 import { getCreatePath } from "../../utils/appRoutes.js";
 import { trackEvent } from "../../utils/analytics.js";
 import "./MarketingHomePage.css";
-
-const MOBILE_CREATE_URL = "https://tree.tatababa.top/app/create?source=pc-home";
 
 const memoryScenes = [
   {
@@ -81,7 +78,6 @@ const trustItems = [
 const MarketingHomePage = () => {
   const navigate = useNavigate();
   const [navOpen, setNavOpen] = useState(false);
-  const [createPanelOpen, setCreatePanelOpen] = useState(false);
   const authenticated = Boolean(localStorage.getItem("token"));
   const createPath = getCreatePath(authenticated);
   const createState = useMemo(
@@ -94,32 +90,15 @@ const MarketingHomePage = () => {
     trackEvent("homepage_view");
   }, []);
 
-  useEffect(() => {
-    if (!createPanelOpen) return undefined;
-
-    const closeOnEscape = (event) => {
-      if (event.key === "Escape") setCreatePanelOpen(false);
-    };
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    window.addEventListener("keydown", closeOnEscape);
-    return () => {
-      document.body.style.overflow = originalOverflow;
-      window.removeEventListener("keydown", closeOnEscape);
-    };
-  }, [createPanelOpen]);
-
   const beginCreate = (source) => {
+    const device = window.matchMedia("(max-width: 768px)").matches
+      ? "mobile"
+      : "desktop";
+
     trackEvent("hero_create_click", { source });
+    trackEvent("app_create_open", { source, device });
     setNavOpen(false);
-
-    if (window.matchMedia("(max-width: 768px)").matches) {
-      trackEvent("app_create_open", { source, device: "mobile" });
-      navigate(createPath, { state: createState });
-      return;
-    }
-
-    setCreatePanelOpen(true);
+    navigate(createPath, { state: createState });
   };
 
   const openDemo = (source) => {
@@ -181,11 +160,20 @@ const MarketingHomePage = () => {
           </nav>
 
           <div className="site-header-actions">
-            <Link to="/login" state={{ from: "/", returnTo: "/app" }}>
+            <Link
+              className="site-header-login"
+              to="/login"
+              state={{ from: "/", returnTo: "/app" }}
+            >
               登录
             </Link>
-            <button type="button" onClick={() => beginCreate("header")}>
+            <button
+              className="site-header-create"
+              type="button"
+              onClick={() => beginCreate("header")}
+            >
               {authenticated ? "进入我的家谱" : "免费创建"}
+              <ArrowRightOutlined />
             </button>
           </div>
         </div>
@@ -519,62 +507,6 @@ const MarketingHomePage = () => {
       >
         {authenticated ? "进入我的家谱" : "免费创建我的家谱"}
       </button>
-
-      {createPanelOpen && (
-        <div
-          className="create-panel-backdrop"
-          role="presentation"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) setCreatePanelOpen(false);
-          }}
-        >
-          <section
-            className="create-panel"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="create-panel-title"
-          >
-            <button
-              className="create-panel-close"
-              type="button"
-              aria-label="关闭"
-              onClick={() => setCreatePanelOpen(false)}
-              autoFocus
-            >
-              <CloseOutlined />
-            </button>
-            <span className="site-kicker">更适合在手机上开始</span>
-            <h2 id="create-panel-title">扫码，把第一位家人写进谱里</h2>
-            <p>
-              用手机浏览器或微信扫码打开创建页面，之后可以在任意设备继续整理。
-            </p>
-            <div className="create-product-qr">
-              <QRCode
-                value={MOBILE_CREATE_URL}
-                size={190}
-                color="#173f38"
-                bgColor="#fffdf7"
-                bordered={false}
-              />
-            </div>
-            <Link
-              className="site-button site-button-primary"
-              to={createPath}
-              state={createState}
-              onClick={() => {
-                trackEvent("app_create_open", {
-                  source: "desktop-panel",
-                  device: "desktop",
-                });
-                setCreatePanelOpen(false);
-              }}
-            >
-              在电脑上继续
-              <ArrowRightOutlined />
-            </Link>
-          </section>
-        </div>
-      )}
     </div>
   );
 };

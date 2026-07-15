@@ -63,17 +63,17 @@ flowchart LR
 
 ## 技术栈
 
-| 层次 | 技术 |
-| --- | --- |
-| 前端 | React 18、React Router、Ant Design 5 |
-| 家谱可视化 | React Flow 11、Dagre |
-| 生产 API | Vercel Serverless Functions |
-| 本地 API | Express 5 |
-| 数据访问 | Prisma 5 |
-| 数据库 | PostgreSQL，推荐 Neon |
-| 媒体 | 腾讯云 COS |
-| OCR | 阿里云通义千问 |
-| 部署 | Vercel |
+| 层次       | 技术                                 |
+| ---------- | ------------------------------------ |
+| 前端       | React 18、React Router、Ant Design 5 |
+| 家谱可视化 | React Flow 11、Dagre                 |
+| 生产 API   | Vercel Serverless Functions          |
+| 本地 API   | Express 5                            |
+| 数据访问   | Prisma 5                             |
+| 数据库     | PostgreSQL，推荐 Neon                |
+| 媒体       | 腾讯云 COS                           |
+| OCR        | 阿里云通义千问                       |
+| 部署       | Vercel                               |
 
 ## 快速开始
 
@@ -90,7 +90,7 @@ npm run db:migrate:deploy
 npm run dev
 ```
 
-- 产品官网：http://localhost:3000
+- 产品官网：http://localhost:3000（手机直接访问时默认进入 `/app`；应用内可通过 `/?from=app` 返回官网）
 - H5 产品：http://localhost:3000/app
 - 穆氏示范家谱：http://localhost:3000/app/demo
 - 本地 API：http://localhost:3003（与 Vercel 共用 `api/*.js` handler）
@@ -144,22 +144,22 @@ family_tree/
 
 ## 主要 API
 
-| 方法 | 路径 | 说明 |
-| --- | --- | --- |
-| POST | `/api/auth/register` | 注册并返回 JWT |
-| POST | `/api/auth/login` | 登录并返回 JWT |
-| POST | `/api/auth/send-code` | 发送邮箱验证码 |
-| POST | `/api/auth/verify-code` | 校验验证码 |
-| POST | `/api/auth/reset-password` | 使用邮箱验证码重置密码 |
-| GET | `/api/user/profile` | 获取当前用户资料 |
-| GET | `/api/family-data` | 读取默认或租户家谱数据 |
-| POST | `/api/family-data` | 保存租户家谱数据 |
-| POST | `/api/family-data/save` | 保存家谱数据的兼容入口 |
-| GET/POST | `/api/tenants` | 获取或创建租户 |
-| GET/PATCH/DELETE | `/api/tenants/:tenantId` | 获取、更新隐私设置或删除租户 |
-| POST | `/api/people` | 在家谱中增量新增人物 |
-| GET/PATCH | `/api/people/:personId` | 读取或增量修改人物 |
-| GET | `/api/health` | API 健康检查 |
+| 方法             | 路径                       | 说明                         |
+| ---------------- | -------------------------- | ---------------------------- |
+| POST             | `/api/auth/register`       | 注册并返回 JWT               |
+| POST             | `/api/auth/login`          | 登录并返回 JWT               |
+| POST             | `/api/auth/send-code`      | 发送邮箱验证码               |
+| POST             | `/api/auth/verify-code`    | 校验验证码                   |
+| POST             | `/api/auth/reset-password` | 使用邮箱验证码重置密码       |
+| GET              | `/api/user/profile`        | 获取当前用户资料             |
+| GET              | `/api/family-data`         | 读取默认或租户家谱数据       |
+| POST             | `/api/family-data`         | 保存租户家谱数据             |
+| POST             | `/api/family-data/save`    | 保存家谱数据的兼容入口       |
+| GET/POST         | `/api/tenants`             | 获取或创建租户               |
+| GET/PATCH/DELETE | `/api/tenants/:tenantId`   | 获取、更新隐私设置或删除租户 |
+| POST             | `/api/people`              | 在家谱中增量新增人物         |
+| GET/PATCH        | `/api/people/:personId`    | 读取或增量修改人物           |
+| GET              | `/api/health`              | API 健康检查                 |
 
 ## 当前产品边界与下一阶段
 
