@@ -32,7 +32,10 @@ import {
   getCollapseStats,
   hasCollapsedChildren
 } from '../utils/familyTreeCollapse.js';
-import { getAdaptiveTreeFitOptions } from '../utils/familyTreeViewport.js';
+import {
+  getAdaptiveTreeFitOptions,
+  getHorizontallyCenteredViewportX,
+} from '../utils/familyTreeViewport.js';
 
 import 'reactflow/dist/style.css';
 import './FamilyTreeFlow.css';
@@ -661,6 +664,82 @@ const FamilyTreeFlow = forwardRef(({
     () => nodes.map((node) => node.id).sort().join('|'),
     [nodes],
   );
+
+  const centerDemoTreeHorizontally = useCallback((duration = 0) => {
+    const flowContainer = flowContainerRef.current;
+    const currentNodes = getNodes().filter((node) => !node.hidden);
+    if (
+      !useFounderLabels
+      || presentationMode
+      || !flowContainer
+      || !currentNodes.length
+      || !flowContainer.clientWidth
+    ) {
+      return;
+    }
+
+    const viewport = getViewport();
+    const bounds = getNodesBounds(
+      currentNodes.map((node) => ({
+        ...node,
+        width: node.measured?.width || node.width || (isMobile ? 180 : 240),
+        height: node.measured?.height || node.height || 120,
+      })),
+    );
+    const centeredX = getHorizontallyCenteredViewportX({
+      bounds,
+      viewportWidth: flowContainer.clientWidth,
+      zoom: viewport.zoom,
+    });
+
+    setViewport(
+      {
+        ...viewport,
+        x: centeredX,
+      },
+      { duration },
+    );
+  }, [getNodes, getViewport, isMobile, presentationMode, setViewport, useFounderLabels]);
+
+  // 未登录示范谱的布局坐标从正数开始，首次渲染时需要把整棵树的可见范围
+  // 横向移到画布中心；只调整 x，保留当前缩放和纵向取景。
+  useEffect(() => {
+    if (!useFounderLabels || presentationMode || !visibleNodeSignature) {
+      return undefined;
+    }
+
+    const timer = setTimeout(() => centerDemoTreeHorizontally(), 160);
+    return () => clearTimeout(timer);
+  }, [centerDemoTreeHorizontally, presentationMode, useFounderLabels, visibleNodeSignature]);
+
+  useEffect(() => {
+    const flowContainer = flowContainerRef.current;
+    if (
+      !useFounderLabels
+      || presentationMode
+      || !flowContainer
+      || typeof ResizeObserver === 'undefined'
+    ) {
+      return undefined;
+    }
+
+    let timer;
+    let previousWidth = flowContainer.clientWidth;
+    const observer = new ResizeObserver(([entry]) => {
+      const { width } = entry.contentRect;
+      if (Math.abs(width - previousWidth) < 12) return;
+
+      previousWidth = width;
+      clearTimeout(timer);
+      timer = setTimeout(() => centerDemoTreeHorizontally(240), 120);
+    });
+
+    observer.observe(flowContainer);
+    return () => {
+      clearTimeout(timer);
+      observer.disconnect();
+    };
+  }, [centerDemoTreeHorizontally, presentationMode, useFounderLabels]);
 
   const fitPersonalTreeToCanvas = useCallback((duration = 600) => {
     const reactFlow = reactFlowInstanceRef.current;

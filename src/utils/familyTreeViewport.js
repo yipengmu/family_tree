@@ -23,3 +23,16 @@ export const getAdaptiveTreeFitOptions = (nodeCount, isMobile) => {
     maxZoom: isMobile ? 0.62 : 0.76,
   };
 };
+
+export const getHorizontallyCenteredViewportX = ({
+  bounds,
+  viewportWidth,
+  zoom,
+}) => {
+  const boundsX = Number(bounds?.x) || 0;
+  const boundsWidth = Math.max(0, Number(bounds?.width) || 0);
+  const safeViewportWidth = Math.max(0, Number(viewportWidth) || 0);
+  const safeZoom = Number(zoom) > 0 ? Number(zoom) : 1;
+
+  return (safeViewportWidth - boundsWidth * safeZoom) / 2 - boundsX * safeZoom;
+};

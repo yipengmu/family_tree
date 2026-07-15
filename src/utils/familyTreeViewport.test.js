@@ -1,4 +1,7 @@
-import { getAdaptiveTreeFitOptions } from "./familyTreeViewport.js";
+import {
+  getAdaptiveTreeFitOptions,
+  getHorizontallyCenteredViewportX,
+} from "./familyTreeViewport.js";
 
 describe("family tree adaptive viewport", () => {
   test("lets a four-generation mobile tree use most of the canvas", () => {
@@ -22,5 +25,15 @@ describe("family tree adaptive viewport", () => {
     expect(getAdaptiveTreeFitOptions(3, false).maxZoom).toBeGreaterThan(
       getAdaptiveTreeFitOptions(3, true).maxZoom,
     );
+  });
+
+  test("centers a demo tree whose layout starts at a positive x coordinate", () => {
+    expect(
+      getHorizontallyCenteredViewportX({
+        bounds: { x: 420, width: 860 },
+        viewportWidth: 640,
+        zoom: 0.35,
+      }),
+    ).toBe(22.5);
   });
 });
