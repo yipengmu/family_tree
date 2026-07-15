@@ -14,7 +14,6 @@ const FamilyMemberNode = ({ data, selected }) => {
     birthDate,
     death,
     location,
-    summary,
     hasCollapsedChildren,
     isNameProtectionEnabled = false, // 姓名保护开关，默认关闭
     useFounderLabels = true,
@@ -168,9 +167,7 @@ const FamilyMemberNode = ({ data, selected }) => {
         {location && (
           <div><strong>地点:</strong> {location}</div>
         )}
-        {summary && (
-          <div><strong>简介:</strong> {formatDisplayText(summary, 100)}</div>
-        )}
+        <div className="family-member-tooltip-hint">点击节点查看人物资料</div>
       </div>
     );
   };

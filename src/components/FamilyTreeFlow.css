@@ -1063,10 +1063,31 @@
   gap: 10px;
 }
 
+.mobile-person-summary {
+  display: grid;
+  gap: 5px;
+  padding: 2px 2px 6px;
+}
+
 .mobile-person-actions p {
   margin: 0 0 3px;
   color: var(--ink-soft);
   font-size: 12px;
+}
+
+.mobile-person-actions .mobile-person-generation {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.mobile-person-actions .mobile-person-summary-text {
+  margin-top: 4px;
+  padding: 9px 11px;
+  border: 1px solid rgba(35, 53, 47, 0.1);
+  border-radius: 9px;
+  background: rgba(35, 53, 47, 0.045);
+  line-height: 1.6;
 }
 
 .mobile-person-actions .ant-btn-primary {
@@ -1078,4 +1099,12 @@
   color: var(--ink-soft);
   font-size: 10px;
   text-align: center;
+}
+
+.family-member-tooltip-hint {
+  margin-top: 8px;
+  padding-top: 7px;
+  border-top: 1px solid rgba(35, 53, 47, 0.1);
+  color: var(--ink-soft);
+  font-size: 11px;
 }

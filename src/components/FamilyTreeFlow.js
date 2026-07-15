@@ -1192,24 +1192,34 @@ const FamilyTreeFlow = forwardRef(({
         onClose={() => setSelectedNode(null)}
         open={Boolean(isMobile && selectedNode)}
         className="mobile-person-action-drawer"
-        styles={{ body: { padding: '8px 18px 22px' } }}
+        styles={{ body: { padding: '8px 18px calc(88px + env(safe-area-inset-bottom))' } }}
       >
         {selectedNode && (
           <div className="mobile-person-actions">
-            <p>
-              当前记录第 {selectedNode.data.rank} 代
-              {selectedNode.data.location
-                ? ` · ${selectedNode.data.location}`
-                : ''}
-            </p>
+            <div className="mobile-person-summary">
+              <p className="mobile-person-generation">
+                第 {selectedNode.data.rank} 代 · 排行第 {selectedNode.data.rankIndex}
+              </p>
+              {selectedNode.data.death && (
+                <p>状态：{selectedNode.data.death === 'alive' ? '在世' : selectedNode.data.death === 'unknown' ? '待确认' : '已故'}</p>
+              )}
+              {selectedNode.data.officialPosition && <p>身份：{selectedNode.data.officialPosition}</p>}
+              {selectedNode.data.location && <p>地点：{selectedNode.data.location}</p>}
+              {selectedNode.data.summary && (
+                <p className="mobile-person-summary-text">{selectedNode.data.summary}</p>
+              )}
+            </div>
             {onOpenPersonProfile && (
               <Button
                 type="primary"
                 block
                 size="large"
-                onClick={() => onOpenPersonProfile(selectedNode.data.id)}
+                onClick={() => {
+                  setSelectedNode(null);
+                  onOpenPersonProfile(selectedNode.data.id);
+                }}
               >
-                查看生平与家庭档案
+                查看生平详情
               </Button>
             )}
             {onAddPaternalAncestor &&
