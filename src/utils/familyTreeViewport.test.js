@@ -1,6 +1,7 @@
 import {
   getAdaptiveTreeFitOptions,
-  getHorizontallyCenteredViewportX,
+  getViewportXForNodeCenter,
+  getViewportYForNodeCenter,
 } from "./familyTreeViewport.js";
 
 describe("family tree adaptive viewport", () => {
@@ -27,13 +28,25 @@ describe("family tree adaptive viewport", () => {
     );
   });
 
-  test("centers a demo tree whose layout starts at a positive x coordinate", () => {
+  test("centers a node whose layout starts at a positive x coordinate", () => {
     expect(
-      getHorizontallyCenteredViewportX({
-        bounds: { x: 420, width: 860 },
+      getViewportXForNodeCenter({
+        nodeX: 420,
+        nodeWidth: 120,
         viewportWidth: 640,
         zoom: 0.35,
       }),
-    ).toBe(22.5);
+    ).toBe(152);
+  });
+
+  test("keeps a journey node above the bottom player safe area", () => {
+    expect(
+      getViewportYForNodeCenter({
+        nodeY: 600,
+        nodeHeight: 80,
+        viewportCenterY: 360,
+        zoom: 0.62,
+      }),
+    ).toBeCloseTo(-36.8);
   });
 });

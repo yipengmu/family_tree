@@ -34,7 +34,8 @@ import {
 } from '../utils/familyTreeCollapse.js';
 import {
   getAdaptiveTreeFitOptions,
-  getHorizontallyCenteredViewportX,
+  getViewportXForNodeCenter,
+  getViewportYForNodeCenter,
 } from '../utils/familyTreeViewport.js';
 
 import 'reactflow/dist/style.css';
@@ -637,24 +638,56 @@ const FamilyTreeFlow = forwardRef(({
         (node) => node.data.id === presentationFocusId,
       );
       if (!focusNode) return;
-      const visibleBounds = getNodesBounds(
-        nodes.map((node) => ({
-          ...node,
-          width: isMobile ? 100 : 200,
-          height: 80,
-        })),
-      );
-      const centerX = isMobile
-        ? visibleBounds.x + visibleBounds.width / 2
-        : focusNode.position.x + 100;
+      const flowContainer = flowContainerRef.current;
+      const nodeWidth = isMobile ? 100 : 120;
+      const nodeHeight = 80;
+      const zoom = isMobile ? 0.62 : 0.78;
 
-      setCenter(
-        centerX,
-        focusNode.position.y + (isMobile ? 145 : 100),
+      if (!flowContainer) {
+        setCenter(
+          focusNode.position.x + nodeWidth / 2,
+          focusNode.position.y + nodeHeight / 2,
+          { zoom, duration: 820 },
+        );
+        return;
+      }
+
+      const containerRect = flowContainer.getBoundingClientRect();
+      const summaryRect = flowContainer
+        .querySelector('.journey-panorama-summary')
+        ?.getBoundingClientRect();
+      const playerRect = flowContainer
+        .closest('.family-tree-wrapper')
+        ?.querySelector('.family-journey-player')
+        ?.getBoundingClientRect();
+      const availableTop = summaryRect
+        ? summaryRect.bottom - containerRect.top + 12
+        : 12;
+      const availableBottom = playerRect
+        ? playerRect.top - containerRect.top - 12
+        : flowContainer.clientHeight - 12;
+      const availableCenter =
+        availableBottom > availableTop
+          ? (availableTop + availableBottom) / 2
+          : flowContainer.clientHeight / 2;
+
+      setViewport(
         {
-          zoom: isMobile ? 0.62 : 0.78,
-          duration: 820,
+          x: getViewportXForNodeCenter({
+            nodeX: focusNode.position.x,
+            nodeWidth,
+            viewportWidth: flowContainer.clientWidth,
+            zoom,
+          }),
+          y: getViewportYForNodeCenter({
+            nodeY: focusNode.position.y,
+            nodeHeight,
+            viewportCenterY: availableCenter,
+            zoom,
+          }),
+          zoom,
         },
+        { duration: 820 },
       );
     }, 80);
     return () => clearTimeout(timer);
@@ -665,30 +698,47 @@ const FamilyTreeFlow = forwardRef(({
     [nodes],
   );
 
-  const centerDemoTreeHorizontally = useCallback((duration = 0) => {
+  const centerDemoFounderHorizontally = useCallback((duration = 0) => {
     const flowContainer = flowContainerRef.current;
-    const currentNodes = getNodes().filter((node) => !node.hidden);
+    const founderNode = getNodes().find((node) =>
+      !node.hidden
+      && Number(node.data.rank) === 1
+      && (node.data.name === '穆茂' || node.data.id === 1),
+    );
     if (
       !useFounderLabels
       || presentationMode
       || !flowContainer
-      || !currentNodes.length
+      || !founderNode?.position
       || !flowContainer.clientWidth
     ) {
       return;
     }
 
     const viewport = getViewport();
-    const bounds = getNodesBounds(
-      currentNodes.map((node) => ({
-        ...node,
-        width: node.measured?.width || node.width || (isMobile ? 180 : 240),
-        height: node.measured?.height || node.height || 120,
-      })),
-    );
-    const centeredX = getHorizontallyCenteredViewportX({
-      bounds,
+    const founderWidth = founderNode.measured?.width
+      || founderNode.width
+      || (isMobile ? 180 : 240);
+    const founderHeight = founderNode.measured?.height
+      || founderNode.height
+      || 120;
+    const containerRect = flowContainer.getBoundingClientRect();
+    const launcherRect = flowContainer
+      .querySelector('.journey-launcher')
+      ?.getBoundingClientRect();
+    const defaultCenterY = launcherRect
+      ? launcherRect.bottom - containerRect.top + 24 + (founderHeight * viewport.zoom) / 2
+      : Math.min(flowContainer.clientHeight * 0.24, 260);
+    const centeredX = getViewportXForNodeCenter({
+      nodeX: founderNode.position.x,
+      nodeWidth: founderWidth,
       viewportWidth: flowContainer.clientWidth,
+      zoom: viewport.zoom,
+    });
+    const centeredY = getViewportYForNodeCenter({
+      nodeY: founderNode.position.y,
+      nodeHeight: founderHeight,
+      viewportCenterY: defaultCenterY,
       zoom: viewport.zoom,
     });
 
@@ -696,21 +746,21 @@ const FamilyTreeFlow = forwardRef(({
       {
         ...viewport,
         x: centeredX,
+        y: centeredY,
       },
       { duration },
     );
   }, [getNodes, getViewport, isMobile, presentationMode, setViewport, useFounderLabels]);
 
-  // 未登录示范谱的布局坐标从正数开始，首次渲染时需要把整棵树的可见范围
-  // 横向移到画布中心；只调整 x，保留当前缩放和纵向取景。
+  // 未登录示范谱首次渲染时只把根节点穆茂移到中心，避免扫描和移动整棵树。
   useEffect(() => {
     if (!useFounderLabels || presentationMode || !visibleNodeSignature) {
       return undefined;
     }
 
-    const timer = setTimeout(() => centerDemoTreeHorizontally(), 160);
+    const timer = setTimeout(() => centerDemoFounderHorizontally(), 160);
     return () => clearTimeout(timer);
-  }, [centerDemoTreeHorizontally, presentationMode, useFounderLabels, visibleNodeSignature]);
+  }, [centerDemoFounderHorizontally, presentationMode, useFounderLabels, visibleNodeSignature]);
 
   useEffect(() => {
     const flowContainer = flowContainerRef.current;
@@ -731,7 +781,7 @@ const FamilyTreeFlow = forwardRef(({
 
       previousWidth = width;
       clearTimeout(timer);
-      timer = setTimeout(() => centerDemoTreeHorizontally(240), 120);
+      timer = setTimeout(() => centerDemoFounderHorizontally(240), 120);
     });
 
     observer.observe(flowContainer);
@@ -739,7 +789,7 @@ const FamilyTreeFlow = forwardRef(({
       clearTimeout(timer);
       observer.disconnect();
     };
-  }, [centerDemoTreeHorizontally, presentationMode, useFounderLabels]);
+  }, [centerDemoFounderHorizontally, presentationMode, useFounderLabels]);
 
   const fitPersonalTreeToCanvas = useCallback((duration = 600) => {
     const reactFlow = reactFlowInstanceRef.current;

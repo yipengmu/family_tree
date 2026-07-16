@@ -24,15 +24,30 @@ export const getAdaptiveTreeFitOptions = (nodeCount, isMobile) => {
   };
 };
 
-export const getHorizontallyCenteredViewportX = ({
-  bounds,
+export const getViewportXForNodeCenter = ({
+  nodeX,
+  nodeWidth,
   viewportWidth,
   zoom,
 }) => {
-  const boundsX = Number(bounds?.x) || 0;
-  const boundsWidth = Math.max(0, Number(bounds?.width) || 0);
+  const safeNodeX = Number(nodeX) || 0;
+  const safeNodeWidth = Math.max(0, Number(nodeWidth) || 0);
   const safeViewportWidth = Math.max(0, Number(viewportWidth) || 0);
   const safeZoom = Number(zoom) > 0 ? Number(zoom) : 1;
 
-  return (safeViewportWidth - boundsWidth * safeZoom) / 2 - boundsX * safeZoom;
+  return safeViewportWidth / 2 - (safeNodeX + safeNodeWidth / 2) * safeZoom;
+};
+
+export const getViewportYForNodeCenter = ({
+  nodeY,
+  nodeHeight,
+  viewportCenterY,
+  zoom,
+}) => {
+  const safeNodeY = Number(nodeY) || 0;
+  const safeNodeHeight = Math.max(0, Number(nodeHeight) || 0);
+  const safeViewportCenterY = Number(viewportCenterY) || 0;
+  const safeZoom = Number(zoom) > 0 ? Number(zoom) : 1;
+
+  return safeViewportCenterY - (safeNodeY + safeNodeHeight / 2) * safeZoom;
 };
