@@ -257,8 +257,15 @@
 .auth-card .ant-input-affix-wrapper,
 .auth-card .ant-input,
 .auth-card .ant-btn-lg {
+  box-sizing: border-box;
+  height: 46px;
   min-height: 46px;
   border-radius: 10px;
+}
+
+.auth-card .ant-input-affix-wrapper > input.ant-input {
+  height: auto;
+  min-height: 0;
 }
 
 .auth-card .ant-input-affix-wrapper,

@@ -43,4 +43,13 @@ describe("authentication page layout", () => {
       "@media (min-width: 901px) and (max-height: 760px)",
     );
   });
+
+  test("keeps authentication inputs at one shared height", () => {
+    expect(stylesheet).toMatch(
+      /\.auth-card \.ant-input-affix-wrapper,[\s\S]*?height: 46px;[\s\S]*?min-height: 46px;/,
+    );
+    expect(stylesheet).toContain(
+      ".auth-card .ant-input-affix-wrapper > input.ant-input",
+    );
+  });
 });

@@ -11,16 +11,10 @@ describe("creator page mobile directory", () => {
     "utf8",
   );
 
-  test("keeps the mobile creation navigation to one line", () => {
-    const header = source.match(
-      /<header className="mobile-creation-header">([\s\S]*?)<\/header>/,
-    );
-
-    expect(header).not.toBeNull();
-    expect(header[1]).toContain("<strong>续家谱</strong>");
-    expect(header[1]).not.toContain("内容自动保存在你的家谱空间");
-    expect(source).not.toContain("<span>续家谱</span>");
-    expect(stylesheet).not.toContain(".mobile-continue-heading > span");
+  test("uses the bottom navigation instead of a duplicate mobile header", () => {
+    expect(source).not.toContain('className="mobile-creation-header"');
+    expect(source).not.toContain("ArrowLeftOutlined");
+    expect(stylesheet).not.toContain(".mobile-creation-header");
   });
 
   test("replaces the mobile horizontal table with a searchable card list", () => {
@@ -31,14 +25,12 @@ describe("creator page mobile directory", () => {
     expect(stylesheet).toMatch(
       /@media\s*\(max-width:\s*768px\)[\s\S]*?\.family-data-card\s*\{[^}]*display:\s*none;/s,
     );
-    expect(stylesheet).toMatch(
-      /\.mobile-directory-head\s*\{[^}]*display:\s*grid;[^}]*grid-template-columns:\s*1fr;/s,
-    );
     expect(source).toContain('className="mobile-manage-link"');
-    expect(source).not.toContain('aria-label="打开更多家谱管理"');
-    expect(source).toMatch(
-      /<strong>\s*\{rows\.filter\(\(row\) => row\.name\)\.length\} 位家人\s*<\/strong>/,
-    );
+    expect(source).toContain('className="mobile-family-directory"');
+    expect(source).not.toContain("showMobileTable");
+    expect(source).not.toContain("mobile-directory-toggle");
+    expect(stylesheet).not.toContain(".mobile-directory-toggle");
+    expect(stylesheet).not.toContain(".mobile-directory-summary");
   });
 
   test("offers a focused mobile form for modifying a person", () => {

@@ -18,9 +18,7 @@ import {
   Spin,
 } from "antd";
 import {
-  ArrowLeftOutlined,
   PlusOutlined,
-  TableOutlined,
   SaveOutlined,
   CameraOutlined,
   SettingOutlined,
@@ -137,7 +135,6 @@ function CreatorPage({
     useState(false);
   const [paternalNameUnknown, setPaternalNameUnknown] = useState(false);
   const [paternalGuideAutoOpened, setPaternalGuideAutoOpened] = useState(false);
-  const [showMobileTable, setShowMobileTable] = useState(false);
   const [editingMobilePerson, setEditingMobilePerson] = useState(null);
   const [mobileVisibleCount, setMobileVisibleCount] = useState(20);
   const [mobilePersonForm] = Form.useForm();
@@ -1290,13 +1287,6 @@ function CreatorPage({
   }
 
   const mobileDisplayRows = getCurrentDisplayData();
-  const mobileGenerationValues = rows
-    .map((row) => Number(row.g_rank))
-    .filter((value) => Number.isFinite(value) && value > 0);
-  const mobileGenerationRange = mobileGenerationValues.length
-    ? `${Math.min(...mobileGenerationValues)}–${Math.max(...mobileGenerationValues)} 代`
-    : "世代待补充";
-
   return (
     <AppLayout
       activeMenuItem={activeMenuItem}
@@ -1304,24 +1294,9 @@ function CreatorPage({
       immersiveMobile
     >
       <div className="data-management-page">
-        <header className="mobile-creation-header">
-          <button
-            type="button"
-            onClick={() => onMenuClick?.("tree")}
-            aria-label="返回家谱"
-          >
-            <ArrowLeftOutlined />
-          </button>
-          <strong>续家谱</strong>
-          <span className="mobile-creation-spacer" aria-hidden="true" />
-        </header>
         <section className="mobile-continue-hub">
           <div className="mobile-continue-heading">
             <h1>把记得的，先记下来</h1>
-            <p>
-              {currentTenant?.name || "我的家谱"} · 已记录{" "}
-              {rows.filter((row) => row.name).length} 位家人
-            </p>
           </div>
           {!paternalOnboarding.complete && paternalOnboarding.anchorPerson && (
             <section
@@ -1407,64 +1382,36 @@ function CreatorPage({
           </div>
           <button
             type="button"
-            className="mobile-flow-card mobile-directory-toggle"
-            onClick={() => setShowMobileTable((value) => !value)}
-          >
-            <span className="mobile-flow-icon">
-              <TableOutlined />
-            </span>
-            <span>
-              <strong>查找 / 修改家人</strong>
-              <small>
-                已录 {rows.filter((row) => row.name).length}{" "}
-                位，点击姓名即可修改
-              </small>
-            </span>
-            <b>{showMobileTable ? "收起" : "展开"}</b>
-          </button>
-          <button
-            type="button"
             className="mobile-manage-link"
             onClick={() => setManagementModalVisible(true)}
           >
             <SettingOutlined /> 备份、导出与更多管理
           </button>
 
-          {showMobileTable && (
-            <section
-              className="mobile-family-directory"
-              aria-label="查找与修改家人资料"
-            >
-              <div className="mobile-directory-head">
-                <div className="mobile-directory-summary">
-                  <span>家人资料 · 点击即可修改</span>
-                  <strong>
-                    {rows.filter((row) => row.name).length} 位家人
-                  </strong>
-                  <p>覆盖 {mobileGenerationRange}</p>
-                </div>
-              </div>
+          <section
+            className="mobile-family-directory"
+            aria-label="家人资料列表"
+          >
+            <div className="mobile-directory-search">
+              <Input
+                aria-label="搜索家人资料"
+                placeholder="搜索姓名、地点、备注"
+                prefix={<SearchOutlined />}
+                suffix={<span>{mobileDisplayRows.length} 位</span>}
+                value={searchText}
+                onChange={(event) => {
+                  handleSearch(event.target.value);
+                  setMobileVisibleCount(20);
+                }}
+                allowClear
+              />
+            </div>
 
-              <div className="mobile-directory-search">
-                <Input
-                  aria-label="搜索家人资料"
-                  placeholder="搜索姓名、地点、备注"
-                  prefix={<SearchOutlined />}
-                  suffix={<span>{mobileDisplayRows.length} 位</span>}
-                  value={searchText}
-                  onChange={(event) => {
-                    handleSearch(event.target.value);
-                    setMobileVisibleCount(20);
-                  }}
-                  allowClear
-                />
-              </div>
-
-              <div className="mobile-person-list">
-                {mobileDisplayRows.length ? (
-                  mobileDisplayRows
-                    .slice(0, mobileVisibleCount)
-                    .map((person) => {
+            <div className="mobile-person-list">
+              {mobileDisplayRows.length ? (
+                mobileDisplayRows
+                  .slice(0, mobileVisibleCount)
+                  .map((person) => {
                       const fatherName = person.g_father_id
                         ? personNameById.get(String(person.g_father_id))
                         : null;
@@ -1478,72 +1425,71 @@ function CreatorPage({
                         person.dealth === "unknown" ||
                         person.death_date === "unknown";
 
-                      return (
-                        <button
-                          type="button"
-                          className="mobile-person-card"
-                          key={personKey}
-                          onClick={() => openMobilePersonEditor(person)}
-                          aria-label={`修改${person.name}的资料`}
+                    return (
+                      <button
+                        type="button"
+                        className="mobile-person-card"
+                        key={personKey}
+                        onClick={() => openMobilePersonEditor(person)}
+                        aria-label={`修改${person.name}的资料`}
+                      >
+                        <span
+                          className="mobile-person-avatar"
+                          aria-hidden="true"
                         >
-                          <span
-                            className="mobile-person-avatar"
-                            aria-hidden="true"
-                          >
-                            {person.name?.slice(-1)}
-                          </span>
-                          <span className="mobile-person-card-copy">
-                            <span className="mobile-person-card-title">
-                              <strong>{person.name}</strong>
-                              <i>第 {person.g_rank || 1} 代</i>
-                              <i
-                                className={
-                                  isPersonAlive(person)
-                                    ? "alive"
-                                    : lifeStatusUnknown
-                                      ? "pending"
-                                      : ""
-                                }
-                              >
-                                {isPersonAlive(person)
-                                  ? "在世"
+                          {person.name?.slice(-1)}
+                        </span>
+                        <span className="mobile-person-card-copy">
+                          <span className="mobile-person-card-title">
+                            <strong>{person.name}</strong>
+                            <i>第 {person.g_rank || 1} 代</i>
+                            <i
+                              className={
+                                isPersonAlive(person)
+                                  ? "alive"
                                   : lifeStatusUnknown
-                                    ? "待确认"
-                                    : "已故"}
-                              </i>
-                            </span>
-                            <small>
-                              {supportingDetails.length
-                                ? supportingDetails.join(" · ")
-                                : "资料待补充"}
-                            </small>
+                                    ? "pending"
+                                    : ""
+                              }
+                            >
+                              {isPersonAlive(person)
+                                ? "在世"
+                                : lifeStatusUnknown
+                                  ? "待确认"
+                                  : "已故"}
+                            </i>
                           </span>
-                          <span className="mobile-person-edit-label">修改</span>
-                        </button>
-                      );
-                    })
-                ) : (
-                  <div className="mobile-person-empty">
-                    <SearchOutlined />
-                    <span>没有找到匹配的家人</span>
-                    <button type="button" onClick={clearSearch}>
-                      清除搜索
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {mobileDisplayRows.length > mobileVisibleCount && (
-                <button
-                  type="button"
-                  className="mobile-directory-more"
-                  onClick={() => setMobileVisibleCount((count) => count + 20)}
-                >
-                  再显示 20 位家人
-                </button>
+                          <small>
+                            {supportingDetails.length
+                              ? supportingDetails.join(" · ")
+                              : "资料待补充"}
+                          </small>
+                        </span>
+                        <span className="mobile-person-edit-label">修改</span>
+                      </button>
+                    );
+                  })
+              ) : (
+                <div className="mobile-person-empty">
+                  <SearchOutlined />
+                  <span>没有找到匹配的家人</span>
+                  <button type="button" onClick={clearSearch}>
+                    清除搜索
+                  </button>
+                </div>
               )}
-            </section>
-          )}
+            </div>
+
+            {mobileDisplayRows.length > mobileVisibleCount && (
+              <button
+                type="button"
+                className="mobile-directory-more"
+                onClick={() => setMobileVisibleCount((count) => count + 20)}
+              >
+                再显示 20 位家人
+              </button>
+            )}
+          </section>
         </section>
 
         {/* 页面头部 */}

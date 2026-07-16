@@ -380,9 +380,6 @@
 .mobile-continue-hub {
   display: none;
 }
-.mobile-creation-header {
-  display: none;
-}
 .mobile-family-directory {
   display: none;
 }
@@ -393,38 +390,6 @@
     padding: 0 14px calc(96px + env(safe-area-inset-bottom));
     background: var(--paper);
     overflow: auto;
-  }
-  .mobile-creation-header {
-    position: sticky;
-    top: 0;
-    z-index: 20;
-    display: grid;
-    grid-template-columns: 44px 1fr 44px;
-    align-items: center;
-    min-height: calc(50px + env(safe-area-inset-top));
-    margin: 0 -14px 10px;
-    padding: env(safe-area-inset-top) 10px 0;
-    border-bottom: 1px solid var(--hairline);
-    background: rgba(250, 247, 238, 0.96);
-    backdrop-filter: blur(14px);
-  }
-  .mobile-creation-header button {
-    width: 44px;
-    height: 44px;
-    border: 0;
-    border-radius: 50%;
-    background: transparent;
-    color: var(--pine);
-    font-size: 18px;
-  }
-  .mobile-creation-header strong {
-    justify-self: center;
-    color: var(--ink);
-    font: 600 16px var(--serif);
-  }
-  .mobile-creation-spacer {
-    width: 44px;
-    height: 44px;
   }
   .data-management-page > .page-header {
     display: none;
@@ -638,14 +603,6 @@
     color: var(--cinnabar);
   }
 
-  .mobile-directory-toggle {
-    margin-top: 1px;
-  }
-
-  .mobile-directory-toggle .mobile-flow-icon {
-    background: rgba(216, 180, 107, 0.15);
-    color: #80611f;
-  }
   .mobile-manage-link {
     min-height: 34px;
     margin-top: 0;
@@ -667,40 +624,6 @@
     border-radius: 15px;
     background: rgba(255, 253, 247, 0.97);
     box-shadow: 0 8px 24px rgba(35, 53, 47, 0.06);
-  }
-
-  .mobile-directory-head {
-    display: grid;
-    grid-template-columns: 1fr;
-    padding: 12px 12px 9px;
-    background: linear-gradient(135deg, rgba(247, 243, 232, 0.92), #fffdf7);
-  }
-
-  .mobile-directory-summary {
-    min-width: 0;
-    align-self: center;
-  }
-
-  .mobile-directory-summary > span {
-    color: var(--cinnabar);
-    font-size: 9px;
-    letter-spacing: 0.14em;
-  }
-
-  .mobile-directory-summary strong {
-    display: block;
-    margin-top: 4px;
-    overflow: hidden;
-    color: var(--ink);
-    font: 600 17px var(--serif);
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .mobile-directory-summary p {
-    margin: 5px 0 0;
-    color: var(--ink-soft);
-    font-size: 10px;
   }
 
   .mobile-directory-search {
