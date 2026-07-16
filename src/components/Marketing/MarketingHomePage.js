@@ -12,7 +12,6 @@ import {
 } from "@ant-design/icons";
 import { Link, useNavigate } from "react-router-dom";
 import BRAND from "../../constants/brand.js";
-import BrandLogo from "../UI/BrandLogo.js";
 import { getAppPath, getCreatePath } from "../../utils/appRoutes.js";
 import { trackEvent } from "../../utils/analytics.js";
 import "./MarketingHomePage.css";
@@ -188,7 +187,7 @@ const MarketingHomePage = () => {
         <div className="site-header-inner">
           <Link className="site-brand" to="/" aria-label="谱里官网首页">
             <span className="site-brand-seal" aria-hidden="true">
-              <BrandLogo alt="" />
+              {BRAND.seal}
             </span>
             <span>
               <strong>{BRAND.name}</strong>
@@ -570,7 +569,7 @@ const MarketingHomePage = () => {
         <div>
           <Link className="site-brand" to="/">
             <span className="site-brand-seal" aria-hidden="true">
-              <BrandLogo alt="" />
+              {BRAND.seal}
             </span>
             <span>
               <strong>{BRAND.name}</strong>

@@ -9,6 +9,7 @@ const FamilyMemberNode = ({ data, selected }) => {
     name,
     rank,
     rankIndex,
+    siblingTitle,
     officialPosition,
     sex,
     birthDate,
@@ -156,7 +157,7 @@ const FamilyMemberNode = ({ data, selected }) => {
     return (
       <div className="family-member-tooltip">
         <div><strong>姓名:</strong> {displayName}</div>
-        <div><strong>第{rank}代</strong> (排行第{rankIndex})</div>
+        <div><strong>第{rank}代</strong> {siblingTitle ? `· ${siblingTitle}` : ''} (排行第{rankIndex})</div>
         {lifeStatus && (
           <div><strong>状态:</strong> {lifeStatus.text}</div>
         )}
@@ -243,6 +244,11 @@ const FamilyMemberNode = ({ data, selected }) => {
                 {formatDisplayText(getProtectedName(name), 8)}
               </div>
               <div className="generation-info">
+                {siblingTitle && (
+                  <span className={`sibling-title ${siblingTitle?.endsWith('女') ? 'daughter-title' : ''}`}>
+                    {siblingTitle}
+                  </span>
+                )}
                 <Tag
                   color={isFoundingGeneration() ? (rank === 1 ? 'gold' : rank === 2 ? 'orange' : 'orange') : getGenerationColor(rank)}
                   size="small"

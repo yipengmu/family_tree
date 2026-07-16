@@ -1,5 +1,3 @@
-import dagre from "dagre";
-
 /**
  * 返回同一父亲名下的下一个兄弟排行。
  * 无父亲时按 0 归组，兼容旧数据中的空值和数字 0。
@@ -11,6 +9,99 @@ export const getNextSiblingRank = (familyData = [], fatherId) => {
     .map((person) => Number(person.rank_index) || 0);
 
   return Math.max(0, ...siblingRanks) + 1;
+};
+
+const getPositiveRankIndex = (value) => {
+  const rankIndex = Number(value);
+  return Number.isFinite(rankIndex) && rankIndex > 0
+    ? rankIndex
+    : Number.MAX_SAFE_INTEGER;
+};
+
+const compareIds = (left, right) => {
+  const leftNumber = Number(left);
+  const rightNumber = Number(right);
+  if (Number.isFinite(leftNumber) && Number.isFinite(rightNumber)) {
+    return leftNumber - rightNumber;
+  }
+  return String(left).localeCompare(String(right));
+};
+
+/**
+ * 生成节点从根到当前人的父系排序路径。
+ *
+ * 布局算法只关心节点的拓扑关系，不知道 rank_index 的业务含义。把每一级
+ * 父系成员的排行带进排序路径，可以让同一父亲的所有子女稳定地从左到右
+ * 排列，同时让不同支系保持与其父亲相同的阅读顺序。
+ */
+const getFamilyOrderPath = (node, nodeMap) => {
+  const path = [];
+  const visited = new Set();
+  let current = node;
+
+  while (current && !visited.has(String(current.id))) {
+    visited.add(String(current.id));
+    path.unshift([
+      getPositiveRankIndex(current.data?.rankIndex),
+      String(current.id),
+    ]);
+    const fatherId = current.data?.fatherId;
+    current = fatherId ? nodeMap.get(String(fatherId)) : null;
+  }
+
+  return path;
+};
+
+const compareFamilyOrder = (left, right, nodeMap) => {
+  const leftPath = getFamilyOrderPath(left, nodeMap);
+  const rightPath = getFamilyOrderPath(right, nodeMap);
+  const length = Math.max(leftPath.length, rightPath.length);
+
+  for (let index = 0; index < length; index += 1) {
+    const leftSegment = leftPath[index];
+    const rightSegment = rightPath[index];
+    if (!leftSegment) return -1;
+    if (!rightSegment) return 1;
+    if (leftSegment[0] !== rightSegment[0]) {
+      return leftSegment[0] - rightSegment[0];
+    }
+    const idDifference = compareIds(leftSegment[1], rightSegment[1]);
+    if (idDifference !== 0) return idDifference;
+  }
+
+  return compareIds(left.id, right.id);
+};
+
+/**
+ * 返回家谱中的子女称谓，例如“长子”“次女”“三子”。
+ * rank_index 是事实字段；称谓只是展示层派生值，不会写回家谱数据。
+ */
+export const getSiblingTitle = (rankIndex, sex, fatherId) => {
+  if (!fatherId || String(fatherId) === "0") return "";
+
+  const index = Number(rankIndex);
+  if (!Number.isInteger(index) || index < 1) return "";
+
+  const chineseDigits = ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九"];
+  const toChineseNumber = (value) => {
+    if (value < 10) return chineseDigits[value];
+    if (value < 20) return `十${value === 10 ? "" : chineseDigits[value - 10]}`;
+    if (value < 100) {
+      const tens = Math.floor(value / 10);
+      const remainder = value % 10;
+      return `${chineseDigits[tens]}十${remainder ? chineseDigits[remainder] : ""}`;
+    }
+    return String(value);
+  };
+
+  const prefix = index === 1 ? "长" : index === 2 ? "次" : toChineseNumber(index);
+  const suffix = sex === "WOMAN" || sex === "女" || sex === "FEMALE"
+    ? "女"
+    : sex === "MAN" || sex === "男" || sex === "MALE"
+      ? "子"
+      : "人";
+
+  return `${prefix}${suffix}`;
 };
 
 /**
@@ -64,6 +155,11 @@ export const convertToReactFlowData = (
         rank: person.g_rank,
         rankIndex: person.rank_index,
         fatherId: person.g_father_id,
+        siblingTitle: getSiblingTitle(
+          person.rank_index,
+          person.sex,
+          person.g_father_id,
+        ),
         officialPosition: person.official_position,
         summary: person.summary,
         adoption: person.adoption,
@@ -143,8 +239,8 @@ export const convertToReactFlowData = (
 /**
  * 将可见的父母/子女关系合并成家谱常用的“纵向主干 + 同代总线”结构。
  *
- * Dagre 仍然使用 convertToReactFlowData 生成的原始关系边进行布局；这里仅
- * 生成画布展示用的边，因此不会改变 FamilyData、折叠规则或节点坐标。一个
+ * 这里仅生成画布展示用的边，不参与节点坐标计算，因此不会改变 FamilyData
+ * 或折叠规则。一个
  * 父母组合只生成一条可视边，边组件再绘制父母汇流和多个子女的共用横线。
  */
 export const getFamilyBusEdges = (familyData, visibleNodes = []) => {
@@ -176,8 +272,8 @@ export const getFamilyBusEdges = (familyData, visibleNodes = []) => {
   return [...familyGroups.entries()].map(([familyKey, group]) => {
     const children = [...group.children].sort((left, right) => {
       const rankDifference =
-        (Number(left.rank_index) || 0) - (Number(right.rank_index) || 0);
-      return rankDifference || String(left.id).localeCompare(String(right.id));
+        getPositiveRankIndex(left.rank_index) - getPositiveRankIndex(right.rank_index);
+      return rankDifference || compareIds(left.id, right.id);
     });
 
     return {
@@ -224,48 +320,13 @@ export const getJourneyLayoutedNodes = (nodes, pathIds = [], options = {}) => {
     nodesByGeneration.get(generation).push(node);
   });
 
-  const getRoute = (node) => {
-    const route = [];
-    const visited = new Set();
-    let current = node;
-
-    while (current && !visited.has(current.id)) {
-      visited.add(current.id);
-      route.unshift([
-        Number(current.data.rankIndex) || Number.MAX_SAFE_INTEGER,
-        String(current.id),
-      ]);
-      const fatherId = current.data.fatherId;
-      current = fatherId ? nodeMap.get(String(fatherId)) : null;
-    }
-
-    return route;
-  };
-
-  const compareRoutes = (left, right) => {
-    const length = Math.max(left.length, right.length);
-    for (let index = 0; index < length; index += 1) {
-      const leftSegment = left[index];
-      const rightSegment = right[index];
-      if (!leftSegment) return -1;
-      if (!rightSegment) return 1;
-      if (leftSegment[0] !== rightSegment[0]) {
-        return leftSegment[0] - rightSegment[0];
-      }
-      if (leftSegment[1] !== rightSegment[1]) {
-        return leftSegment[1].localeCompare(rightSegment[1]);
-      }
-    }
-    return 0;
-  };
-
   const generations = [...nodesByGeneration.keys()].sort((a, b) => a - b);
   const minGeneration = generations[0] || 1;
   const slotWidth = nodeWidth + nodeGap;
 
   return generations.flatMap((generation) => {
     const generationNodes = [...nodesByGeneration.get(generation)].sort(
-      (left, right) => compareRoutes(getRoute(left), getRoute(right)),
+      (left, right) => compareFamilyOrder(left, right, nodeMap),
     );
     const focusIndex = Math.max(
       0,
@@ -285,173 +346,157 @@ export const getJourneyLayoutedNodes = (nodes, pathIds = [], options = {}) => {
 };
 
 /**
- * 使用Dagre算法进行层次布局
+ * 使用单次树布局生成层次坐标。edges 参数保留用于兼容调用方，排序和坐标
+ * 生成均在本函数内一次完成。
  * @param {Array} nodes - 节点数组
  * @param {Array} edges - 边数组
  * @returns {Array} - 布局后的节点数组
  */
-export const getLayoutedElements = (nodes, edges, direction = "TB") => {
-  const dagreGraph = new dagre.graphlib.Graph();
-  dagreGraph.setDefaultEdgeLabel(() => ({}));
-
-  const nodeWidth = 200;
-  const nodeHeight = 80;
-
-  dagreGraph.setGraph({
-    rankdir: direction,
-    nodesep: 80, // 增加节点间距，从50增加到80，减少连接线交错
-    ranksep: 120, // 增加行间距，从90增加到120，保持代际间合适高度
-    marginx: 20,
-    marginy: 10, // 减少顶部边距，从20减少到10
-    align: undefined, // 移除对齐限制，让Dagre自动居中对齐父子节点
-    acyclicer: "greedy", // 使用贪心算法减少环路
-    ranker: "tight-tree", // 使用紧凑树排列，优化连接线
-  });
-
-  nodes.forEach((node) => {
-    dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight });
-  });
-
-  edges.forEach((edge) => {
-    dagreGraph.setEdge(edge.source, edge.target);
-  });
-
-  dagre.layout(dagreGraph);
-
-  // 获取布局后的节点位置
-  const layoutedNodes = nodes.map((node) => {
-    const nodeWithPosition = dagreGraph.node(node.id);
-    node.targetPosition = "top";
-    node.sourcePosition = "bottom";
-
-    // 调整位置，使节点居中
-    node.position = {
-      x: nodeWithPosition.x - nodeWidth / 2,
-      y: nodeWithPosition.y - nodeHeight / 2,
-    };
-
-    return node;
-  });
-
-  // 手动调整父子节点的水平对齐
-  return adjustParentChildAlignment(layoutedNodes, edges);
+export const getLayoutedElements = (nodes, _edges, direction = "TB") => {
+  return getSinglePassTreeLayout(nodes, direction);
 };
 
 /**
- * 调整父子节点的水平对齐，同时避免同级节点重叠
- * @param {Array} nodes - 布局后的节点数组
- * @param {Array} edges - 边数组
- * @returns {Array} - 调整对齐后的节点数组
+ * 单次树布局：子女按 rank_index 插入父亲的有序子女链，再用 DFS 计算
+ * 子树宽度与坐标。这样排序直接发生在坐标生成过程中，没有布局后处理轮。
  */
-const adjustParentChildAlignment = (nodes, edges) => {
+const getSinglePassTreeLayout = (nodes, direction = "TB") => {
   const nodeWidth = 200;
-  const minNodeSpacing = 80; // 节点间最小间距
+  const nodeHeight = 80;
+  const siblingGap = 80;
+  const generationGap = 120;
+  const nodeMap = new Map(nodes.map((node) => [String(node.id), node]));
+  const childrenMap = new Map();
 
-  // 创建节点映射
-  const nodeMap = new Map(nodes.map((node) => [node.id, node]));
-
-  // 创建父子关系映射
-  const parentChildrenMap = new Map();
-  edges.forEach((edge) => {
-    const parentId = edge.source;
-    const childId = edge.target;
-
-    if (!parentChildrenMap.has(parentId)) {
-      parentChildrenMap.set(parentId, []);
+  const insertChild = (fatherId, child) => {
+    const key = String(fatherId);
+    const children = childrenMap.get(key) || [];
+    let index = 0;
+    while (
+      index < children.length
+      && compareFamilyOrder(children[index], child, nodeMap) <= 0
+    ) {
+      index += 1;
     }
-    parentChildrenMap.get(parentId).push(childId);
-  });
+    children.splice(index, 0, child);
+    childrenMap.set(key, children);
+  };
 
-  // 按Y坐标分组节点到不同代数
-  const generations = new Map();
   nodes.forEach((node) => {
-    const y = Math.round(node.position.y / 60) * 60;
-    if (!generations.has(y)) {
-      generations.set(y, []);
+    const fatherId = node.data?.fatherId;
+    if (fatherId && nodeMap.has(String(fatherId))) {
+      insertChild(fatherId, node);
     }
-    generations.get(y).push(node);
   });
 
-  // 从上到下逐代处理
-  const processedGenerations = Array.from(generations.keys()).sort(
-    (a, b) => a - b,
+  const childIds = new Set(
+    [...childrenMap.values()].flat().map((node) => String(node.id)),
   );
+  const roots = nodes
+    .filter((node) => !childIds.has(String(node.id)))
+    .sort((left, right) => compareFamilyOrder(left, right, nodeMap));
+  const subtreeWidths = new Map();
 
-  processedGenerations.forEach((generationY) => {
-    const generationNodes = generations.get(generationY);
+  const getSubtreeWidth = (node, path = new Set()) => {
+    const nodeId = String(node.id);
+    if (subtreeWidths.has(nodeId)) return subtreeWidths.get(nodeId);
+    if (path.has(nodeId)) return nodeWidth;
 
-    // 先尝试居中对齐父子节点
-    generationNodes.forEach((parentNode) => {
-      const childrenIds = parentChildrenMap.get(parentNode.id);
-      if (childrenIds && childrenIds.length > 0) {
-        const childrenNodes = childrenIds
-          .map((id) => nodeMap.get(id))
-          .filter(Boolean);
+    const nextPath = new Set(path);
+    nextPath.add(nodeId);
+    const children = childrenMap.get(nodeId) || [];
+    const childrenWidth = children.reduce(
+      (total, child) => total + getSubtreeWidth(child, nextPath),
+      Math.max(0, children.length - 1) * siblingGap,
+    );
+    const width = Math.max(nodeWidth, childrenWidth);
+    subtreeWidths.set(nodeId, width);
+    return width;
+  };
 
-        if (childrenNodes.length > 0) {
-          // 计算子节点的水平中心位置
-          const childrenXPositions = childrenNodes.map(
-            (child) => child.position.x + nodeWidth / 2,
-          );
-          const minX = Math.min(...childrenXPositions);
-          const maxX = Math.max(...childrenXPositions);
-          const centerX = (minX + maxX) / 2;
+  nodes.forEach((node) => getSubtreeWidth(node));
 
-          // 设置父节点的理想位置
-          parentNode.idealX = centerX - nodeWidth / 2;
-        }
-      }
+  const ranks = nodes
+    .map((node) => Number(node.data?.rank))
+    .filter(Number.isFinite);
+  const minRank = Math.min(...ranks, 1);
+  const placed = new Set();
+  let cursor = 0;
+  const isHorizontal = direction === "LR" || direction === "RL";
+
+  const placeSubtree = (node, left, path = new Set()) => {
+    const nodeId = String(node.id);
+    if (placed.has(nodeId) || path.has(nodeId)) return;
+    placed.add(nodeId);
+
+    const nextPath = new Set(path);
+    nextPath.add(nodeId);
+    const children = childrenMap.get(nodeId) || [];
+    const width = subtreeWidths.get(nodeId) || nodeWidth;
+    const childrenWidth = children.reduce(
+      (total, child) => total + (subtreeWidths.get(String(child.id)) || nodeWidth),
+      Math.max(0, children.length - 1) * siblingGap,
+    );
+    let childCursor = left + (width - childrenWidth) / 2;
+
+    children.forEach((child) => {
+      const childWidth = subtreeWidths.get(String(child.id)) || nodeWidth;
+      placeSubtree(child, childCursor, nextPath);
+      childCursor += childWidth + siblingGap;
     });
 
-    // 解决同级节点重叠问题
-    resolveOverlaps(generationNodes, nodeWidth, minNodeSpacing);
+    const childCenters = children
+      .map((child) => nodeMap.get(String(child.id)))
+      .filter((child) => child && placed.has(String(child.id)))
+      .map((child) => child.position.__treeCenter);
+    const center = childCenters.length
+      ? (Math.min(...childCenters) + Math.max(...childCenters)) / 2
+      : left + width / 2;
+    const generation = Number(node.data?.rank);
+    const level = Number.isFinite(generation) ? generation - minRank : 0;
+
+    node.position = {
+      x: isHorizontal ? level * (nodeWidth + generationGap) : center - nodeWidth / 2,
+      y: isHorizontal ? center - nodeWidth / 2 : level * (nodeHeight + generationGap),
+      __treeCenter: center,
+    };
+  };
+
+  roots.forEach((root) => {
+    const width = subtreeWidths.get(String(root.id)) || nodeWidth;
+    placeSubtree(root, cursor);
+    cursor += width + siblingGap;
+  });
+
+  nodes.forEach((node) => {
+    if (placed.has(String(node.id))) return;
+    placeSubtree(node, cursor);
+    cursor += (subtreeWidths.get(String(node.id)) || nodeWidth) + siblingGap;
+  });
+
+  const centerOffset = cursor / 2;
+  nodes.forEach((node) => {
+    delete node.position.__treeCenter;
+    if (!isHorizontal) node.position.x -= centerOffset;
+    if (direction === "BT") node.position.y *= -1;
+    if (direction === "RL") node.position.x *= -1;
+    node.targetPosition = direction === "LR"
+      ? "left"
+      : direction === "RL"
+        ? "right"
+        : direction === "BT"
+          ? "bottom"
+          : "top";
+    node.sourcePosition = direction === "LR"
+      ? "right"
+      : direction === "RL"
+        ? "left"
+        : direction === "BT"
+          ? "top"
+          : "bottom";
   });
 
   return nodes;
-};
-
-/**
- * 解决同级节点重叠问题
- * @param {Array} nodes - 同一代的节点数组
- * @param {number} nodeWidth - 节点宽度
- * @param {number} minSpacing - 最小间距
- */
-const resolveOverlaps = (nodes, nodeWidth, minSpacing) => {
-  if (nodes.length <= 1) return;
-
-  // 按X坐标排序
-  const sortedNodes = [...nodes].sort((a, b) => {
-    const aX = a.idealX !== undefined ? a.idealX : a.position.x;
-    const bX = b.idealX !== undefined ? b.idealX : b.position.x;
-    return aX - bX;
-  });
-
-  // 使用理想位置或当前位置
-  sortedNodes.forEach((node) => {
-    if (node.idealX !== undefined) {
-      node.position.x = node.idealX;
-    }
-  });
-
-  // 从左到右调整位置，确保没有重叠
-  for (let i = 1; i < sortedNodes.length; i++) {
-    const prevNode = sortedNodes[i - 1];
-    const currentNode = sortedNodes[i];
-
-    const prevRight = prevNode.position.x + nodeWidth;
-    const currentLeft = currentNode.position.x;
-    const requiredLeft = prevRight + minSpacing;
-
-    // 如果当前节点与前一个节点重叠，向右移动
-    if (currentLeft < requiredLeft) {
-      currentNode.position.x = requiredLeft;
-    }
-  }
-
-  // 清理临时属性
-  sortedNodes.forEach((node) => {
-    delete node.idealX;
-  });
 };
 
 /**

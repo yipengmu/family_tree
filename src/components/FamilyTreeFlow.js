@@ -1356,7 +1356,9 @@ const FamilyTreeFlow = forwardRef(({
           <div className="mobile-person-actions">
             <div className="mobile-person-summary">
               <p className="mobile-person-generation">
-                第 {selectedNode.data.rank} 代 · 排行第 {selectedNode.data.rankIndex}
+                第 {selectedNode.data.rank} 代
+                {selectedNode.data.siblingTitle ? ` · ${selectedNode.data.siblingTitle}` : ''}
+                {' · '}排行第 {selectedNode.data.rankIndex}
               </p>
               {selectedNode.data.death && (
                 <p>状态：{selectedNode.data.death === 'alive' ? '在世' : selectedNode.data.death === 'unknown' ? '待确认' : '已故'}</p>

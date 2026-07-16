@@ -13,7 +13,6 @@ import TenantSelector from "../TenantSelector.js";
 import AuthService from "../../services/authService.js";
 import tenantService from "../../services/tenantService.js";
 import BRAND from "../../constants/brand.js";
-import BrandLogo from "../UI/BrandLogo.js";
 import "./MyPage.css";
 
 const readStoredUser = () => {
@@ -64,9 +63,7 @@ const MyPage = ({ activeMenuItem = "mine", onMenuClick, familyData = [] }) => {
     <AppLayout activeMenuItem={activeMenuItem} onMenuClick={onMenuClick}>
       <div className={`my-page ${!authenticated ? "my-page-guest" : ""}`}>
         <header className="my-page-header">
-          <span className="my-page-seal">
-            <BrandLogo alt="" />
-          </span>
+          <span className="my-page-seal">{BRAND.seal}</span>
           <div>
             <p>我的谱里</p>
             <h1>
@@ -79,20 +76,30 @@ const MyPage = ({ activeMenuItem = "mine", onMenuClick, familyData = [] }) => {
 
         {!authenticated ? (
           <section className="my-guest-card">
-            <span className="my-card-kicker">默认私密</span>
-            <h2>{BRAND.tagline}</h2>
-            <p>从自己开始，记下父母与祖辈</p>
-            <Button
-              type="primary"
-              block
-              size="large"
-              onClick={() => onMenuClick?.("register")}
-            >
-              免费创建家谱
-            </Button>
-            <Button type="text" block onClick={() => onMenuClick?.("login")}>
-              已有账号，去登录
-            </Button>
+            <div className="my-guest-intro">
+              <span className="my-card-kicker">默认私密</span>
+              <h2>{BRAND.tagline}</h2>
+              <p>从自己开始，记下父母与祖辈</p>
+            </div>
+            <div className="my-guest-actions">
+              <Button
+                type="primary"
+                block
+                size="large"
+                onClick={() => onMenuClick?.("login")}
+              >
+                立即登录
+              </Button>
+              <Button
+                type="default"
+                block
+                size="large"
+                onClick={() => onMenuClick?.("register")}
+              >
+                注册并创建家谱
+              </Button>
+              <p className="my-guest-note">新用户将进入注册流程</p>
+            </div>
           </section>
         ) : (
           <>

@@ -196,14 +196,3 @@
     display: none;
   }
 }
-.mobile-header-logo {
-  width: 28px;
-  height: 28px;
-  display: inline-block;
-  overflow: hidden;
-  flex: 0 0 auto;
-}
-
-.mobile-header-logo .brand-logo {
-  transform: scale(1.45);
-}

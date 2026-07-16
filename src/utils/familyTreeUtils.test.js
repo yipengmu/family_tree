@@ -4,6 +4,7 @@ import {
   getLayoutedElements,
   getJourneyLayoutedNodes,
   getNextSiblingRank,
+  getSiblingTitle,
 } from "./familyTreeUtils.js";
 import demoFamilyData from "../data/familyData.js";
 
@@ -60,6 +61,31 @@ describe("family tree relationship edges", () => {
       mainlineChild.position.x,
     );
     expect(otherBranch.position.x).toBeGreaterThan(mainlineSibling.position.x);
+  });
+
+  test("uses rank_index to place children from left to right before layout", () => {
+    const familyData = [
+      { id: 1, name: "父", g_rank: 1, rank_index: 1, g_father_id: 0 },
+      { id: 4, name: "三子", g_rank: 2, rank_index: 3, g_father_id: 1 },
+      { id: 2, name: "长子", g_rank: 2, rank_index: 1, g_father_id: 1 },
+      { id: 3, name: "次子", g_rank: 2, rank_index: 2, g_father_id: 1 },
+    ];
+    const { nodes, edges } = convertToReactFlowData(familyData);
+    const layoutedNodes = getLayoutedElements(nodes, edges);
+    const childX = [2, 3, 4].map(
+      (id) => layoutedNodes.find((node) => node.id === String(id)).position.x,
+    );
+
+    expect(childX[0]).toBeLessThan(childX[1]);
+    expect(childX[1]).toBeLessThan(childX[2]);
+  });
+
+  test("derives compact son and daughter titles from rank_index", () => {
+    expect(getSiblingTitle(1, "MAN", 10)).toBe("长子");
+    expect(getSiblingTitle(2, "WOMAN", 10)).toBe("次女");
+    expect(getSiblingTitle(3, "MAN", 10)).toBe("三子");
+    expect(getSiblingTitle(4, "WOMAN", 10)).toBe("四女");
+    expect(getSiblingTitle(1, "MAN", 0)).toBe("");
   });
 
   test("does not create duplicate or invisible relationship edges", () => {

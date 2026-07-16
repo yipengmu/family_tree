@@ -5,6 +5,11 @@
   padding: 10px 0 90px;
   overflow: auto;
 }
+.my-page-guest {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
 .my-page-header {
   display: flex;
   align-items: center;
@@ -20,12 +25,6 @@
   overflow: hidden;
 }
 
-.my-page-seal img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  transform: scale(1.45);
-}
 .my-page-header p {
   margin: 0 0 2px;
   color: var(--ink-soft);
@@ -46,8 +45,15 @@
   box-shadow: 0 8px 24px rgba(35, 53, 47, 0.06);
 }
 .my-guest-card {
-  padding: 28px;
+  min-height: 430px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(28px, 5vh, 48px) 28px;
   text-align: center;
+}
+.my-guest-intro {
+  flex: 0 0 auto;
 }
 .my-guest-card h2 {
   margin: 8px 0 10px;
@@ -60,9 +66,24 @@
   color: var(--ink-soft);
   line-height: 1.75;
 }
-.my-guest-card .ant-btn + .ant-btn {
+.my-guest-actions {
+  width: min(100%, 520px);
+  margin: 30px auto 0;
+}
+.my-guest-actions .ant-btn + .ant-btn {
   margin-inline-start: 0;
-  margin-top: 10px;
+  margin-top: 12px;
+}
+.my-guest-actions .ant-btn-default {
+  border-color: rgba(35, 53, 47, 0.18);
+  color: var(--pine);
+  background: rgba(255, 253, 247, 0.7);
+}
+.my-guest-note {
+  margin: 12px auto 0 !important;
+  color: #89938e !important;
+  font-size: 11px;
+  line-height: 1.5 !important;
 }
 .my-card-kicker {
   color: var(--cinnabar);
@@ -192,10 +213,10 @@
     padding: 2px 0 calc(74px + env(safe-area-inset-bottom));
   }
   .my-page-guest {
-    padding-top: clamp(34px, 10vh, 96px);
+    padding-top: 0;
   }
   .my-page-header {
-    margin: 2px 2px 12px;
+    margin: 0 2px 18px;
   }
   .my-page-header h1 {
     font-size: 18px;
@@ -205,10 +226,14 @@
     height: 42px;
   }
   .my-guest-card {
-    padding: 28px 20px;
+    min-height: clamp(390px, 46vh, 470px);
+    padding: 32px 20px;
   }
   .my-guest-card h2 {
     font-size: 22px;
+  }
+  .my-guest-actions {
+    margin-top: 28px;
   }
   .my-family-card {
     margin-bottom: 10px;

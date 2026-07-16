@@ -113,6 +113,27 @@
   min-width: 0;
   overflow: hidden;
   margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sibling-title {
+  flex: 0 0 auto;
+  padding: 1px 5px;
+  border: 1px solid rgba(24, 144, 255, 0.28);
+  border-radius: 4px;
+  color: #1677ff;
+  background: rgba(230, 244, 255, 0.78);
+  font-size: 10px;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+.sibling-title.daughter-title {
+  border-color: rgba(235, 47, 150, 0.28);
+  color: #c41d7f;
+  background: rgba(255, 240, 246, 0.82);
 }
 
 .generation-info .ant-tag {
