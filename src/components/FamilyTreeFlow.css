@@ -354,27 +354,6 @@
   }
 }
 
-/* 选中节点信息面板样式 */
-.selected-node-info {
-  font-family: 'Inter', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-}
-
-.selected-node-info p {
-  margin-bottom: 8px;
-  font-size: 13px;
-  line-height: 1.5;
-  color: hsl(222.2 84% 4.9%);
-}
-
-.selected-node-info p:last-child {
-  margin-bottom: 0;
-}
-
-.selected-node-info strong {
-  color: hsl(222.2 84% 4.9%);
-  font-weight: 600;
-}
-
 /* React Flow Panel 样式覆盖 */
 .react-flow__panel .ant-card {
   background: hsl(0 0% 100%) !important;
@@ -506,16 +485,6 @@
   align-items: center;
   justify-content: center;
   height: 400px;
-}
-
-.selected-node-info p {
-  margin-bottom: 8px;
-  font-size: 13px;
-  line-height: 1;
-}
-
-.selected-node-info p:last-child {
-  margin-bottom: 0;
 }
 
 /* React Flow 自定义样式 */

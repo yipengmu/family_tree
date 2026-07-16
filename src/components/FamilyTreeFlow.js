@@ -12,7 +12,7 @@ import ReactFlow, {
   getNodesBounds,
   getViewportForBounds,
 } from 'reactflow';
-import { Button, Card, Slider, Select, Space, Typography, Spin, Alert, Drawer, Divider, Switch } from 'antd';
+import { Button, Slider, Select, Space, Typography, Spin, Alert, Drawer, Divider, Switch } from 'antd';
 import {
   SettingOutlined
 } from '@ant-design/icons';
@@ -1346,6 +1346,7 @@ const FamilyTreeFlow = forwardRef(({
               )}
               {selectedNode.data.officialPosition && <p>身份：{selectedNode.data.officialPosition}</p>}
               {selectedNode.data.location && <p>地点：{selectedNode.data.location}</p>}
+              {selectedNode.data.birthDate && <p>出生：{selectedNode.data.birthDate}</p>}
               {selectedNode.data.summary && (
                 <p className="mobile-person-summary-text">{selectedNode.data.summary}</p>
               )}
@@ -1487,100 +1488,6 @@ const FamilyTreeFlow = forwardRef(({
             </Panel>
           )}
 
-          {/* 选中节点信息面板 */}
-          {!isMobile && selectedNode && (
-            <Panel position="top-right">
-              <Card
-                title={selectedNode.data.name}
-                size="small"
-                style={{
-                  width: 320,
-                  maxHeight: 450,
-                  overflow: 'auto',
-                  background: 'hsl(0 0% 100%)',
-                  border: '1px solid hsl(214.3 31.8% 91.4%)',
-                  borderRadius: '12px',
-                  boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15)',
-                  transform: 'translateY(-50%)' // 垂直居中对齐节点
-                }}
-                styles={{
-                  header: {
-                    background: 'hsl(210 40% 98%)',
-                    borderBottom: '1px solid hsl(214.3 31.8% 91.4%)',
-                    borderRadius: '12px 12px 0 0',
-                    color: 'hsl(222.2 84% 4.9%)',
-                    fontWeight: 600
-                  },
-                  body: {
-                    background: 'hsl(0 0% 100%)',
-                    color: 'hsl(222.2 84% 4.9%)'
-                  }
-                }}
-                extra={
-                  <Button
-                    type="text"
-                    size="small"
-                    onClick={() => setSelectedNode(null)}
-                    style={{
-                      color: 'hsl(215.4 16.3% 46.9%)',
-                      fontSize: '16px',
-                      fontWeight: 'bold'
-                    }}
-                  >
-                    ×
-                  </Button>
-                }
-              >
-                <div className="selected-node-info">
-                  <p style={{ color: 'hsl(222.2 84% 4.9%)', marginBottom: '12px' }}>
-                    <strong>第{selectedNode.data.rank}代</strong> (排行第{selectedNode.data.rankIndex})
-                  </p>
-                  {selectedNode.data.officialPosition && (
-                    <p style={{ color: 'hsl(222.2 84% 4.9%)', marginBottom: '8px' }}>
-                      <strong>职位:</strong> {selectedNode.data.officialPosition}
-                    </p>
-                  )}
-                  {selectedNode.data.birthDate && (
-                    <p style={{ color: 'hsl(222.2 84% 4.9%)', marginBottom: '8px' }}>
-                      <strong>生日:</strong> {selectedNode.data.birthDate}
-                    </p>
-                  )}
-                  {selectedNode.data.location && (
-                    <p style={{ color: 'hsl(222.2 84% 4.9%)', marginBottom: '8px' }}>
-                      <strong>地点:</strong> {selectedNode.data.location}
-                    </p>
-                  )}
-                  {selectedNode.data.summary && (
-                    <div style={{ marginTop: '12px' }}>
-                      <strong style={{ color: 'hsl(222.2 84% 4.9%)' }}>简介:</strong>
-                      <p style={{
-                        marginTop: 6,
-                        fontSize: '13px',
-                        lineHeight: 1.5,
-                        color: 'hsl(215.4 16.3% 46.9%)',
-                        background: 'hsl(210 40% 98%)',
-                        padding: '8px 12px',
-                        borderRadius: '8px',
-                        border: '1px solid hsl(214.3 31.8% 91.4%)'
-                      }}>
-                        {selectedNode.data.summary}
-                      </p>
-                    </div>
-                  )}
-                  {onOpenPersonProfile && (
-                    <Button
-                      type="primary"
-                      block
-                      style={{ marginTop: 14 }}
-                      onClick={() => onOpenPersonProfile(selectedNode.data.id)}
-                    >
-                      查看生平与家庭档案
-                    </Button>
-                  )}
-                </div>
-              </Card>
-            </Panel>
-          )}
         </ReactFlow>
       </div>
     </div>

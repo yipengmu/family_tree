@@ -218,17 +218,9 @@ export const getNextJourneyStepIndex = (steps = [], currentIndex = 0) => {
   const lastIndex = steps.length - 1;
   if (lastIndex <= 0 || currentIndex >= lastIndex) return lastIndex;
 
-  const currentGeneration = Number(steps[currentIndex]?.generation);
-  if (!Number.isFinite(currentGeneration) || currentGeneration < 10) {
-    return currentIndex + 1;
-  }
-
-  const nextGenerationIndex = steps.findIndex(
-    (step, index) =>
-      index > currentIndex && Number(step.generation) >= currentGeneration + 2,
-  );
-
-  return nextGenerationIndex === -1 ? lastIndex : nextGenerationIndex;
+  // 每次只绘制一代，控制单次进入 React Flow 的节点和连线数量，
+  // 让深代播放保持线性的渲染压力，而不是用更少步骤换取瞬时峰值。
+  return currentIndex + 1;
 };
 
 export const filterFamilyByGeneration = (familyData = [], generation) =>

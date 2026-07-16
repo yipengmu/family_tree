@@ -86,8 +86,8 @@ const LoginPage = () => {
     <AuthPageLayout
       backLabel="返回"
       onBack={handleBack}
-      title="回到谱里"
-      subtitle="继续整理你们家的名字与故事"
+      title="谱里"
+      subtitle="整理你们家的名字树与故事树"
       footer={
         <>
           <Text>没有账号？</Text>
@@ -120,11 +120,11 @@ const LoginPage = () => {
           rules={[
             {
               required: true,
-              message: "请输入您的邮箱!",
+              message: "请输入您的邮箱",
             },
             {
               type: "email",
-              message: "请输入有效的邮箱地址!",
+              message: "请输入有效的邮箱地址",
             },
           ]}
         >
@@ -167,11 +167,11 @@ const LoginPage = () => {
           rules={[
             {
               required: true,
-              message: "请输入您的密码!",
+              message: "请输入您的密码",
             },
             {
               min: 6,
-              message: "密码至少需要6个字符!",
+              message: "密码至少需要6个字符",
             },
           ]}
         >

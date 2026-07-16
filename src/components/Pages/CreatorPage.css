@@ -1,6 +1,7 @@
 /* 数据管理页面样式 */
 .data-management-page {
-  background: #f7f7f8;
+  background: var(--paper);
+  color: var(--ink);
   min-height: calc(100vh - 80px);
 }
 

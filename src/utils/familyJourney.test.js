@@ -115,14 +115,14 @@ describe("familyJourney", () => {
     ).toEqual([1, 3, 4]);
   });
 
-  test("advances every two generations after generation 10", () => {
+  test("advances one generation at a time throughout playback", () => {
     const steps = Array.from({ length: 14 }, (_, index) => ({
       generation: index + 1,
     }));
 
     expect(getNextJourneyStepIndex(steps, 8)).toBe(9);
-    expect(getNextJourneyStepIndex(steps, 9)).toBe(11);
-    expect(getNextJourneyStepIndex(steps, 11)).toBe(13);
+    expect(getNextJourneyStepIndex(steps, 9)).toBe(10);
+    expect(getNextJourneyStepIndex(steps, 11)).toBe(12);
   });
 
   test("always keeps the final generation in late playback", () => {

@@ -30,14 +30,15 @@ describe("authentication page layout", () => {
     expect(stylesheet).toContain(".auth-back-button:focus-visible");
   });
 
-  test("keeps the return action as the only topbar navigation", () => {
-    expect(layoutSource).not.toContain("auth-brand");
-    expect(layoutSource).not.toContain("auth-seal");
-    expect(stylesheet).toContain("justify-content: flex-start;");
+  test("keeps the clickable brand in the top-left and the return action available", () => {
+    expect(layoutSource).toContain('className="auth-brand"');
+    expect(layoutSource).toContain('to="/"');
+    expect(layoutSource).toContain("auth-brand-seal");
+    expect(stylesheet).toContain("justify-content: space-between;");
   });
 
   test("uses compact desktop spacing so the footer remains in view", () => {
-    expect(stylesheet).toContain("padding: 30px 38px 24px;");
+    expect(stylesheet).toContain("padding: 26px 38px 18px;");
     expect(stylesheet).toContain(
       "@media (min-width: 901px) and (max-height: 760px)",
     );
