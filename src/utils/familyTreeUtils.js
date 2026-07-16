@@ -114,6 +114,63 @@ export const convertToReactFlowData = (familyData, fullFamilyData = null, isColl
 };
 
 /**
+ * 将可见的父母/子女关系合并成家谱常用的“纵向主干 + 同代总线”结构。
+ *
+ * Dagre 仍然使用 convertToReactFlowData 生成的原始关系边进行布局；这里仅
+ * 生成画布展示用的边，因此不会改变 FamilyData、折叠规则或节点坐标。一个
+ * 父母组合只生成一条可视边，边组件再绘制父母汇流和多个子女的共用横线。
+ */
+export const getFamilyBusEdges = (familyData, visibleNodes = []) => {
+  const visibleNodeIds = new Set(visibleNodes.map((node) => String(node.id)));
+  const familyGroups = new Map();
+
+  familyData.forEach((person) => {
+    const parentIds = [person.g_father_id, person.g_mother_id]
+      .filter((parentId) => parentId && parentId !== 0 && visibleNodeIds.has(String(parentId)))
+      .map(String)
+      .filter((parentId, index, ids) => ids.indexOf(parentId) === index);
+
+    if (!parentIds.length || !visibleNodeIds.has(String(person.id))) return;
+
+    const familyKey = parentIds.join('-');
+    if (!familyGroups.has(familyKey)) {
+      familyGroups.set(familyKey, {
+        parentIds,
+        children: [],
+      });
+    }
+
+    familyGroups.get(familyKey).children.push(person);
+  });
+
+  return [...familyGroups.entries()].map(([familyKey, group]) => {
+    const children = [...group.children].sort((left, right) => {
+      const rankDifference = (Number(left.rank_index) || 0) - (Number(right.rank_index) || 0);
+      return rankDifference || String(left.id).localeCompare(String(right.id));
+    });
+
+    return {
+      id: `family-bus-${familyKey}-${children.map((child) => child.id).join('-')}`,
+      source: group.parentIds[0],
+      target: String(children[0].id),
+      type: 'familyBus',
+      animated: false,
+      selectable: false,
+      data: {
+        parentIds: group.parentIds,
+        childIds: children.map((child) => String(child.id)),
+      },
+      style: {
+        stroke: 'hsl(155 13% 45%)',
+        strokeWidth: 2,
+        strokeLinecap: 'round',
+        strokeLinejoin: 'round',
+      },
+    };
+  });
+};
+
+/**
  * 为家谱演示生成稳定的紧凑布局。
  *
  * 旧实现只按每代的数组下标左右交替摆放节点，导致不同父系支路互相穿插，

@@ -18,8 +18,10 @@ import {
 } from '@ant-design/icons';
 
 import FamilyMemberNode from './FamilyMemberNode.js';
+import FamilyBusEdge from './FamilyBusEdge.js';
 import {
   convertToReactFlowData,
+  getFamilyBusEdges,
   getLayoutedElements,
   getJourneyLayoutedNodes,
   filterByRank,
@@ -47,6 +49,10 @@ const { Text } = Typography;
 // 定义节点类型
 const nodeTypes = {
   familyMember: FamilyMemberNode,
+};
+
+const edgeTypes = {
+  familyBus: FamilyBusEdge,
 };
 
 const FamilyTreeFlow = forwardRef(({
@@ -488,16 +494,21 @@ const FamilyTreeFlow = forwardRef(({
         allLayoutedNodes.map((node) => [node.id, Number(node.data.rank)]),
       )
       : null;
+    const visualFamilyData = presentationMode
+      ? filteredData.filter((person) => visibleNodeIds.has(String(person.id)))
+      : filteredData;
+    const familyBusEdges = getFamilyBusEdges(visualFamilyData, layoutedNodes);
     const visibleEdges = presentationMode
-      ? newEdges
-        .filter((edge) => visibleNodeIds.has(edge.source) && visibleNodeIds.has(edge.target))
+      ? familyBusEdges
         .map((edge) => ({
           ...edge,
-          className: generationByNodeId.get(edge.target) === Number(presentationStep)
+          className: edge.data.childIds.some(
+            (childId) => generationByNodeId.get(childId) === Number(presentationStep),
+          )
             ? 'journey-edge-entering'
             : '',
         }))
-      : newEdges;
+      : familyBusEdges;
 
     setNodes(layoutedNodes);
     setEdges(visibleEdges);
@@ -1433,6 +1444,7 @@ const FamilyTreeFlow = forwardRef(({
             reactFlowInstanceRef.current = instance;
           }}
           nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
           nodesDraggable={isNodeDraggable}
           nodesConnectable={false}
           elementsSelectable={isNodeDraggable}
