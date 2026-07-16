@@ -865,6 +865,10 @@ function CreatorPage({
 
   const handlePhotoImport = async (selectedFiles) => {
     if (!selectedFiles.length || busy) return;
+    if (rows.some((row) => String(row?.name || "").trim())) {
+      message.warning("照片建谱只用于空白家谱初始化，已有数据不能覆盖");
+      return;
+    }
 
     setBusy(true);
     setUploadedImages([]);
@@ -881,7 +885,9 @@ function CreatorPage({
 
       if (applyImageCandidates(parsed)) {
         setImageParseModalVisible(false);
-        message.success("解析完成，请核对人物和关系后再保存");
+        message.success(
+          "已生成家谱预览，请核对人物和关系；点击保存家谱后才会写入数据源",
+        );
       }
     } catch (error) {
       message.destroy();
@@ -910,6 +916,18 @@ function CreatorPage({
     setFiles(list);
     setPreviews(list.map((file) => uploadService.createPreviewUrl(file)));
     handlePhotoImport(list);
+  };
+
+  const openImageImport = () => {
+    if (dataLoading) {
+      message.info("正在读取当前家谱，请稍候");
+      return;
+    }
+    if (rows.some((row) => String(row?.name || "").trim())) {
+      message.warning("照片建谱仅支持空白家谱初始化，不会覆盖已有数据");
+      return;
+    }
+    setImageParseModalVisible(true);
   };
 
   // 数据变化处理（已删除localStorage保存）
@@ -1368,7 +1386,7 @@ function CreatorPage({
             <button
               type="button"
               className="mobile-secondary-action"
-              onClick={() => setImageParseModalVisible(true)}
+              onClick={openImageImport}
             >
               <span className="mobile-secondary-icon">
                 <CameraOutlined />
@@ -1409,66 +1427,61 @@ function CreatorPage({
 
             <div className="mobile-person-list">
               {mobileDisplayRows.length ? (
-                mobileDisplayRows
-                  .slice(0, mobileVisibleCount)
-                  .map((person) => {
-                      const fatherName = person.g_father_id
-                        ? personNameById.get(String(person.g_father_id))
-                        : null;
-                      const supportingDetails = [
-                        fatherName ? `父亲：${fatherName}` : null,
-                        person.location || null,
-                        person.spouse ? `配偶：${person.spouse}` : null,
-                      ].filter(Boolean);
-                      const personKey = person.person_id ?? person.id;
-                      const lifeStatusUnknown =
-                        person.dealth === "unknown" ||
-                        person.death_date === "unknown";
+                mobileDisplayRows.slice(0, mobileVisibleCount).map((person) => {
+                  const fatherName = person.g_father_id
+                    ? personNameById.get(String(person.g_father_id))
+                    : null;
+                  const supportingDetails = [
+                    fatherName ? `父亲：${fatherName}` : null,
+                    person.location || null,
+                    person.spouse ? `配偶：${person.spouse}` : null,
+                  ].filter(Boolean);
+                  const personKey = person.person_id ?? person.id;
+                  const lifeStatusUnknown =
+                    person.dealth === "unknown" ||
+                    person.death_date === "unknown";
 
-                    return (
-                      <button
-                        type="button"
-                        className="mobile-person-card"
-                        key={personKey}
-                        onClick={() => openMobilePersonEditor(person)}
-                        aria-label={`修改${person.name}的资料`}
-                      >
-                        <span
-                          className="mobile-person-avatar"
-                          aria-hidden="true"
-                        >
-                          {person.name?.slice(-1)}
-                        </span>
-                        <span className="mobile-person-card-copy">
-                          <span className="mobile-person-card-title">
-                            <strong>{person.name}</strong>
-                            <i>第 {person.g_rank || 1} 代</i>
-                            <i
-                              className={
-                                isPersonAlive(person)
-                                  ? "alive"
-                                  : lifeStatusUnknown
-                                    ? "pending"
-                                    : ""
-                              }
-                            >
-                              {isPersonAlive(person)
-                                ? "在世"
+                  return (
+                    <button
+                      type="button"
+                      className="mobile-person-card"
+                      key={personKey}
+                      onClick={() => openMobilePersonEditor(person)}
+                      aria-label={`修改${person.name}的资料`}
+                    >
+                      <span className="mobile-person-avatar" aria-hidden="true">
+                        {person.name?.slice(-1)}
+                      </span>
+                      <span className="mobile-person-card-copy">
+                        <span className="mobile-person-card-title">
+                          <strong>{person.name}</strong>
+                          <i>第 {person.g_rank || 1} 代</i>
+                          <i
+                            className={
+                              isPersonAlive(person)
+                                ? "alive"
                                 : lifeStatusUnknown
-                                  ? "待确认"
-                                  : "已故"}
-                            </i>
-                          </span>
-                          <small>
-                            {supportingDetails.length
-                              ? supportingDetails.join(" · ")
-                              : "资料待补充"}
-                          </small>
+                                  ? "pending"
+                                  : ""
+                            }
+                          >
+                            {isPersonAlive(person)
+                              ? "在世"
+                              : lifeStatusUnknown
+                                ? "待确认"
+                                : "已故"}
+                          </i>
                         </span>
-                        <span className="mobile-person-edit-label">修改</span>
-                      </button>
-                    );
-                  })
+                        <small>
+                          {supportingDetails.length
+                            ? supportingDetails.join(" · ")
+                            : "资料待补充"}
+                        </small>
+                      </span>
+                      <span className="mobile-person-edit-label">修改</span>
+                    </button>
+                  );
+                })
               ) : (
                 <div className="mobile-person-empty">
                   <SearchOutlined />
@@ -1649,7 +1662,7 @@ function CreatorPage({
                     <Button
                       type="primary"
                       icon={<CameraOutlined />}
-                      onClick={() => setImageParseModalVisible(true)}
+                      onClick={openImageImport}
                       size="small"
                     >
                       照片识别
@@ -2090,7 +2103,8 @@ function CreatorPage({
               <div className="family-photo-intro">
                 <h3>选择纸质家谱照片</h3>
                 <p>
-                  选完后会自动安全上传，并由腾讯混元大模型直接理解文字、版面和世系关系。
+                  可一次选择最多 10
+                  张照片。大模型会综合排序、识别跨页关系，并先生成一棵待确认的家谱预览。
                 </p>
               </div>
 
@@ -2102,7 +2116,9 @@ function CreatorPage({
                   <strong>
                     {busy ? "正在处理照片" : "从相册或电脑选择照片"}
                   </strong>
-                  <small>支持 JPG、PNG、WebP，单张不超过 10MB</small>
+                  <small>
+                    支持 JPG、PNG、WebP，最多 10 张，单张不超过 10MB
+                  </small>
                 </span>
                 <input
                   type="file"
@@ -2142,8 +2158,8 @@ function CreatorPage({
 
               {busy && analysisProgress > 0 && (
                 <div className="family-photo-progress" aria-live="polite">
-                  <strong>大模型正在理解家谱</strong>
-                  <span>逐张读取人名、代际和连接关系，请稍候</span>
+                  <strong>大模型正在合并家谱</strong>
+                  <span>正在统一代际、跨页人物与连接关系，请稍候</span>
                   <Progress
                     percent={Math.round(analysisProgress)}
                     status="active"
@@ -2159,7 +2175,7 @@ function CreatorPage({
               )}
 
               <small className="family-photo-review-note">
-                大模型只生成待确认候选，不会自动改写已保存的家谱。
+                仅空白家谱可使用。大模型只生成待确认预览；请在表格中核对后手动保存，绝不会自动覆盖已保存家谱。
               </small>
             </Space>
           </div>
