@@ -36,8 +36,8 @@ const FamilyJourneyPlayer = ({
           谱
         </span>
         <span>
-          <strong>看家族如何生长</strong>
-          <small>从明代到当代 · {steps.length} 代展开</small>
+          <strong>看一个500年的家谱如何延续</strong>
+          <small>从 明代 到 当代 · {steps.length}代 展开</small>
         </span>
         <span className="journey-launcher-play" aria-hidden="true">
           <CaretRightOutlined />

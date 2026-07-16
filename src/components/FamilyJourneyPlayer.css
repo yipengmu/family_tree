@@ -288,34 +288,10 @@
   min-height: 56px;
 }
 .journey-copy-transition {
-  animation: journey-copy-change 0.58s ease both;
-  will-change: opacity, filter;
+  animation: none;
 }
 .journey-copy-transition--light {
-  animation: journey-copy-change-light 0.16s ease-out both;
-  will-change: opacity;
-}
-@keyframes journey-copy-change-light {
-  from {
-    opacity: 0.55;
-  }
-  to {
-    opacity: 1;
-  }
-}
-@keyframes journey-copy-change {
-  0% {
-    opacity: 0;
-    filter: blur(3px);
-  }
-  55% {
-    opacity: 0.72;
-    filter: blur(0.8px);
-  }
-  100% {
-    opacity: 1;
-    filter: blur(0);
-  }
+  animation: none;
 }
 .journey-era-orb {
   width: 48px;

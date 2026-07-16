@@ -46,6 +46,17 @@ describe("family journey panorama framing", () => {
     );
   });
 
+  test("reuses the compact journey layout and zoom before playback", () => {
+    expect(source).toMatch(
+      /compactDemoMode[\s\S]*?getJourneyLayoutedNodes\(flowData\.nodes, presentationPathIds/,
+    );
+    expect(source).toMatch(
+      /const zoom = compactDemoMode \? \(isMobile \? 0\.62 : 0\.78\)/,
+    );
+    expect(source).toContain("presentationMode || compactDemoMode ? 'journey-flow-container'");
+    expect(source).toContain("onlyRenderVisibleElements={presentationMode || compactDemoMode}");
+  });
+
   test("auto-fits a personal tree when its nodes or canvas size change", () => {
     expect(source).toContain("getAdaptiveTreeFitOptions");
     expect(source).toMatch(

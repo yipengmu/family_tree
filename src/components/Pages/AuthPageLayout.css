@@ -63,6 +63,7 @@
   place-items: center;
   border-radius: 7px;
   overflow: hidden;
+  font-size: 20px;
 }
 
 .auth-brand-copy {

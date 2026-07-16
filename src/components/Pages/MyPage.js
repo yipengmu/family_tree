@@ -14,6 +14,7 @@ import AuthService from "../../services/authService.js";
 import tenantService from "../../services/tenantService.js";
 import BRAND from "../../constants/brand.js";
 import "./MyPage.css";
+import "../UI/BrandSeal.css";
 
 const readStoredUser = () => {
   try {
@@ -63,9 +64,8 @@ const MyPage = ({ activeMenuItem = "mine", onMenuClick, familyData = [] }) => {
     <AppLayout activeMenuItem={activeMenuItem} onMenuClick={onMenuClick}>
       <div className={`my-page ${!authenticated ? "my-page-guest" : ""}`}>
         <header className="my-page-header">
-          <span className="my-page-seal">{BRAND.seal}</span>
+          <span className="brand-seal my-page-seal">{BRAND.seal}</span>
           <div>
-            <p>我的谱里</p>
             <h1>
               {authenticated
                 ? user?.name || user?.email || "家谱整理者"
@@ -98,7 +98,6 @@ const MyPage = ({ activeMenuItem = "mine", onMenuClick, familyData = [] }) => {
               >
                 注册并创建家谱
               </Button>
-              <p className="my-guest-note">新用户将进入注册流程</p>
             </div>
           </section>
         ) : (
@@ -185,7 +184,7 @@ const MyPage = ({ activeMenuItem = "mine", onMenuClick, familyData = [] }) => {
           </>
         )}
 
-        <p className="my-page-footnote">让孩子知道家族从哪里来</p>
+        <p className="my-page-footnote">通过家谱故事，让孩子知道家族从哪里来</p>
       </div>
     </AppLayout>
   );

@@ -27,7 +27,7 @@ describe("family journey animation styles", () => {
     );
   });
 
-  test("uses an opacity fade for journey generation changes", () => {
+  test("keeps node reveals but updates the bottom card without a fade", () => {
     expect(stylesheet).toMatch(
       /@keyframes\s+journey-node-reveal\s*\{[^}]*opacity:\s*0;[^}]*filter:\s*blur/s,
     );
@@ -35,20 +35,23 @@ describe("family journey animation styles", () => {
       /@keyframes\s+journey-node-reveal\s*\{[^}]*transform\s*:/s,
     );
     expect(journeyPlayerStylesheet).toMatch(
-      /@keyframes\s+journey-copy-change\s*\{[^}]*opacity:\s*0;[^}]*filter:\s*blur/s,
+      /\.journey-copy-transition\s*\{[^}]*animation:\s*none/s,
     );
-    expect(journeyPlayerStylesheet).not.toMatch(
-      /@keyframes\s+journey-copy-change\s*\{[^}]*transform\s*:/s,
-    );
+    expect(journeyPlayerStylesheet).not.toContain("@keyframes journey-copy-change");
   });
 
   test("uses lightweight late-journey transitions", () => {
     expect(pageSource).toContain('journey-performance-mode');
-    expect(stylesheet).toContain('.journey-performance-mode .react-flow__edge');
+    expect(stylesheet).toMatch(
+      /\.journey-performance-mode\s+\.react-flow__edge/,
+    );
     expect(stylesheet).toContain('@keyframes journey-node-reveal-light');
     expect(stylesheet).toContain('animation: journey-node-reveal-light');
     expect(journeyPlayerStylesheet).toContain(
       '.journey-copy-transition--light',
+    );
+    expect(journeyPlayerStylesheet).toMatch(
+      /\.journey-copy-transition--light\s*\{[^}]*animation:\s*none/s,
     );
   });
 

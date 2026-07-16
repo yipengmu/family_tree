@@ -87,7 +87,7 @@ const LoginPage = () => {
       backLabel="返回"
       onBack={handleBack}
       title="谱里"
-      subtitle="整理你们家的名字树与故事树"
+      subtitle="续写每个名字背后的故事"
       footer={
         <>
           <Text>没有账号？</Text>

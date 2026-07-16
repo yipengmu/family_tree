@@ -454,7 +454,7 @@
   text-align: center;
 }
 
-/* 演示全景使用紧凑卡片，避免 624 人在深代被固定卡片宽度撑成一条横带。
+/* 示范谱使用紧凑卡片，避免默认态或深代被固定卡片宽度撑成一条横带。
    点击节点仍可打开完整详情，浏览模式不受影响。 */
 .journey-flow-container .family-member-node {
   min-width: 120px;

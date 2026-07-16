@@ -4,6 +4,7 @@ import { Card, Typography } from "antd";
 import { Link } from "react-router-dom";
 import BRAND from "../../constants/brand.js";
 import "./AuthPageLayout.css";
+import "../UI/BrandSeal.css";
 
 const { Title, Text } = Typography;
 
@@ -18,7 +19,7 @@ const AuthPageLayout = ({
   <div className="auth-page">
     <header className="auth-topbar">
       <Link className="auth-brand" to="/" aria-label="谱里官网首页">
-        <span className="auth-brand-seal" aria-hidden="true">
+        <span className="brand-seal auth-brand-seal" aria-hidden="true">
           {BRAND.seal}
         </span>
         <span className="auth-brand-copy">

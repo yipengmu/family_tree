@@ -114,7 +114,7 @@ const RegisterPage = () => {
       backLabel="返回"
       onBack={handleBack}
       title={BRAND.tagline}
-      subtitle="从自己开始记录。默认私密，仅受邀家人可见。"
+      subtitle="此刻，从我开始记录"
       footer={
         <>
           <Text>已有账号？</Text>
@@ -131,21 +131,6 @@ const RegisterPage = () => {
         onFinish={handleRegister}
         autoComplete="off"
       >
-        <Form.Item
-          name="name"
-          rules={[
-            {
-              required: true,
-              message: "请输入您的姓名!",
-            },
-            {
-              max: 50,
-              message: "姓名不能超过50个字符!",
-            },
-          ]}
-        >
-          <Input prefix={<UserOutlined />} placeholder="姓名" size="large" />
-        </Form.Item>
 
         <Form.Item
           name="email"
@@ -163,30 +148,6 @@ const RegisterPage = () => {
           <Input
             prefix={<MailOutlined />}
             placeholder="邮箱地址"
-            size="large"
-          />
-        </Form.Item>
-
-        <Form.Item
-          name="password"
-          rules={[
-            {
-              required: true,
-              message: "请输入您的密码!",
-            },
-            {
-              min: 6,
-              message: "密码至少需要6个字符!",
-            },
-            {
-              max: 100,
-              message: "密码不能超过100个字符!",
-            },
-          ]}
-        >
-          <Input.Password
-            prefix={<LockOutlined />}
-            placeholder="密码"
             size="large"
           />
         </Form.Item>
@@ -220,6 +181,46 @@ const RegisterPage = () => {
               </Button>
             </Col>
           </Row>
+        </Form.Item>
+
+        <Form.Item
+          name="name"
+          rules={[
+            {
+              required: true,
+              message: "请输入您的姓名!",
+            },
+            {
+              max: 50,
+              message: "姓名不能超过50个字符!",
+            },
+          ]}
+        >
+          <Input prefix={<UserOutlined />} placeholder="姓名" size="large" />
+        </Form.Item>
+
+        <Form.Item
+          name="password"
+          rules={[
+            {
+              required: true,
+              message: "请输入您的密码!",
+            },
+            {
+              min: 6,
+              message: "密码至少需要6个字符!",
+            },
+            {
+              max: 100,
+              message: "密码不能超过100个字符!",
+            },
+          ]}
+        >
+          <Input.Password
+            prefix={<LockOutlined />}
+            placeholder="密码"
+            size="large"
+          />
         </Form.Item>
 
         <Form.Item>

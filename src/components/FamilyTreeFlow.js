@@ -65,6 +65,7 @@ const FamilyTreeFlow = forwardRef(({
   presentationFocusId = null,
   presentationPathIds = [],
   presentationComplete = false,
+  compactDemoMode = false,
   panorama = null,
   onOpenPersonProfile,
   onAddPaternalAncestor,
@@ -468,7 +469,12 @@ const FamilyTreeFlow = forwardRef(({
     const newEdges = flowData.edges;
     const allLayoutedNodes = presentationMode && presentationLayout
       ? flowData.nodes
-      : getLayoutedElements(flowData.nodes, newEdges, layoutDirection);
+      : compactDemoMode
+        ? getJourneyLayoutedNodes(flowData.nodes, presentationPathIds, {
+          nodeWidth: isMobile ? 100 : 120,
+          nodeGap: isMobile ? 8 : 12,
+        })
+        : getLayoutedElements(flowData.nodes, newEdges, layoutDirection);
     const visibleNodeIds = presentationMode
       ? new Set(
         familyData
@@ -517,7 +523,7 @@ const FamilyTreeFlow = forwardRef(({
 
     // 调试第20代成员显示
     debug20thGeneration();
-  }, [familyData, searchTerm, generationRange, layoutDirection, setNodes, setEdges, isMobile, isShowingAll, isSmartCollapseEnabled, currentUser, expandedNodes, debug20thGeneration, isNameProtectionEnabled, onOpenPersonProfile, searchTargetPerson, presentationMode, presentationStep, presentationFocusId, presentationLayout, useFounderLabels]);
+  }, [familyData, searchTerm, generationRange, layoutDirection, setNodes, setEdges, isMobile, isShowingAll, isSmartCollapseEnabled, currentUser, expandedNodes, debug20thGeneration, isNameProtectionEnabled, onOpenPersonProfile, searchTargetPerson, presentationMode, presentationStep, presentationFocusId, presentationLayout, presentationPathIds, compactDemoMode, useFounderLabels]);
 
   // 添加日志功能
   const logViewportInfo = useCallback(() => {
@@ -729,9 +735,10 @@ const FamilyTreeFlow = forwardRef(({
     }
 
     const viewport = getViewport();
-    const founderWidth = founderNode.measured?.width
-      || founderNode.width
-      || (isMobile ? 180 : 240);
+    const zoom = compactDemoMode ? (isMobile ? 0.62 : 0.78) : viewport.zoom;
+    const founderWidth = compactDemoMode
+      ? (isMobile ? 100 : 120)
+      : founderNode.measured?.width || founderNode.width || (isMobile ? 180 : 240);
     const founderHeight = founderNode.measured?.height
       || founderNode.height
       || 120;
@@ -740,19 +747,19 @@ const FamilyTreeFlow = forwardRef(({
       .querySelector('.journey-launcher')
       ?.getBoundingClientRect();
     const defaultCenterY = launcherRect
-      ? launcherRect.bottom - containerRect.top + 24 + (founderHeight * viewport.zoom) / 2
+      ? launcherRect.bottom - containerRect.top + 24 + (founderHeight * zoom) / 2
       : Math.min(flowContainer.clientHeight * 0.24, 260);
     const centeredX = getViewportXForNodeCenter({
       nodeX: founderNode.position.x,
       nodeWidth: founderWidth,
       viewportWidth: flowContainer.clientWidth,
-      zoom: viewport.zoom,
+      zoom,
     });
     const centeredY = getViewportYForNodeCenter({
       nodeY: founderNode.position.y,
       nodeHeight: founderHeight,
       viewportCenterY: defaultCenterY,
-      zoom: viewport.zoom,
+      zoom,
     });
 
     setViewport(
@@ -760,10 +767,11 @@ const FamilyTreeFlow = forwardRef(({
         ...viewport,
         x: centeredX,
         y: centeredY,
+        zoom,
       },
       { duration },
     );
-  }, [getNodes, getViewport, isMobile, presentationMode, setViewport, useFounderLabels]);
+  }, [compactDemoMode, getNodes, getViewport, isMobile, presentationMode, setViewport, useFounderLabels]);
 
   // 未登录示范谱首次渲染时只把根节点穆茂移到中心，避免扫描和移动整棵树。
   useEffect(() => {
@@ -1404,7 +1412,7 @@ const FamilyTreeFlow = forwardRef(({
       {/* React Flow 图表 */}
       <div
         ref={flowContainerRef}
-        className={`flow-container ${presentationMode ? 'journey-flow-container' : ''}`}
+        className={`flow-container ${presentationMode || compactDemoMode ? 'journey-flow-container' : ''}`}
       >
         {presentationComplete && panorama && (
           <aside className="journey-panorama-summary" aria-label="家族世系全景摘要">
@@ -1456,8 +1464,8 @@ const FamilyTreeFlow = forwardRef(({
           nodesDraggable={isNodeDraggable}
           nodesConnectable={false}
           elementsSelectable={isNodeDraggable}
-          // 深代播放时只挂载当前视口内的节点/边，避免屏幕外的数百张卡片参与布局和绘制。
-          onlyRenderVisibleElements={presentationMode}
+          // 示范谱只挂载当前视口内的节点/边，避免屏幕外的卡片参与绘制。
+          onlyRenderVisibleElements={presentationMode || compactDemoMode}
           connectionLineType={ConnectionLineType.Straight}
           defaultEdgeOptions={{
             type: 'straight',

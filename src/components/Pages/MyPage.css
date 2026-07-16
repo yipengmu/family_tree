@@ -23,6 +23,8 @@
   place-items: center;
   border-radius: 8px;
   overflow: hidden;
+  border-radius: 8px;
+  font-size: 25px;
 }
 
 .my-page-header p {

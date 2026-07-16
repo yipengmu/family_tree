@@ -434,6 +434,7 @@ const FamilyTreePage = ({
               presentationFocusId={currentJourneyStep?.focusPersonId}
               presentationPathIds={journeyPathIds}
               presentationComplete={journeyStatus === "complete"}
+              compactDemoMode={isDemoFamily}
               panorama={{
                 familyName,
                 totalMembers: familyData.length,
