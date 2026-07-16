@@ -34,7 +34,20 @@ describe("marketing homepage creation entry", () => {
     expect(stylesheet).not.toContain(".create-panel-backdrop");
   });
 
-  test("gives login and create actions distinct accessible styles", () => {
+  test("shows register and login only for visitors", () => {
+    expect(pageSource).toContain("{authenticated ? (");
+    expect(pageSource).toContain('onClick={() => openMyFamily("header")}');
+    expect(pageSource).toContain('className="site-header-register"');
+    expect(pageSource).toContain('to="/register"');
+    expect(pageSource).toContain('className="site-header-login"');
+    expect(pageSource).toContain('to="/login"');
+    expect(pageSource).not.toContain(
+      '{authenticated ? "进入我的家谱" : "免费创建"}',
+    );
+  });
+
+  test("gives header auth actions distinct accessible styles", () => {
+    expect(pageSource).toContain('className="site-header-register"');
     expect(pageSource).toContain('className="site-header-login"');
     expect(pageSource).toContain('className="site-header-create"');
     expect(stylesheet).toContain(".site-header-actions > a:focus-visible");

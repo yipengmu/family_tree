@@ -229,7 +229,7 @@ const FamilyTreeFlow = forwardRef(({
       familyData,
       familyData,
       false,
-      { isNameProtectionEnabled, useFounderLabels },
+      { isMobile, isNameProtectionEnabled, onOpenPersonProfile, useFounderLabels },
     );
     return {
       nodes: getJourneyLayoutedNodes(allNodes, presentationPathIds, {
@@ -238,7 +238,7 @@ const FamilyTreeFlow = forwardRef(({
       }),
       edges: allEdges,
     };
-  }, [familyData, isMobile, isNameProtectionEnabled, presentationMode, presentationPathIds, useFounderLabels]);
+  }, [familyData, isMobile, isNameProtectionEnabled, onOpenPersonProfile, presentationMode, presentationPathIds, useFounderLabels]);
 
   // 当nodes或statistics变化时，通知父组件
   useEffect(() => {
@@ -463,7 +463,7 @@ const FamilyTreeFlow = forwardRef(({
         filteredData,
         familyData,
         isShowingAll && isSmartCollapseEnabled,
-        { isNameProtectionEnabled, useFounderLabels },
+        { isMobile, isNameProtectionEnabled, onOpenPersonProfile, useFounderLabels },
       );
     const newEdges = flowData.edges;
     const allLayoutedNodes = presentationMode && presentationLayout
@@ -517,7 +517,7 @@ const FamilyTreeFlow = forwardRef(({
 
     // 调试第20代成员显示
     debug20thGeneration();
-  }, [familyData, searchTerm, generationRange, layoutDirection, setNodes, setEdges, isShowingAll, isSmartCollapseEnabled, currentUser, expandedNodes, debug20thGeneration, isNameProtectionEnabled, searchTargetPerson, presentationMode, presentationStep, presentationFocusId, presentationLayout, useFounderLabels]);
+  }, [familyData, searchTerm, generationRange, layoutDirection, setNodes, setEdges, isMobile, isShowingAll, isSmartCollapseEnabled, currentUser, expandedNodes, debug20thGeneration, isNameProtectionEnabled, onOpenPersonProfile, searchTargetPerson, presentationMode, presentationStep, presentationFocusId, presentationLayout, useFounderLabels]);
 
   // 添加日志功能
   const logViewportInfo = useCallback(() => {
@@ -983,9 +983,15 @@ const FamilyTreeFlow = forwardRef(({
       }
     }
 
-    // 显示节点详情
+    // 移动端使用底部抽屉；桌面端直接进入现有的人物资料页，避免只更新
+    // selectedNode 却没有任何可见面板导致“点击没反应”。
+    if (!isMobile && onOpenPersonProfile) {
+      onOpenPersonProfile(node.data.id);
+      return;
+    }
+
     setSelectedNode(node);
-  }, [familyData, nodes, expandedNodes]);
+  }, [familyData, isMobile, nodes, expandedNodes, onOpenPersonProfile]);
 
   // 移除重置视图功能
 

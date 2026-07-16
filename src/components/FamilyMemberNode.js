@@ -15,7 +15,9 @@ const FamilyMemberNode = ({ data, selected }) => {
     death,
     location,
     hasCollapsedChildren,
+    isMobile = false,
     isNameProtectionEnabled = false, // 姓名保护开关，默认关闭
+    onOpenPersonProfile,
     useFounderLabels = true,
   } = data;
 
@@ -167,7 +169,20 @@ const FamilyMemberNode = ({ data, selected }) => {
         {location && (
           <div><strong>地点:</strong> {location}</div>
         )}
-        <div className="family-member-tooltip-hint">点击节点查看人物资料</div>
+        <div
+          className="family-member-tooltip-hint"
+          role="button"
+          tabIndex={0}
+          onClick={() => onOpenPersonProfile?.(data.id)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              onOpenPersonProfile?.(data.id);
+            }
+          }}
+        >
+          点击节点查看人物资料
+        </div>
       </div>
     );
   };
@@ -181,7 +196,11 @@ const FamilyMemberNode = ({ data, selected }) => {
         isConnectable={false}
       />
       
-      <Tooltip title={getTooltipContent()} placement="right">
+      <Tooltip
+        title={getTooltipContent()}
+        placement="right"
+        open={isMobile ? false : undefined}
+      >
         <div style={{ position: 'relative' }}>
           <Card
             size="small"

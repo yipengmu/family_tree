@@ -221,21 +221,33 @@ const MarketingHomePage = () => {
           </nav>
 
           <div className="site-header-actions">
-            <Link
-              className="site-header-login"
-              to="/login"
-              state={{ from: "/", returnTo: "/app" }}
-            >
-              登录
-            </Link>
-            <button
-              className="site-header-create"
-              type="button"
-              onClick={() => beginCreate("header")}
-            >
-              {authenticated ? "进入我的家谱" : "免费创建"}
-              <ArrowRightOutlined />
-            </button>
+            {authenticated ? (
+              <button
+                className="site-header-create"
+                type="button"
+                onClick={() => openMyFamily("header")}
+              >
+                进入我的家谱
+                <ArrowRightOutlined />
+              </button>
+            ) : (
+              <>
+                <Link
+                  className="site-header-register"
+                  to="/register"
+                  state={{ from: "/", returnTo: "/app/create" }}
+                >
+                  注册
+                </Link>
+                <Link
+                  className="site-header-login"
+                  to="/login"
+                  state={{ from: "/", returnTo: "/app" }}
+                >
+                  登录
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>

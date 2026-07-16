@@ -267,6 +267,7 @@
     transform 160ms ease;
 }
 
+.site-header-register,
 .site-header-login {
   min-width: 72px;
   padding: 0 17px;
@@ -275,6 +276,7 @@
   background: rgba(255, 253, 247, 0.62);
 }
 
+.site-header-register:hover,
 .site-header-login:hover {
   border-color: rgba(23, 63, 56, 0.42);
   background: var(--site-paper-light);

@@ -27,7 +27,12 @@ export const convertToReactFlowData = (
   isCollapseMode = false,
   options = {},
 ) => {
-  const { isNameProtectionEnabled = false, useFounderLabels = true } = options;
+  const {
+    isNameProtectionEnabled = false,
+    isMobile = false,
+    onOpenPersonProfile = null,
+    useFounderLabels = true,
+  } = options;
   const nodes = [];
   const edges = [];
 
@@ -77,6 +82,8 @@ export const convertToReactFlowData = (
         childrens: person.childrens,
         hasCollapsedChildren, // 添加折叠状态标识
         isNameProtectionEnabled, // 添加姓名保护开关
+        isMobile,
+        onOpenPersonProfile,
         useFounderLabels,
       },
     };
