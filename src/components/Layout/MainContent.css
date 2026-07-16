@@ -96,6 +96,27 @@
   }
 }
 
+@media (max-width: 1100px) and (min-width: 769px) {
+  .main-content,
+  .main-content.sidebar-collapsed {
+    margin-left: 72px;
+  }
+
+  .main-content .header {
+    gap: 12px;
+    padding-inline: 14px;
+  }
+
+  .header-privacy {
+    display: none;
+  }
+
+  .content-container {
+    height: calc(100vh - 58px);
+    padding: 12px;
+  }
+}
+
 @media (max-width: 768px) {
   .main-content,
   .main-content.sidebar-collapsed {

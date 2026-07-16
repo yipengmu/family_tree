@@ -48,6 +48,7 @@ import {
   getLifeStatusFields,
   getPaternalOnboardingState,
 } from "../../utils/paternalOnboarding.js";
+import { getNextSiblingRank } from "../../utils/familyTreeUtils.js";
 import "./CreatorPage.css";
 
 const { Title } = Typography;
@@ -991,7 +992,8 @@ function CreatorPage({
         ...getLifeStatusFields(lifeStatus),
         g_rank: generation,
         rank_index:
-          rows.filter((row) => Number(row.g_rank) === generation).length + 1,
+          Number(values.rank_index) ||
+          getNextSiblingRank(rows, values.g_father_id),
         g_father_id: values.g_father_id
           ? Number(values.g_father_id) || values.g_father_id
           : 0,
@@ -1439,7 +1441,11 @@ function CreatorPage({
                       type="button"
                       className="mobile-person-card"
                       key={personKey}
-                      onClick={() => (onOpenPersonEdit ? onOpenPersonEdit(person.person_id ?? person.id) : openMobilePersonEditor(person))}
+                      onClick={() =>
+                        onOpenPersonEdit
+                          ? onOpenPersonEdit(person.person_id ?? person.id)
+                          : openMobilePersonEditor(person)
+                      }
                       aria-label={`修改${person.name}的资料`}
                     >
                       <span className="mobile-person-avatar" aria-hidden="true">
@@ -1912,6 +1918,11 @@ function CreatorPage({
                 options={fatherOptions}
                 placeholder="输入姓名查找"
                 notFoundContent="没有找到，可先跳过"
+                onChange={(fatherId) => {
+                  mobilePersonForm.setFieldsValue({
+                    rank_index: getNextSiblingRank(rows, fatherId),
+                  });
+                }}
               />
             </Form.Item>
             <details className="mobile-more-fields">
@@ -1921,6 +1932,18 @@ function CreatorPage({
                   name="g_rank"
                   label="世代"
                   extra="未选择父亲时使用，之后仍可修改"
+                >
+                  <Input
+                    size="large"
+                    type="number"
+                    min="1"
+                    inputMode="numeric"
+                  />
+                </Form.Item>
+                <Form.Item
+                  name="rank_index"
+                  label="同一父亲下的排行"
+                  extra="用于确定兄弟在家谱树中的先后顺序"
                 >
                   <Input
                     size="large"

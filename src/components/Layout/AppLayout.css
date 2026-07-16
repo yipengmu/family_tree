@@ -11,21 +11,83 @@
 .app-layout {
   background: var(--paper);
 }
-.sidebar-wrapper { width: 184px; }
-.sidebar-wrapper.collapsed { width: 72px; }
+.sidebar-wrapper {
+  width: 184px;
+}
+.sidebar-wrapper.collapsed {
+  width: 72px;
+}
 .mobile-menu-btn {
   background: var(--pine);
-  border: 1px solid rgba(255,255,255,.18);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 50%;
 }
-.mobile-menu-btn span { background: #fffaf0; }
-::selection { background: rgba(166,70,50,.18); color: var(--ink); }
-:focus-visible { outline-color: var(--cinnabar); }
-::-webkit-scrollbar-track { background: #eee8da; }
-::-webkit-scrollbar-thumb { background: #b8b4a8; }
+.mobile-menu-btn span {
+  background: #fffaf0;
+}
+::selection {
+  background: rgba(166, 70, 50, 0.18);
+  color: var(--ink);
+}
+:focus-visible {
+  outline-color: var(--cinnabar);
+}
+::-webkit-scrollbar-track {
+  background: #eee8da;
+}
+::-webkit-scrollbar-thumb {
+  background: #b8b4a8;
+}
 
 @media (max-width: 1024px) and (min-width: 769px) {
-  .sidebar-wrapper { width: 168px; }
+  .sidebar-wrapper {
+    width: 168px;
+  }
+}
+
+/* 折叠屏展开态的 CSS 视口常落在 769-1100px：收窄侧栏，保留可用内容宽度。 */
+@media (max-width: 1100px) and (min-width: 769px) {
+  .sidebar-wrapper,
+  .sidebar-wrapper:not(.collapsed) {
+    width: 72px;
+  }
+
+  .sidebar-wrapper:not(.collapsed) .sidebar {
+    width: 72px;
+  }
+
+  .sidebar-wrapper:not(.collapsed) .logo-text,
+  .sidebar-wrapper:not(.collapsed) .logo-subtitle,
+  .sidebar-wrapper:not(.collapsed) .nav-link span,
+  .sidebar-wrapper:not(.collapsed) .privacy-note,
+  .sidebar-wrapper:not(.collapsed) .demo-tenant-note {
+    display: none;
+  }
+
+  .sidebar-wrapper:not(.collapsed) .logo,
+  .sidebar-wrapper:not(.collapsed) .nav-link {
+    justify-content: center;
+  }
+
+  .sidebar-wrapper:not(.collapsed) .nav-link {
+    font-size: 0;
+  }
+
+  .sidebar-wrapper:not(.collapsed) .nav-icon {
+    font-size: 18px;
+  }
+
+  .sidebar-wrapper:not(.collapsed) .logo {
+    padding-inline: 10px;
+  }
+
+  .sidebar-wrapper:not(.collapsed) .nav-link {
+    padding-inline: 8px;
+  }
+
+  .sidebar-wrapper:not(.collapsed) .bottom-section {
+    display: none;
+  }
 }
 
 /* 侧边栏包装器 */
@@ -150,11 +212,11 @@
     transition: transform 0.3s ease;
     width: 280px;
   }
-  
+
   .sidebar-wrapper.open {
     transform: translateX(0);
   }
-  
+
   .content-grid {
     grid-template-columns: 1fr;
     gap: 16px;
@@ -181,9 +243,9 @@
 body {
   margin: 0;
   padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu",
+    "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background: #f8fafc;

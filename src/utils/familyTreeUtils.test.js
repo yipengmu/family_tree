@@ -3,6 +3,7 @@ import {
   getFamilyBusEdges,
   getLayoutedElements,
   getJourneyLayoutedNodes,
+  getNextSiblingRank,
 } from "./familyTreeUtils.js";
 import demoFamilyData from "../data/familyData.js";
 
@@ -50,33 +51,65 @@ describe("family tree relationship edges", () => {
     ];
     const { nodes } = convertToReactFlowData(familyData);
     const layoutedNodes = getJourneyLayoutedNodes(nodes, [1, 2, 4]);
-    const mainlineChild = layoutedNodes.find(node => node.id === "4");
-    const mainlineSibling = layoutedNodes.find(node => node.id === "5");
-    const otherBranch = layoutedNodes.find(node => node.id === "6");
+    const mainlineChild = layoutedNodes.find((node) => node.id === "4");
+    const mainlineSibling = layoutedNodes.find((node) => node.id === "5");
+    const otherBranch = layoutedNodes.find((node) => node.id === "6");
 
     expect(mainlineChild.position.x).toBe(0);
-    expect(mainlineSibling.position.x).toBeGreaterThan(mainlineChild.position.x);
+    expect(mainlineSibling.position.x).toBeGreaterThan(
+      mainlineChild.position.x,
+    );
     expect(otherBranch.position.x).toBeGreaterThan(mainlineSibling.position.x);
   });
 
   test("does not create duplicate or invisible relationship edges", () => {
     const familyData = [
       { id: 1, name: "父", g_rank: 1, rank_index: 1, g_father_id: 0 },
-      { id: 2, name: "子", g_rank: 2, rank_index: 1, g_father_id: 1, g_mother_id: 1 },
+      {
+        id: 2,
+        name: "子",
+        g_rank: 2,
+        rank_index: 1,
+        g_father_id: 1,
+        g_mother_id: 1,
+      },
       { id: 3, name: "孤儿", g_rank: 2, rank_index: 2, g_father_id: 99 },
     ];
     const { edges } = convertToReactFlowData(familyData);
 
-    expect(edges.map(edge => [edge.source, edge.target])).toEqual([["1", "2"]]);
+    expect(edges.map((edge) => [edge.source, edge.target])).toEqual([
+      ["1", "2"],
+    ]);
   });
 
   test("groups two known parents and multiple children into one compact family bus", () => {
     const familyData = [
       { id: 1, name: "父", g_rank: 1, rank_index: 1 },
       { id: 2, name: "母", g_rank: 1, rank_index: 2 },
-      { id: 3, name: "长子", g_rank: 2, rank_index: 1, g_father_id: 1, g_mother_id: 2 },
-      { id: 4, name: "次子", g_rank: 2, rank_index: 2, g_father_id: 1, g_mother_id: 2 },
-      { id: 5, name: "三子", g_rank: 2, rank_index: 3, g_father_id: 1, g_mother_id: 2 },
+      {
+        id: 3,
+        name: "长子",
+        g_rank: 2,
+        rank_index: 1,
+        g_father_id: 1,
+        g_mother_id: 2,
+      },
+      {
+        id: 4,
+        name: "次子",
+        g_rank: 2,
+        rank_index: 2,
+        g_father_id: 1,
+        g_mother_id: 2,
+      },
+      {
+        id: 5,
+        name: "三子",
+        g_rank: 2,
+        rank_index: 3,
+        g_father_id: 1,
+        g_mother_id: 2,
+      },
     ];
     const { nodes } = convertToReactFlowData(familyData);
     const familyBusEdges = getFamilyBusEdges(familyData, nodes);
@@ -91,14 +124,31 @@ describe("family tree relationship edges", () => {
   test("keeps a known single parent while ignoring unknown or invisible parents", () => {
     const familyData = [
       { id: 1, name: "母亲", g_rank: 1, rank_index: 1 },
-      { id: 2, name: "孩子", g_rank: 2, rank_index: 1, g_father_id: 99, g_mother_id: 1 },
-      { id: 3, name: "待考", g_rank: 2, rank_index: 2, g_father_id: 0, g_mother_id: 0 },
+      {
+        id: 2,
+        name: "孩子",
+        g_rank: 2,
+        rank_index: 1,
+        g_father_id: 99,
+        g_mother_id: 1,
+      },
+      {
+        id: 3,
+        name: "待考",
+        g_rank: 2,
+        rank_index: 2,
+        g_father_id: 0,
+        g_mother_id: 0,
+      },
     ];
     const { nodes } = convertToReactFlowData(familyData);
     const familyBusEdges = getFamilyBusEdges(familyData, nodes);
 
     expect(familyBusEdges).toHaveLength(1);
-    expect(familyBusEdges[0].data).toEqual({ parentIds: ["1"], childIds: ["2"] });
+    expect(familyBusEdges[0].data).toEqual({
+      parentIds: ["1"],
+      childIds: ["2"],
+    });
   });
 
   test("keeps a deep lineage vertical and does not increase the visible edge count", () => {
@@ -115,7 +165,9 @@ describe("family tree relationship edges", () => {
 
     expect(familyBusEdges.length).toBeLessThanOrEqual(edges.length);
     for (let index = 1; index < layoutedNodes.length; index += 1) {
-      expect(layoutedNodes[index].position.y).toBeGreaterThan(layoutedNodes[index - 1].position.y);
+      expect(layoutedNodes[index].position.y).toBeGreaterThan(
+        layoutedNodes[index - 1].position.y,
+      );
     }
   });
 
@@ -125,7 +177,24 @@ describe("family tree relationship edges", () => {
 
     expect(demoFamilyData).toHaveLength(624);
     expect(familyBusEdges.length).toBeLessThanOrEqual(edges.length);
-    expect(familyBusEdges.every((edge) => edge.data.parentIds.length > 0)).toBe(true);
-    expect(familyBusEdges.every((edge) => edge.data.childIds.length > 0)).toBe(true);
+    expect(familyBusEdges.every((edge) => edge.data.parentIds.length > 0)).toBe(
+      true,
+    );
+    expect(familyBusEdges.every((edge) => edge.data.childIds.length > 0)).toBe(
+      true,
+    );
+  });
+
+  test("uses the next rank among children of the selected father", () => {
+    const familyData = [
+      { id: 1, g_father_id: 0, rank_index: 1 },
+      { id: 2, g_father_id: 1, rank_index: 1 },
+      { id: 3, g_father_id: 1, rank_index: 3 },
+      { id: 4, g_father_id: 9, rank_index: 4 },
+    ];
+
+    expect(getNextSiblingRank(familyData, 1)).toBe(4);
+    expect(getNextSiblingRank(familyData, 0)).toBe(2);
+    expect(getNextSiblingRank(familyData, 99)).toBe(1);
   });
 });

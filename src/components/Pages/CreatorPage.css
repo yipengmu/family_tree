@@ -322,6 +322,25 @@
   }
 }
 
+/* 折叠屏展开态通常只有约 1024px CSS 宽度，使用紧凑桌面布局避免侧栏挤压内容。 */
+@media (max-width: 1100px) and (min-width: 769px) {
+  .data-management-page {
+    padding-inline: 12px;
+  }
+
+  .page-header {
+    margin-bottom: 16px;
+  }
+
+  .page-header h1 {
+    font-size: 24px;
+  }
+
+  .family-data-card .ant-card-head {
+    padding-inline: 12px;
+  }
+}
+
 /* 兼容旧样式 */
 .creator-page {
   padding: 24px;

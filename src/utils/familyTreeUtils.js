@@ -1,4 +1,17 @@
-import dagre from 'dagre';
+import dagre from "dagre";
+
+/**
+ * 返回同一父亲名下的下一个兄弟排行。
+ * 无父亲时按 0 归组，兼容旧数据中的空值和数字 0。
+ */
+export const getNextSiblingRank = (familyData = [], fatherId) => {
+  const normalizedFatherId = fatherId ? String(fatherId) : "0";
+  const siblingRanks = familyData
+    .filter((person) => String(person.g_father_id || 0) === normalizedFatherId)
+    .map((person) => Number(person.rank_index) || 0);
+
+  return Math.max(0, ...siblingRanks) + 1;
+};
 
 /**
  * 将扁平化的家谱数据转换为React Flow需要的节点和边数据结构
@@ -8,30 +21,37 @@ import dagre from 'dagre';
  * @param {Object} options - 额外选项
  * @returns {Object} - 包含nodes和edges的对象
  */
-export const convertToReactFlowData = (familyData, fullFamilyData = null, isCollapseMode = false, options = {}) => {
-  const {
-    isNameProtectionEnabled = false,
-    useFounderLabels = true,
-  } = options;
+export const convertToReactFlowData = (
+  familyData,
+  fullFamilyData = null,
+  isCollapseMode = false,
+  options = {},
+) => {
+  const { isNameProtectionEnabled = false, useFounderLabels = true } = options;
   const nodes = [];
   const edges = [];
-  
+
   // 创建节点映射，便于查找
   const nodeMap = new Map();
-  
+
   // 首先创建所有节点
-  familyData.forEach(person => {
+  familyData.forEach((person) => {
     // 检查是否有被折叠的子节点
     let hasCollapsedChildren = false;
     if (isCollapseMode && fullFamilyData) {
-      const allChildren = fullFamilyData.filter(p => p.g_father_id === person.id);
-      const visibleChildren = familyData.filter(p => p.g_father_id === person.id);
-      hasCollapsedChildren = allChildren.length > 0 && visibleChildren.length < allChildren.length;
+      const allChildren = fullFamilyData.filter(
+        (p) => p.g_father_id === person.id,
+      );
+      const visibleChildren = familyData.filter(
+        (p) => p.g_father_id === person.id,
+      );
+      hasCollapsedChildren =
+        allChildren.length > 0 && visibleChildren.length < allChildren.length;
     }
 
     const node = {
       id: person.id.toString(),
-      type: 'familyMember',
+      type: "familyMember",
       position: { x: 0, y: 0 }, // 初始位置，后续会通过布局算法调整
       data: {
         id: person.id,
@@ -58,13 +78,13 @@ export const convertToReactFlowData = (familyData, fullFamilyData = null, isColl
         hasCollapsedChildren, // 添加折叠状态标识
         isNameProtectionEnabled, // 添加姓名保护开关
         useFounderLabels,
-      }
+      },
     };
 
     nodes.push(node);
     nodeMap.set(String(person.id), node);
   });
-  
+
   // 创建边（父母与子女关系）。过滤掉当前视图中不存在的父节点，
   // 并按 source-target 去重，避免折叠/脏数据造成“幽灵线”或重复线。
   const edgeKeys = new Set();
@@ -79,37 +99,37 @@ export const convertToReactFlowData = (familyData, fullFamilyData = null, isColl
       id: `edge-${edgeKey}`,
       source: sourceId,
       target: targetId,
-      type: 'straight', // 使用直线连接，避免交错
+      type: "straight", // 使用直线连接，避免交错
       animated: false,
       style: {
         ...style,
         strokeWidth: 2,
-        strokeLinecap: 'round',
-        strokeLinejoin: 'round',
+        strokeLinecap: "round",
+        strokeLinejoin: "round",
       },
       markerEnd: {
-        type: 'arrowclosed',
+        type: "arrowclosed",
         color: style.stroke,
         width: 12,
         height: 12,
-      }
+      },
     });
   };
 
-  familyData.forEach(person => {
+  familyData.forEach((person) => {
     if (person.g_father_id && person.g_father_id !== 0) {
       addRelationshipEdge(person.g_father_id, person.id, {
-        stroke: 'hsl(215.4 16.3% 46.9%)',
+        stroke: "hsl(215.4 16.3% 46.9%)",
       });
     }
 
     if (person.g_mother_id && person.g_mother_id !== 0) {
       addRelationshipEdge(person.g_mother_id, person.id, {
-        stroke: 'hsl(8 40% 52%)',
+        stroke: "hsl(8 40% 52%)",
       });
     }
   });
-  
+
   return { nodes, edges };
 };
 
@@ -126,13 +146,16 @@ export const getFamilyBusEdges = (familyData, visibleNodes = []) => {
 
   familyData.forEach((person) => {
     const parentIds = [person.g_father_id, person.g_mother_id]
-      .filter((parentId) => parentId && parentId !== 0 && visibleNodeIds.has(String(parentId)))
+      .filter(
+        (parentId) =>
+          parentId && parentId !== 0 && visibleNodeIds.has(String(parentId)),
+      )
       .map(String)
       .filter((parentId, index, ids) => ids.indexOf(parentId) === index);
 
     if (!parentIds.length || !visibleNodeIds.has(String(person.id))) return;
 
-    const familyKey = parentIds.join('-');
+    const familyKey = parentIds.join("-");
     if (!familyGroups.has(familyKey)) {
       familyGroups.set(familyKey, {
         parentIds,
@@ -145,15 +168,16 @@ export const getFamilyBusEdges = (familyData, visibleNodes = []) => {
 
   return [...familyGroups.entries()].map(([familyKey, group]) => {
     const children = [...group.children].sort((left, right) => {
-      const rankDifference = (Number(left.rank_index) || 0) - (Number(right.rank_index) || 0);
+      const rankDifference =
+        (Number(left.rank_index) || 0) - (Number(right.rank_index) || 0);
       return rankDifference || String(left.id).localeCompare(String(right.id));
     });
 
     return {
-      id: `family-bus-${familyKey}-${children.map((child) => child.id).join('-')}`,
+      id: `family-bus-${familyKey}-${children.map((child) => child.id).join("-")}`,
       source: group.parentIds[0],
       target: String(children[0].id),
-      type: 'familyBus',
+      type: "familyBus",
       animated: false,
       selectable: false,
       data: {
@@ -161,10 +185,10 @@ export const getFamilyBusEdges = (familyData, visibleNodes = []) => {
         childIds: children.map((child) => String(child.id)),
       },
       style: {
-        stroke: 'hsl(155 13% 45%)',
+        stroke: "hsl(155 13% 45%)",
         strokeWidth: 2,
-        strokeLinecap: 'round',
-        strokeLinejoin: 'round',
+        strokeLinecap: "round",
+        strokeLinejoin: "round",
       },
     };
   });
@@ -182,13 +206,14 @@ export const getJourneyLayoutedNodes = (nodes, pathIds = [], options = {}) => {
   const nodeGap = options.nodeGap || 24;
   const generationHeight = options.generationHeight || 200;
   const pathIdSet = new Set(pathIds.map(String));
-  const nodeMap = new Map(nodes.map(node => [String(node.id), node]));
+  const nodeMap = new Map(nodes.map((node) => [String(node.id), node]));
   const nodesByGeneration = new Map();
 
-  nodes.forEach(node => {
+  nodes.forEach((node) => {
     const generation = Number(node.data.rank);
     if (!Number.isFinite(generation)) return;
-    if (!nodesByGeneration.has(generation)) nodesByGeneration.set(generation, []);
+    if (!nodesByGeneration.has(generation))
+      nodesByGeneration.set(generation, []);
     nodesByGeneration.get(generation).push(node);
   });
 
@@ -231,19 +256,19 @@ export const getJourneyLayoutedNodes = (nodes, pathIds = [], options = {}) => {
   const minGeneration = generations[0] || 1;
   const slotWidth = nodeWidth + nodeGap;
 
-  return generations.flatMap(generation => {
+  return generations.flatMap((generation) => {
     const generationNodes = [...nodesByGeneration.get(generation)].sort(
       (left, right) => compareRoutes(getRoute(left), getRoute(right)),
     );
     const focusIndex = Math.max(
       0,
-      generationNodes.findIndex(node => pathIdSet.has(String(node.id))),
+      generationNodes.findIndex((node) => pathIdSet.has(String(node.id))),
     );
 
     return generationNodes.map((node, index) => ({
       ...node,
-      targetPosition: 'top',
-      sourcePosition: 'bottom',
+      targetPosition: "top",
+      sourcePosition: "bottom",
       position: {
         x: (index - focusIndex) * slotWidth,
         y: (generation - minGeneration) * generationHeight,
@@ -258,39 +283,39 @@ export const getJourneyLayoutedNodes = (nodes, pathIds = [], options = {}) => {
  * @param {Array} edges - 边数组
  * @returns {Array} - 布局后的节点数组
  */
-export const getLayoutedElements = (nodes, edges, direction = 'TB') => {
+export const getLayoutedElements = (nodes, edges, direction = "TB") => {
   const dagreGraph = new dagre.graphlib.Graph();
   dagreGraph.setDefaultEdgeLabel(() => ({}));
-  
+
   const nodeWidth = 200;
   const nodeHeight = 80;
-  
+
   dagreGraph.setGraph({
     rankdir: direction,
-    nodesep: 80,     // 增加节点间距，从50增加到80，减少连接线交错
-    ranksep: 120,    // 增加行间距，从90增加到120，保持代际间合适高度
+    nodesep: 80, // 增加节点间距，从50增加到80，减少连接线交错
+    ranksep: 120, // 增加行间距，从90增加到120，保持代际间合适高度
     marginx: 20,
-    marginy: 10,     // 减少顶部边距，从20减少到10
+    marginy: 10, // 减少顶部边距，从20减少到10
     align: undefined, // 移除对齐限制，让Dagre自动居中对齐父子节点
-    acyclicer: 'greedy',  // 使用贪心算法减少环路
-    ranker: 'tight-tree'  // 使用紧凑树排列，优化连接线
+    acyclicer: "greedy", // 使用贪心算法减少环路
+    ranker: "tight-tree", // 使用紧凑树排列，优化连接线
   });
-  
+
   nodes.forEach((node) => {
     dagreGraph.setNode(node.id, { width: nodeWidth, height: nodeHeight });
   });
-  
+
   edges.forEach((edge) => {
     dagreGraph.setEdge(edge.source, edge.target);
   });
-  
+
   dagre.layout(dagreGraph);
 
   // 获取布局后的节点位置
   const layoutedNodes = nodes.map((node) => {
     const nodeWithPosition = dagreGraph.node(node.id);
-    node.targetPosition = 'top';
-    node.sourcePosition = 'bottom';
+    node.targetPosition = "top";
+    node.sourcePosition = "bottom";
 
     // 调整位置，使节点居中
     node.position = {
@@ -316,11 +341,11 @@ const adjustParentChildAlignment = (nodes, edges) => {
   const minNodeSpacing = 80; // 节点间最小间距
 
   // 创建节点映射
-  const nodeMap = new Map(nodes.map(node => [node.id, node]));
+  const nodeMap = new Map(nodes.map((node) => [node.id, node]));
 
   // 创建父子关系映射
   const parentChildrenMap = new Map();
-  edges.forEach(edge => {
+  edges.forEach((edge) => {
     const parentId = edge.source;
     const childId = edge.target;
 
@@ -332,7 +357,7 @@ const adjustParentChildAlignment = (nodes, edges) => {
 
   // 按Y坐标分组节点到不同代数
   const generations = new Map();
-  nodes.forEach(node => {
+  nodes.forEach((node) => {
     const y = Math.round(node.position.y / 60) * 60;
     if (!generations.has(y)) {
       generations.set(y, []);
@@ -341,20 +366,26 @@ const adjustParentChildAlignment = (nodes, edges) => {
   });
 
   // 从上到下逐代处理
-  const processedGenerations = Array.from(generations.keys()).sort((a, b) => a - b);
+  const processedGenerations = Array.from(generations.keys()).sort(
+    (a, b) => a - b,
+  );
 
-  processedGenerations.forEach(generationY => {
+  processedGenerations.forEach((generationY) => {
     const generationNodes = generations.get(generationY);
 
     // 先尝试居中对齐父子节点
-    generationNodes.forEach(parentNode => {
+    generationNodes.forEach((parentNode) => {
       const childrenIds = parentChildrenMap.get(parentNode.id);
       if (childrenIds && childrenIds.length > 0) {
-        const childrenNodes = childrenIds.map(id => nodeMap.get(id)).filter(Boolean);
+        const childrenNodes = childrenIds
+          .map((id) => nodeMap.get(id))
+          .filter(Boolean);
 
         if (childrenNodes.length > 0) {
           // 计算子节点的水平中心位置
-          const childrenXPositions = childrenNodes.map(child => child.position.x + nodeWidth / 2);
+          const childrenXPositions = childrenNodes.map(
+            (child) => child.position.x + nodeWidth / 2,
+          );
           const minX = Math.min(...childrenXPositions);
           const maxX = Math.max(...childrenXPositions);
           const centerX = (minX + maxX) / 2;
@@ -389,7 +420,7 @@ const resolveOverlaps = (nodes, nodeWidth, minSpacing) => {
   });
 
   // 使用理想位置或当前位置
-  sortedNodes.forEach(node => {
+  sortedNodes.forEach((node) => {
     if (node.idealX !== undefined) {
       node.position.x = node.idealX;
     }
@@ -411,7 +442,7 @@ const resolveOverlaps = (nodes, nodeWidth, minSpacing) => {
   }
 
   // 清理临时属性
-  sortedNodes.forEach(node => {
+  sortedNodes.forEach((node) => {
     delete node.idealX;
   });
 };
@@ -424,8 +455,8 @@ const resolveOverlaps = (nodes, nodeWidth, minSpacing) => {
  * @returns {Array} - 筛选后的数据
  */
 export const filterByRank = (familyData, minRank = 1, maxRank = 20) => {
-  return familyData.filter(person => 
-    person.g_rank >= minRank && person.g_rank <= maxRank
+  return familyData.filter(
+    (person) => person.g_rank >= minRank && person.g_rank <= maxRank,
   );
 };
 
@@ -437,13 +468,15 @@ export const filterByRank = (familyData, minRank = 1, maxRank = 20) => {
  */
 export const searchFamilyMembers = (familyData, searchTerm) => {
   if (!searchTerm.trim()) return familyData;
-  
+
   const term = searchTerm.toLowerCase();
-  return familyData.filter(person => 
-    person.name.toLowerCase().includes(term) ||
-    (person.official_position && person.official_position.toLowerCase().includes(term)) ||
-    (person.summary && person.summary.toLowerCase().includes(term)) ||
-    (person.location && person.location.toLowerCase().includes(term))
+  return familyData.filter(
+    (person) =>
+      person.name.toLowerCase().includes(term) ||
+      (person.official_position &&
+        person.official_position.toLowerCase().includes(term)) ||
+      (person.summary && person.summary.toLowerCase().includes(term)) ||
+      (person.location && person.location.toLowerCase().includes(term)),
   );
 };
 
@@ -456,17 +489,19 @@ export const searchFamilyMembers = (familyData, searchTerm) => {
 export const getDescendants = (familyData, personId) => {
   const descendants = [];
   const queue = [personId];
-  
+
   while (queue.length > 0) {
     const currentId = queue.shift();
-    const children = familyData.filter(person => person.g_father_id === currentId);
-    
-    children.forEach(child => {
+    const children = familyData.filter(
+      (person) => person.g_father_id === currentId,
+    );
+
+    children.forEach((child) => {
       descendants.push(child);
       queue.push(child.id);
     });
   }
-  
+
   return descendants;
 };
 
@@ -478,11 +513,15 @@ export const getDescendants = (familyData, personId) => {
  */
 export const getAncestors = (familyData, personId) => {
   const ancestors = [];
-  const personMap = new Map(familyData.map(p => [p.id, p]));
-  
+  const personMap = new Map(familyData.map((p) => [p.id, p]));
+
   let currentPerson = personMap.get(personId);
-  
-  while (currentPerson && currentPerson.g_father_id && currentPerson.g_father_id !== 0) {
+
+  while (
+    currentPerson &&
+    currentPerson.g_father_id &&
+    currentPerson.g_father_id !== 0
+  ) {
     const father = personMap.get(currentPerson.g_father_id);
     if (father) {
       ancestors.push(father);
@@ -491,7 +530,7 @@ export const getAncestors = (familyData, personId) => {
       break;
     }
   }
-  
+
   return ancestors;
 };
 
@@ -506,29 +545,29 @@ export const getFamilyStatistics = (familyData) => {
     generations: 0,
     maleCount: 0,
     femaleCount: 0,
-    byGeneration: {}
+    byGeneration: {},
   };
-  
-  familyData.forEach(person => {
+
+  familyData.forEach((person) => {
     // 统计代数
     if (person.g_rank > stats.generations) {
       stats.generations = person.g_rank;
     }
-    
+
     // 统计性别
-    if (person.sex === 'MAN') {
+    if (person.sex === "MAN") {
       stats.maleCount++;
-    } else if (person.sex === 'WOMAN') {
+    } else if (person.sex === "WOMAN") {
       stats.femaleCount++;
     }
-    
+
     // 按代数统计
     if (!stats.byGeneration[person.g_rank]) {
       stats.byGeneration[person.g_rank] = 0;
     }
     stats.byGeneration[person.g_rank]++;
   });
-  
+
   return stats;
 };
 
@@ -539,7 +578,7 @@ export const getFamilyStatistics = (familyData) => {
  * @returns {Array} - 路径上的所有人员数据
  */
 export const getPathToRoot = (familyData, targetPersonId) => {
-  const personMap = new Map(familyData.map(p => [p.id, p]));
+  const personMap = new Map(familyData.map((p) => [p.id, p]));
   const pathPersons = [];
 
   let currentPerson = personMap.get(targetPersonId);
@@ -571,25 +610,26 @@ export const getPathTreeData = (familyData, targetPersonId) => {
   const resultPersons = new Set();
 
   // 添加路径上的所有人员
-  pathPersons.forEach(person => {
+  pathPersons.forEach((person) => {
     resultPersons.add(person);
   });
 
   // 为路径上的每个人员添加其直接子节点（显示兄弟姐妹关系）
-  pathPersons.forEach(pathPerson => {
-    const siblings = familyData.filter(person =>
-      person.g_father_id === pathPerson.g_father_id &&
-      person.g_father_id !== 0
+  pathPersons.forEach((pathPerson) => {
+    const siblings = familyData.filter(
+      (person) =>
+        person.g_father_id === pathPerson.g_father_id &&
+        person.g_father_id !== 0,
     );
-    siblings.forEach(sibling => {
+    siblings.forEach((sibling) => {
       resultPersons.add(sibling);
     });
 
     // 添加该路径节点的所有直接子节点
-    const children = familyData.filter(person =>
-      person.g_father_id === pathPerson.id
+    const children = familyData.filter(
+      (person) => person.g_father_id === pathPerson.id,
     );
-    children.forEach(child => {
+    children.forEach((child) => {
       resultPersons.add(child);
     });
   });
@@ -608,16 +648,18 @@ export const searchWithPathTree = (familyData, searchTerm) => {
     return {
       searchResults: [],
       pathTreeData: familyData,
-      targetPerson: null
+      targetPerson: null,
     };
   }
 
   const term = searchTerm.toLowerCase();
-  const searchResults = familyData.filter(person =>
-    person.name.toLowerCase().includes(term) ||
-    (person.official_position && person.official_position.toLowerCase().includes(term)) ||
-    (person.summary && person.summary.toLowerCase().includes(term)) ||
-    (person.location && person.location.toLowerCase().includes(term))
+  const searchResults = familyData.filter(
+    (person) =>
+      person.name.toLowerCase().includes(term) ||
+      (person.official_position &&
+        person.official_position.toLowerCase().includes(term)) ||
+      (person.summary && person.summary.toLowerCase().includes(term)) ||
+      (person.location && person.location.toLowerCase().includes(term)),
   );
 
   // 如果只有一个搜索结果，返回其路径树
@@ -628,7 +670,7 @@ export const searchWithPathTree = (familyData, searchTerm) => {
     return {
       searchResults,
       pathTreeData,
-      targetPerson
+      targetPerson,
     };
   }
 
@@ -636,7 +678,7 @@ export const searchWithPathTree = (familyData, searchTerm) => {
   return {
     searchResults,
     pathTreeData: searchResults,
-    targetPerson: null
+    targetPerson: null,
   };
 };
 
@@ -647,16 +689,22 @@ export const searchWithPathTree = (familyData, searchTerm) => {
  */
 export const validateFamilyData = (familyData) => {
   const issues = [];
-  const personIds = new Set(familyData.map(p => p.id));
+  const personIds = new Set(familyData.map((p) => p.id));
 
-  familyData.forEach(person => {
+  familyData.forEach((person) => {
     // 检查父亲ID是否存在
-    if (person.g_father_id && person.g_father_id !== 0 && !personIds.has(person.g_father_id)) {
-      issues.push(`${person.name} (ID: ${person.id}) 的父亲ID ${person.g_father_id} 不存在`);
+    if (
+      person.g_father_id &&
+      person.g_father_id !== 0 &&
+      !personIds.has(person.g_father_id)
+    ) {
+      issues.push(
+        `${person.name} (ID: ${person.id}) 的父亲ID ${person.g_father_id} 不存在`,
+      );
     }
 
     // 检查必要字段
-    if (!person.name || person.name.trim() === '') {
+    if (!person.name || person.name.trim() === "") {
       issues.push(`ID ${person.id} 的成员缺少姓名`);
     }
 
@@ -667,6 +715,6 @@ export const validateFamilyData = (familyData) => {
 
   return {
     isValid: issues.length === 0,
-    issues
+    issues,
   };
 };
