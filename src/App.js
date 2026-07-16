@@ -6,6 +6,7 @@ import SettingsPage from "./components/Pages/SettingsPage.js";
 import CreatorPage from "./components/Pages/CreatorPage.js";
 import DiscoverPage from "./components/Pages/DiscoverPage.js";
 import PersonProfilePage from "./components/Pages/PersonProfilePage.js";
+import PersonEditPage from "./components/Pages/PersonEditPage.js";
 import familyDataService from "./services/familyDataService.js";
 import tenantService from "./services/tenantService.js";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -16,6 +17,7 @@ import {
   getAppPath,
   getPersonIdFromPath,
   getPersonProfilePath,
+  getPersonEditPath,
 } from "./utils/appRoutes.js";
 // 导入测试工具（开发环境自动运行）
 
@@ -87,6 +89,10 @@ function MainApp({ demoMode = false }) {
 
   const openPersonProfile = (personId, options = {}) => {
     navigate(getPersonProfilePath(personId, options));
+  };
+
+  const openPersonEdit = (personId) => {
+    navigate(getPersonEditPath(personId));
   };
 
   const startPaternalGuide = () => {
@@ -322,6 +328,7 @@ function MainApp({ demoMode = false }) {
             currentTenant={currentTenant}
             demoMode={demoMode}
             onOpenPersonProfile={openPersonProfile}
+            onOpenPersonEdit={openPersonEdit}
             onStartPaternalGuide={startPaternalGuide}
           />
         );
@@ -348,9 +355,24 @@ function MainApp({ demoMode = false }) {
             familyData={familyData}
             onMenuClick={handleMenuClick}
             onBack={() => navigate("/app")}
+            onEdit={() => navigate(getPersonEditPath(personId))}
             initialStoryOpen={
               new URLSearchParams(location.search).get("capture") === "1"
             }
+          />
+        );
+      }
+      case "person-edit": {
+        const personId = getPersonIdFromPath(location.pathname);
+        const person = familyData.find(
+          (item) => String(item.person_id ?? item.id) === String(personId),
+        );
+        return (
+          <PersonEditPage
+            person={person}
+            familyData={familyData}
+            onMenuClick={handleMenuClick}
+            onBack={() => navigate(getPersonProfilePath(personId))}
           />
         );
       }
@@ -449,6 +471,7 @@ function MainApp({ demoMode = false }) {
             {...commonProps}
             familyData={familyData}
             onOpenPersonProfile={openPersonProfile}
+            onOpenPersonEdit={openPersonEdit}
             openPaternalGuide={
               new URLSearchParams(location.search).get("guide") === "paternal"
             }

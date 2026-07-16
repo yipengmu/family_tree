@@ -8,7 +8,9 @@ export const getAppPageFromPath = (pathname = "") => {
 
   const page = segments[1];
   if (!page || page === "demo") return "tree";
-  if (page === "person" && segments[2]) return "person";
+  if (page === "person" && segments[2]) {
+    return segments[3] === "edit" ? "person-edit" : "person";
+  }
   return APP_PAGES.has(page) ? page : "tree";
 };
 
@@ -30,6 +32,13 @@ export const getPersonIdFromPath = (pathname = "") => {
   } catch {
     return segments[2];
   }
+};
+
+export const getPersonEditPath = (personId) => {
+  if (personId === undefined || personId === null || String(personId) === "") {
+    return APP_BASE_PATH;
+  }
+  return `${APP_BASE_PATH}/person/${encodeURIComponent(String(personId))}/edit`;
 };
 
 export const getPersonProfilePath = (personId, { capture = false } = {}) => {

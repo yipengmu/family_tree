@@ -1,7 +1,9 @@
 .family-member-node {
+  width: 200px;
   min-width: 200px;
-  max-width: 240px;
+  max-width: 200px;
   font-size: 13px;
+  box-sizing: border-box;
 }
 
 /* 谱牒卡片：避免厚重仿古，保留现代可读性 */
@@ -31,12 +33,19 @@
 }
 
 .member-card {
+  width: 100%;
+  box-sizing: border-box;
   cursor: pointer;
   transition: all 0.2s ease;
   background: hsl(0 0% 100%);
   border-radius: 12px;
   border: 1px solid hsl(214.3 31.8% 91.4%);
   box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+.member-card .ant-card-body {
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .member-card:hover {
@@ -81,6 +90,7 @@
 .member-header {
   display: flex;
   align-items: center;
+  min-width: 0;
   margin-bottom: 8px;
 }
 
@@ -100,7 +110,17 @@
 }
 
 .generation-info {
+  min-width: 0;
+  overflow: hidden;
   margin-top: 4px;
+}
+
+.generation-info .ant-tag {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .member-position {
@@ -122,6 +142,7 @@
 
 .member-meta {
   display: flex;
+  justify-content: center;
   flex-wrap: wrap;
   gap: 4px;
   margin-top: 8px;
@@ -138,6 +159,11 @@
   border: 1px solid hsl(214.3 31.8% 91.4%);
   background: hsl(210 40% 98%);
   color: hsl(215.4 16.3% 46.9%);
+}
+
+/* 状态是卡片的结尾信息，与节点和连线保持居中对齐。 */
+.member-meta .life-status {
+  flex: 0 0 auto;
 }
 
 /* 工具提示样式 */
@@ -186,6 +212,7 @@
 /* 响应式设计 */
 @media (max-width: 768px) {
   .family-member-node {
+    width: 180px;
     min-width: 150px;
     max-width: 180px;
   }

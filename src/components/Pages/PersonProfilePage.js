@@ -69,6 +69,7 @@ function PersonProfilePage({
   onMenuClick,
   onBack,
   initialStoryOpen = false,
+  onEdit,
 }) {
   const tenant = tenantService.getCurrentTenant();
   const personId = person?.person_id ?? person?.id;
@@ -387,13 +388,10 @@ function PersonProfilePage({
             </p>
           </div>
           {tenant?.id !== "default" && (
-            <Button
-              type="primary"
-              icon={<AudioOutlined />}
-              onClick={() => setStoryOpen(true)}
-            >
-              记录一段经历
-            </Button>
+            <div className="person-profile-actions">
+              <Button onClick={onEdit}>编辑资料</Button>
+              <Button type="primary" icon={<AudioOutlined />} onClick={() => setStoryOpen(true)}>记录一段经历</Button>
+            </div>
           )}
         </header>
 

@@ -603,15 +603,6 @@
     color: var(--cinnabar);
   }
 
-  .mobile-manage-link {
-    min-height: 34px;
-    margin-top: 0;
-    border: 0;
-    background: transparent;
-    color: var(--ink-soft);
-    font-size: 11px;
-  }
-
   .family-data-card {
     display: none;
   }

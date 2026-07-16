@@ -25,12 +25,13 @@ describe("creator page mobile directory", () => {
     expect(stylesheet).toMatch(
       /@media\s*\(max-width:\s*768px\)[\s\S]*?\.family-data-card\s*\{[^}]*display:\s*none;/s,
     );
-    expect(source).toContain('className="mobile-manage-link"');
+    expect(source).not.toContain('className="mobile-manage-link"');
     expect(source).toContain('className="mobile-family-directory"');
     expect(source).not.toContain("showMobileTable");
     expect(source).not.toContain("mobile-directory-toggle");
     expect(stylesheet).not.toContain(".mobile-directory-toggle");
     expect(stylesheet).not.toContain(".mobile-directory-summary");
+    expect(stylesheet).not.toContain(".mobile-manage-link");
   });
 
   test("offers a focused mobile form for modifying a person", () => {

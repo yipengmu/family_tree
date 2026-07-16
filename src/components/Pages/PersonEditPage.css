@@ -1,0 +1,21 @@
+.person-edit-page { min-height: 100%; padding: 24px 36px 80px; background: #f5f0e7; color: #342a22; }
+.person-edit-topbar { max-width: 920px; margin: 0 auto 20px; display: flex; justify-content: space-between; align-items: center; color: #806f5d; font-size: 13px; }
+.person-edit-back { border: 0; background: transparent; color: #766554; cursor: pointer; padding: 6px 0; font-size: 15px; }
+.person-edit-shell { max-width: 920px; margin: 0 auto; padding: 32px 40px; border: 1px solid #d9cbb6; border-radius: 20px; background: rgba(255,253,247,.9); box-shadow: 0 16px 42px rgba(87,62,36,.08); }
+.person-edit-heading { display: flex; align-items: center; gap: 18px; padding-bottom: 26px; border-bottom: 1px solid #e4d9ca; }
+.person-edit-avatar { width: 76px; height: 88px; display: grid; place-items: center; flex: 0 0 auto; border: 5px solid #fff; outline: 1px solid #cbb89e; border-radius: 38px 38px 12px 12px; background: #e8ddcc; color: #7f402f; font: 36px/1 "Songti SC", serif; }
+.person-edit-heading span, .person-edit-section-title > span { color: #9a3f2f; letter-spacing: .14em; font-size: 12px; }
+.person-edit-heading h1 { margin: 5px 0; font: 600 30px/1.25 "Songti SC", "STSong", serif; }
+.person-edit-heading p, .person-edit-section-title p { margin: 0; color: #877766; }
+.person-edit-section { padding: 28px 0 6px; border-bottom: 1px solid #eee5d9; }
+.person-edit-section-title { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 18px; }
+.person-edit-section-title h2 { margin: 0 0 3px; font: 600 20px "Songti SC", serif; }
+.person-edit-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.person-edit-form .ant-form-item-label > label { color: #514237; font-weight: 600; }
+.person-edit-form .ant-input, .person-edit-form .ant-select-selector { border-color: #d9d1c5; border-radius: 11px !important; background: #fff; }
+.person-life-status { display: flex; width: 100%; }
+.person-life-status .ant-radio-button-wrapper { flex: 1; text-align: center; }
+.person-edit-submit { display: flex; justify-content: flex-end; gap: 12px; padding-top: 28px; }
+.person-edit-submit .ant-btn { min-width: 112px; height: 44px; border-radius: 10px; }
+.person-edit-missing { display: grid; place-items: center; text-align: center; }
+@media (max-width: 768px) { .person-edit-page { padding: 14px 14px calc(92px + env(safe-area-inset-bottom)); overflow-y: auto; } .person-edit-topbar { margin-bottom: 12px; } .person-edit-shell { padding: 22px 18px; border-radius: 16px; } .person-edit-heading { align-items: flex-start; gap: 14px; padding-bottom: 20px; } .person-edit-avatar { width: 60px; height: 70px; font-size: 28px; } .person-edit-heading h1 { font-size: 24px; } .person-edit-heading p { font-size: 13px; } .person-edit-grid { grid-template-columns: 1fr; gap: 0; } .person-edit-section { padding-top: 22px; } .person-edit-section-title h2 { font-size: 18px; } .person-edit-submit { position: sticky; bottom: -22px; margin: 8px -18px -22px; padding: 14px 18px calc(14px + env(safe-area-inset-bottom)); background: rgba(255,253,247,.97); box-shadow: 0 -8px 22px rgba(83,61,39,.07); z-index: 3; } .person-edit-submit .ant-btn { flex: 1; } }

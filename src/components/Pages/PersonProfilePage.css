@@ -8,6 +8,7 @@
 .person-profile-title > span, .life-events-heading > span { color: #9a3f2f; letter-spacing: .24em; font-size: 12px; }
 .person-profile-title h1 { margin: 4px 0 8px; font-family: "Songti SC", "STSong", serif; font-size: 38px; font-weight: 600; }
 .person-profile-title p { margin: 0; color: #776858; }
+.person-profile-actions { display: flex; gap: 10px; position: relative; z-index: 1; }
 .person-profile-facts { display: flex; flex-wrap: wrap; gap: 12px 22px; padding: 18px 12px; color: #6d5e50; }
 .person-profile-summary { max-width: 820px; margin: 8px auto 36px; padding: 22px 30px; border-left: 3px solid #9a3f2f; background: rgba(255,255,255,.55); font-family: serif; font-size: 17px; line-height: 1.9; }
 .person-profile-missing { display: grid; place-items: center; text-align: center; }
@@ -66,6 +67,8 @@
   .person-profile-portrait { width: 72px; height: 86px; font-size: 32px; }
   .person-profile-title h1 { font-size: 30px; }
   .person-profile-hero > .ant-btn { width: 100%; }
+  .person-profile-actions { width: 100%; }
+  .person-profile-actions .ant-btn { flex: 1; }
   .person-profile-facts { padding-inline: 4px; }
   .life-events-heading { text-align: left; margin-bottom: 20px; }
   .life-events-heading h2 { font-size: 25px; }

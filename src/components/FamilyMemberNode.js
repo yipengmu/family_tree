@@ -194,7 +194,7 @@ const FamilyMemberNode = ({ data, selected }) => {
             }}
             styles={{
               body: {
-                padding: '12px 16px',
+                padding: '10px 8px',
                 background: isFoundingGeneration() ? 'transparent' : undefined
               }
             }}
@@ -257,7 +257,7 @@ const FamilyMemberNode = ({ data, selected }) => {
             {(() => {
               const lifeStatus = getLifeStatus();
               return lifeStatus && (
-                <Tag color={lifeStatus.color} size="small">
+                <Tag className="life-status" color={lifeStatus.color} size="small">
                   {lifeStatus.text}
                 </Tag>
               );

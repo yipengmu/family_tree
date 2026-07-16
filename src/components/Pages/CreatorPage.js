@@ -109,6 +109,7 @@ function CreatorPage({
   activeMenuItem = "create",
   onMenuClick,
   onOpenPersonProfile,
+  onOpenPersonEdit,
   openPaternalGuide = false,
 }) {
   // 状态管理
@@ -1314,7 +1315,7 @@ function CreatorPage({
       <div className="data-management-page">
         <section className="mobile-continue-hub">
           <div className="mobile-continue-heading">
-            <h1>把记得的，先记下来</h1>
+            <h1>把能记的，先记下来</h1>
           </div>
           {!paternalOnboarding.complete && paternalOnboarding.anchorPerson && (
             <section
@@ -1398,14 +1399,6 @@ function CreatorPage({
               <b>拍照</b>
             </button>
           </div>
-          <button
-            type="button"
-            className="mobile-manage-link"
-            onClick={() => setManagementModalVisible(true)}
-          >
-            <SettingOutlined /> 备份、导出与更多管理
-          </button>
-
           <section
             className="mobile-family-directory"
             aria-label="家人资料列表"
@@ -1446,7 +1439,7 @@ function CreatorPage({
                       type="button"
                       className="mobile-person-card"
                       key={personKey}
-                      onClick={() => openMobilePersonEditor(person)}
+                      onClick={() => (onOpenPersonEdit ? onOpenPersonEdit(person.person_id ?? person.id) : openMobilePersonEditor(person))}
                       aria-label={`修改${person.name}的资料`}
                     >
                       <span className="mobile-person-avatar" aria-hidden="true">
