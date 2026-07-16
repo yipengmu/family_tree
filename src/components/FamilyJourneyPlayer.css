@@ -15,6 +15,13 @@
   backdrop-filter: blur(16px);
 }
 
+/* 深代节点增多时避免底部卡片参与昂贵的背景模糊合成。 */
+.journey-player--light {
+  backdrop-filter: none;
+  box-shadow: 0 10px 24px rgba(23, 63, 56, 0.16);
+  transition: none;
+}
+
 .journey-launcher > *,
 .family-journey-player > * {
   position: relative;

@@ -30,6 +30,7 @@ const FamilyTreePage = ({
   onOpenPersonProfile,
   onStartPaternalGuide,
 }) => {
+  const JOURNEY_STEP_DELAY = 1120;
   // 状态管理
   const [nodes, setNodes] = useState([]);
   const [statistics, setStatistics] = useState(null);
@@ -157,7 +158,7 @@ const FamilyTreePage = ({
     const nextIndex = getNextJourneyStepIndex(journey.steps, currentIndex);
     const timer = window.setTimeout(() => {
       setJourneyGeneration(journey.steps[nextIndex].generation);
-    }, 960);
+    }, JOURNEY_STEP_DELAY);
     return () => window.clearTimeout(timer);
   }, [currentJourneyStep, finishJourney, journey.steps, journeyStatus]);
 
