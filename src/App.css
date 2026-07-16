@@ -604,6 +604,10 @@
     height: calc(100dvh - 64px - env(safe-area-inset-bottom));
     padding: 10px 12px 0;
   }
+  .mobile-layout .app-layout.immersive-mobile .main-content.no-search .content-container {
+    height: calc(100dvh - 64px - env(safe-area-inset-bottom));
+    padding: 0;
+  }
   .family-tree-page {
     height: 100%;
     min-height: 0;

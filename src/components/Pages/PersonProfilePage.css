@@ -62,14 +62,16 @@
 .story-processing h3 { margin-top: 22px; font-family: serif; }
 .story-draft-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 @media (max-width: 768px) {
-  .person-profile-page { height: 100%; padding: 16px 14px 96px; overflow-y: auto; overscroll-behavior-y: contain; -webkit-overflow-scrolling: touch; }
-  .person-profile-hero { align-items: flex-start; flex-wrap: wrap; padding: 24px 18px; gap: 16px; }
+  .person-profile-page { height: 100%; padding: 0 0 96px; overflow-y: auto; overscroll-behavior-y: contain; -webkit-overflow-scrolling: touch; }
+  .person-profile-back { margin: 0; padding: 8px 14px 10px; }
+  .person-profile-hero { align-items: flex-start; flex-wrap: wrap; padding: 24px 18px; gap: 16px; border-left: 0; border-right: 0; border-radius: 0; }
   .person-profile-portrait { width: 72px; height: 86px; font-size: 32px; }
   .person-profile-title h1 { font-size: 30px; }
   .person-profile-hero > .ant-btn { width: 100%; }
   .person-profile-actions { width: 100%; }
   .person-profile-actions .ant-btn { flex: 1; }
-  .person-profile-facts { padding-inline: 4px; }
+  .person-profile-facts { padding: 18px 14px; }
+  .life-events-section { padding: 0 14px; }
   .life-events-heading { text-align: left; margin-bottom: 20px; }
   .life-events-heading h2 { font-size: 25px; }
   .life-timeline { padding-left: 28px; }
