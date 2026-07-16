@@ -240,42 +240,6 @@ const FamilyTreeFlow = forwardRef(({
     };
   }, [familyData, isMobile, isNameProtectionEnabled, presentationMode, presentationPathIds, useFounderLabels]);
 
-  // 演示播放只改变“显示到哪一代”，节点坐标和总线关系并没有改变。
-  // 把每一代的可见帧预先算好，避免每次切换都重复扫描 624 人并重建全部边。
-  const presentationFrames = useMemo(() => {
-    if (!presentationMode || !presentationLayout?.nodes?.length) return null;
-
-    const generationByNodeId = new Map(
-      presentationLayout.nodes.map((node) => [node.id, Number(node.data.rank)]),
-    );
-    const peopleByGeneration = new Map();
-    familyData.forEach((person) => {
-      const generation = Number(person.g_rank);
-      if (!peopleByGeneration.has(generation)) peopleByGeneration.set(generation, []);
-      peopleByGeneration.get(generation).push(person);
-    });
-
-    const generations = [...peopleByGeneration.keys()].sort((left, right) => left - right);
-    let visibleNodes = [];
-    let visiblePeople = [];
-    const frames = new Map();
-
-    generations.forEach((generation) => {
-      visiblePeople = visiblePeople.concat(peopleByGeneration.get(generation));
-      const enteringNodes = presentationLayout.nodes.filter(
-        (node) => Number(node.data.rank) === generation,
-      );
-      visibleNodes = visibleNodes.concat(enteringNodes);
-      frames.set(generation, {
-        nodes: visibleNodes,
-        edges: getFamilyBusEdges(visiblePeople, visibleNodes),
-        generationByNodeId,
-      });
-    });
-
-    return frames;
-  }, [familyData, presentationLayout, presentationMode]);
-
   // 当nodes或statistics变化时，通知父组件
   useEffect(() => {
     if (onDataUpdate && nodes && statistics) {
@@ -369,6 +333,38 @@ const FamilyTreeFlow = forwardRef(({
     getStatistics: () => statistics
   }), [nodes, statistics, familyData, getNodes, setCenter]);
 
+  // 调试：检查第20代成员显示状态
+  const debug20thGeneration = useCallback(() => {
+    const gen20Members = familyData.filter(person => person.g_rank === 20);
+    console.log('=== 第20代成员显示状态检查 ===');
+    gen20Members.forEach(member => {
+      const isAlive = member.dealth === 'alive';
+      const protectedName = isAlive && member.name.length > 1 ?
+        (() => {
+          const annotationMatch = member.name.match(/（[^）]*）/);
+          let baseName = member.name;
+          let annotation = '';
+
+          if (annotationMatch) {
+            annotation = annotationMatch[0];
+            baseName = member.name.replace(annotation, '');
+          }
+
+          if (baseName.length > 1) {
+            const protectedBase = baseName.slice(0, -1) + '*';
+            if (annotation && protectedBase.length > 1) {
+              return protectedBase.slice(0, -1) + annotation + protectedBase.slice(-1);
+            }
+            return protectedBase;
+          }
+          return member.name;
+        })() : member.name;
+
+      console.log(`ID: ${member.id}, 原名: "${member.name}", 显示名: "${protectedName}", 状态: ${isAlive ? '在世' : '已故'}, 父亲ID: ${member.g_father_id}`);
+    });
+    console.log('=== 检查完成 ===');
+  }, [familyData]);
+
   // 处理数据转换和布局
   const processData = useCallback(() => {
     if (!familyData || familyData.length === 0) return;
@@ -461,23 +457,24 @@ const FamilyTreeFlow = forwardRef(({
     }
 
     // 转换为 React Flow 数据。演示模式复用预计算的全谱布局。
-    const presentationFrame = presentationMode && presentationFrames
-      ? presentationFrames.get(Number(presentationStep))
-      : null;
-    const flowData = presentationFrame || (presentationMode && presentationLayout
+    const flowData = presentationMode && presentationLayout
       ? presentationLayout
       : convertToReactFlowData(
         filteredData,
         familyData,
         isShowingAll && isSmartCollapseEnabled,
         { isNameProtectionEnabled, useFounderLabels },
-      ));
+      );
     const newEdges = flowData.edges;
-    const allLayoutedNodes = presentationFrame || (presentationMode && presentationLayout)
+    const allLayoutedNodes = presentationMode && presentationLayout
       ? flowData.nodes
       : getLayoutedElements(flowData.nodes, newEdges, layoutDirection);
     const visibleNodeIds = presentationMode
-      ? new Set(allLayoutedNodes.map((node) => node.id))
+      ? new Set(
+        familyData
+          .filter((person) => Number(person.g_rank) <= Number(presentationStep))
+          .map((person) => person.id.toString()),
+      )
       : null;
     const layoutedNodes = presentationMode
       ? allLayoutedNodes
@@ -492,17 +489,15 @@ const FamilyTreeFlow = forwardRef(({
           ].filter(Boolean).join(' '),
         }))
       : allLayoutedNodes;
-    const generationByNodeId = presentationFrame?.generationByNodeId || (presentationMode
-      ? new Map(allLayoutedNodes.map((node) => [node.id, Number(node.data.rank)]))
-      : null);
+    const generationByNodeId = presentationMode
+      ? new Map(
+        allLayoutedNodes.map((node) => [node.id, Number(node.data.rank)]),
+      )
+      : null;
     const visualFamilyData = presentationMode
-      ? (presentationFrame
-        ? filteredData
-        : filteredData.filter((person) => visibleNodeIds.has(String(person.id))))
+      ? filteredData.filter((person) => visibleNodeIds.has(String(person.id)))
       : filteredData;
-    const familyBusEdges = presentationFrame
-      ? flowData.edges
-      : getFamilyBusEdges(visualFamilyData, layoutedNodes);
+    const familyBusEdges = getFamilyBusEdges(visualFamilyData, layoutedNodes);
     const visibleEdges = presentationMode
       ? familyBusEdges
         .map((edge) => ({
@@ -520,7 +515,9 @@ const FamilyTreeFlow = forwardRef(({
 
     // 移除自动fitView，避免展开节点时视角跳转
 
-  }, [familyData, searchTerm, generationRange, layoutDirection, setNodes, setEdges, isShowingAll, isSmartCollapseEnabled, currentUser, expandedNodes, isNameProtectionEnabled, searchTargetPerson, presentationMode, presentationStep, presentationFocusId, presentationFrames, presentationLayout, useFounderLabels]);
+    // 调试第20代成员显示
+    debug20thGeneration();
+  }, [familyData, searchTerm, generationRange, layoutDirection, setNodes, setEdges, isShowingAll, isSmartCollapseEnabled, currentUser, expandedNodes, debug20thGeneration, isNameProtectionEnabled, searchTargetPerson, presentationMode, presentationStep, presentationFocusId, presentationLayout, useFounderLabels]);
 
   // 添加日志功能
   const logViewportInfo = useCallback(() => {
