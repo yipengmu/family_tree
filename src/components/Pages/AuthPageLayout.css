@@ -207,7 +207,7 @@
 }
 
 .auth-card .ant-form-item {
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .auth-card .ant-input-affix-wrapper,
@@ -260,7 +260,8 @@
   line-height: 1.5;
 }
 
-.auth-card .login-account-history-note .ant-btn-link {
+.auth-card .login-account-history-note .ant-btn-link,
+.login-forgot-link {
   min-height: 28px;
   flex: 0 0 auto;
   font-size: 12px;

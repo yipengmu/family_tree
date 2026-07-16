@@ -148,6 +148,20 @@ const LoginPage = () => {
 
         <Form.Item
           name="password"
+          extra={
+            <div className="login-account-history-note">
+              <Text type="secondary"> </Text>
+              <Button
+                type="link"
+                onClick={() =>
+                  navigate("/reset-password", { state: location.state })
+                }
+                className="login-forgot-link"
+              >
+                忘记密码？
+              </Button>
+            </div>
+          }
           rules={[
             {
               required: true,
@@ -164,17 +178,6 @@ const LoginPage = () => {
             placeholder="密码"
             size="large"
           />
-        </Form.Item>
-
-        <Form.Item>
-          <Button
-            type="link"
-            onClick={() =>
-              navigate("/reset-password", { state: location.state })
-            }
-          >
-            忘记密码？
-          </Button>
         </Form.Item>
 
         <Form.Item>
