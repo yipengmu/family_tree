@@ -210,6 +210,14 @@ function MainApp({ demoMode = false }) {
       }
 
       const initialTenantId = tenantService.getCurrentTenant().id;
+
+      // 创建页有自己的数据初始化和 loading 状态。不要让 MainApp 先加载整份家谱，
+      // 否则首次打开 /app/create 会被家谱请求阻塞，且 CreatorPage 会再次读取同一份数据。
+      if (currentPage === "create") {
+        setLoading(false);
+        return;
+      }
+
       // 游客读取示范家谱；登录用户直接读取自己上次使用的家谱，避免短暂泄露示范数据或错租户编辑。
       await loadFamilyData(initialTenantId);
     };
@@ -245,7 +253,7 @@ function MainApp({ demoMode = false }) {
       window.removeEventListener("familyDataUpdated", handleFamilyDataUpdated);
       unsubscribe();
     };
-  }, [demoMode]);
+  }, [currentPage, demoMode]);
 
   // 显示加载状态 - 优化：即使在后台加载时也允许用户交互
   if (loading && familyData.length === 0) {
