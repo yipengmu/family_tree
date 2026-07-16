@@ -604,7 +604,6 @@
     height: 100%;
     object-fit: cover;
   }
-  }
   .mobile-welcome-kicker {
     color: var(--pine);
     font: 11px var(--serif);
