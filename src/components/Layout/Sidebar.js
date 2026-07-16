@@ -108,7 +108,7 @@ const Sidebar = ({
         aria-label="返回谱里产品官网"
       >
         <div className="logo-icon" aria-hidden="true">
-          {BRAND.seal}
+          <img src="/puli-logo.png" alt="" />
         </div>
         {!collapsed && (
           <div className="logo-copy">

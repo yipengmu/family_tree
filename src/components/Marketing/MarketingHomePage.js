@@ -187,7 +187,7 @@ const MarketingHomePage = () => {
         <div className="site-header-inner">
           <Link className="site-brand" to="/" aria-label="谱里官网首页">
             <span className="site-brand-seal" aria-hidden="true">
-              {BRAND.seal}
+              <img src="/puli-logo.png" alt="谱里" />
             </span>
             <span>
               <strong>{BRAND.name}</strong>
@@ -569,7 +569,7 @@ const MarketingHomePage = () => {
         <div>
           <Link className="site-brand" to="/">
             <span className="site-brand-seal" aria-hidden="true">
-              {BRAND.seal}
+              <img src="/puli-logo.png" alt="谱里" />
             </span>
             <span>
               <strong>{BRAND.name}</strong>

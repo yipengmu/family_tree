@@ -63,7 +63,7 @@ const MyPage = ({ activeMenuItem = "mine", onMenuClick, familyData = [] }) => {
     <AppLayout activeMenuItem={activeMenuItem} onMenuClick={onMenuClick}>
       <div className={`my-page ${!authenticated ? "my-page-guest" : ""}`}>
         <header className="my-page-header">
-          <span className="my-page-seal">{BRAND.seal}</span>
+          <span className="my-page-seal"><img src="/puli-logo.png" alt="谱里" /></span>
           <div>
             <p>我的谱里</p>
             <h1>

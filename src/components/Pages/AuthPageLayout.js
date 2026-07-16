@@ -19,7 +19,7 @@ const AuthPageLayout = ({
     <header className="auth-topbar">
       <Link className="auth-brand" to="/" aria-label="谱里官网首页">
         <span className="auth-brand-seal" aria-hidden="true">
-          {BRAND.seal}
+          <img src="/puli-logo.png" alt="谱里" />
         </span>
         <span className="auth-brand-copy">
           <strong>{BRAND.name}</strong>

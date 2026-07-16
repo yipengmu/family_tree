@@ -197,7 +197,7 @@ const FamilyTreePage = ({
         {showMobileWelcome && (
           <section className="mobile-welcome" aria-label="欢迎使用谱里">
             <div className="mobile-welcome-paper">
-              <span className="mobile-welcome-seal">谱</span>
+              <span className="mobile-welcome-seal"><img src="/puli-logo.png" alt="谱里" /></span>
               <span className="mobile-welcome-kicker">{BRAND.tagline}</span>
               <h1>
                 让家人的名字

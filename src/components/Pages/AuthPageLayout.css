@@ -61,12 +61,14 @@
   height: 38px;
   display: grid;
   place-items: center;
-  border: 1px solid rgba(255, 255, 255, 0.82);
   border-radius: 7px;
-  color: #fffaf0;
-  background: var(--cinnabar);
-  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.14);
-  font: 21px var(--serif);
+  overflow: hidden;
+}
+
+.auth-brand-seal img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .auth-brand-copy {
@@ -390,7 +392,6 @@
   .auth-brand-seal {
     width: 34px;
     height: 34px;
-    font-size: 18px;
   }
 }
 
