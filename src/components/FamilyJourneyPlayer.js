@@ -91,7 +91,7 @@ const FamilyJourneyPlayer = ({
           </h2>
           <p>
             {complete
-              ? `${familyName}从 ${startYear}年延展至 ${endYear}年，共收录 ${totalMembers} 位族人`
+              ? `${familyName}约从 ${startYear} 年延展至 ${endYear} 年，共收录 ${totalMembers} 位族人。`
               : `第 ${currentStep.generation} 代 · 谱中已有 ${currentStep.visibleCount} 个名字`}
           </p>
         </div>

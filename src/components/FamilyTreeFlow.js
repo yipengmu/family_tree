@@ -1451,8 +1451,6 @@ const FamilyTreeFlow = forwardRef(({
           nodesDraggable={isNodeDraggable}
           nodesConnectable={false}
           elementsSelectable={isNodeDraggable}
-          // 深代播放时只挂载当前视口内的节点/边，避免屏幕外的数百张卡片参与布局和绘制。
-          onlyRenderVisibleElements={presentationMode}
           connectionLineType={ConnectionLineType.Straight}
           defaultEdgeOptions={{
             type: 'straight',
