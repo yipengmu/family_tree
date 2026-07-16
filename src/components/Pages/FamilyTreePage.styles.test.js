@@ -42,6 +42,16 @@ describe("family journey animation styles", () => {
     );
   });
 
+  test("uses lightweight late-journey transitions", () => {
+    expect(pageSource).toContain('journey-performance-mode');
+    expect(stylesheet).toContain('.journey-performance-mode .react-flow__edge');
+    expect(stylesheet).toContain('@keyframes journey-node-reveal-light');
+    expect(stylesheet).toContain('animation: journey-node-reveal-light');
+    expect(journeyPlayerStylesheet).toContain(
+      '.journey-copy-transition--light',
+    );
+  });
+
   test("keeps the modern and completed journey cards in the green palette", () => {
     const modernStyles = journeyPlayerStylesheet.match(
       /\.family-journey-player\.era-modern\s*\{([\s\S]*?)\n\}/,
@@ -62,6 +72,15 @@ describe("family journey animation styles", () => {
     expect(journeyPlayerStylesheet).toContain(".journey-launcher-play {");
     expect(journeyPlayerStylesheet).toMatch(
       /\.journey-launcher-play\s*\{[^}]*border-radius:\s*50%/s,
+    );
+  });
+
+  test("centers the idle journey launcher at the bottom of the tree canvas", () => {
+    expect(journeyPlayerStylesheet).toMatch(
+      /\.journey-launcher\s*\{[^}]*bottom:\s*18px;[^}]*left:\s*50%;[^}]*transform:\s*translateX\(-50%\)/s,
+    );
+    expect(journeyPlayerStylesheet).toMatch(
+      /@media\s*\(max-width:\s*768px\)[\s\S]*?\.journey-launcher\s*\{[^}]*bottom:\s*10px;[^}]*left:\s*50%;/s,
     );
   });
 

@@ -70,6 +70,8 @@ const FamilyTreePage = ({
       journey.steps[journey.steps.length - 1]
     );
   }, [journey.steps, journeyGeneration]);
+  const isLateJourneyStep =
+    isJourneyActive && Number(currentJourneyStep?.generation) >= 16;
 
   // 检查用户是否已登录
   const isAuthenticated = () => {
@@ -390,7 +392,7 @@ const FamilyTreePage = ({
 
         {/* 家谱组件容器 */}
         <div
-          className={`family-tree-wrapper ${isJourneyActive ? "journey-active" : ""}`}
+          className={`family-tree-wrapper ${isJourneyActive ? "journey-active" : ""} ${isLateJourneyStep ? "journey-performance-mode" : ""}`}
         >
           {isDemoFamily && currentJourneyStep && (
             <FamilyJourneyPlayer
@@ -403,6 +405,7 @@ const FamilyTreePage = ({
               summary={journey.summary}
               status={journeyStatus}
               currentStep={currentJourneyStep}
+              performanceMode={isLateJourneyStep}
               onStart={startJourney}
               onPause={() => setJourneyStatus("paused")}
               onResume={() => setJourneyStatus("playing")}

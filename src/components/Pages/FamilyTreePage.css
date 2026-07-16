@@ -251,6 +251,20 @@
   }
 }
 
+/* 深代一次出现的节点和连线更多，改用合成成本更低的轻量过渡。 */
+.journey-performance-mode .react-flow__node.journey-node-entering .family-member-node {
+  animation: journey-node-reveal-light 0.18s ease-out both;
+}
+.journey-performance-mode .react-flow__edge.journey-edge-entering .react-flow__edge-path {
+  stroke-dasharray: none;
+  animation: none;
+  opacity: 1;
+}
+@keyframes journey-node-reveal-light {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .journey-active .react-flow__node .family-member-node,
   .journey-active .react-flow__edge-path {

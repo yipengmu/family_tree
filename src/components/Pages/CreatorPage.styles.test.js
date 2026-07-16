@@ -36,7 +36,9 @@ describe("creator page mobile directory", () => {
     );
     expect(source).toContain('className="mobile-manage-link"');
     expect(source).not.toContain('aria-label="打开更多家谱管理"');
-    expect(source).toContain("<strong>已录家人</strong>");
+    expect(source).toMatch(
+      /<strong>\s*\{rows\.filter\(\(row\) => row\.name\)\.length\} 位家人\s*<\/strong>/,
+    );
   });
 
   test("offers a focused mobile form for modifying a person", () => {

@@ -61,7 +61,7 @@ const MyPage = ({ activeMenuItem = "mine", onMenuClick, familyData = [] }) => {
 
   return (
     <AppLayout activeMenuItem={activeMenuItem} onMenuClick={onMenuClick}>
-      <div className="my-page">
+      <div className={`my-page ${!authenticated ? "my-page-guest" : ""}`}>
         <header className="my-page-header">
           <span className="my-page-seal">{BRAND.seal}</span>
           <div>

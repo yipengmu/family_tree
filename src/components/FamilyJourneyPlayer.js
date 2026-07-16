@@ -25,6 +25,7 @@ const FamilyJourneyPlayer = ({
   onRestart,
   onClose,
   onSeek,
+  performanceMode = false,
 }) => {
   if (!steps.length) return null;
 
@@ -54,7 +55,7 @@ const FamilyJourneyPlayer = ({
 
   return (
     <section
-      className={`family-journey-player era-${eraKey}`}
+      className={`family-journey-player era-${eraKey}${performanceMode ? " journey-player--light" : ""}`}
       data-era={complete ? "世系全景" : currentStep.era.label}
       aria-live="polite"
     >
@@ -74,7 +75,7 @@ const FamilyJourneyPlayer = ({
 
       <div
         key={`copy-${complete ? "complete" : currentStep.generation}`}
-        className="journey-player-copy journey-copy-transition"
+        className={`journey-player-copy journey-copy-transition${performanceMode ? " journey-copy-transition--light" : ""}`}
       >
         <div
           className={`journey-era-orb ${currentStep.era.key}`}

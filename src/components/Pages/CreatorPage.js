@@ -1375,45 +1375,50 @@ function CreatorPage({
             </span>
             <b>开始</b>
           </button>
+          <div className="mobile-secondary-actions" aria-label="其他录入方式">
+            <button
+              type="button"
+              className="mobile-secondary-action archive"
+              onClick={() => setArchivePersonModalVisible(true)}
+            >
+              <span className="mobile-secondary-icon">
+                <BookOutlined />
+              </span>
+              <span>
+                <strong>记录生平</strong>
+                <small>为家人留下故事</small>
+              </span>
+              <b>去记录</b>
+            </button>
+            <button
+              type="button"
+              className="mobile-secondary-action"
+              onClick={() => setImageParseModalVisible(true)}
+            >
+              <span className="mobile-secondary-icon">
+                <CameraOutlined />
+              </span>
+              <span>
+                <strong>拍照录入</strong>
+                <small>识别旧家谱照片</small>
+              </span>
+              <b>拍照</b>
+            </button>
+          </div>
           <button
             type="button"
-            className="mobile-flow-card archive"
-            onClick={() => setArchivePersonModalVisible(true)}
-          >
-            <span className="mobile-flow-icon">
-              <BookOutlined />
-            </span>
-            <span>
-              <strong>记录生平与家庭档案</strong>
-              <small>写经历、留原声，也可以添加老照片</small>
-            </span>
-            <b>去记录</b>
-          </button>
-          <button
-            type="button"
-            className="mobile-flow-card"
-            onClick={() => setImageParseModalVisible(true)}
-          >
-            <span className="mobile-flow-icon">
-              <CameraOutlined />
-            </span>
-            <span>
-              <strong>拍照录入旧家谱</strong>
-              <small>识别结果会先让你确认</small>
-            </span>
-            <b>拍照</b>
-          </button>
-          <button
-            type="button"
-            className="mobile-flow-card"
+            className="mobile-flow-card mobile-directory-toggle"
             onClick={() => setShowMobileTable((value) => !value)}
           >
             <span className="mobile-flow-icon">
               <TableOutlined />
             </span>
             <span>
-              <strong>查找与修改资料</strong>
-              <small>查看已录家人，集中补充信息</small>
+              <strong>查找 / 修改家人</strong>
+              <small>
+                已录 {rows.filter((row) => row.name).length}{" "}
+                位，点击姓名即可修改
+              </small>
             </span>
             <b>{showMobileTable ? "收起" : "展开"}</b>
           </button>
@@ -1432,12 +1437,11 @@ function CreatorPage({
             >
               <div className="mobile-directory-head">
                 <div className="mobile-directory-summary">
-                  <span>家人资料</span>
-                  <strong>已录家人</strong>
-                  <p>
-                    {rows.filter((row) => row.name).length} 位 ·{" "}
-                    {mobileGenerationRange}
-                  </p>
+                  <span>家人资料 · 点击即可修改</span>
+                  <strong>
+                    {rows.filter((row) => row.name).length} 位家人
+                  </strong>
+                  <p>覆盖 {mobileGenerationRange}</p>
                 </div>
               </div>
 

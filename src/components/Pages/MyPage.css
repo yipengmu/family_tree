@@ -56,6 +56,10 @@
   color: var(--ink-soft);
   line-height: 1.75;
 }
+.my-guest-card .ant-btn + .ant-btn {
+  margin-inline-start: 0;
+  margin-top: 10px;
+}
 .my-card-kicker {
   color: var(--cinnabar);
   font-size: 11px;
@@ -182,6 +186,9 @@
 @media (max-width: 768px) {
   .my-page {
     padding: 2px 0 calc(74px + env(safe-area-inset-bottom));
+  }
+  .my-page-guest {
+    padding-top: clamp(34px, 10vh, 96px);
   }
   .my-page-header {
     margin: 2px 2px 12px;

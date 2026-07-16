@@ -644,10 +644,11 @@ const FamilyTreeFlow = forwardRef(({
       const zoom = isMobile ? 0.62 : 0.78;
 
       if (!flowContainer) {
+        const viewportDuration = Number(presentationStep) >= 16 ? 360 : 820;
         setCenter(
           focusNode.position.x + nodeWidth / 2,
           focusNode.position.y + nodeHeight / 2,
-          { zoom, duration: 820 },
+          { zoom, duration: viewportDuration },
         );
         return;
       }
@@ -671,6 +672,7 @@ const FamilyTreeFlow = forwardRef(({
           ? (availableTop + availableBottom) / 2
           : flowContainer.clientHeight / 2;
 
+      const viewportDuration = Number(presentationStep) >= 16 ? 360 : 820;
       setViewport(
         {
           x: getViewportXForNodeCenter({
@@ -687,7 +689,7 @@ const FamilyTreeFlow = forwardRef(({
           }),
           zoom,
         },
-        { duration: 820 },
+        { duration: viewportDuration },
       );
     }, 80);
     return () => clearTimeout(timer);
