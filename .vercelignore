@@ -13,3 +13,4 @@
 .DS_Store
 *.log
 .vercel-build-meta.json
+.vercel-migrate-meta.json

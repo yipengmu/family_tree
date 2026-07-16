@@ -3,6 +3,7 @@ import { ArrowLeftOutlined } from "@ant-design/icons";
 import { Card, Typography } from "antd";
 import { Link } from "react-router-dom";
 import BRAND from "../../constants/brand.js";
+import BrandLogo from "../UI/BrandLogo.js";
 import "./AuthPageLayout.css";
 
 const { Title, Text } = Typography;
@@ -19,7 +20,7 @@ const AuthPageLayout = ({
     <header className="auth-topbar">
       <Link className="auth-brand" to="/" aria-label="谱里官网首页">
         <span className="auth-brand-seal" aria-hidden="true">
-          <img src="/puli-logo.png" alt="谱里" />
+          <BrandLogo alt="" />
         </span>
         <span className="auth-brand-copy">
           <strong>{BRAND.name}</strong>

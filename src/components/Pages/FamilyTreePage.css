@@ -135,6 +135,11 @@
   border-radius: 12px 12px 4px 4px;
   color: #d8b46b;
   font: 600 21px var(--serif);
+  overflow: hidden;
+}
+
+.paternal-progress-banner > span .brand-logo {
+  transform: scale(1.45);
 }
 
 .paternal-progress-banner small {
@@ -602,7 +607,8 @@
   .mobile-welcome-seal img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain;
+    transform: scale(1.45);
   }
   .mobile-welcome-kicker {
     color: var(--pine);

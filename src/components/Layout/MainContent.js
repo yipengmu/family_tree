@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import FamilySearchBar from "../UI/FamilySearchBar.js";
 import "./MainContent.css";
 import BRAND from "../../constants/brand.js";
+import BrandLogo from "../UI/BrandLogo.js";
 import { OFFICIAL_SITE_PATH } from "../../utils/mobileEntry.js";
 
 const MainContent = ({
@@ -26,7 +27,9 @@ const MainContent = ({
           to={OFFICIAL_SITE_PATH}
           aria-label="打开谱里产品官网"
         >
-          <span>{BRAND.seal}</span>
+          <span className="mobile-header-logo">
+            <BrandLogo alt="" />
+          </span>
           <b>{BRAND.name}</b>
         </Link>
         <div className="header-brandline">

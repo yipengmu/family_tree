@@ -3,8 +3,13 @@
   "name": "谱里 · 年轻人的第一份家谱",
   "icons": [
     {
+      "src": "puli-logo-icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
       "src": "puli-logo.png",
-      "sizes": "512x512",
+      "sizes": "400x400",
       "type": "image/png"
     }
   ],

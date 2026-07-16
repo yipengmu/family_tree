@@ -13,6 +13,7 @@ import "./Sidebar.css";
 import AuthService from "../../services/authService.js";
 import { Link, useNavigate } from "react-router-dom";
 import BRAND from "../../constants/brand.js";
+import BrandLogo from "../UI/BrandLogo.js";
 
 const Sidebar = ({
   activeItem = "tree",
@@ -108,7 +109,7 @@ const Sidebar = ({
         aria-label="返回谱里产品官网"
       >
         <div className="logo-icon" aria-hidden="true">
-          <img src="/puli-logo.png" alt="" />
+          <BrandLogo alt="" />
         </div>
         {!collapsed && (
           <div className="logo-copy">

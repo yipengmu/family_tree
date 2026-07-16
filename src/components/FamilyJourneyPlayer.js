@@ -7,6 +7,7 @@ import {
   RedoOutlined,
 } from "@ant-design/icons";
 import "./FamilyJourneyPlayer.css";
+import BrandLogo from "./UI/BrandLogo.js";
 
 const FamilyJourneyPlayer = ({
   familyName,
@@ -33,7 +34,7 @@ const FamilyJourneyPlayer = ({
     return (
       <button type="button" className="journey-launcher" onClick={onStart}>
         <span className="journey-launcher-mark" aria-hidden="true">
-          谱
+          <BrandLogo alt="" />
         </span>
         <span>
           <strong>看家族如何生长</strong>

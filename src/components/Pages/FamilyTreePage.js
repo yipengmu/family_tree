@@ -13,6 +13,7 @@ import { Button } from "antd";
 import "./FamilyTreePage.css";
 import tenantService from "../../services/tenantService.js";
 import BRAND from "../../constants/brand.js";
+import BrandLogo from "../UI/BrandLogo.js";
 import {
   buildFamilyJourney,
   getNextJourneyStepIndex,
@@ -197,7 +198,9 @@ const FamilyTreePage = ({
         {showMobileWelcome && (
           <section className="mobile-welcome" aria-label="欢迎使用谱里">
             <div className="mobile-welcome-paper">
-              <span className="mobile-welcome-seal"><img src="/puli-logo.png" alt="谱里" /></span>
+              <span className="mobile-welcome-seal">
+                <BrandLogo alt="" />
+              </span>
               <span className="mobile-welcome-kicker">{BRAND.tagline}</span>
               <h1>
                 让家人的名字
@@ -312,7 +315,9 @@ const FamilyTreePage = ({
                   : `父系四代进度：已连接 ${paternalOnboarding.completedGenerations} 代，共 4 代`
               }
             >
-              <span aria-hidden="true">谱</span>
+              <span aria-hidden="true">
+                <BrandLogo alt="" />
+              </span>
               <div>
                 <small>父系四代</small>
                 <strong>
