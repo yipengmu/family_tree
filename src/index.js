@@ -2,6 +2,9 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
 import RouterApp from "./RouterApp.js";
+import { initAnalytics } from "./utils/analytics.js";
+
+initAnalytics();
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(

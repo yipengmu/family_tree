@@ -16,6 +16,7 @@ import {
   getLoginAccountHistory,
   rememberLoginAccount,
 } from "../../utils/loginAccountHistory.js";
+import { trackEvent } from "../../utils/analytics.js";
 import AuthPageLayout from "./AuthPageLayout.js";
 
 const { Text } = Typography;
@@ -50,6 +51,7 @@ const LoginPage = () => {
           rememberLoginAccount(result.user?.email || values.email),
         );
         message.success("登录成功");
+        trackEvent("login_complete", { source: "login-page" });
         navigate(location.state?.returnTo || "/app", { replace: true });
       } else {
         message.error(result.error || "登录失败");

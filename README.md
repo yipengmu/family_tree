@@ -62,6 +62,17 @@ flowchart LR
 
 生产环境由 Vercel 提供 React 构建产物和 `api/**/*.js` Serverless Functions；本地 `npm run dev` 同时启动 React 开发服务器和 Express，Express 只负责 CORS、请求体解析和把 `/api/*` 转发到同一套 `api/*.js` handler。结构化家谱数据进入 PostgreSQL，媒体进入 COS 私有桶，浏览器保留缓存与搜索历史。
 
+### PostHog 产品分析
+
+前端支持通过 `REACT_APP_POSTHOG_KEY` 和 `REACT_APP_POSTHOG_HOST` 接入 PostHog Cloud。当前配置只启用自动点击采集和业务事件，不启用 Session Replay；事件属性会过滤邮箱、姓名、联系方式、地址、照片和家谱内容。生产环境建议在 PostHog 中选择 EU (Frankfurt) 区域，并只使用脱敏后的内部用户 ID 做登录用户识别。
+
+```bash
+REACT_APP_POSTHOG_KEY=phc_xxx
+REACT_APP_POSTHOG_HOST=https://eu.i.posthog.com
+```
+
+未配置 `REACT_APP_POSTHOG_KEY` 时，应用仍可正常运行，只保留本地 `puli:analytics` 事件广播。
+
 本地和 Vercel 的业务入口已经收敛：认证、租户授权、家谱数据、媒体和图片解析均执行同一套 handler。Express 不再保留旧版认证、家谱或图片解析业务实现。
 
 ## 技术栈
