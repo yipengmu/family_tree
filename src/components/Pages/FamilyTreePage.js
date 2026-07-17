@@ -67,7 +67,9 @@ const FamilyTreePage = ({
     !localStorage.getItem("token") ||
     paternalOnboarding.complete;
   const canShareFamily =
-    !isDemoFamily && Boolean(localStorage.getItem("token")) && familyData.length > 0;
+    !isDemoFamily &&
+    Boolean(localStorage.getItem("token")) &&
+    familyData.length > 0;
   const currentJourneyStep = useMemo(() => {
     if (!journey.steps.length) return null;
     return (
@@ -249,7 +251,7 @@ const FamilyTreePage = ({
         )}
 
         <section
-          className={`family-context-bar ${showContextAction || canShareFamily ? "" : "family-context-bar--compact"}`}
+          className={`family-context-bar ${showContextAction || canShareFamily ? "" : "family-context-bar--compact"} ${canShareFamily && !showContextAction ? "family-context-bar--share-only" : ""}`}
           aria-label="当前家谱信息"
         >
           <div className="family-context-copy">
@@ -283,34 +285,35 @@ const FamilyTreePage = ({
                   分享家谱
                 </Button>
               )}
-              {showContextAction && (isDemoFamily ? (
-                <Button
-                  type="primary"
-                  onClick={handleCreateMyFamilyTree}
-                  className="create-family-btn"
-                >
-                  <span className="create-family-btn-eyebrow">
-                    没有纸质家谱，也能
-                  </span>
-                  <span>从自己开始</span>
-                </Button>
-              ) : !localStorage.getItem("token") ? (
-                <Button
-                  type="primary"
-                  onClick={handleCreateMyFamilyTree}
-                  className="create-family-btn"
-                >
-                  创建我的家谱
-                </Button>
-              ) : (
-                <Button
-                  type="primary"
-                  onClick={() => onMenuClick?.("create")}
-                  className="create-family-btn"
-                >
-                  续录族人
-                </Button>
-              ))}
+              {showContextAction &&
+                (isDemoFamily ? (
+                  <Button
+                    type="primary"
+                    onClick={handleCreateMyFamilyTree}
+                    className="create-family-btn"
+                  >
+                    <span className="create-family-btn-eyebrow">
+                      没有纸质家谱，也能
+                    </span>
+                    <span>从自己开始</span>
+                  </Button>
+                ) : !localStorage.getItem("token") ? (
+                  <Button
+                    type="primary"
+                    onClick={handleCreateMyFamilyTree}
+                    className="create-family-btn"
+                  >
+                    创建我的家谱
+                  </Button>
+                ) : (
+                  <Button
+                    type="primary"
+                    onClick={() => onMenuClick?.("create")}
+                    className="create-family-btn"
+                  >
+                    续录族人
+                  </Button>
+                ))}
             </div>
           )}
         </section>

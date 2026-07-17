@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Layout, Alert, message } from "antd";
+import { Layout, Alert, Button, message } from "antd";
 import { validateFamilyData } from "./utils/familyTreeUtils.js";
 import FamilyTreePage from "./components/Pages/FamilyTreePage.js";
 import SettingsPage from "./components/Pages/SettingsPage.js";
@@ -44,6 +44,7 @@ function MainApp({ demoMode = false }) {
   const [familyData, setFamilyData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [authExpired, setAuthExpired] = useState(false);
   const [validationResult, setValidationResult] = useState(null);
   const [mobile, setMobile] = useState(isMobile());
   const location = useLocation();
@@ -150,6 +151,7 @@ function MainApp({ demoMode = false }) {
     // 加载家谱数据 - 优化：优先使用缓存，后台异步更新
     const loadFamilyData = async (tenantId = null) => {
       try {
+        setAuthExpired(false);
         const currentTenantId = tenantId || tenantService.getCurrentTenant().id;
         console.log(`📖 [App] 加载家谱数据 - 租户: ${currentTenantId}`);
 
@@ -189,8 +191,13 @@ function MainApp({ demoMode = false }) {
           return;
         }
         console.error("加载数据失败:", err);
-        setError(err.message);
-        message.error(`加载家谱数据失败: ${err.message}`);
+        const isAuthError = err?.isAuthError || err?.status === 401 || err?.status === 403;
+        const errorMessage = isAuthError
+          ? "登录状态已过期，请重新登录后继续查看家谱。"
+          : err.message;
+        setAuthExpired(isAuthError);
+        setError(errorMessage);
+        message.error(`加载家谱数据失败: ${errorMessage}`);
         setLoading(false);
       }
     };
@@ -311,6 +318,22 @@ function MainApp({ demoMode = false }) {
             description={error}
             type="error"
             showIcon
+            action={
+              authExpired ? (
+                <Button
+                  size="small"
+                  type="primary"
+                  onClick={() =>
+                    navigate("/login", {
+                      replace: true,
+                      state: { from: location.pathname, returnTo: location.pathname },
+                    })
+                  }
+                >
+                  重新登录
+                </Button>
+              ) : null
+            }
             style={{ maxWidth: "400px" }}
           />
         </Content>

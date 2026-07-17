@@ -673,9 +673,13 @@
   }
   .person-profile-actions {
     width: 100%;
+    flex-wrap: wrap;
   }
   .person-profile-actions .ant-btn {
     flex: 1;
+  }
+  .person-profile-actions .ant-btn-primary {
+    flex-basis: 100%;
   }
   .person-profile-facts {
     padding: 18px 14px;

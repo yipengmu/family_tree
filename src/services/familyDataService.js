@@ -29,6 +29,23 @@ const CACHE_EXPIRY = {
 // Neon/Vercel 首次唤醒可能需要几秒，3 秒会把正常冷启动误判为数据库故障。
 export const FAMILY_DATA_REQUEST_TIMEOUT_MS = 15 * 1000;
 
+class FamilyDataRequestError extends Error {
+  constructor(message, status) {
+    super(message);
+    this.name = 'FamilyDataRequestError';
+    this.status = status;
+    this.isAuthError = status === 401 || status === 403;
+  }
+}
+
+const clearInvalidAuthState = () => {
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  localStorage.removeItem('current_tenant');
+  localStorage.removeItem('tenant_list');
+  localStorage.removeItem('guest_mode');
+};
+
 // 内存缓存管理器
 class MemoryCacheManager {
   constructor() {
@@ -261,7 +278,17 @@ class FamilyDataService {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorPayload = await response.json().catch(() => ({}));
+        const serverMessage =
+          errorPayload.error ||
+          errorPayload.message ||
+          `家谱数据加载失败: HTTP ${response.status}`;
+        if (response.status === 401 || response.status === 403) {
+          clearInvalidAuthState();
+          memoryCache.clear();
+          this.versions.clear();
+        }
+        throw new FamilyDataRequestError(serverMessage, response.status);
       }
 
       const contentType = response.headers.get('content-type');

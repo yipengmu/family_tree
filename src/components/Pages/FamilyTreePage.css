@@ -84,7 +84,15 @@
   grid-column: 4;
   display: flex;
   align-items: center;
+  gap: 8px;
   justify-self: end;
+}
+.family-context-actions .family-share-btn {
+  height: 42px;
+  border-color: rgba(24, 79, 67, 0.3);
+  border-radius: 10px;
+  color: var(--pine);
+  background: rgba(255, 253, 248, 0.74);
 }
 .family-context-actions .create-family-btn {
   min-width: 104px;
@@ -314,12 +322,15 @@
 @media (max-width: 768px) {
   .family-context-bar {
     min-height: 0;
-    grid-template-columns: minmax(0, 1fr) 116px;
+    grid-template-columns: minmax(0, 1fr) 166px;
     gap: 10px;
     padding: 0 0 8px;
   }
   .family-context-bar--compact {
     grid-template-columns: minmax(0, 1fr);
+  }
+  .family-context-bar--share-only {
+    grid-template-columns: minmax(0, 1fr) 44px;
   }
   .family-context-copy {
     column-gap: 10px;
@@ -346,6 +357,16 @@
     flex-direction: column;
     gap: 4px;
     font-size: 12px;
+  }
+  .family-context-actions .family-share-btn {
+    width: 42px;
+    min-width: 42px;
+    height: 48px;
+    padding: 0;
+    font-size: 0;
+  }
+  .family-context-actions .family-share-btn .anticon {
+    font-size: 16px;
   }
   .create-family-btn-eyebrow {
     display: block;

@@ -163,9 +163,28 @@ export const buildPersonPosterModel = ({
   };
 };
 
-const roundRect = (context, x, y, width, height, radius, fill, stroke) => {
+const traceRoundRect = (context, x, y, width, height, radius) => {
+  const safeRadius = Math.min(radius, width / 2, height / 2);
   context.beginPath();
-  context.roundRect(x, y, width, height, radius);
+  context.moveTo(x + safeRadius, y);
+  context.lineTo(x + width - safeRadius, y);
+  context.quadraticCurveTo(x + width, y, x + width, y + safeRadius);
+  context.lineTo(x + width, y + height - safeRadius);
+  context.quadraticCurveTo(
+    x + width,
+    y + height,
+    x + width - safeRadius,
+    y + height,
+  );
+  context.lineTo(x + safeRadius, y + height);
+  context.quadraticCurveTo(x, y + height, x, y + height - safeRadius);
+  context.lineTo(x, y + safeRadius);
+  context.quadraticCurveTo(x, y, x + safeRadius, y);
+  context.closePath();
+};
+
+const roundRect = (context, x, y, width, height, radius, fill, stroke) => {
+  traceRoundRect(context, x, y, width, height, radius);
   if (fill) {
     context.fillStyle = fill;
     context.fill();
@@ -211,10 +230,7 @@ const drawWrappedText = (
   const visible = lines.slice(0, maxLines);
   if (lines.length > maxLines && visible.length) {
     let finalLine = visible[visible.length - 1];
-    while (
-      finalLine &&
-      context.measureText(`${finalLine}…`).width > maxWidth
-    ) {
+    while (finalLine && context.measureText(`${finalLine}…`).width > maxWidth) {
       finalLine = finalLine.slice(0, -1);
     }
     visible[visible.length - 1] = `${finalLine}…`;
@@ -376,7 +392,7 @@ const drawFamilyGroups = (context, model, startY) => {
 
 export const renderFamilyPoster = async (options) => {
   const model = buildFamilyPosterModel(options);
-  const height = Math.max(1850, 1040 + model.groups.length * 158);
+  const height = Math.max(1850, 1200 + model.groups.length * 158);
   const canvas = createCanvas(height);
   const context = canvas.getContext("2d");
   drawPaperBackground(context, height);
@@ -429,8 +445,7 @@ const drawPortrait = async (context, model, x, y) => {
 
   if (portrait) {
     context.save();
-    context.beginPath();
-    context.roundRect(x, y, 178, 210, 78);
+    traceRoundRect(context, x, y, 178, 210, 78);
     context.clip();
     const scale = Math.max(178 / portrait.width, 210 / portrait.height);
     const width = portrait.width * scale;
@@ -449,7 +464,11 @@ const drawPortrait = async (context, model, x, y) => {
   context.fillStyle = COLORS.cinnabar;
   context.font = `600 76px ${FONT_SERIF}`;
   context.textAlign = "center";
-  context.fillText(Array.from(model.name).slice(-1)[0] || "志", x + 89, y + 132);
+  context.fillText(
+    Array.from(model.name).slice(-1)[0] || "志",
+    x + 89,
+    y + 132,
+  );
   context.textAlign = "left";
 };
 
@@ -517,7 +536,11 @@ const drawPersonEvents = (context, model, startY, footerTop) => {
   if (model.omittedEventCount && y < footerTop - 80) {
     context.fillStyle = COLORS.inkSoft;
     context.font = `23px ${FONT_SANS}`;
-    context.fillText(`另有 ${model.omittedEventCount} 段纪事留在家谱中`, 144, y);
+    context.fillText(
+      `另有 ${model.omittedEventCount} 段纪事留在家谱中`,
+      144,
+      y,
+    );
     y += 58;
   }
   return y;
@@ -577,4 +600,3 @@ export const dataUrlToFile = async (dataUrl, filename) => {
   const blob = await response.blob();
   return new File([blob], filename, { type: "image/png" });
 };
-

@@ -109,8 +109,13 @@ function SharePosterModal({
   const sharePoster = async () => {
     if (!posterUrl) return;
     try {
+      if (!navigator.share || typeof File === "undefined") {
+        downloadPoster();
+        message.info("图片已生成，也可以长按预览图保存到相册");
+        return;
+      }
       const file = await dataUrlToFile(posterUrl, filename);
-      if (!navigator.share || !navigator.canShare?.({ files: [file] })) {
+      if (!navigator.canShare?.({ files: [file] })) {
         downloadPoster();
         message.info("图片已生成，也可以长按预览图保存到相册");
         return;
@@ -190,7 +195,11 @@ function SharePosterModal({
         ) : (
           <img
             src={posterUrl}
-            alt={kind === "family" ? `${familyName}分享图片预览` : `${person?.name}人物志分享图片预览`}
+            alt={
+              kind === "family"
+                ? `${familyName}分享图片预览`
+                : `${person?.name}人物志分享图片预览`
+            }
           />
         )}
       </div>
@@ -225,4 +234,3 @@ function SharePosterModal({
 }
 
 export default SharePosterModal;
-

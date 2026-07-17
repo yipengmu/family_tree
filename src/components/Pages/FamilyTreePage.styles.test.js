@@ -37,18 +37,20 @@ describe("family journey animation styles", () => {
     expect(journeyPlayerStylesheet).toMatch(
       /\.journey-copy-transition\s*\{[^}]*animation:\s*none/s,
     );
-    expect(journeyPlayerStylesheet).not.toContain("@keyframes journey-copy-change");
+    expect(journeyPlayerStylesheet).not.toContain(
+      "@keyframes journey-copy-change",
+    );
   });
 
   test("uses lightweight late-journey transitions", () => {
-    expect(pageSource).toContain('journey-performance-mode');
+    expect(pageSource).toContain("journey-performance-mode");
     expect(stylesheet).toMatch(
       /\.journey-performance-mode\s+\.react-flow__edge/,
     );
-    expect(stylesheet).toContain('@keyframes journey-node-reveal-light');
-    expect(stylesheet).toContain('animation: journey-node-reveal-light');
+    expect(stylesheet).toContain("@keyframes journey-node-reveal-light");
+    expect(stylesheet).toContain("animation: journey-node-reveal-light");
     expect(journeyPlayerStylesheet).toContain(
-      '.journey-copy-transition--light',
+      ".journey-copy-transition--light",
     );
     expect(journeyPlayerStylesheet).toMatch(
       /\.journey-copy-transition--light\s*\{[^}]*animation:\s*none/s,
@@ -168,5 +170,12 @@ describe("family journey animation styles", () => {
     expect(flowStylesheet).toMatch(
       /\.journey-panorama-summary\s*\{[^}]*position:\s*absolute;[^}]*left:\s*50%;[^}]*transform:\s*translateX\(-50%\)/s,
     );
+  });
+
+  test("offers family sharing without replacing the existing create action", () => {
+    expect(pageSource).toContain("SharePosterModal");
+    expect(pageSource).toContain("分享家谱");
+    expect(pageSource).toContain('kind="family"');
+    expect(stylesheet).toContain(".family-share-btn");
   });
 });

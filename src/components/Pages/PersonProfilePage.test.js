@@ -56,4 +56,10 @@ describe("person life archive flow", () => {
     expect(source).not.toContain("story-prompts");
     expect(source).not.toContain("小时候最鲜明的记忆");
   });
+
+  it("offers a privacy-reviewed long-image share flow", () => {
+    expect(source).toContain("SharePosterModal");
+    expect(source).toContain("分享人物志");
+    expect(source).toContain('kind="person"');
+  });
 });

@@ -106,6 +106,17 @@ test("maps the API health path to the shared health handler", () => {
   });
 });
 
+test("maps the admin analytics path to the shared admin handler", () => {
+  assert.deepEqual(
+    createModernApiBridge.resolveModernRoute("/api/admin/analytics"),
+    {
+      modulePath: "api/admin.js",
+      query: { type: "analytics" },
+      params: {},
+    },
+  );
+});
+
 test("maps story routes and preserves route parameters", () => {
   assert.deepEqual(
     createModernApiBridge.resolveModernRoute(

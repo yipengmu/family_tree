@@ -58,4 +58,32 @@ describe("private family data loading", () => {
     ).resolves.toEqual([]);
     expect(fallback).not.toHaveBeenCalled();
   });
+
+  test("clears stale local auth state and preserves server message on 403", async () => {
+    localStorage.setItem("token", "expired-token");
+    localStorage.setItem("user", JSON.stringify({ id: 1 }));
+    localStorage.setItem(
+      "current_tenant",
+      JSON.stringify({ id: "tenant-private", name: "旧家谱" }),
+    );
+    localStorage.setItem("tenant_list", JSON.stringify([{ id: "tenant-private" }]));
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 403,
+      json: async () => ({ error: "令牌无效或已过期" }),
+      headers: { get: () => "application/json" },
+    });
+
+    await expect(
+      familyDataService.loadFamilyDataFromServer("tenant-private"),
+    ).rejects.toMatchObject({
+      message: "令牌无效或已过期",
+      status: 403,
+      isAuthError: true,
+    });
+    expect(localStorage.getItem("token")).toBeNull();
+    expect(localStorage.getItem("user")).toBeNull();
+    expect(localStorage.getItem("current_tenant")).toBeNull();
+    expect(localStorage.getItem("tenant_list")).toBeNull();
+  });
 });

@@ -25,8 +25,7 @@
     linear-gradient(45deg, #eee7db 25%, transparent 25%),
     linear-gradient(-45deg, #eee7db 25%, transparent 25%),
     linear-gradient(45deg, transparent 75%, #eee7db 75%),
-    linear-gradient(-45deg, transparent 75%, #eee7db 75%),
-    #f8f4ec;
+    linear-gradient(-45deg, transparent 75%, #eee7db 75%), #f8f4ec;
   background-position:
     0 0,
     0 8px,
@@ -112,4 +111,3 @@
     min-height: 44px;
   }
 }
-

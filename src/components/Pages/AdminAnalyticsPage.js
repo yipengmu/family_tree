@@ -69,7 +69,8 @@ function AdminAnalyticsPage() {
     setError("");
     try {
       const query = new URLSearchParams(range).toString();
-      const response = await fetch(`/api/admin/analytics?${query}`, {
+      const apiBaseUrl = process.env.REACT_APP_API_BASE_URL || "";
+      const response = await fetch(`${apiBaseUrl}/api/admin/analytics?${query}`, {
         headers: { Authorization: `Bearer ${token}` },
         cache: "no-store",
       });
