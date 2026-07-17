@@ -114,7 +114,7 @@ const LoginPage = () => {
           onChange={setMode}
           options={[
             { label: "手机号登录", value: "phone" },
-            { label: "邮箱密码", value: "email" },
+            { label: "邮箱登录", value: "email" },
           ]}
         />
         {mode === "phone" ? (
