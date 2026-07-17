@@ -7,9 +7,9 @@ describe("login account history", () => {
     "utf8",
   );
 
-  test("remembers the account only inside the successful login branch", () => {
+  test("remembers the email account only inside the successful login branch", () => {
     expect(loginPageSource).toMatch(
-      /if \(result\.success\) \{[\s\S]*?if \(mode === "email"\) \{[\s\S]*?rememberLoginAccount\(account\)/,
+      /if \(result\.success\) \{[\s\S]*?rememberLoginAccount\(result\.user\?\.email \|\| values\.email\)/,
     );
   });
 
@@ -20,17 +20,21 @@ describe("login account history", () => {
     expect(loginPageSource).toContain("onSelect={handleAccountSelect}");
   });
 
-  test("tells users that passwords are never saved in account history", () => {
-    expect(loginPageSource).toContain("仅保存邮箱，不保存密码");
+  test("uses phone code login and email password login", () => {
+    expect(loginPageSource).toContain(
+      'onFinish={mode === "phone" ? handlePhoneLogin : handleLogin}',
+    );
+    expect(loginPageSource).toContain("AuthService.phoneLogin(");
+    expect(loginPageSource).toContain(
+      "AuthService.login(values.email, values.password)",
+    );
+    expect(loginPageSource).toContain('name="phoneCode"');
+    expect(loginPageSource).toContain("获取验证码");
   });
 
-  test("uses password login for both phone and email without a code field", () => {
-    expect(loginPageSource).toContain('const account = mode === "phone"');
-    expect(loginPageSource).toContain(
-      "AuthService.login(account, values.password)",
-    );
-    expect(loginPageSource).not.toContain('name="phoneCode"');
-    expect(loginPageSource).not.toContain("获取验证码");
-    expect(loginPageSource).toContain("忘记密码？");
+  test("shows password reset from both login modes", () => {
+    expect(loginPageSource).toContain('className="login-secondary-action"');
+    expect(loginPageSource).toContain('className="login-forgot-link"');
+    expect(loginPageSource).toContain("找回密码");
   });
 });

@@ -353,12 +353,23 @@
   min-height: 0;
 }
 
-.login-account-history-note {
+.login-account-history-note,
+.login-secondary-action {
   display: flex;
   min-height: 28px;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+}
+
+.login-secondary-action {
+  margin-top: 2px;
+  margin-bottom: 8px;
+  justify-content: flex-end;
+}
+
+.auth-card .login-forgot-link.ant-btn-link {
+  padding-inline: 0;
 }
 
 .auth-card .login-account-history-note .ant-typography {
@@ -382,6 +393,11 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
+}
+
+.auth-card .auth-submit-item.ant-form-item {
+  margin-top: 6px;
+  margin-bottom: 0;
 }
 
 .auth-card .ant-btn-primary {
@@ -530,6 +546,14 @@
 
   .auth-card .ant-form-item {
     margin-bottom: 15px;
+  }
+
+  .login-secondary-action {
+    margin-bottom: 8px;
+  }
+
+  .auth-card .auth-submit-item.ant-form-item {
+    margin-top: 6px;
   }
 
   .login-mode-tabs.ant-segmented {

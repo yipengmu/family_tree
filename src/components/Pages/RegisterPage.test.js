@@ -19,9 +19,10 @@ describe("phone registration", () => {
   });
 
   test("offers email as an optional pending identity", () => {
-    expect(registerPageSource).toContain('placeholder="邮箱（选填）"');
-    expect(registerPageSource).toContain(
-      "完成邮箱验证后可用于邮箱登录和找回密码",
-    );
+    expect(registerPageSource).toContain('placeholder="邮箱（用于密码找回）"');
+  });
+
+  test("keeps primary action visually separated from the form fields", () => {
+    expect(registerPageSource).toContain('className="auth-submit-item"');
   });
 });

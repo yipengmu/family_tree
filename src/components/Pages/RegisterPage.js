@@ -3,7 +3,6 @@ import {
   Form,
   Input,
   Button,
-  Checkbox,
   message,
   Typography,
   Divider,
@@ -103,7 +102,6 @@ const RegisterPage = () => {
       backLabel="返回"
       onBack={handleBack}
       title={BRAND.tagline}
-      subtitle="验证手机号并设置登录密码"
       footer={
         <>
           <Text>已有账号？</Text>
@@ -201,34 +199,16 @@ const RegisterPage = () => {
 
         <Form.Item
           name="email"
-          extra="选填；完成邮箱验证后可用于邮箱登录和找回密码"
           rules={[{ type: "email", message: "请输入有效的邮箱地址" }]}
         >
           <Input
             prefix={<MailOutlined />}
-            placeholder="邮箱（选填）"
+            placeholder="邮箱（用于密码找回）"
             size="large"
           />
         </Form.Item>
 
-        <Form.Item
-          name="privacyConsent"
-          valuePropName="checked"
-          rules={[
-            {
-              validator: (_, value) =>
-                value
-                  ? Promise.resolve()
-                  : Promise.reject(new Error("请先确认手机号使用说明")),
-            },
-          ]}
-        >
-          <Checkbox>
-            我同意手机号用于账号验证与安全找回，并由短信服务商完成验证码发送
-          </Checkbox>
-        </Form.Item>
-
-        <Form.Item>
+        <Form.Item className="auth-submit-item">
           <Button
             type="primary"
             htmlType="submit"

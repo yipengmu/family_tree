@@ -14,11 +14,11 @@ import {
   LockOutlined,
   MailOutlined,
   PhoneOutlined,
+  SafetyCertificateOutlined,
 } from "@ant-design/icons";
 import { useLocation, useNavigate } from "react-router-dom";
 import AuthService from "../../services/authService.js";
 import {
-  clearLoginAccountHistory,
   getLoginAccountHistory,
   rememberLoginAccount,
 } from "../../utils/loginAccountHistory.js";
@@ -31,6 +31,8 @@ const LoginPage = () => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState("phone");
+  const [phoneCodeLoading, setPhoneCodeLoading] = useState(false);
+  const [phoneCountdown, setPhoneCountdown] = useState(0);
   const [loginAccounts, setLoginAccounts] = useState(() =>
     getLoginAccountHistory(),
   );
@@ -51,13 +53,12 @@ const LoginPage = () => {
   const handleLogin = async (values) => {
     setLoading(true);
     try {
-      const account = mode === "phone" ? values.phone : values.email;
-      const result = await AuthService.login(account, values.password);
+      const result = await AuthService.login(values.email, values.password);
 
       if (result.success) {
-        if (mode === "email") {
-          setLoginAccounts(rememberLoginAccount(account));
-        }
+        setLoginAccounts(
+          rememberLoginAccount(result.user?.email || values.email),
+        );
         message.success("登录成功");
         trackEvent("login_complete", { source: "login-page" });
         navigate(location.state?.returnTo || "/app", { replace: true });
@@ -72,13 +73,58 @@ const LoginPage = () => {
     }
   };
 
-  const handleAccountSelect = (account) => {
-    form.setFieldsValue({ email: account, password: "" });
+  const handlePhoneCode = async () => {
+    const phone = form.getFieldValue("phone")?.trim();
+    if (!/^1[3-9]\d{9}$/.test(phone || "")) {
+      message.error("请输入有效的手机号");
+      return;
+    }
+    setPhoneCodeLoading(true);
+    try {
+      const result = await AuthService.sendPhoneCode(phone);
+      if (!result.success) {
+        message.error(result.error || "验证码发送失败");
+        return;
+      }
+      message.success("验证码已发送");
+      setPhoneCountdown(60);
+      const timer = setInterval(() => {
+        setPhoneCountdown((value) => {
+          if (value <= 1) {
+            clearInterval(timer);
+            return 0;
+          }
+          return value - 1;
+        });
+      }, 1000);
+    } finally {
+      setPhoneCodeLoading(false);
+    }
   };
 
-  const handleClearAccountHistory = () => {
-    clearLoginAccountHistory();
-    setLoginAccounts([]);
+  const handlePhoneLogin = async (values) => {
+    setLoading(true);
+    try {
+      const result = await AuthService.phoneLogin(
+        values.phone,
+        values.phoneCode,
+      );
+      if (!result.success) {
+        message.error(result.error || "登录失败");
+        return;
+      }
+      message.success("登录成功");
+      trackEvent("phone_auth_completed", { source: "login-page" });
+      navigate(location.state?.returnTo || "/app/create", { replace: true });
+    } catch (error) {
+      message.error(error.message || "登录失败，请稍后重试");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAccountSelect = (account) => {
+    form.setFieldsValue({ email: account, password: "" });
   };
 
   // 处理注册跳转
@@ -95,7 +141,6 @@ const LoginPage = () => {
       backLabel="返回"
       onBack={handleBack}
       title="谱里"
-      subtitle="续写每个名字背后的故事"
       footer={
         <>
           <Text>没有账号？</Text>
@@ -109,7 +154,7 @@ const LoginPage = () => {
         form={form}
         name="login_form"
         initialValues={{ remember: true }}
-        onFinish={handleLogin}
+        onFinish={mode === "phone" ? handlePhoneLogin : handleLogin}
         autoComplete="off"
       >
         <Segmented
@@ -119,24 +164,53 @@ const LoginPage = () => {
           onChange={setMode}
           options={[
             { label: "手机号登录", value: "phone" },
-            { label: "邮箱登录", value: "email" },
+            { label: "邮箱密码", value: "email" },
           ]}
         />
         {mode === "phone" ? (
-          <Form.Item
-            name="phone"
-            rules={[
-              { required: true, message: "请输入手机号" },
-              { pattern: /^1[3-9]\d{9}$/, message: "请输入有效的手机号" },
-            ]}
-          >
-            <Input
-              prefix={<PhoneOutlined />}
-              placeholder="手机号"
-              size="large"
-              inputMode="tel"
-            />
-          </Form.Item>
+          <>
+            <Form.Item
+              name="phone"
+              rules={[
+                { required: true, message: "请输入手机号" },
+                { pattern: /^1[3-9]\d{9}$/, message: "请输入有效的手机号" },
+              ]}
+            >
+              <Input
+                prefix={<PhoneOutlined />}
+                placeholder="手机号"
+                size="large"
+                inputMode="tel"
+              />
+            </Form.Item>
+            <Form.Item
+              name="phoneCode"
+              className="phone-code-field"
+              rules={[
+                { required: true, message: "请输入验证码" },
+                { pattern: /^\d{6}$/, message: "请输入6位验证码" },
+              ]}
+            >
+              <Input
+                prefix={<SafetyCertificateOutlined />}
+                placeholder="验证码"
+                size="large"
+                inputMode="numeric"
+                maxLength={6}
+                suffix={
+                  <Button
+                    type="link"
+                    className="phone-code-button"
+                    onClick={handlePhoneCode}
+                    loading={phoneCodeLoading}
+                    disabled={phoneCountdown > 0}
+                  >
+                    {phoneCountdown > 0 ? `${phoneCountdown}s` : "获取验证码"}
+                  </Button>
+                }
+              />
+            </Form.Item>
+          </>
         ) : null}
         {mode === "email" ? (
           <Form.Item
@@ -174,48 +248,41 @@ const LoginPage = () => {
           </Form.Item>
         ) : null}
 
-        <Form.Item
-          name="password"
-          extra={
-            <div className="login-account-history-note">
-              <Text type="secondary">
-                {mode === "email" && loginAccounts.length > 0
-                  ? "仅保存邮箱，不保存密码"
-                  : " "}
-              </Text>
-              <div className="login-account-actions">
-                {mode === "email" && loginAccounts.length > 0 ? (
-                  <Button type="link" onClick={handleClearAccountHistory}>
-                    清除历史
-                  </Button>
-                ) : null}
-                <Button
-                  type="link"
-                  onClick={() =>
-                    navigate("/reset-password", {
-                      state: { ...location.state, mode },
-                    })
-                  }
-                  className="login-forgot-link"
-                >
-                  忘记密码？
-                </Button>
-              </div>
-            </div>
-          }
-          rules={[
-            { required: true, message: "请输入您的密码" },
-            { min: 6, message: "密码至少需要6个字符" },
-          ]}
-        >
-          <Input.Password
-            prefix={<LockOutlined />}
-            placeholder="密码"
-            size="large"
-          />
-        </Form.Item>
+        {mode === "email" ? (
+          <Form.Item
+            name="password"
+            rules={[
+              {
+                required: true,
+                message: "请输入您的密码",
+              },
+              {
+                min: 6,
+                message: "密码至少需要6个字符",
+              },
+            ]}
+          >
+            <Input.Password
+              prefix={<LockOutlined />}
+              placeholder="密码"
+              size="large"
+            />
+          </Form.Item>
+        ) : null}
 
-        <Form.Item>
+        <div className="login-secondary-action">
+          <Button
+            type="link"
+            onClick={() =>
+              navigate("/reset-password", { state: location.state })
+            }
+            className="login-forgot-link"
+          >
+            找回密码
+          </Button>
+        </div>
+
+        <Form.Item className="auth-submit-item">
           <Button
             type="primary"
             htmlType="submit"
@@ -223,7 +290,7 @@ const LoginPage = () => {
             loading={loading}
             block
           >
-            登录
+            登录账号
           </Button>
         </Form.Item>
       </Form>
