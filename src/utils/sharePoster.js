@@ -420,13 +420,13 @@ const drawQrFooter = async (context, height, label) => {
   context.fillText(label, 72, footerTop + 76);
   context.fillStyle = COLORS.inkSoft;
   context.font = `24px ${FONT_SANS}`;
-  context.fillText("长按识别二维码，来谱里记录你的家人", 72, footerTop + 126);
+  context.fillText("长按识别二维码，来「谱里」记录你的家人", 72, footerTop + 126);
   context.fillText("tree.tatababa.top", 72, footerTop + 172);
   context.drawImage(qrImage, 776, footerTop + 42, 232, 232);
 
   context.fillStyle = "rgba(47,43,37,0.46)";
   context.font = `20px ${FONT_SANS}`;
-  context.fillText("图片由谱里在本机生成，不代表家谱已公开", 72, height - 52);
+  context.fillText("图片由「谱里」在本机生成，不代表家谱已公开", 72, height - 52);
 };
 
 const measurePersonPosterHeight = (model) => {

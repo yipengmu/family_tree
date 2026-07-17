@@ -97,7 +97,7 @@ function FamilySharePage({ familyName = "我的家谱", familyData = [], onBack 
           icon={<ArrowLeftOutlined />}
           onClick={onBack}
           className="family-share-back"
-          aria-label="返回家谱"
+          aria-label="返回"
         />
         <div>
           <h1>分享家谱</h1>
