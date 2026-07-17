@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ArrowLeftOutlined,
   DownloadOutlined,
-  ReloadOutlined,
   ShareAltOutlined,
 } from "@ant-design/icons";
 import { Button, Spin, message } from "antd";
@@ -91,27 +90,15 @@ function FamilySharePage({ familyName = "我的家谱", familyData = [], onBack 
 
   return (
     <main className="family-share-page">
-      <header className="family-share-header">
-        <Button
-          type="text"
-          icon={<ArrowLeftOutlined />}
-          onClick={onBack}
-          className="family-share-back"
-          aria-label="返回"
-        />
-        <div>
-          <h1>分享家谱</h1>
-          <p>预览图将正常展示家人姓名</p>
-        </div>
-        <Button
-          icon={<ReloadOutlined />}
-          disabled={generating}
-          onClick={generatePoster}
-          className="family-share-refresh"
-        >
-          重新生成
-        </Button>
-      </header>
+      <Button
+        type="text"
+        icon={<ArrowLeftOutlined />}
+        onClick={onBack}
+        className="family-share-back-top"
+        aria-label="返回"
+      >
+        返回
+      </Button>
 
       <section className="family-share-preview" aria-live="polite">
         {!posterUrl ? (

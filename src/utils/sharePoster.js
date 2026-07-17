@@ -630,7 +630,7 @@ export const renderFamilyPoster = async (options) => {
   context.font = `600 66px ${FONT_SERIF}`;
   drawWrappedText(context, model.familyName, 72, 324, 936, 78, 2);
 
-  roundRect(context, 72, 430, 936, 160, 28, COLORS.pine);
+  roundRect(context, 72, 430, 836, 160, 28, COLORS.pine);
   context.fillStyle = "#fffdf8";
   context.font = `600 46px ${FONT_SERIF}`;
   context.fillText(`${model.memberCount} 位家人`, 116, 508);
@@ -638,7 +638,7 @@ export const renderFamilyPoster = async (options) => {
   context.font = `26px ${FONT_SANS}`;
   context.fillText(
     model.generationCount
-      ? `${model.generationCount} 代相承 · 仍在持续补充`
+      ? `${model.generationCount} 代相承 · 我们仍在持续补充`
       : "每一个名字，都值得被记住",
     116,
     554,
@@ -646,13 +646,6 @@ export const renderFamilyPoster = async (options) => {
 
   context.fillStyle = COLORS.inkSoft;
   context.font = `24px ${FONT_SANS}`;
-  context.fillText(
-    model.hideProtectedNames
-      ? "在世及状态待确认人物已使用隐私称谓"
-      : "这张图片包含家人姓名，请确认公开范围",
-    72,
-    650,
-  );
 
   context.fillStyle = COLORS.cinnabar;
   context.font = `600 24px ${FONT_SANS}`;

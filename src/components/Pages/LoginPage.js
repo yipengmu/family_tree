@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   AutoComplete,
   Form,
@@ -31,10 +31,14 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState("phone");
   const [loginAccounts, setLoginAccounts] = useState(() =>
-    getLoginAccountHistory(),
+    getLoginAccountHistory(mode),
   );
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    setLoginAccounts(getLoginAccountHistory(mode));
+  }, [mode]);
 
   const accountOptions = loginAccounts.map((account) => ({
     value: account,
@@ -54,11 +58,9 @@ const LoginPage = () => {
       const result = await AuthService.login(account, values.password);
 
       if (result.success) {
-        if (mode === "email") {
-          setLoginAccounts(
-            rememberLoginAccount(result.user?.email || values.email),
-          );
-        }
+        const accountValue =
+          mode === "phone" ? values.phone : result.user?.email || values.email;
+        setLoginAccounts(rememberLoginAccount(accountValue, mode));
         message.success("登录成功");
         trackEvent("login_complete", { source: "login-page" });
         navigate(location.state?.returnTo || "/app", { replace: true });
@@ -74,7 +76,7 @@ const LoginPage = () => {
   };
 
   const handleAccountSelect = (account) => {
-    form.setFieldsValue({ email: account, password: "" });
+    form.setFieldsValue({ [mode]: account, password: "" });
   };
 
   // 处理注册跳转
@@ -118,22 +120,34 @@ const LoginPage = () => {
           ]}
         />
         {mode === "phone" ? (
-          <>
-            <Form.Item
-              name="phone"
-              rules={[
-                { required: true, message: "请输入手机号" },
-                { pattern: /^1[3-9]\d{9}$/, message: "请输入有效的手机号" },
-              ]}
+          <Form.Item
+            name="phone"
+            className="login-account-field"
+            rules={[
+              { required: true, message: "请输入手机号" },
+              { pattern: /^1[3-9]\d{9}$/, message: "请输入有效的手机号" },
+            ]}
+          >
+            <AutoComplete
+              options={accountOptions}
+              onSelect={handleAccountSelect}
+              filterOption={(inputValue, option) =>
+                option.value.includes(inputValue)
+              }
             >
               <Input
                 prefix={<PhoneOutlined />}
+                suffix={
+                  loginAccounts.length > 0 ? (
+                    <HistoryOutlined aria-label="可选择登录历史" />
+                  ) : null
+                }
                 placeholder="手机号"
                 size="large"
                 inputMode="tel"
               />
-            </Form.Item>
-          </>
+            </AutoComplete>
+          </Form.Item>
         ) : null}
         {mode === "email" ? (
           <Form.Item

@@ -7,17 +7,29 @@ describe("login account history", () => {
     "utf8",
   );
 
-  test("remembers the email account only inside the successful login branch", () => {
+  test("remembers the account for the active login mode inside the successful login branch", () => {
     expect(loginPageSource).toMatch(
-      /if \(result\.success\) \{[\s\S]*?rememberLoginAccount\(result\.user\?\.email \|\| values\.email\)/,
+      /const accountValue =[\s\S]*?mode === "phone" \? values\.phone : result\.user\?\.email \|\| values\.email/,
+    );
+    expect(loginPageSource).toMatch(
+      /rememberLoginAccount\(accountValue, mode\)/,
     );
   });
 
-  test("clears the password when a historical account is selected", () => {
+  test("clears the password and fills the active mode field when a historical account is selected", () => {
     expect(loginPageSource).toContain(
-      'form.setFieldsValue({ email: account, password: "" });',
+      'form.setFieldsValue({ [mode]: account, password: "" });',
     );
     expect(loginPageSource).toContain("onSelect={handleAccountSelect}");
+  });
+
+  test("renders history dropdowns for both phone and email modes", () => {
+    expect(loginPageSource).toContain('name="phone"');
+    expect(loginPageSource).toContain('name="email"');
+    const autoCompleteCount = (loginPageSource.match(/<AutoComplete/g) || [])
+      .length;
+    expect(autoCompleteCount).toBeGreaterThanOrEqual(2);
+    expect(loginPageSource).toContain("getLoginAccountHistory(mode)");
   });
 
   test("uses password login for both phone and email accounts", () => {
