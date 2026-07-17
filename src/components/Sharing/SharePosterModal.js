@@ -225,7 +225,7 @@ function SharePosterModal({
           disabled={!posterUrl || generating}
           onClick={downloadPoster}
         >
-          保存图片
+          保存图片 
         </Button>
         <Button
           type="primary"

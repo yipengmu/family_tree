@@ -28,7 +28,7 @@ export const getCompactTreeNodeMetrics = (isMobile) => ({
   width: isMobile ? 152 : 160,
   gap: isMobile ? 12 : 16,
   height: 80,
-  zoom: isMobile ? 0.62 : 0.78,
+  zoom: isMobile ? 0.72 : 1.0,
 });
 
 export const getViewportXForNodeCenter = ({

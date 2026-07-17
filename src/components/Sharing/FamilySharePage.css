@@ -147,13 +147,22 @@
   background: #f5f1ea !important;
 }
 
-.family-share-btn-share {
+.family-share-btn-share,
+.family-share-btn-share span {
   background: linear-gradient(135deg, #4a6741 0%, #3d5636 100%);
   border-color: transparent;
+  color: #f5f0e8;
 }
 
-.family-share-btn-share:hover:not(:disabled) {
+.family-share-btn-share:hover:not(:disabled),
+.family-share-btn-share:hover:not(:disabled) span {
   opacity: 0.9 !important;
+  color: #ffffff !important;
+}
+
+.family-share-btn-share:active:not(:disabled),
+.family-share-btn-share:active:not(:disabled) span {
+  color: #f5f0e8 !important;
 }
 
 .family-share-actions span {

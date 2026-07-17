@@ -35,6 +35,14 @@ function collectMigrationFiles(directory) {
 }
 
 collectMigrationFiles(migrationsDirectory);
+
+// 兼容只配置了 DATABASE_URL 的部署环境（如 Vercel 未单独设置直连地址）。
+// Prisma schema 中 directUrl = env("DATABASE_URL_UNPOOLED") 在校验阶段就会要求该变量存在，
+// 这里在调用 Prisma 之前补齐，避免构建因漏配而失败。
+if (!process.env.DATABASE_URL_UNPOOLED && process.env.DATABASE_URL) {
+  process.env.DATABASE_URL_UNPOOLED = process.env.DATABASE_URL;
+}
+
 const migrationFingerprint = hashFiles(migrationFiles);
 let migratedFingerprint = null;
 
