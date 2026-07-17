@@ -16,6 +16,7 @@ import {
   PauseOutlined,
   PlayCircleOutlined,
   SaveOutlined,
+  ShareAltOutlined,
   SoundOutlined,
 } from "@ant-design/icons";
 import {
@@ -31,6 +32,7 @@ import {
   Upload,
 } from "antd";
 import AppLayout from "../Layout/AppLayout.js";
+import SharePosterModal from "../Sharing/SharePosterModal.js";
 import storyService, {
   compressPhoto,
   deletePendingRecording,
@@ -97,6 +99,7 @@ function PersonProfilePage({
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [storyOpen, setStoryOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
   const [stage, setStage] = useState("capture");
   const [recording, setRecording] = useState(false);
   const [paused, setPaused] = useState(false);
@@ -563,6 +566,12 @@ function PersonProfilePage({
           </div>
           {tenant?.id !== "default" && (
             <div className="person-profile-actions">
+              <Button
+                icon={<ShareAltOutlined />}
+                onClick={() => setShareOpen(true)}
+              >
+                分享人物志
+              </Button>
               <Button onClick={onEdit}>编辑资料</Button>
               <Button
                 type="primary"
@@ -696,6 +705,14 @@ function PersonProfilePage({
             </div>
           )}
         </section>
+
+        <SharePosterModal
+          open={shareOpen}
+          onClose={() => setShareOpen(false)}
+          kind="person"
+          person={person}
+          events={events}
+        />
 
         <Modal
           title={`记录${person.name}的一段经历`}

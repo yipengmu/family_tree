@@ -82,10 +82,13 @@ test("Aliyun SMS auth uses the package default export as the client class", asyn
     assert.equal(calls.length, 2);
     assert.equal(calls[0].method, "send");
     assert.equal(calls[0].request.phoneNumber, "13800138000");
+    assert.equal(calls[0].request.schemeName, "默认方案");
     assert.equal(calls[0].request.signName, "恒创联众");
     assert.equal(calls[0].request.templateCode, "100001");
+    assert.equal(calls[0].request.validTime, 300);
     assert.deepEqual(calls[0].runtime, {});
     assert.equal(calls[1].method, "check");
+    assert.equal(calls[1].request.schemeName, "默认方案");
     assert.equal(calls[1].request.verifyCode, "123456");
   });
 });

@@ -19,6 +19,7 @@ import {
   getPersonProfilePath,
   getPersonEditPath,
 } from "./utils/appRoutes.js";
+import { trackEvent } from "./utils/analytics.js";
 // 导入测试工具（开发环境自动运行）
 
 import "./App.css";
@@ -106,6 +107,14 @@ function MainApp({ demoMode = false }) {
   useEffect(() => {
     document.title = demoMode ? `${BRAND.demoFamilyName}` : `我的家谱`;
   }, [demoMode]);
+
+  useEffect(() => {
+    if (demoMode) return;
+    trackEvent("app_view", {
+      page: currentPage,
+      device: mobile ? "mobile" : "desktop",
+    });
+  }, [currentPage, demoMode, mobile]);
 
   useEffect(() => {
     if (!isAuthenticated() && currentPage === "create") {

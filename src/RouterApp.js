@@ -20,6 +20,9 @@ const RegisterPage = lazy(() => import("./components/Pages/RegisterPage.js"));
 const ResetPasswordPage = lazy(
   () => import("./components/Pages/ResetPasswordPage.js"),
 );
+const AdminAnalyticsPage = lazy(
+  () => import("./components/Pages/AdminAnalyticsPage.js"),
+);
 
 const RouteLoading = () => (
   <div className="route-loading" role="status" aria-live="polite">
@@ -48,6 +51,7 @@ const RouterApp = () => (
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
         <Route path="/app/demo" element={<AppWorkspace demoMode />} />
         <Route path="/app/*" element={<AppWorkspace />} />
         <Route path="/tree" element={<Navigate to="/app" replace />} />

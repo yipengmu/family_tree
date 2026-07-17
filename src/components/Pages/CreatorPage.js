@@ -1263,6 +1263,7 @@ function CreatorPage({
       );
       if (saved) {
         trackEvent("first_person_saved", { memberCount: firstFamily.length });
+        trackEvent("family_created_success", { memberCount: firstFamily.length });
         if (firstFamily.length > 1) {
           trackEvent("first_relationship_created", {
             memberCount: firstFamily.length,

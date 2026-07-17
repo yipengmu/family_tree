@@ -74,6 +74,8 @@ REACT_APP_POSTHOG_HOST=https://eu.i.posthog.com
 
 未配置 `REACT_APP_POSTHOG_KEY` 时，应用仍可正常运行，只保留本地 `puli:analytics` 事件广播。
 
+管理员数据分析后台位于 `/admin/analytics`。页面和 `/api/admin/analytics` 接口都要求当前 JWT 用户邮箱命中服务端 `ADMIN_EMAILS` 白名单；数据库统计默认排除 `default,user_1`（穆氏示范/迁移家谱）。若要显示 DAU、转换漏斗和留存，还需要在服务端配置 `POSTHOG_API_KEY`、`POSTHOG_PROJECT_ID` 和 `POSTHOG_API_HOST`，这些变量不能使用 `REACT_APP_` 前缀。
+
 本地和 Vercel 的业务入口已经收敛：认证、租户授权、家谱数据、媒体和图片解析均执行同一套 handler。Express 不再保留旧版认证、家谱或图片解析业务实现。
 
 ## 技术栈
@@ -205,6 +207,7 @@ family_tree/
 | POST             | `/api/family-data/save`           | 保存家谱数据的兼容入口         |
 | GET/POST         | `/api/tenants`                    | 获取或创建租户                 |
 | GET/PATCH/DELETE | `/api/tenants/:tenantId`          | 获取、更新隐私设置或删除租户   |
+| GET              | `/api/admin/analytics`            | 管理员数据分析汇总             |
 | POST             | `/api/people`                     | 在家谱中增量新增人物           |
 | GET/PATCH        | `/api/people/:personId`           | 读取或增量修改人物             |
 | POST             | `/api/tencent/image-parse`        | 大模型解析纸质家谱照片候选     |

@@ -6,9 +6,11 @@ import React, {
   useMemo,
 } from "react";
 import { ReactFlowProvider } from "reactflow";
+import { ShareAltOutlined } from "@ant-design/icons";
 import FamilyTreeFlow from "../FamilyTreeFlow.js";
 import FamilyJourneyPlayer from "../FamilyJourneyPlayer.js";
 import AppLayout from "../Layout/AppLayout.js";
+import SharePosterModal from "../Sharing/SharePosterModal.js";
 import { Button } from "antd";
 import "./FamilyTreePage.css";
 import tenantService from "../../services/tenantService.js";
@@ -33,6 +35,7 @@ const FamilyTreePage = ({
   // 状态管理
   const [nodes, setNodes] = useState([]);
   const [statistics, setStatistics] = useState(null);
+  const [shareOpen, setShareOpen] = useState(false);
   const [showMobileWelcome, setShowMobileWelcome] = useState(
     () =>
       typeof window !== "undefined" &&
@@ -63,6 +66,8 @@ const FamilyTreePage = ({
     isDemoFamily ||
     !localStorage.getItem("token") ||
     paternalOnboarding.complete;
+  const canShareFamily =
+    !isDemoFamily && Boolean(localStorage.getItem("token")) && familyData.length > 0;
   const currentJourneyStep = useMemo(() => {
     if (!journey.steps.length) return null;
     return (
@@ -244,7 +249,7 @@ const FamilyTreePage = ({
         )}
 
         <section
-          className={`family-context-bar ${showContextAction ? "" : "family-context-bar--compact"}`}
+          className={`family-context-bar ${showContextAction || canShareFamily ? "" : "family-context-bar--compact"}`}
           aria-label="当前家谱信息"
         >
           <div className="family-context-copy">
@@ -267,9 +272,18 @@ const FamilyTreePage = ({
               <p>先记下一位家人，之后再补充父母、祖辈和家族故事。</p>
             </div>
           )}
-          {showContextAction && (
+          {(showContextAction || canShareFamily) && (
             <div className="family-context-actions">
-              {isDemoFamily ? (
+              {canShareFamily && (
+                <Button
+                  icon={<ShareAltOutlined />}
+                  className="family-share-btn"
+                  onClick={() => setShareOpen(true)}
+                >
+                  分享家谱
+                </Button>
+              )}
+              {showContextAction && (isDemoFamily ? (
                 <Button
                   type="primary"
                   onClick={handleCreateMyFamilyTree}
@@ -296,7 +310,7 @@ const FamilyTreePage = ({
                 >
                   续录族人
                 </Button>
-              )}
+              ))}
             </div>
           )}
         </section>
@@ -454,6 +468,14 @@ const FamilyTreePage = ({
             />
           </ReactFlowProvider>
         </div>
+
+        <SharePosterModal
+          open={shareOpen}
+          onClose={() => setShareOpen(false)}
+          kind="family"
+          familyName={familyName}
+          familyData={familyData}
+        />
       </div>
     </AppLayout>
   );
