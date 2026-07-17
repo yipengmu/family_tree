@@ -574,9 +574,10 @@ const drawFamilyTreePreview = (context, model, startY) => {
       context.fillStyle = COLORS.inkSoft;
       context.font = `20px ${FONT_SANS}`;
       context.fillText("家谱成员", position.x + 24, position.y + 74);
-      if (rowIndex === 0) {
-        drawCrown(context, position.x + position.width / 2, position.y - 8, 15);
-      }
+      // 皇冠已移除，保持界面清爽
+      // if (rowIndex === 0) {
+      //   drawCrown(context, position.x + position.width / 2, position.y - 8, 15);
+      // }
     });
   });
 
@@ -635,18 +636,69 @@ export const renderFamilyPoster = async (options) => {
   context.font = `24px ${FONT_SANS}`;
   context.fillText("从你的名字开始，看见家人如何连成一棵树", 72, 326);
 
-  roundRect(context, 72, 370, 936, 160, 28, COLORS.pine);
-  context.fillStyle = "#fffdf8";
+  // 国风人数卡片：淡青绿渐变底纹 + 微妙纹理
+  const cardX = 72;
+  const cardY = 360;
+  const cardW = 936;
+  const cardH = 170;
+
+  // 绘制圆角矩形作为基础
+  traceRoundRect(context, cardX, cardY, cardW, cardH, 28);
+
+  // 淡青绿渐变背景（国风色调）
+  const bgGrad = context.createLinearGradient(cardX, cardY, cardX + cardW, cardY + cardH);
+  bgGrad.addColorStop(0, "#e8f0ec");
+  bgGrad.addColorStop(0.5, "#dce8e2");
+  bgGrad.addColorStop(1, "#d0e0d8");
+  context.fillStyle = bgGrad;
+  context.fill();
+
+  // 微妙的竖条纹纹理（宣纸质感）
+  context.save();
+  context.globalAlpha = 0.04;
+  for (let i = 0; i < cardW; i += 3) {
+    if (i % 12 === 0) {
+      context.strokeStyle = "#184f43";
+      context.lineWidth = 1;
+      context.beginPath();
+      context.moveTo(cardX + i, cardY);
+      context.lineTo(cardX + i, cardY + cardH);
+      context.stroke();
+    }
+  }
+  context.restore();
+
+  // 左侧装饰条（深绿）
+  context.fillStyle = COLORS.pine;
+  context.beginPath();
+  context.roundRect(cardX, cardY, 6, cardH, [28, 0, 0, 28]);
+  context.fill();
+
+  // 右上角微妙的云纹装饰
+  context.save();
+  context.globalAlpha = 0.08;
+  context.fillStyle = COLORS.pine;
+  context.beginPath();
+  context.arc(cardX + cardW - 80, cardY + 40, 35, 0, Math.PI * 2);
+  context.arc(cardX + cardW - 40, cardY + 55, 25, 0, Math.PI * 2);
+  context.arc(cardX + cardW - 100, cardY + 60, 20, 0, Math.PI * 2);
+  context.fill();
+  context.restore();
+
+  // 文字内容 - 主标题
+  context.fillStyle = COLORS.pine;
   context.font = `600 46px ${FONT_SERIF}`;
-  context.fillText(`${model.memberCount} 位家人`, 116, 448);
-  context.fillStyle = "rgba(255,253,248,0.72)";
+  context.fillText(`${model.memberCount} 位家人`, cardX + 40, cardY + 78);
+
+  // 副标题
+  context.fillStyle = "rgba(24,79,67,0.68)";
   context.font = `26px ${FONT_SANS}`;
   context.fillText(
     model.generationCount
       ? `${model.generationCount} 代相承 · 我们仍在持续补充`
       : "每一个名字，都值得被记住",
-    116,
-    494,
+    cardX + 40,
+    cardY + 124,
   );
 
   context.fillStyle = COLORS.inkSoft;

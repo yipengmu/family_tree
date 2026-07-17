@@ -8,7 +8,7 @@
   overflow: visible;
 }
 
-/* 参考人物档案页：无边框、低干扰，并随分享页内容一起滚动。 */
+/* 返回按钮：无边界、低干扰，融合在页面背景中 */
 .family-share-back-top {
   position: absolute;
   top: calc(14px + env(safe-area-inset-top));
@@ -17,16 +17,13 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  border: 0;
+  border: none;
   min-height: 40px;
   padding: 0 13px;
-  border: 1px solid rgba(216, 205, 187, 0.8);
-  background: rgba(255, 253, 248, 0.78);
+  background: transparent;
   cursor: pointer;
   font-size: 15px;
   color: #766554;
-  backdrop-filter: blur(8px);
-  border-radius: 8px;
   transition: all 0.2s ease;
 }
 
@@ -110,60 +107,6 @@
   font-size: 12px;
 }
 
-.family-share-tip {
-  text-align: center;
-  margin: 0;
-  color: #9e9282;
-  font-size: 12px;
-}
-
-/* 按钮区域 */
-.family-share-buttons {
-  display: flex;
-  gap: 12px;
-}
-
-.family-share-buttons .ant-btn {
-  flex: 1;
-  min-height: 46px;
-  font-size: 15px;
-  font-weight: 550;
-  border-radius: 10px;
-}
-
-.family-share-btn-save {
-  background: #fff;
-  border-color: #d4cabb;
-  color: #5a5044;
-}
-
-.family-share-btn-save:hover:not(:disabled) {
-  border-color: #b8a99a !important;
-  color: #3d352c !important;
-}
-
-.family-share-btn-save:active:not(:disabled) {
-  background: #f5f1ea !important;
-}
-
-.family-share-btn-share,
-.family-share-btn-share span {
-  background: linear-gradient(135deg, #4a6741 0%, #3d5636 100%);
-  border-color: transparent;
-  color: #f5f0e8;
-}
-
-.family-share-btn-share:hover:not(:disabled),
-.family-share-btn-share:hover:not(:disabled) span {
-  opacity: 0.9 !important;
-  color: #ffffff !important;
-}
-
-.family-share-btn-share:active:not(:disabled),
-.family-share-btn-share:active:not(:disabled) span {
-  color: #f5f0e8 !important;
-}
-
 .family-share-actions span {
   color: #756b5d;
   font-size: 13px;
@@ -203,15 +146,5 @@
 
   .action-hint-divider {
     font-size: 11px;
-  }
-
-  .family-share-tip {
-    font-size: 11px;
-  }
-
-  .family-share-buttons .ant-btn {
-    min-height: 48px;
-    font-size: 15px;
-    border-radius: 10px;
   }
 }
