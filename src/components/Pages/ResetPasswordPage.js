@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { LockOutlined, MailOutlined } from "@ant-design/icons";
-import { Button, Col, Form, Input, message, Row } from "antd";
+import { LockOutlined, MailOutlined, PhoneOutlined } from "@ant-design/icons";
+import { Button, Col, Form, Input, message, Row, Segmented } from "antd";
 import { useLocation, useNavigate } from "react-router-dom";
 import AuthService from "../../services/authService.js";
 import AuthPageLayout from "./AuthPageLayout.js";
@@ -12,6 +12,9 @@ const ResetPasswordPage = () => {
   const [countdown, setCountdown] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
+  const [mode, setMode] = useState(
+    location.state?.mode === "email" ? "email" : "phone",
+  );
 
   const startCountdown = () => {
     setCountdown(60);
@@ -28,10 +31,14 @@ const ResetPasswordPage = () => {
 
   const sendResetCode = async () => {
     try {
-      await form.validateFields(["email"]);
-      const email = form.getFieldValue("email").trim().toLowerCase();
+      const fieldName = mode === "phone" ? "phone" : "email";
+      await form.validateFields([fieldName]);
+      const account = form.getFieldValue(fieldName).trim().toLowerCase();
       setCodeLoading(true);
-      const result = await AuthService.sendVerificationCode(email, "reset");
+      const result =
+        mode === "phone"
+          ? await AuthService.sendPhoneCode(account, "reset")
+          : await AuthService.sendVerificationCode(account, "reset");
       if (result.success) {
         message.success(result.message || "验证码已发送，请查收邮件");
         startCountdown();
@@ -51,7 +58,7 @@ const ResetPasswordPage = () => {
     setLoading(true);
     try {
       const result = await AuthService.resetPassword(
-        values.email,
+        mode === "phone" ? values.phone : values.email,
         values.code,
         values.newPassword,
       );
@@ -71,7 +78,7 @@ const ResetPasswordPage = () => {
       backLabel="返回登录"
       onBack={() => navigate("/login")}
       title="找回密码"
-      subtitle="通过注册邮箱验证后设置新密码"
+      subtitle="验证账号归属后设置新密码"
     >
       <Form
         form={form}
@@ -79,19 +86,50 @@ const ResetPasswordPage = () => {
         onFinish={handleReset}
         autoComplete="off"
       >
-        <Form.Item
-          name="email"
-          rules={[
-            { required: true, message: "请输入您的邮箱!" },
-            { type: "email", message: "请输入有效的邮箱地址!" },
+        <Segmented
+          block
+          className="login-mode-tabs"
+          value={mode}
+          onChange={(value) => {
+            setMode(value);
+            form.setFieldsValue({ code: "" });
+          }}
+          options={[
+            { label: "手机号", value: "phone" },
+            { label: "邮箱", value: "email" },
           ]}
-        >
-          <Input
-            prefix={<MailOutlined />}
-            placeholder="邮箱地址"
-            size="large"
-          />
-        </Form.Item>
+        />
+
+        {mode === "phone" ? (
+          <Form.Item
+            name="phone"
+            rules={[
+              { required: true, message: "请输入手机号" },
+              { pattern: /^1[3-9]\d{9}$/, message: "请输入有效的手机号" },
+            ]}
+          >
+            <Input
+              prefix={<PhoneOutlined />}
+              placeholder="手机号"
+              size="large"
+              inputMode="tel"
+            />
+          </Form.Item>
+        ) : (
+          <Form.Item
+            name="email"
+            rules={[
+              { required: true, message: "请输入您的邮箱" },
+              { type: "email", message: "请输入有效的邮箱地址" },
+            ]}
+          >
+            <Input
+              prefix={<MailOutlined />}
+              placeholder="邮箱地址"
+              size="large"
+            />
+          </Form.Item>
+        )}
 
         <Form.Item
           name="code"
@@ -102,11 +140,7 @@ const ResetPasswordPage = () => {
         >
           <Row gutter={8}>
             <Col span={16}>
-              <Input
-                placeholder="邮箱验证码"
-                size="large"
-                inputMode="numeric"
-              />
+              <Input placeholder="验证码" size="large" inputMode="numeric" />
             </Col>
             <Col span={8}>
               <Button

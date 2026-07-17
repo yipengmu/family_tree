@@ -30,7 +30,7 @@
 - 穆氏示范家谱支持从明代至当代的代际展开动画，可暂停、拖动时间轴和回到全景。
 - 姓名/职位/地点搜索、代数筛选、智能折叠和移动端适配。
 - 游客只读浏览“穆氏示范家谱”。
-- 邮箱验证码注册、密码找回、密码重置、登录、JWT 会话和个人资料读取。
+- 手机号验证码注册、手机号或邮箱密码登录、密码找回与重置、JWT 会话和个人资料读取。
 - 新用户可从示范家谱进入注册；空家谱使用两步向导，先录入本人，再补充父亲或一位长辈，保存后直接查看第一份家谱。
 - 已连接本人和父亲后，移动端按 `2/4 → 3/4 → 4/4` 逐代引导补充祖父、曾祖父；不知道姓名时可建立“姓名待考”关系节点，生存状态默认待确认，每次保存后立即回到家谱查看树的生长。
 - 用户与家谱空间的真实归属关系，Owner/Editor/Contributor/Viewer 角色基础。
@@ -141,7 +141,7 @@ TENCENT_SES_SUBJECT=家谱创作工具验证码
 
 ### 阿里云手机号验证码配置
 
-手机号登录使用阿里云号码认证服务的短信认证 API。请为服务端创建最小权限 RAM 用户，并在 Vercel Production/Preview 环境配置：
+手机号注册与密码找回使用阿里云号码认证服务的短信认证 API；正常登录只使用手机号和密码。请为服务端创建最小权限 RAM 用户，并在 Vercel Production/Preview 环境配置：
 
 ```bash
 ALIBABA_CLOUD_ACCESS_KEY_ID=阿里云RAM用户AccessKeyId
@@ -191,30 +191,29 @@ family_tree/
 
 ## 主要 API
 
-| 方法             | 路径                              | 说明                         |
-| ---------------- | --------------------------------- | ---------------------------- |
-| POST             | `/api/auth/register`              | 注册并返回 JWT               |
-| POST             | `/api/auth/login`                 | 登录并返回 JWT               |
-| POST             | `/api/auth/send-code`             | 发送邮箱验证码               |
-| POST             | `/api/auth/verify-code`           | 校验验证码                   |
-| POST             | `/api/auth?type=phone-send-code` | 发送手机号验证码             |
-| POST             | `/api/auth?type=phone-verify`    | 校验手机号验证码并登录/注册   |
-| POST             | `/api/auth/reset-password`        | 使用邮箱验证码重置密码       |
-| GET              | `/api/user/profile`               | 获取当前用户资料             |
-| GET              | `/api/family-data`                | 读取默认或租户家谱数据       |
-| POST             | `/api/family-data`                | 保存租户家谱数据             |
-| POST             | `/api/family-data/save`           | 保存家谱数据的兼容入口       |
-| GET/POST         | `/api/tenants`                    | 获取或创建租户               |
-| GET/PATCH/DELETE | `/api/tenants/:tenantId`          | 获取、更新隐私设置或删除租户 |
-| POST             | `/api/people`                     | 在家谱中增量新增人物         |
-| GET/PATCH        | `/api/people/:personId`           | 读取或增量修改人物           |
-| POST             | `/api/tencent/image-parse`        | 大模型解析纸质家谱照片候选   |
-| GET              | `/api/people/:personId/events`    | 读取人物生平纪事             |
-| POST             | `/api/people/:personId/memories`  | 保存人物档案原始材料         |
-| GET/PATCH        | `/api/memories/:memoryId`         | 读取或修订档案草稿           |
-| POST             | `/api/memories/:memoryId/publish` | 人工确认后发布纪事           |
-| POST             | `/api/memories/:memoryId/process` | AI/ASR 整理档案草稿          |
-| GET              | `/api/health`                     | API 健康检查                 |
+| 方法             | 路径                              | 说明                           |
+| ---------------- | --------------------------------- | ------------------------------ |
+| POST             | `/api/auth/register`              | 手机号验证码注册并设置密码     |
+| POST             | `/api/auth/login`                 | 手机号或邮箱加密码登录         |
+| POST             | `/api/auth/send-code`             | 发送邮箱验证码                 |
+| POST             | `/api/auth/verify-code`           | 校验验证码                     |
+| POST             | `/api/auth?type=phone-send-code`  | 发送注册或找回手机号验证码     |
+| POST             | `/api/auth/reset-password`        | 使用手机号或邮箱验证码重置密码 |
+| GET              | `/api/user/profile`               | 获取当前用户资料               |
+| GET              | `/api/family-data`                | 读取默认或租户家谱数据         |
+| POST             | `/api/family-data`                | 保存租户家谱数据               |
+| POST             | `/api/family-data/save`           | 保存家谱数据的兼容入口         |
+| GET/POST         | `/api/tenants`                    | 获取或创建租户                 |
+| GET/PATCH/DELETE | `/api/tenants/:tenantId`          | 获取、更新隐私设置或删除租户   |
+| POST             | `/api/people`                     | 在家谱中增量新增人物           |
+| GET/PATCH        | `/api/people/:personId`           | 读取或增量修改人物             |
+| POST             | `/api/tencent/image-parse`        | 大模型解析纸质家谱照片候选     |
+| GET              | `/api/people/:personId/events`    | 读取人物生平纪事               |
+| POST             | `/api/people/:personId/memories`  | 保存人物档案原始材料           |
+| GET/PATCH        | `/api/memories/:memoryId`         | 读取或修订档案草稿             |
+| POST             | `/api/memories/:memoryId/publish` | 人工确认后发布纪事             |
+| POST             | `/api/memories/:memoryId/process` | AI/ASR 整理档案草稿            |
+| GET              | `/api/health`                     | API 健康检查                   |
 
 ## 当前产品边界与下一阶段
 

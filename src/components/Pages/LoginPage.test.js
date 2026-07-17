@@ -9,7 +9,7 @@ describe("login account history", () => {
 
   test("remembers the account only inside the successful login branch", () => {
     expect(loginPageSource).toMatch(
-      /if \(result\.success\) \{[\s\S]*?rememberLoginAccount\(result\.user\?\.email \|\| values\.email\)/,
+      /if \(result\.success\) \{[\s\S]*?if \(mode === "email"\) \{[\s\S]*?rememberLoginAccount\(account\)/,
     );
   });
 
@@ -22,5 +22,15 @@ describe("login account history", () => {
 
   test("tells users that passwords are never saved in account history", () => {
     expect(loginPageSource).toContain("仅保存邮箱，不保存密码");
+  });
+
+  test("uses password login for both phone and email without a code field", () => {
+    expect(loginPageSource).toContain('const account = mode === "phone"');
+    expect(loginPageSource).toContain(
+      "AuthService.login(account, values.password)",
+    );
+    expect(loginPageSource).not.toContain('name="phoneCode"');
+    expect(loginPageSource).not.toContain("获取验证码");
+    expect(loginPageSource).toContain("忘记密码？");
   });
 });

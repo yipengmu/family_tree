@@ -251,6 +251,35 @@
   margin-bottom: 8px;
 }
 
+.login-mode-tabs.ant-segmented {
+  margin-bottom: 20px;
+  padding: 3px;
+  border-radius: 11px;
+  background: rgba(35, 53, 47, 0.06);
+}
+
+.login-mode-tabs .ant-segmented-item {
+  min-height: 40px;
+  border-radius: 8px;
+  color: var(--ink-soft);
+  font-size: 15px;
+  line-height: 1;
+}
+
+.login-mode-tabs .ant-segmented-item-label {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.login-mode-tabs .ant-segmented-item-selected {
+  color: var(--ink);
+  background: #fffefb;
+  box-shadow: 0 4px 14px rgba(35, 53, 47, 0.08);
+}
+
 .auth-card .ant-input-affix-wrapper,
 .auth-card .ant-input,
 .auth-card .ant-btn-lg {
@@ -268,6 +297,37 @@
 .auth-card .ant-input-affix-wrapper,
 .auth-card .ant-input {
   background: #fffefb;
+}
+
+.phone-code-field .ant-input-affix-wrapper {
+  padding-right: 8px;
+}
+
+.phone-code-field .ant-input-suffix {
+  margin-left: 12px;
+}
+
+.auth-card .phone-code-button.ant-btn-link,
+.auth-card .login-forgot-link.ant-btn-link {
+  height: 34px;
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 8px;
+  color: var(--cinnabar);
+  font-size: 13px;
+  line-height: 34px;
+  white-space: nowrap;
+}
+
+.auth-card .phone-code-button.ant-btn-link:hover,
+.auth-card .login-forgot-link.ant-btn-link:hover {
+  background: rgba(166, 70, 50, 0.08);
+  color: var(--cinnabar);
+}
+
+.auth-card .phone-code-button.ant-btn-link:disabled {
+  color: var(--ink-soft);
+  background: rgba(35, 53, 47, 0.05);
 }
 
 .login-account-field .ant-select {
@@ -308,11 +368,14 @@
   line-height: 1.5;
 }
 
-.auth-card .login-account-history-note .ant-btn-link,
-.login-forgot-link {
-  min-height: 28px;
+.auth-card .login-account-history-note .ant-btn-link {
   flex: 0 0 auto;
-  font-size: 12px;
+}
+
+.login-account-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .login-account-option {
@@ -467,6 +530,15 @@
 
   .auth-card .ant-form-item {
     margin-bottom: 15px;
+  }
+
+  .login-mode-tabs.ant-segmented {
+    margin-bottom: 18px;
+  }
+
+  .auth-card .phone-code-button.ant-btn-link {
+    padding-inline: 8px;
+    font-size: 12px;
   }
 }
 

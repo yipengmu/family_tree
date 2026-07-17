@@ -10,43 +10,25 @@ class AuthService {
     );
   }
 
-  static async sendPhoneCode(phone) {
-    const response = await fetch(`${this.getApiBaseUrl()}/api/auth?type=phone-send-code`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "omit",
-      cache: "no-store",
-      body: JSON.stringify({ phone }),
-    });
+  static async sendPhoneCode(phone, purpose = "register") {
+    const response = await fetch(
+      `${this.getApiBaseUrl()}/api/auth?type=phone-send-code`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "omit",
+        cache: "no-store",
+        body: JSON.stringify({ phone, purpose }),
+      },
+    );
     const data = await response.json().catch(() => ({}));
-    return response.ok ? data : { success: false, error: data.error || `HTTP ${response.status}` };
-  }
-
-  static async phoneLogin(phone, code) {
-    const response = await fetch(`${this.getApiBaseUrl()}/api/auth?type=phone-verify`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "omit",
-      cache: "no-store",
-      body: JSON.stringify({ phone, code }),
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok || !data.success) {
-      return { success: false, error: data.error || `HTTP ${response.status}` };
-    }
-    localStorage.setItem("token", data.token);
-    localStorage.setItem("user", JSON.stringify(data.user));
-    if (data.tenant) {
-      localStorage.setItem("current_tenant", JSON.stringify(data.tenant));
-      cacheManager.set("current_tenant", data.tenant, 3600);
-    }
-    localStorage.removeItem("guest_mode");
-    identifyUser(data.user);
-    return data;
+    return response.ok
+      ? data
+      : { success: false, error: data.error || `HTTP ${response.status}` };
   }
 
   // 登录
-  static async login(email, password) {
+  static async login(account, password) {
     try {
       // 在Vercel部署中，API端点可能需要调整
       // 在Vercel部署中，API端点可能需要调整
@@ -65,7 +47,7 @@ class AuthService {
         credentials: "omit", // omit cookies to avoid oversized request headers
         cache: "no-store",
         body: JSON.stringify({
-          email: email.trim().toLowerCase(),
+          account: account.trim().toLowerCase(),
           password,
         }),
       });
@@ -164,7 +146,7 @@ class AuthService {
         cache: "no-store",
         body: JSON.stringify({
           name,
-          email: email.trim().toLowerCase(),
+          email: (email || "").trim().toLowerCase(),
           password,
           code,
         }),
@@ -224,6 +206,45 @@ class AuthService {
       }
     } catch (error) {
       console.error("注册失败:", error);
+      return { success: false, error: "注册失败，请检查网络连接" };
+    }
+  }
+
+  static async registerPhone(phone, code, password, email = "") {
+    try {
+      const response = await fetch(
+        `${this.getApiBaseUrl()}/api/auth/register`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "omit",
+          cache: "no-store",
+          body: JSON.stringify({
+            phone: phone.trim(),
+            code,
+            password,
+            email: email.trim().toLowerCase(),
+          }),
+        },
+      );
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.success) {
+        return {
+          success: false,
+          error: data.error || `HTTP ${response.status}`,
+        };
+      }
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+      if (data.tenant) {
+        localStorage.setItem("current_tenant", JSON.stringify(data.tenant));
+        cacheManager.set("current_tenant", data.tenant, 3600);
+      }
+      localStorage.removeItem("guest_mode");
+      identifyUser(data.user);
+      return data;
+    } catch (error) {
+      console.error("手机号注册失败:", error);
       return { success: false, error: "注册失败，请检查网络连接" };
     }
   }
@@ -302,7 +323,7 @@ class AuthService {
   }
 
   // 使用邮箱验证码重置密码
-  static async resetPassword(email, code, newPassword) {
+  static async resetPassword(account, code, newPassword) {
     try {
       const baseUrl =
         process.env.REACT_APP_API_BASE_URL ||
@@ -315,7 +336,7 @@ class AuthService {
         credentials: "omit",
         cache: "no-store",
         body: JSON.stringify({
-          email: email.trim().toLowerCase(),
+          account: account.trim().toLowerCase(),
           code,
           newPassword,
         }),

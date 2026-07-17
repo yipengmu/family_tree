@@ -3,13 +3,17 @@ import {
   Form,
   Input,
   Button,
+  Checkbox,
   message,
-  Row,
-  Col,
   Typography,
   Divider,
 } from "antd";
-import { UserOutlined, LockOutlined, MailOutlined } from "@ant-design/icons";
+import {
+  LockOutlined,
+  MailOutlined,
+  PhoneOutlined,
+  SafetyCertificateOutlined,
+} from "@ant-design/icons";
 import { useLocation, useNavigate } from "react-router-dom";
 import AuthService from "../../services/authService.js";
 import tenantService from "../../services/tenantService.js";
@@ -27,26 +31,13 @@ const RegisterPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // 发送验证码
   const sendVerificationCode = async () => {
     try {
-      await form.validateFields(["email"]);
-      const email = form.getFieldValue("email")?.trim().toLowerCase();
-      if (!email) {
-        message.error("请先输入邮箱地址");
-        return;
-      }
-
-      // 验证邮箱格式
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(email)) {
-        message.error("请输入有效的邮箱地址");
-        return;
-      }
+      await form.validateFields(["phone", "privacyConsent"]);
+      const phone = form.getFieldValue("phone")?.trim();
 
       setCodeLoading(true);
-
-      const result = await AuthService.sendVerificationCode(email, "register");
+      const result = await AuthService.sendPhoneCode(phone, "register");
 
       if (result.success) {
         message.success(result.message);
@@ -72,21 +63,19 @@ const RegisterPage = () => {
     }
   };
 
-  // 处理注册
   const handleRegister = async (values) => {
     setLoading(true);
     try {
-      const result = await AuthService.register(
-        values.name,
-        values.email,
-        values.password,
+      const result = await AuthService.registerPhone(
+        values.phone,
         values.code,
+        values.password,
+        values.email,
       );
 
       if (result.success) {
         message.success("注册成功");
         trackEvent("registration_complete", { source: "register-page" });
-        // 注册接口会返回用户自己的家谱空间；立即切换租户并通知主应用，避免继续读写示例家谱。
         if (result.tenant) tenantService.setCurrentTenant(result.tenant);
         navigate(location.state?.returnTo || "/app/create", { replace: true });
       } else {
@@ -114,7 +103,7 @@ const RegisterPage = () => {
       backLabel="返回"
       onBack={handleBack}
       title={BRAND.tagline}
-      subtitle="此刻，从我开始记录"
+      subtitle="验证手机号并设置登录密码"
       footer={
         <>
           <Text>已有账号？</Text>
@@ -127,100 +116,116 @@ const RegisterPage = () => {
       <Form
         form={form}
         name="register_form"
-        initialValues={{ remember: true }}
+        initialValues={{ privacyConsent: false }}
         onFinish={handleRegister}
         autoComplete="off"
       >
-
         <Form.Item
-          name="email"
+          name="phone"
           rules={[
-            {
-              required: true,
-              message: "请输入您的邮箱!",
-            },
-            {
-              type: "email",
-              message: "请输入有效的邮箱地址!",
-            },
+            { required: true, message: "请输入手机号" },
+            { pattern: /^1[3-9]\d{9}$/, message: "请输入有效的手机号" },
           ]}
         >
           <Input
-            prefix={<MailOutlined />}
-            placeholder="邮箱地址"
+            prefix={<PhoneOutlined />}
+            placeholder="手机号"
             size="large"
+            inputMode="tel"
           />
         </Form.Item>
 
         <Form.Item
           name="code"
+          className="phone-code-field"
           rules={[
-            {
-              required: true,
-              message: "请输入验证码!",
-            },
-            {
-              pattern: /^\d{6}$/,
-              message: "请输入6位数字验证码!",
-            },
+            { required: true, message: "请输入验证码" },
+            { pattern: /^\d{6}$/, message: "请输入6位数字验证码" },
           ]}
         >
-          <Row gutter={8}>
-            <Col span={16}>
-              <Input placeholder="验证码" size="large" />
-            </Col>
-            <Col span={8}>
+          <Input
+            prefix={<SafetyCertificateOutlined />}
+            placeholder="验证码"
+            size="large"
+            inputMode="numeric"
+            maxLength={6}
+            suffix={
               <Button
-                block
-                size="large"
+                type="link"
+                className="phone-code-button"
                 onClick={sendVerificationCode}
                 loading={codeLoading}
                 disabled={countdown > 0}
               >
-                {countdown > 0 ? `${countdown}s` : "获取"}
+                {countdown > 0 ? `${countdown}s` : "获取验证码"}
               </Button>
-            </Col>
-          </Row>
-        </Form.Item>
-
-        <Form.Item
-          name="name"
-          rules={[
-            {
-              required: true,
-              message: "请输入您的姓名!",
-            },
-            {
-              max: 50,
-              message: "姓名不能超过50个字符!",
-            },
-          ]}
-        >
-          <Input prefix={<UserOutlined />} placeholder="姓名" size="large" />
+            }
+          />
         </Form.Item>
 
         <Form.Item
           name="password"
           rules={[
-            {
-              required: true,
-              message: "请输入您的密码!",
-            },
-            {
-              min: 6,
-              message: "密码至少需要6个字符!",
-            },
-            {
-              max: 100,
-              message: "密码不能超过100个字符!",
-            },
+            { required: true, message: "请设置登录密码" },
+            { min: 6, max: 100, message: "密码长度需为6至100个字符" },
           ]}
         >
           <Input.Password
             prefix={<LockOutlined />}
-            placeholder="密码"
+            placeholder="设置密码"
             size="large"
           />
+        </Form.Item>
+
+        <Form.Item
+          name="confirmPassword"
+          dependencies={["password"]}
+          rules={[
+            { required: true, message: "请再次输入密码" },
+            ({ getFieldValue }) => ({
+              validator(_, value) {
+                if (!value || getFieldValue("password") === value) {
+                  return Promise.resolve();
+                }
+                return Promise.reject(new Error("两次输入的密码不一致"));
+              },
+            }),
+          ]}
+        >
+          <Input.Password
+            prefix={<LockOutlined />}
+            placeholder="确认密码"
+            size="large"
+          />
+        </Form.Item>
+
+        <Form.Item
+          name="email"
+          extra="选填；完成邮箱验证后可用于邮箱登录和找回密码"
+          rules={[{ type: "email", message: "请输入有效的邮箱地址" }]}
+        >
+          <Input
+            prefix={<MailOutlined />}
+            placeholder="邮箱（选填）"
+            size="large"
+          />
+        </Form.Item>
+
+        <Form.Item
+          name="privacyConsent"
+          valuePropName="checked"
+          rules={[
+            {
+              validator: (_, value) =>
+                value
+                  ? Promise.resolve()
+                  : Promise.reject(new Error("请先确认手机号使用说明")),
+            },
+          ]}
+        >
+          <Checkbox>
+            我同意手机号用于账号验证与安全找回，并由短信服务商完成验证码发送
+          </Checkbox>
         </Form.Item>
 
         <Form.Item>

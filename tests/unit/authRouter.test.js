@@ -55,8 +55,26 @@ test("auth Vercel entry dispatches requests without routeHandler type errors", a
   assert.equal(response.statusCode, 400);
   assert.deepEqual(response.payload, {
     success: false,
-    error: "邮箱和密码都是必需的",
+    error: "请输入有效的手机号或邮箱及密码",
   });
+});
+
+test("normal phone login requires a password and never dispatches an SMS code", async () => {
+  const router = await loadAuthRouter();
+  const response = createResponse();
+
+  await router(
+    {
+      method: "POST",
+      query: { type: "login" },
+      headers: {},
+      body: { account: "13800138000" },
+    },
+    response,
+  );
+
+  assert.equal(response.statusCode, 400);
+  assert.equal(response.payload.error, "请输入有效的手机号或邮箱及密码");
 });
 
 test("auth Vercel entry exposes the password reset action", async () => {
@@ -64,7 +82,12 @@ test("auth Vercel entry exposes the password reset action", async () => {
   const response = createResponse();
 
   await router(
-    { method: "POST", query: { type: "reset-password" }, headers: {}, body: {} },
+    {
+      method: "POST",
+      query: { type: "reset-password" },
+      headers: {},
+      body: {},
+    },
     response,
   );
 
