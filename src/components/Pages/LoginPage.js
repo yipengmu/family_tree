@@ -14,7 +14,6 @@ import {
   LockOutlined,
   MailOutlined,
   PhoneOutlined,
-  SafetyCertificateOutlined,
 } from "@ant-design/icons";
 import { useLocation, useNavigate } from "react-router-dom";
 import AuthService from "../../services/authService.js";
@@ -31,8 +30,6 @@ const LoginPage = () => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [mode, setMode] = useState("phone");
-  const [phoneCodeLoading, setPhoneCodeLoading] = useState(false);
-  const [phoneCountdown, setPhoneCountdown] = useState(0);
   const [loginAccounts, setLoginAccounts] = useState(() =>
     getLoginAccountHistory(),
   );
@@ -53,12 +50,15 @@ const LoginPage = () => {
   const handleLogin = async (values) => {
     setLoading(true);
     try {
-      const result = await AuthService.login(values.email, values.password);
+      const account = mode === "phone" ? values.phone : values.email;
+      const result = await AuthService.login(account, values.password);
 
       if (result.success) {
-        setLoginAccounts(
-          rememberLoginAccount(result.user?.email || values.email),
-        );
+        if (mode === "email") {
+          setLoginAccounts(
+            rememberLoginAccount(result.user?.email || values.email),
+          );
+        }
         message.success("登录成功");
         trackEvent("login_complete", { source: "login-page" });
         navigate(location.state?.returnTo || "/app", { replace: true });
@@ -68,56 +68,6 @@ const LoginPage = () => {
     } catch (error) {
       console.error("登录失败:", error);
       message.error("登录失败，请检查网络连接");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handlePhoneCode = async () => {
-    const phone = form.getFieldValue("phone")?.trim();
-    if (!/^1[3-9]\d{9}$/.test(phone || "")) {
-      message.error("请输入有效的手机号");
-      return;
-    }
-    setPhoneCodeLoading(true);
-    try {
-      const result = await AuthService.sendPhoneCode(phone);
-      if (!result.success) {
-        message.error(result.error || "验证码发送失败");
-        return;
-      }
-      message.success("验证码已发送");
-      setPhoneCountdown(60);
-      const timer = setInterval(() => {
-        setPhoneCountdown((value) => {
-          if (value <= 1) {
-            clearInterval(timer);
-            return 0;
-          }
-          return value - 1;
-        });
-      }, 1000);
-    } finally {
-      setPhoneCodeLoading(false);
-    }
-  };
-
-  const handlePhoneLogin = async (values) => {
-    setLoading(true);
-    try {
-      const result = await AuthService.phoneLogin(
-        values.phone,
-        values.phoneCode,
-      );
-      if (!result.success) {
-        message.error(result.error || "登录失败");
-        return;
-      }
-      message.success("登录成功");
-      trackEvent("phone_auth_completed", { source: "login-page" });
-      navigate(location.state?.returnTo || "/app/create", { replace: true });
-    } catch (error) {
-      message.error(error.message || "登录失败，请稍后重试");
     } finally {
       setLoading(false);
     }
@@ -154,7 +104,7 @@ const LoginPage = () => {
         form={form}
         name="login_form"
         initialValues={{ remember: true }}
-        onFinish={mode === "phone" ? handlePhoneLogin : handleLogin}
+        onFinish={handleLogin}
         autoComplete="off"
       >
         <Segmented
@@ -181,33 +131,6 @@ const LoginPage = () => {
                 placeholder="手机号"
                 size="large"
                 inputMode="tel"
-              />
-            </Form.Item>
-            <Form.Item
-              name="phoneCode"
-              className="phone-code-field"
-              rules={[
-                { required: true, message: "请输入验证码" },
-                { pattern: /^\d{6}$/, message: "请输入6位验证码" },
-              ]}
-            >
-              <Input
-                prefix={<SafetyCertificateOutlined />}
-                placeholder="验证码"
-                size="large"
-                inputMode="numeric"
-                maxLength={6}
-                suffix={
-                  <Button
-                    type="link"
-                    className="phone-code-button"
-                    onClick={handlePhoneCode}
-                    loading={phoneCodeLoading}
-                    disabled={phoneCountdown > 0}
-                  >
-                    {phoneCountdown > 0 ? `${phoneCountdown}s` : "获取验证码"}
-                  </Button>
-                }
               />
             </Form.Item>
           </>
@@ -248,7 +171,7 @@ const LoginPage = () => {
           </Form.Item>
         ) : null}
 
-        {mode === "email" ? (
+        {mode === "phone" || mode === "email" ? (
           <Form.Item
             name="password"
             rules={[

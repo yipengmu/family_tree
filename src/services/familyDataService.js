@@ -6,6 +6,7 @@
 
 import tenantService from './tenantService.js';
 import dbJson from '../data/familyData.js';
+import cacheManager from '../utils/cacheManager.js';
 
 const CACHE_KEYS = {
   FAMILY_DATA: 'familyData',
@@ -25,6 +26,12 @@ const CACHE_EXPIRY = {
   STATISTICS: 12 * 60 * 60 * 1000,       // 12小时
   PROCESSED_DATA: 6 * 60 * 60 * 1000     // 6小时
 };
+
+// 这份缓存只允许游客使用，避免示范家谱和用户自己的家谱发生任何串扰。
+const GUEST_DEMO_CACHE_KEY = 'guest_demo_family_data';
+const GUEST_DEMO_REFRESH_KEY = 'guest_demo_family_data_refresh_at';
+const GUEST_DEMO_CACHE_EXPIRY = 7 * 24 * 60 * 60 * 1000;
+const GUEST_DEMO_REFRESH_INTERVAL = 24 * 60 * 60 * 1000;
 
 // Neon/Vercel 首次唤醒可能需要几秒，3 秒会把正常冷启动误判为数据库故障。
 export const FAMILY_DATA_REQUEST_TIMEOUT_MS = 15 * 1000;
@@ -169,7 +176,73 @@ class FamilyDataService {
    */
   getCachedFamilyData(tenantId = null) {
     const currentTenantId = tenantId || tenantService.getCurrentTenant().id;
-    return memoryCache.get(getTenantCacheKey(CACHE_KEYS.FAMILY_DATA, currentTenantId));
+    const memoryData = memoryCache.get(getTenantCacheKey(CACHE_KEYS.FAMILY_DATA, currentTenantId));
+    if (memoryData) return memoryData;
+
+    if (this.isGuestDemoContext(currentTenantId)) {
+      const persistedData = cacheManager.get(GUEST_DEMO_CACHE_KEY);
+      if (Array.isArray(persistedData) && persistedData.length > 0) {
+        memoryCache.set(
+          getTenantCacheKey(CACHE_KEYS.FAMILY_DATA, currentTenantId),
+          persistedData,
+          CACHE_EXPIRY.FAMILY_DATA,
+        );
+        return persistedData;
+      }
+    }
+
+    return null;
+  }
+
+  isGuestDemoContext(tenantId) {
+    return (
+      !localStorage.getItem('token') &&
+      (tenantId === 'default' || tenantId === process.env.REACT_APP_DEFAULT_TENANT_ID)
+    );
+  }
+
+  /** 返回游客首屏可立即使用的数据，不发网络请求。 */
+  getGuestDemoSnapshot(tenantId = 'default') {
+    if (!this.isGuestDemoContext(tenantId)) return null;
+
+    const cachedData = this.getCachedFamilyData(tenantId);
+    if (cachedData) return cachedData;
+
+    const snapshot = this.loadOriginalFamilyData(tenantId);
+    if (snapshot.length > 0) this.cacheGuestDemoData(snapshot, tenantId);
+    return snapshot;
+  }
+
+  cacheGuestDemoData(data, tenantId = 'default') {
+    if (!this.isGuestDemoContext(tenantId) || !Array.isArray(data) || data.length === 0) {
+      return;
+    }
+
+    const cacheKey = getTenantCacheKey(CACHE_KEYS.FAMILY_DATA, tenantId);
+    memoryCache.set(cacheKey, data, CACHE_EXPIRY.FAMILY_DATA);
+    cacheManager.set(GUEST_DEMO_CACHE_KEY, data, GUEST_DEMO_CACHE_EXPIRY);
+  }
+
+  /** 游客不等待网络更新，失败时继续使用缓存或内置快照。 */
+  async refreshGuestDemoData(tenantId = 'default') {
+    if (!this.isGuestDemoContext(tenantId)) return null;
+
+    const lastRefreshAt = cacheManager.get(GUEST_DEMO_REFRESH_KEY);
+    if (lastRefreshAt && Date.now() - Number(lastRefreshAt) < GUEST_DEMO_REFRESH_INTERVAL) {
+      return null;
+    }
+
+    try {
+      const latestData = await this.loadFamilyDataFromServer(tenantId);
+      if (Array.isArray(latestData) && latestData.length > 0) {
+        this.cacheGuestDemoData(latestData, tenantId);
+        cacheManager.set(GUEST_DEMO_REFRESH_KEY, Date.now(), GUEST_DEMO_REFRESH_INTERVAL);
+        return latestData;
+      }
+    } catch (error) {
+      console.warn('游客示范家谱后台更新失败，继续使用本地缓存:', error.message);
+    }
+    return null;
   }
 
   /**

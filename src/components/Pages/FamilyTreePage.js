@@ -10,7 +10,6 @@ import { ShareAltOutlined } from "@ant-design/icons";
 import FamilyTreeFlow from "../FamilyTreeFlow.js";
 import FamilyJourneyPlayer from "../FamilyJourneyPlayer.js";
 import AppLayout from "../Layout/AppLayout.js";
-import SharePosterModal from "../Sharing/SharePosterModal.js";
 import { Button } from "antd";
 import "./FamilyTreePage.css";
 import tenantService from "../../services/tenantService.js";
@@ -35,7 +34,6 @@ const FamilyTreePage = ({
   // 状态管理
   const [nodes, setNodes] = useState([]);
   const [statistics, setStatistics] = useState(null);
-  const [shareOpen, setShareOpen] = useState(false);
   const [showMobileWelcome, setShowMobileWelcome] = useState(
     () =>
       typeof window !== "undefined" &&
@@ -280,7 +278,7 @@ const FamilyTreePage = ({
                 <Button
                   icon={<ShareAltOutlined />}
                   className="family-share-btn"
-                  onClick={() => setShareOpen(true)}
+                  onClick={() => onMenuClick?.("share")}
                 >
                   分享家谱
                 </Button>
@@ -471,14 +469,6 @@ const FamilyTreePage = ({
             />
           </ReactFlowProvider>
         </div>
-
-        <SharePosterModal
-          open={shareOpen}
-          onClose={() => setShareOpen(false)}
-          kind="family"
-          familyName={familyName}
-          familyData={familyData}
-        />
       </div>
     </AppLayout>
   );

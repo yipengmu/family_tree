@@ -187,20 +187,27 @@ function SharePosterModal({
       />
 
       <div className="share-poster-preview" aria-live="polite">
-        {generating || !posterUrl ? (
+        {!posterUrl ? (
           <div className="share-poster-loading">
             <Spin size="large" />
             <span>正在排版分享图片…</span>
           </div>
         ) : (
-          <img
-            src={posterUrl}
-            alt={
-              kind === "family"
-                ? `${familyName}分享图片预览`
-                : `${person?.name}人物志分享图片预览`
-            }
-          />
+          <>
+            <img
+              src={posterUrl}
+              alt={
+                kind === "family"
+                  ? `${familyName}分享图片预览`
+                  : `${person?.name}人物志分享图片预览`
+              }
+            />
+            {generating && (
+              <div className="share-poster-refreshing" aria-hidden="true">
+                <Spin />
+              </div>
+            )}
+          </>
         )}
       </div>
       <p className="share-poster-hint">手机端可长按上方图片保存到相册</p>

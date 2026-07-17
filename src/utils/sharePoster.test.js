@@ -24,14 +24,23 @@ describe("share poster privacy model", () => {
       familyName: "穆家家谱",
       familyData: [
         { id: 1, name: "穆一", g_rank: 1, alive: false },
-        { id: 2, name: "穆二", g_rank: 2, alive: true },
-        { id: 3, name: "穆三", g_rank: 2, alive: null },
+        { id: 2, name: "穆二", g_rank: 2, g_father_id: 1, alive: true },
+        { id: 3, name: "穆三", g_rank: 2, g_father_id: 1, alive: null },
       ],
     });
 
     expect(model.familyName).toBe("穆家家谱");
     expect(model.memberCount).toBe(3);
     expect(model.generationCount).toBe(2);
+    expect(model.tree.nodes.map((person) => person.name)).toEqual([
+      "穆一",
+      "穆氏家人",
+      "穆氏家人",
+    ]);
+    expect(model.tree.edges).toEqual([
+      { from: "1", to: "2" },
+      { from: "1", to: "3" },
+    ]);
     expect(model.groups[1].people.map((person) => person.name)).toEqual([
       "穆氏家人",
       "穆氏家人",

@@ -86,4 +86,25 @@ describe("private family data loading", () => {
     expect(localStorage.getItem("current_tenant")).toBeNull();
     expect(localStorage.getItem("tenant_list")).toBeNull();
   });
+
+  test("persists the guest demo snapshot for the next browser visit", () => {
+    localStorage.removeItem("token");
+    const snapshot = [{ id: 1, name: "示例人物", g_rank: 1, g_father_id: 0 }];
+    jest.spyOn(familyDataService, "loadOriginalFamilyData").mockReturnValue(snapshot);
+
+    expect(familyDataService.getGuestDemoSnapshot("default")).toEqual(snapshot);
+
+    familyDataService.clearAllCache();
+    expect(familyDataService.getCachedFamilyData("default")).toEqual(snapshot);
+  });
+
+  test("never reads or writes the guest cache for an authenticated tenant", () => {
+    localStorage.setItem("token", "user-token");
+    const snapshot = [{ id: 1, name: "用户人物", g_rank: 1, g_father_id: 0 }];
+    jest.spyOn(familyDataService, "loadOriginalFamilyData").mockReturnValue(snapshot);
+
+    expect(familyDataService.getGuestDemoSnapshot("default")).toBeNull();
+    expect(familyDataService.getCachedFamilyData("default")).toBeNull();
+    expect(localStorage.getItem("familyTree_guest_demo_family_data")).toBeNull();
+  });
 });

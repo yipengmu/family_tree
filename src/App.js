@@ -7,6 +7,7 @@ import CreatorPage from "./components/Pages/CreatorPage.js";
 import DiscoverPage from "./components/Pages/DiscoverPage.js";
 import PersonProfilePage from "./components/Pages/PersonProfilePage.js";
 import PersonEditPage from "./components/Pages/PersonEditPage.js";
+import FamilySharePage from "./components/Sharing/FamilySharePage.js";
 import familyDataService from "./services/familyDataService.js";
 import tenantService from "./services/tenantService.js";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -155,6 +156,34 @@ function MainApp({ demoMode = false }) {
         const currentTenantId = tenantId || tenantService.getCurrentTenant().id;
         console.log(`📖 [App] 加载家谱数据 - 租户: ${currentTenantId}`);
 
+        // 游客示范谱优先走持久缓存/内置快照，绝不让网络请求阻塞产品入口。
+        // 网络只在后台更新，且该分支不会被已登录用户触发。
+        if (
+          !isAuthenticated() &&
+          familyDataService.isGuestDemoContext(currentTenantId)
+        ) {
+          const snapshot =
+            familyDataService.getGuestDemoSnapshot(currentTenantId);
+          if (snapshot?.length) {
+            setFamilyData(snapshot);
+            setValidationResult(validateFamilyData(snapshot));
+            setLoading(false);
+          }
+
+          void familyDataService
+            .refreshGuestDemoData(currentTenantId)
+            .then((latestData) => {
+              if (
+                latestData &&
+                JSON.stringify(latestData) !== JSON.stringify(snapshot)
+              ) {
+                setFamilyData(latestData);
+                setValidationResult(validateFamilyData(latestData));
+              }
+            });
+          return;
+        }
+
         // 只读取内存缓存；没有缓存时让后续请求直接完成首次加载，避免首屏重复请求。
         const cachedData =
           familyDataService.getCachedFamilyData(currentTenantId);
@@ -191,7 +220,8 @@ function MainApp({ demoMode = false }) {
           return;
         }
         console.error("加载数据失败:", err);
-        const isAuthError = err?.isAuthError || err?.status === 401 || err?.status === 403;
+        const isAuthError =
+          err?.isAuthError || err?.status === 401 || err?.status === 403;
         const errorMessage = isAuthError
           ? "登录状态已过期，请重新登录后继续查看家谱。"
           : err.message;
@@ -326,7 +356,10 @@ function MainApp({ demoMode = false }) {
                   onClick={() =>
                     navigate("/login", {
                       replace: true,
-                      state: { from: location.pathname, returnTo: location.pathname },
+                      state: {
+                        from: location.pathname,
+                        returnTo: location.pathname,
+                      },
                     })
                   }
                 >
@@ -362,6 +395,38 @@ function MainApp({ demoMode = false }) {
             onOpenPersonProfile={openPersonProfile}
             onOpenPersonEdit={openPersonEdit}
             onStartPaternalGuide={startPaternalGuide}
+          />
+        );
+      case "share":
+        if (!isAuthenticated()) {
+          return (
+            <div
+              style={{
+                padding: "40px",
+                textAlign: "center",
+                color: "#64748b",
+                fontSize: "16px",
+              }}
+            >
+              <h2 style={{ color: "#1e293b", marginBottom: "16px" }}>
+                需要登录
+              </h2>
+              <p>分享家谱需要先登录。</p>
+              <Button type="primary" onClick={() => handleMenuClick("login")}>
+                前往登录
+              </Button>
+            </div>
+          );
+        }
+        return (
+          <FamilySharePage
+            familyName={
+              currentTenant?.isDefault
+                ? BRAND.demoFamilyName
+                : currentTenant?.name || "我的家谱"
+            }
+            familyData={familyData}
+            onBack={() => navigate("/app")}
           />
         );
       case "person": {

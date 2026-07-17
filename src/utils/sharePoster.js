@@ -50,6 +50,21 @@ const numericGeneration = (person) => {
   return Number.isFinite(value) && value > 0 ? value : null;
 };
 
+const numericRankIndex = (person) => {
+  const value = Number(person?.rank_index);
+  return Number.isFinite(value) && value > 0 ? value : 999;
+};
+
+const isEmptyRelationId = (value) =>
+  value === undefined ||
+  value === null ||
+  value === "" ||
+  value === 0 ||
+  value === "0";
+
+const getRelationId = (value) =>
+  isEmptyRelationId(value) ? "" : String(value);
+
 const selectGenerationGroups = (groups, limit = 6) => {
   if (groups.length <= limit) return groups;
   const headCount = Math.ceil(limit / 2);
@@ -59,6 +74,92 @@ const selectGenerationGroups = (groups, limit = 6) => {
     { key: "ellipsis", label: "…", people: [], omitted: true },
     ...groups.slice(-tailCount),
   ];
+};
+
+const buildPosterTree = (people, hideProtectedNames) => {
+  const sortedPeople = people
+    .map((person) => ({
+      raw: person,
+      id: getPersonId(person),
+      generation: numericGeneration(person),
+      rankIndex: numericRankIndex(person),
+      fatherId: getRelationId(person?.g_father_id),
+      motherId: getRelationId(person?.g_mother_id),
+    }))
+    .filter((person) => person.id)
+    .sort((left, right) => {
+      if (left.generation === null && right.generation !== null) return 1;
+      if (right.generation === null && left.generation !== null) return -1;
+      if (left.generation !== right.generation) {
+        return (left.generation || 999) - (right.generation || 999);
+      }
+      return left.rankIndex - right.rankIndex;
+    });
+  const byId = new Map(sortedPeople.map((person) => [person.id, person]));
+  const childrenByParent = new Map();
+
+  sortedPeople.forEach((person) => {
+    [person.fatherId, person.motherId].forEach((parentId) => {
+      if (!parentId || !byId.has(parentId)) return;
+      if (!childrenByParent.has(parentId)) childrenByParent.set(parentId, []);
+      childrenByParent.get(parentId).push(person.id);
+    });
+  });
+
+  const roots = sortedPeople.filter(
+    (person) =>
+      (!person.fatherId || !byId.has(person.fatherId)) &&
+      (!person.motherId || !byId.has(person.motherId)),
+  );
+  const queue = roots.length
+    ? roots.map((person) => person.id)
+    : sortedPeople.map((person) => person.id);
+  const selectedIds = [];
+  const selected = new Set();
+
+  while (queue.length && selectedIds.length < 14) {
+    const id = queue.shift();
+    if (!id || selected.has(id) || !byId.has(id)) continue;
+    selected.add(id);
+    selectedIds.push(id);
+    (childrenByParent.get(id) || [])
+      .map((childId) => byId.get(childId))
+      .filter(Boolean)
+      .sort((left, right) => {
+        if (left.generation !== right.generation) {
+          return (left.generation || 999) - (right.generation || 999);
+        }
+        return left.rankIndex - right.rankIndex;
+      })
+      .forEach((child) => queue.push(child.id));
+  }
+
+  const nodes = selectedIds.map((id) => {
+    const person = byId.get(id);
+    return {
+      id,
+      name: getPosterPersonName(person.raw, hideProtectedNames),
+      generation: person.generation,
+      rankIndex: person.rankIndex,
+      gender: person.raw?.sex || person.raw?.gender || "",
+    };
+  });
+  const nodeIds = new Set(nodes.map((node) => node.id));
+  const edges = [];
+  selectedIds.forEach((id) => {
+    const person = byId.get(id);
+    [person.fatherId, person.motherId].forEach((parentId) => {
+      if (parentId && nodeIds.has(parentId)) {
+        edges.push({ from: parentId, to: id });
+      }
+    });
+  });
+
+  return {
+    nodes,
+    edges,
+    omittedCount: Math.max(0, sortedPeople.length - nodes.length),
+  };
 };
 
 export const buildFamilyPosterModel = ({
@@ -108,6 +209,7 @@ export const buildFamilyPosterModel = ({
       people: group.people.slice(0, 4),
       hiddenCount: Math.max(0, group.people.length - 4),
     })),
+    tree: buildPosterTree(people, hideProtectedNames),
     hideProtectedNames,
   };
 };
@@ -338,61 +440,141 @@ const measurePersonPosterHeight = (model) => {
   return Math.min(Math.max(height + 350, 1600), 10500);
 };
 
-const drawFamilyGroups = (context, model, startY) => {
-  let y = startY;
-  model.groups.forEach((group, index) => {
-    if (group.omitted) {
-      context.fillStyle = COLORS.inkSoft;
-      context.font = `32px ${FONT_SERIF}`;
-      context.textAlign = "center";
-      context.fillText("⋮", 130, y + 42);
-      context.textAlign = "left";
-      y += 74;
-      return;
-    }
+const drawFamilyTreePreview = (context, model, startY) => {
+  const tree = model.tree || { nodes: [], edges: [], omittedCount: 0 };
+  if (!tree.nodes.length) {
+    context.fillStyle = COLORS.inkSoft;
+    context.font = `28px ${FONT_SERIF}`;
+    context.fillText("第一位家人，正在等待写进家谱。", 96, startY + 68);
+    return startY + 160;
+  }
 
-    if (index < model.groups.length - 1) {
-      context.strokeStyle = COLORS.gold;
-      context.lineWidth = 3;
-      context.beginPath();
-      context.moveTo(130, y + 64);
-      context.lineTo(130, y + 154);
-      context.stroke();
-    }
+  const groups = Array.from(
+    tree.nodes
+      .reduce((map, node) => {
+        const key =
+          node.generation === null ? "unknown" : String(node.generation);
+        if (!map.has(key)) map.set(key, []);
+        map.get(key).push(node);
+        return map;
+      }, new Map())
+      .entries(),
+  )
+    .sort(([leftKey], [rightKey]) => {
+      if (leftKey === "unknown") return 1;
+      if (rightKey === "unknown") return -1;
+      return Number(leftKey) - Number(rightKey);
+    })
+    .slice(0, 5);
+  const visibleIds = new Set(
+    groups.flatMap(([, nodes]) => nodes.map((node) => node.id)),
+  );
+  const positions = new Map();
+  const treeLeft = 72;
+  const treeWidth = 936;
+  const rowGap = 182;
+  const cardWidth = 238;
+  const cardHeight = 94;
 
-    roundRect(context, 84, y + 18, 92, 92, 46, COLORS.pine);
-    context.fillStyle = "#fffdf8";
-    context.font = `600 26px ${FONT_SERIF}`;
-    context.textAlign = "center";
-    context.fillText(group.generation || "?", 130, y + 75);
-    context.textAlign = "left";
-
-    roundRect(
-      context,
-      214,
-      y,
-      794,
-      132,
-      22,
-      "rgba(255,253,248,0.9)",
-      COLORS.hairline,
-    );
-    context.fillStyle = COLORS.cinnabar;
-    context.font = `600 21px ${FONT_SANS}`;
-    context.fillText(group.label, 246, y + 38);
-    context.fillStyle = COLORS.ink;
-    context.font = `600 30px ${FONT_SERIF}`;
-    const names = group.people.map((person) => person.name).join("　");
-    const suffix = group.hiddenCount ? `　等 ${group.hiddenCount + 4} 位` : "";
-    drawWrappedText(context, `${names}${suffix}`, 246, y + 86, 720, 38, 1);
-    y += 158;
+  groups.forEach(([, nodes], rowIndex) => {
+    const visibleNodes = nodes.slice(0, 3);
+    const gap =
+      (treeWidth - visibleNodes.length * cardWidth) / (visibleNodes.length + 1);
+    visibleNodes.forEach((node, nodeIndex) => {
+      const x = treeLeft + gap + nodeIndex * (cardWidth + gap);
+      const y = startY + rowIndex * rowGap;
+      positions.set(node.id, { x, y, width: cardWidth, height: cardHeight });
+    });
   });
-  return y;
+
+  context.save();
+  context.strokeStyle = "rgba(201,165,95,0.82)";
+  context.lineWidth = 4;
+  tree.edges.forEach((edge) => {
+    if (!visibleIds.has(edge.from) || !visibleIds.has(edge.to)) return;
+    const parent = positions.get(edge.from);
+    const child = positions.get(edge.to);
+    if (!parent || !child) return;
+    const parentX = parent.x + parent.width / 2;
+    const parentY = parent.y + parent.height;
+    const childX = child.x + child.width / 2;
+    const childY = child.y;
+    const midY = parentY + (childY - parentY) / 2;
+    context.beginPath();
+    context.moveTo(parentX, parentY);
+    context.lineTo(parentX, midY);
+    context.lineTo(childX, midY);
+    context.lineTo(childX, childY);
+    context.stroke();
+  });
+  context.restore();
+
+  groups.forEach(([generationKey, nodes], rowIndex) => {
+    const generationLabel =
+      generationKey === "unknown" ? "代际待考" : `第 ${generationKey} 代`;
+    const y = startY + rowIndex * rowGap;
+    context.fillStyle = COLORS.cinnabar;
+    context.font = `600 22px ${FONT_SANS}`;
+    context.fillText(generationLabel, 84, y - 20);
+
+    nodes.slice(0, 3).forEach((node) => {
+      const position = positions.get(node.id);
+      if (!position) return;
+      roundRect(
+        context,
+        position.x,
+        position.y,
+        position.width,
+        position.height,
+        18,
+        "rgba(255,253,248,0.94)",
+        COLORS.hairline,
+      );
+      context.fillStyle = COLORS.pine;
+      context.font = `600 30px ${FONT_SERIF}`;
+      drawWrappedText(
+        context,
+        node.name,
+        position.x + 24,
+        position.y + 42,
+        position.width - 48,
+        36,
+        1,
+      );
+      context.fillStyle = COLORS.inkSoft;
+      context.font = `20px ${FONT_SANS}`;
+      context.fillText("家谱成员", position.x + 24, position.y + 74);
+    });
+  });
+
+  let bottom = startY + groups.length * rowGap - 44;
+  const hiddenInRows = groups.reduce(
+    (sum, [, nodes]) => sum + Math.max(0, nodes.length - 3),
+    0,
+  );
+  const omittedCount = tree.omittedCount + hiddenInRows;
+  if (omittedCount > 0) {
+    context.fillStyle = COLORS.inkSoft;
+    context.font = `24px ${FONT_SANS}`;
+    context.fillText(
+      `另有 ${omittedCount} 位家人留在完整家谱中`,
+      72,
+      bottom + 44,
+    );
+    bottom += 74;
+  }
+  return bottom + 24;
 };
 
 export const renderFamilyPoster = async (options) => {
   const model = buildFamilyPosterModel(options);
-  const height = Math.max(1850, 1200 + model.groups.length * 158);
+  const treeRowCount = Math.max(
+    1,
+    new Set(
+      (model.tree?.nodes || []).map((node) => node.generation ?? "unknown"),
+    ).size,
+  );
+  const height = Math.max(1880, 1280 + Math.min(treeRowCount, 5) * 182);
   const canvas = createCanvas(height);
   const context = canvas.getContext("2d");
   drawPaperBackground(context, height);
@@ -429,7 +611,14 @@ export const renderFamilyPoster = async (options) => {
     690,
   );
 
-  drawFamilyGroups(context, model, 750);
+  context.fillStyle = COLORS.cinnabar;
+  context.font = `600 24px ${FONT_SANS}`;
+  context.fillText("关系预览", 72, 770);
+  context.fillStyle = COLORS.ink;
+  context.font = `600 44px ${FONT_SERIF}`;
+  context.fillText("家人的名字，正在连成一棵树", 72, 834);
+
+  drawFamilyTreePreview(context, model, 930);
   await drawQrFooter(context, height, "也为你的家人，留下一份家谱");
   return canvas.toDataURL("image/png");
 };

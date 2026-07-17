@@ -1,6 +1,13 @@
 export const APP_BASE_PATH = "/app";
 
-const APP_PAGES = new Set(["tree", "create", "settings", "mine", "discover"]);
+const APP_PAGES = new Set([
+  "tree",
+  "create",
+  "settings",
+  "mine",
+  "discover",
+  "share",
+]);
 
 export const getAppPageFromPath = (pathname = "") => {
   const segments = pathname.split("/").filter(Boolean);

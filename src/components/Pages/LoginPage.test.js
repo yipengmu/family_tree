@@ -20,16 +20,17 @@ describe("login account history", () => {
     expect(loginPageSource).toContain("onSelect={handleAccountSelect}");
   });
 
-  test("uses phone code login and email password login", () => {
+  test("uses password login for both phone and email accounts", () => {
+    expect(loginPageSource).toContain("onFinish={handleLogin}");
     expect(loginPageSource).toContain(
-      'onFinish={mode === "phone" ? handlePhoneLogin : handleLogin}',
+      'const account = mode === "phone" ? values.phone : values.email;',
     );
-    expect(loginPageSource).toContain("AuthService.phoneLogin(");
     expect(loginPageSource).toContain(
-      "AuthService.login(values.email, values.password)",
+      "AuthService.login(account, values.password)",
     );
-    expect(loginPageSource).toContain('name="phoneCode"');
-    expect(loginPageSource).toContain("获取验证码");
+    expect(loginPageSource).toContain('name="password"');
+    expect(loginPageSource).not.toContain('name="phoneCode"');
+    expect(loginPageSource).not.toContain("获取验证码");
   });
 
   test("shows password reset from both login modes", () => {
