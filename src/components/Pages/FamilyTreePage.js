@@ -6,7 +6,6 @@ import React, {
   useMemo,
 } from "react";
 import { ReactFlowProvider } from "reactflow";
-import { ShareAltOutlined } from "@ant-design/icons";
 import FamilyTreeFlow from "../FamilyTreeFlow.js";
 import FamilyJourneyPlayer from "../FamilyJourneyPlayer.js";
 import AppLayout from "../Layout/AppLayout.js";
@@ -196,6 +195,8 @@ const FamilyTreePage = ({
       statistics={statistics}
       onSearch={handleSearch}
       onSearchSelect={handleSearchSelect}
+      canShare={canShareFamily}
+      onShare={() => onMenuClick?.("share")}
       demoMode={demoMode}
     >
       <div className="family-tree-page">
@@ -249,14 +250,14 @@ const FamilyTreePage = ({
         )}
 
         <section
-          className={`family-context-bar ${showContextAction || canShareFamily ? "" : "family-context-bar--compact"} ${canShareFamily && !showContextAction ? "family-context-bar--share-only" : ""}`}
+          className={`family-context-bar ${showContextAction ? "" : "family-context-bar--compact"}`}
           aria-label="当前家谱信息"
         >
           <div className="family-context-copy">
             <span className="family-context-kicker">世系总览</span>
             <h1>{familyName}</h1>
             <span className="family-context-meta">
-              {familyData.length || 0} 位族人
+              已显示 {nodes.length || 0}/{statistics?.totalMembers || familyData.length || 0} 位族人
               <i aria-hidden="true" />
               {statistics?.generationCount ||
                 statistics?.totalGenerations ||
@@ -272,46 +273,36 @@ const FamilyTreePage = ({
               <p>先记下一位家人，之后再补充父母、祖辈和家族故事。</p>
             </div>
           )}
-          {(showContextAction || canShareFamily) && (
+          {showContextAction && (
             <div className="family-context-actions">
-              {canShareFamily && (
+              {isDemoFamily ? (
                 <Button
-                  icon={<ShareAltOutlined />}
-                  className="family-share-btn"
-                  onClick={() => onMenuClick?.("share")}
+                  type="primary"
+                  onClick={handleCreateMyFamilyTree}
+                  className="create-family-btn"
                 >
-                  分享家谱
+                  <span className="create-family-btn-eyebrow">
+                    没有纸质家谱，也能
+                  </span>
+                  <span>从自己开始</span>
+                </Button>
+              ) : !localStorage.getItem("token") ? (
+                <Button
+                  type="primary"
+                  onClick={handleCreateMyFamilyTree}
+                  className="create-family-btn"
+                >
+                  创建我的家谱
+                </Button>
+              ) : (
+                <Button
+                  type="primary"
+                  onClick={() => onMenuClick?.("create")}
+                  className="create-family-btn"
+                >
+                  续录族人
                 </Button>
               )}
-              {showContextAction &&
-                (isDemoFamily ? (
-                  <Button
-                    type="primary"
-                    onClick={handleCreateMyFamilyTree}
-                    className="create-family-btn"
-                  >
-                    <span className="create-family-btn-eyebrow">
-                      没有纸质家谱，也能
-                    </span>
-                    <span>从自己开始</span>
-                  </Button>
-                ) : !localStorage.getItem("token") ? (
-                  <Button
-                    type="primary"
-                    onClick={handleCreateMyFamilyTree}
-                    className="create-family-btn"
-                  >
-                    创建我的家谱
-                  </Button>
-                ) : (
-                  <Button
-                    type="primary"
-                    onClick={() => onMenuClick?.("create")}
-                    className="create-family-btn"
-                  >
-                    续录族人
-                  </Button>
-                ))}
             </div>
           )}
         </section>

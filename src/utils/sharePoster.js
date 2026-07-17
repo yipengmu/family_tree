@@ -440,6 +440,41 @@ const measurePersonPosterHeight = (model) => {
   return Math.min(Math.max(height + 350, 1600), 10500);
 };
 
+// 为初祖绘制可爱的小皇冠，金色三尖带宝石样式，与家谱tab的皇冠风格保持一致
+const drawCrown = (context, centerX, bottomY, size = 15) => {
+  const w = size * 2.2;
+  const h = size * 1.2;
+  const left = centerX - w / 2;
+  const bandH = h * 0.42;
+  const bandTop = bottomY - bandH;
+
+  context.save();
+  context.fillStyle = COLORS.gold;
+  context.beginPath();
+  context.moveTo(left, bottomY);
+  context.lineTo(left, bandTop);
+  context.lineTo(left + w * 0.22, bandTop - h * 0.5);
+  context.lineTo(left + w * 0.5, bandTop - h * 0.92);
+  context.lineTo(left + w * 0.78, bandTop - h * 0.5);
+  context.lineTo(left + w, bandTop);
+  context.lineTo(left + w, bottomY);
+  context.closePath();
+  context.fill();
+
+  context.fillStyle = "#fff4d6";
+  const r = Math.max(2.5, size * 0.16);
+  context.beginPath();
+  context.arc(left, bandTop, r, 0, Math.PI * 2);
+  context.fill();
+  context.beginPath();
+  context.arc(left + w * 0.5, bandTop - h * 0.92, r, 0, Math.PI * 2);
+  context.fill();
+  context.beginPath();
+  context.arc(left + w, bandTop, r, 0, Math.PI * 2);
+  context.fill();
+  context.restore();
+};
+
 const drawFamilyTreePreview = (context, model, startY) => {
   const tree = model.tree || { nodes: [], edges: [], omittedCount: 0 };
   if (!tree.nodes.length) {
@@ -544,6 +579,14 @@ const drawFamilyTreePreview = (context, model, startY) => {
       context.fillStyle = COLORS.inkSoft;
       context.font = `20px ${FONT_SANS}`;
       context.fillText("家谱成员", position.x + 24, position.y + 74);
+      if (rowIndex === 0) {
+        drawCrown(
+          context,
+          position.x + position.width / 2,
+          position.y - 8,
+          15,
+        );
+      }
     });
   });
 
@@ -574,7 +617,7 @@ export const renderFamilyPoster = async (options) => {
       (model.tree?.nodes || []).map((node) => node.generation ?? "unknown"),
     ).size,
   );
-  const height = Math.max(1880, 1280 + Math.min(treeRowCount, 5) * 182);
+  const height = Math.max(1840, 1240 + Math.min(treeRowCount, 5) * 182);
   const canvas = createCanvas(height);
   const context = canvas.getContext("2d");
   drawPaperBackground(context, height);
@@ -587,10 +630,10 @@ export const renderFamilyPoster = async (options) => {
   context.font = `600 66px ${FONT_SERIF}`;
   drawWrappedText(context, model.familyName, 72, 324, 936, 78, 2);
 
-  roundRect(context, 72, 470, 936, 160, 28, COLORS.pine);
+  roundRect(context, 72, 430, 936, 160, 28, COLORS.pine);
   context.fillStyle = "#fffdf8";
   context.font = `600 46px ${FONT_SERIF}`;
-  context.fillText(`${model.memberCount} 位家人`, 116, 548);
+  context.fillText(`${model.memberCount} 位家人`, 116, 508);
   context.fillStyle = "rgba(255,253,248,0.72)";
   context.font = `26px ${FONT_SANS}`;
   context.fillText(
@@ -598,7 +641,7 @@ export const renderFamilyPoster = async (options) => {
       ? `${model.generationCount} 代相承 · 仍在持续补充`
       : "每一个名字，都值得被记住",
     116,
-    594,
+    554,
   );
 
   context.fillStyle = COLORS.inkSoft;
@@ -608,17 +651,17 @@ export const renderFamilyPoster = async (options) => {
       ? "在世及状态待确认人物已使用隐私称谓"
       : "这张图片包含家人姓名，请确认公开范围",
     72,
-    690,
+    650,
   );
 
   context.fillStyle = COLORS.cinnabar;
   context.font = `600 24px ${FONT_SANS}`;
-  context.fillText("关系预览", 72, 770);
+  context.fillText("关系预览", 72, 730);
   context.fillStyle = COLORS.ink;
   context.font = `600 44px ${FONT_SERIF}`;
-  context.fillText("家人的名字，正在连成一棵树", 72, 834);
+  context.fillText("家人的名字，正在连成一棵树", 72, 794);
 
-  drawFamilyTreePreview(context, model, 930);
+  drawFamilyTreePreview(context, model, 890);
   await drawQrFooter(context, height, "也为你的家人，留下一份家谱");
   return canvas.toDataURL("image/png");
 };

@@ -22,7 +22,7 @@ function FamilySharePage({ familyName = "我的家谱", familyData = [], onBack 
     () => ({
       familyName,
       familyData,
-      hideProtectedNames: true,
+      hideProtectedNames: false,
     }),
     [familyData, familyName],
   );
@@ -97,12 +97,11 @@ function FamilySharePage({ familyName = "我的家谱", familyData = [], onBack 
           icon={<ArrowLeftOutlined />}
           onClick={onBack}
           className="family-share-back"
-        >
-          返回家谱
-        </Button>
+          aria-label="返回家谱"
+        />
         <div>
           <h1>分享家谱</h1>
-          <p>预览图默认隐藏在世及状态待确认人物姓名</p>
+          <p>预览图将正常展示家人姓名</p>
         </div>
         <Button
           icon={<ReloadOutlined />}
@@ -133,20 +132,35 @@ function FamilySharePage({ familyName = "我的家谱", familyData = [], onBack 
       </section>
 
       <footer className="family-share-actions">
-        <span>手机端可长按预览图保存到相册</span>
-        <div>
+        <div className="family-share-action-hints">
+          <div className="action-hint-item">
+            <DownloadOutlined />
+            <span>保存到相册</span>
+          </div>
+          <div className="action-hint-divider">或</div>
+          <div className="action-hint-item">
+            <ShareAltOutlined />
+            <span>分享给亲友</span>
+          </div>
+        </div>
+        <p className="family-share-tip">手机端也可长按图片保存</p>
+        <div className="family-share-buttons">
           <Button
+            size="large"
             icon={<DownloadOutlined />}
             disabled={!posterUrl || generating}
             onClick={downloadPoster}
+            className="family-share-btn-save"
           >
             保存图片
           </Button>
           <Button
+            size="large"
             type="primary"
             icon={<ShareAltOutlined />}
             disabled={!posterUrl || generating}
             onClick={sharePoster}
+            className="family-share-btn-share"
           >
             分享图片
           </Button>

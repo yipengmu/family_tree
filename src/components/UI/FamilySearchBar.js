@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { AutoComplete, Input, Typography } from 'antd';
-import { SearchOutlined } from '@ant-design/icons';
+import { SearchOutlined, ShareAltOutlined } from '@ant-design/icons';
 import searchHistoryManager from '../../utils/searchHistory.js';
 import './FamilySearchBar.css';
 
@@ -14,13 +14,13 @@ const FamilySearchBar = ({
   onSelect,
   placeholder = "搜索家族成员...",
   showStatus = true,
+  canShare = false,
+  onShare,
   style = {}
 }) => {
   const [searchInputValue, setSearchInputValue] = useState('');
   const [searchOptions, setSearchOptions] = useState([]);
   const searchTimeoutRef = useRef(null);
-  const visibleMemberCount = nodes.length;
-  const totalMemberCount = statistics?.totalMembers || familyData.length;
 
   // 简化初始化，不预加载搜索历史
   // useEffect 移除，清空我们不需要的初始化逻辑
@@ -154,22 +154,17 @@ const FamilySearchBar = ({
         </AutoComplete>
       </div>
 
-       {/* 移动端：家族数据总数与搜索框在同一行 */}
-      {showStatus && (
-        <div className="status-info">
-          <div
-            className="count-info"
-            aria-label={`当前已显示 ${visibleMemberCount} 位，共 ${totalMemberCount} 位族人`}
-          >
-            <Text type="secondary" className="count-copy" aria-hidden="true">
-              <span className="count-prefix">已显示</span>
-              <strong>{visibleMemberCount}</strong>
-              <span aria-hidden="true">/</span>
-              <strong>{totalMemberCount}</strong>
-              <span className="count-suffix">位族人</span>
-            </Text>
-          </div>
-        </div>
+       {/* 分享家谱：弱化的纯图标，无边框 */}
+      {canShare && (
+        <button
+          type="button"
+          className="family-share-icon"
+          onClick={onShare}
+          aria-label="分享家谱"
+          title="分享家谱"
+        >
+          <ShareAltOutlined />
+        </button>
       )}
     </div>
   );

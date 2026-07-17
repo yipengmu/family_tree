@@ -64,37 +64,32 @@
   line-height: 32px;
 }
 
-.status-info {
-  display: flex;
-  align-items: center;
+.family-share-icon {
   flex-shrink: 0;
-}
-
-.count-info {
-  min-height: 34px;
-  padding: 0 9px;
-  display: flex;
-  align-items: center;
-  border: 1px solid rgba(35, 53, 47, 0.09);
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.45);
+  width: 34px;
+  height: 34px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
   color: var(--ink-soft);
-  font-size: 11px;
-  white-space: nowrap;
+  font-size: 16px;
+  cursor: pointer;
+  transition:
+    color 0.18s ease,
+    background 0.18s ease;
 }
 
-.count-copy {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 4px;
-  color: var(--ink-soft) !important;
-  font-size: 11px;
-}
-
-.count-copy strong {
+.family-share-icon:hover {
   color: var(--pine);
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
+  background: rgba(23, 63, 56, 0.07);
+}
+
+.family-share-icon:active {
+  color: var(--pine);
+  background: rgba(23, 63, 56, 0.12);
 }
 
 .family-search-dropdown {
@@ -148,32 +143,9 @@
     line-height: 34px;
   }
 
-  .count-info {
-    min-height: 36px;
-    padding: 0 7px;
-  }
-
-  .count-copy {
-    gap: 3px;
-    font-size: 10px;
-  }
-}
-
-@media (max-width: 360px) {
-  .count-suffix {
-    display: none;
-  }
-
-  .count-prefix {
-    font-size: 0;
-  }
-
-  .count-prefix::after {
-    content: "显示";
-    font-size: 10px;
-  }
-
-  .count-info {
-    padding-inline: 6px;
+  .family-share-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 17px;
   }
 }

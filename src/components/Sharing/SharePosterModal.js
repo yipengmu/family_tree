@@ -29,7 +29,7 @@ function SharePosterModal({
   events = [],
 }) {
   const sensitivePerson = isShareProtectedPerson(person || {});
-  const [hideProtectedNames, setHideProtectedNames] = useState(true);
+  const [hideProtectedNames, setHideProtectedNames] = useState(false);
   const [includeLifeFacts, setIncludeLifeFacts] = useState(!sensitivePerson);
   const [includePortrait, setIncludePortrait] = useState(!sensitivePerson);
   const [includeStories, setIncludeStories] = useState(true);
@@ -38,7 +38,7 @@ function SharePosterModal({
 
   useEffect(() => {
     if (!open) return;
-    setHideProtectedNames(true);
+    setHideProtectedNames(false);
     setIncludeLifeFacts(!sensitivePerson);
     setIncludePortrait(!sensitivePerson);
     setIncludeStories(true);
@@ -149,7 +149,7 @@ function SharePosterModal({
             checked={hideProtectedNames}
             onChange={(event) => setHideProtectedNames(event.target.checked)}
           >
-            隐藏在世及状态待确认人物姓名（推荐）
+            隐藏在世及状态待确认人物姓名
           </Checkbox>
         ) : (
           <>

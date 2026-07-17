@@ -13,6 +13,8 @@ const AppLayout = ({
   statistics = null,
   onSearch,
   onSearchSelect,
+  canShare = false,
+  onShare,
   immersiveMobile = false,
   demoMode = false,
 }) => {
@@ -72,6 +74,8 @@ const AppLayout = ({
           statistics={statistics}
           onSearch={onSearch}
           onSearchSelect={onSearchSelect}
+          canShare={canShare}
+          onShare={onShare}
           sidebarCollapsed={sidebarCollapsed}
           showSearch={activeMenuItem === "tree"}
         >

@@ -13,6 +13,8 @@ const MainContent = ({
   statistics = null,
   onSearch,
   onSearchSelect,
+  canShare = false,
+  onShare,
   sidebarCollapsed = false,
   showSearch = true,
 }) => {
@@ -46,6 +48,8 @@ const MainContent = ({
               statistics={statistics}
               onSearch={onSearch}
               onSelect={onSearchSelect}
+              canShare={canShare}
+              onShare={onShare}
               placeholder="搜索姓名、字辈或居住地"
               showStatus={true}
               style={{ flex: 1, maxWidth: "100%" }}
