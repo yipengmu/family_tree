@@ -24,7 +24,7 @@ function resolveModernRoute(requestPath) {
   if (resource === "health" && !id) return route("api/health.js");
   if (resource === "admin" && id === "analytics")
     return route("api/admin.js", { type: "analytics" });
-  if (resource === "auth" && id) return route("api/auth.js", { type: id });
+  if (resource === "auth") return route("api/auth.js", id ? { type: id } : {});
   if (resource === "user" && id === "profile")
     return route("api/user.js", { type: "profile" });
   if (resource === "family-data") {

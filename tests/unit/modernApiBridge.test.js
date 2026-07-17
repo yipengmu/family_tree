@@ -117,6 +117,25 @@ test("maps the admin analytics path to the shared admin handler", () => {
   );
 });
 
+test("maps auth paths in both path-style and query-style", () => {
+  assert.deepEqual(
+    createModernApiBridge.resolveModernRoute("/api/auth/send-code"),
+    {
+      modulePath: "api/auth.js",
+      query: { type: "send-code" },
+      params: {},
+    },
+  );
+  assert.deepEqual(
+    createModernApiBridge.resolveModernRoute("/api/auth?type=phone-send-code"),
+    {
+      modulePath: "api/auth.js",
+      query: {},
+      params: {},
+    },
+  );
+});
+
 test("maps story routes and preserves route parameters", () => {
   assert.deepEqual(
     createModernApiBridge.resolveModernRoute(
