@@ -13,8 +13,8 @@ import TenantSelector from "../TenantSelector.js";
 import AuthService from "../../services/authService.js";
 import tenantService from "../../services/tenantService.js";
 import BRAND from "../../constants/brand.js";
+import BrandLogo from "../UI/BrandLogo.js";
 import "./MyPage.css";
-import "../UI/BrandSeal.css";
 
 const readStoredUser = () => {
   try {
@@ -64,7 +64,9 @@ const MyPage = ({ activeMenuItem = "mine", onMenuClick, familyData = [] }) => {
     <AppLayout activeMenuItem={activeMenuItem} onMenuClick={onMenuClick}>
       <div className={`my-page ${!authenticated ? "my-page-guest" : ""}`}>
         <header className="my-page-header">
-          <span className="brand-seal my-page-seal">{BRAND.seal}</span>
+          <span className="my-page-seal" aria-hidden="true">
+            <BrandLogo alt="" />
+          </span>
           <div>
             <h1>
               {authenticated

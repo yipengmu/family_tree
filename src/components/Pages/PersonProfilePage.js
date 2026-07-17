@@ -9,6 +9,8 @@ import {
   ArrowLeftOutlined,
   AudioOutlined,
   CameraOutlined,
+  CheckCircleFilled,
+  CloseOutlined,
   EnvironmentOutlined,
   HeartOutlined,
   PauseOutlined,
@@ -55,6 +57,24 @@ const eventTypeOptions = [
 const eventTypeLabels = Object.fromEntries(
   eventTypeOptions.map((option) => [option.value, option.label]),
 );
+const voiceGuideSteps = [
+  { key: "who", title: "谁", prompt: "这是关于谁的故事？当时还有谁在场？" },
+  {
+    key: "when",
+    title: "何时何地",
+    prompt: "大概是什么时候？事情发生在哪里？",
+  },
+  {
+    key: "what",
+    title: "发生了什么",
+    prompt: "从事情的开始讲起，发生了哪些事？",
+  },
+  {
+    key: "how",
+    title: "后来怎样",
+    prompt: "后来怎么样了？为什么家里人一直记得？",
+  },
+];
 
 const chooseAudioType = () =>
   ["audio/webm;codecs=opus", "audio/mp4", "audio/webm"].find((type) =>
@@ -87,17 +107,26 @@ function PersonProfilePage({
   const [storyTime, setStoryTime] = useState("");
   const [storyLocation, setStoryLocation] = useState("");
   const [storyType, setStoryType] = useState("EVERYDAY");
+  const [storyTags, setStoryTags] = useState([]);
   const [visibility, setVisibility] = useState("FAMILY");
   const [photos, setPhotos] = useState([]);
   const [busy, setBusy] = useState(false);
   const [processingLabel, setProcessingLabel] = useState("正在整理故事…");
   const [mediaUrls, setMediaUrls] = useState({});
+  const [voiceGuideOpen, setVoiceGuideOpen] = useState(false);
+  const [voiceStage, setVoiceStage] = useState("idle");
+  const [autoFilled, setAutoFilled] = useState(false);
   const recorderRef = useRef(null);
   const streamRef = useRef(null);
   const chunksRef = useRef([]);
   const timerRef = useRef(null);
   const discardRecordingRef = useRef(false);
   const latestMemoryIdRef = useRef(null);
+  const secondsRef = useRef(0);
+  const longPressTimerRef = useRef(null);
+  const voiceOpeningRef = useRef(false);
+  const voiceCaptureRef = useRef(false);
+  const tagMetadataRef = useRef({});
   const pendingKey = `person-${tenant?.id}-${personId}`;
 
   const loadEvents = useCallback(async () => {
@@ -156,6 +185,10 @@ function PersonProfilePage({
 
   useEffect(() => cleanupRecorder, [cleanupRecorder]);
 
+  useEffect(() => {
+    secondsRef.current = seconds;
+  }, [seconds]);
+
   const stopRecording = useCallback(() => {
     if (recorderRef.current && recorderRef.current.state !== "inactive")
       recorderRef.current.stop();
@@ -171,10 +204,88 @@ function PersonProfilePage({
     }
   }, [recording, seconds, stopRecording]);
 
+  const getExtractionDraft = (memory) =>
+    memory?.jobs?.find(
+      (job) => job.kind === "EXTRACT_EVENTS" && job.status === "SUCCEEDED",
+    )?.output?.events?.[0] || null;
+
+  const processVoiceMemory = async (memoryId) => {
+    for (let attempt = 0; attempt < 40; attempt += 1) {
+      const result = await storyService.processMemory(memoryId);
+      if (result.status === "READY") return result.memory;
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+    }
+    throw new Error("语音整理时间较长，原音已保存，请稍后重试");
+  };
+
+  const applyVoiceDraft = (memory) => {
+    const draft = getExtractionDraft(memory);
+    if (!draft) throw new Error("没有从这段讲述中提炼出可填写的内容");
+    setStoryTitle(draft.title || "");
+    setStoryTime(draft.timeText || "");
+    setStoryLocation(draft.location || "");
+    setStoryType(
+      eventTypeOptions.some((option) => option.value === draft.eventType)
+        ? draft.eventType
+        : "OTHER",
+    );
+    tagMetadataRef.current = Object.fromEntries(
+      (draft.tags || [])
+        .filter((tag) => typeof tag === "object" && tag?.label)
+        .map((tag) => [tag.label, tag]),
+    );
+    setStoryTags(
+      (draft.tags || [])
+        .map((tag) => (typeof tag === "string" ? tag : tag?.label))
+        .filter(Boolean),
+    );
+    setRawText(draft.narrative || memory.transcriptRaw || "");
+    setAutoFilled(true);
+    window.setTimeout(() => setAutoFilled(false), 1800);
+  };
+
+  const transcribeRecording = async (file, durationSeconds) => {
+    try {
+      setVoiceStage("processing");
+      setProcessingLabel("正在保存原音…");
+      const created = await storyService.createMemory(tenant.id, personId, {
+        rawText: "",
+        visibility,
+        title: `关于${person.name}的语音讲述`,
+      });
+      const memoryId = created.memory.id;
+      latestMemoryIdRef.current = memoryId;
+      await storyService.uploadAsset({
+        tenantId: tenant.id,
+        personId,
+        memoryId,
+        kind: "AUDIO",
+        file,
+        durationSeconds,
+      });
+      await deletePendingRecording(pendingKey).catch(() => undefined);
+      setProcessingLabel("正在识别并填写表单…");
+      const memory = await processVoiceMemory(memoryId);
+      applyVoiceDraft(memory);
+      voiceCaptureRef.current = false;
+      setVoiceGuideOpen(false);
+      setVoiceStage("idle");
+      message.success("语音内容已填写到表单，请确认后保存");
+    } catch (error) {
+      voiceCaptureRef.current = false;
+      setVoiceStage("failed");
+      message.error(
+        latestMemoryIdRef.current
+          ? `原音已保存，但自动填写失败：${error.message}`
+          : error.message,
+      );
+    }
+  };
+
   const startRecording = async () => {
     if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
       message.error("当前浏览器不支持录音，请改用文字记录");
-      return;
+      return false;
     }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -209,6 +320,9 @@ function PersonProfilePage({
         if (discardRecordingRef.current) return;
         setAudioFile(file);
         await savePendingRecording(pendingKey, file).catch(() => undefined);
+        if (voiceCaptureRef.current) {
+          await transcribeRecording(file, secondsRef.current);
+        }
       };
       recorderRef.current = recorder;
       streamRef.current = stream;
@@ -219,13 +333,57 @@ function PersonProfilePage({
         () => setSeconds((value) => value + 1),
         1000,
       );
+      return true;
     } catch (error) {
       message.error(
         error.name === "NotAllowedError"
           ? "请允许浏览器使用麦克风"
           : "无法开始录音",
       );
+      return false;
     }
+  };
+
+  const openVoiceGuide = async () => {
+    if (recording || voiceOpeningRef.current) return;
+    voiceOpeningRef.current = true;
+    discardRecordingRef.current = false;
+    setAudioFile(null);
+    setSeconds(0);
+    setVoiceStage("recording");
+    setVoiceGuideOpen(true);
+    voiceCaptureRef.current = true;
+    const started = await startRecording();
+    if (!started) {
+      voiceCaptureRef.current = false;
+      setVoiceStage("failed");
+    }
+    voiceOpeningRef.current = false;
+  };
+
+  const startLongPress = () => {
+    clearTimeout(longPressTimerRef.current);
+    longPressTimerRef.current = window.setTimeout(openVoiceGuide, 350);
+  };
+
+  const cancelLongPress = () => {
+    clearTimeout(longPressTimerRef.current);
+    longPressTimerRef.current = null;
+  };
+
+  const finishVoiceGuide = () => {
+    if (!recording) return;
+    setVoiceStage("processing");
+    stopRecording();
+  };
+
+  const cancelVoiceGuide = () => {
+    discardRecordingRef.current = true;
+    voiceCaptureRef.current = false;
+    stopRecording();
+    setVoiceGuideOpen(false);
+    setVoiceStage("idle");
+    setSeconds(0);
   };
 
   const togglePause = () => {
@@ -246,14 +404,23 @@ function PersonProfilePage({
   };
 
   const saveSourceMaterial = async () => {
-    const created = await storyService.createMemory(tenant.id, personId, {
-      rawText,
-      visibility,
-      title: storyTitle.trim() || `关于${person.name}的讲述`,
-    });
-    const memoryId = created.memory.id;
+    const existingMemoryId = latestMemoryIdRef.current;
+    let memoryId = existingMemoryId;
+    if (memoryId) {
+      await storyService.updateMemory(memoryId, {
+        correctedText: rawText,
+        title: storyTitle.trim() || `关于${person.name}的讲述`,
+      });
+    } else {
+      const created = await storyService.createMemory(tenant.id, personId, {
+        rawText,
+        visibility,
+        title: storyTitle.trim() || `关于${person.name}的讲述`,
+      });
+      memoryId = created.memory.id;
+    }
     latestMemoryIdRef.current = memoryId;
-    if (audioFile) {
+    if (audioFile && !existingMemoryId) {
       await storyService.uploadAsset({
         tenantId: tenant.id,
         personId,
@@ -288,6 +455,7 @@ function PersonProfilePage({
         timeText: storyTime,
         location: storyLocation,
         eventType: storyType,
+        tags: storyTags.map((label) => tagMetadataRef.current[label] || label),
         isHighlight: false,
         visibility,
       });
@@ -319,6 +487,8 @@ function PersonProfilePage({
 
   const closeStory = () => {
     discardRecordingRef.current = true;
+    voiceCaptureRef.current = false;
+    cancelLongPress();
     stopRecording();
     setStoryOpen(false);
     setStage("capture");
@@ -328,9 +498,13 @@ function PersonProfilePage({
     setStoryTime("");
     setStoryLocation("");
     setStoryType("EVERYDAY");
+    setStoryTags([]);
+    tagMetadataRef.current = {};
     setPhotos([]);
     setSeconds(0);
     latestMemoryIdRef.current = null;
+    setVoiceGuideOpen(false);
+    setVoiceStage("idle");
   };
 
   const generationLabel = useMemo(
@@ -390,7 +564,13 @@ function PersonProfilePage({
           {tenant?.id !== "default" && (
             <div className="person-profile-actions">
               <Button onClick={onEdit}>编辑资料</Button>
-              <Button type="primary" icon={<AudioOutlined />} onClick={() => setStoryOpen(true)}>记录一段经历</Button>
+              <Button
+                type="primary"
+                icon={<AudioOutlined />}
+                onClick={() => setStoryOpen(true)}
+              >
+                记录一段经历
+              </Button>
             </div>
           )}
         </header>
@@ -459,6 +639,15 @@ function PersonProfilePage({
                       <p className="life-event-location">
                         <EnvironmentOutlined /> {event.location}
                       </p>
+                    )}
+                    {!!event.tags?.length && (
+                      <div className="life-event-tags">
+                        {event.tags.map((tag) => (
+                          <Tag key={`${event.id}-${tag.type}-${tag.label}`}>
+                            #{tag.label}
+                          </Tag>
+                        ))}
+                      </div>
                     )}
                     <p className="life-event-narrative">{event.narrative}</p>
                     {event.sources
@@ -567,7 +756,9 @@ function PersonProfilePage({
                   </div>
                 </fieldset>
               </div>
-              <div className="story-narrative-field">
+              <div
+                className={`story-narrative-field ${autoFilled ? "auto-filled" : ""}`}
+              >
                 <Input.TextArea
                   rows={6}
                   value={rawText}
@@ -576,52 +767,19 @@ function PersonProfilePage({
                   showCount
                   placeholder="写下发生了什么。记不清的时间、地点可以留空，也可以直接写“约”“听长辈说”或“待考”。"
                 />
-                <div
-                  className={`story-recorder ${recording ? "recording" : ""}`}
-                >
-                  <div className="story-recorder-status">
-                    <span className="story-wave">
-                      <SoundOutlined />
-                    </span>
-                    <strong>
-                      {String(Math.floor(seconds / 60)).padStart(2, "0")}:
-                      {String(seconds % 60).padStart(2, "0")}
-                    </strong>
-                    {audioFile && !recording && (
-                      <span className="story-recorded">
-                        已保留原声 · {(audioFile.size / 1024 / 1024).toFixed(1)}
-                        MB
-                      </span>
-                    )}
-                  </div>
-                  <div className="story-recorder-actions">
-                    {!recording && !audioFile && (
-                      <Button
-                        type="primary"
-                        shape="round"
-                        icon={<AudioOutlined />}
-                        onClick={startRecording}
-                      >
-                        录音
-                      </Button>
-                    )}
-                    {recording && (
-                      <>
-                        <Button
-                          shape="circle"
-                          icon={
-                            paused ? <PlayCircleOutlined /> : <PauseOutlined />
-                          }
-                          aria-label={paused ? "继续录音" : "暂停录音"}
-                          onClick={togglePause}
-                        />
-                        <Button danger shape="round" onClick={stopRecording}>
-                          结束
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                </div>
+              </div>
+              <div className="story-tag-field">
+                <label htmlFor="story-tags">标签</label>
+                <Select
+                  id="story-tags"
+                  mode="tags"
+                  value={storyTags}
+                  onChange={(values) => setStoryTags(values.slice(0, 12))}
+                  tokenSeparators={[",", "，", " "]}
+                  maxTagCount="responsive"
+                  placeholder="例如：外出工作、春节、迁居"
+                  open={false}
+                />
               </div>
               <div className="story-attachments">
                 <Upload
@@ -647,6 +805,26 @@ function PersonProfilePage({
                   />
                 </div>
               </div>
+              <div className="story-voice-entry">
+                <div>
+                  <strong>不想逐项填写？直接讲出来</strong>
+                  <span>
+                    系统会根据谁、何时何地、发生什么、后来怎样填写上面的表单
+                  </span>
+                </div>
+                <Button
+                  type="primary"
+                  size="large"
+                  icon={<AudioOutlined />}
+                  onPointerDown={startLongPress}
+                  onPointerUp={cancelLongPress}
+                  onPointerCancel={cancelLongPress}
+                  onPointerLeave={cancelLongPress}
+                  onClick={openVoiceGuide}
+                >
+                  长按语音录入
+                </Button>
+              </div>
               <div className="story-submit-actions">
                 <Button
                   type="primary"
@@ -670,6 +848,110 @@ function PersonProfilePage({
               <p>原音和照片已经安全保存，请不要重复提交。</p>
             </div>
           )}
+        </Modal>
+        <Modal
+          open={voiceGuideOpen}
+          footer={null}
+          closable={false}
+          maskClosable={false}
+          width="100%"
+          className="voice-guide-modal"
+          destroyOnClose
+        >
+          <div className="voice-guide-shell">
+            <header>
+              <Button
+                type="text"
+                icon={<CloseOutlined />}
+                onClick={cancelVoiceGuide}
+                disabled={voiceStage === "processing"}
+              >
+                取消
+              </Button>
+              <span className="voice-guide-time">
+                {String(Math.floor(seconds / 60)).padStart(2, "0")}:
+                {String(seconds % 60).padStart(2, "0")}
+              </span>
+            </header>
+
+            {voiceStage === "processing" ? (
+              <div className="voice-guide-processing">
+                <Spin size="large" />
+                <h2>{processingLabel}</h2>
+                <p>原音会作为家庭档案保留，识别结果只会先填入表单。</p>
+              </div>
+            ) : voiceStage === "failed" ? (
+              <div className="voice-guide-processing">
+                <SoundOutlined className="voice-guide-error" />
+                <h2>这次没有完成自动填写</h2>
+                <p>可以重新录制，也可以返回表单继续手动填写。</p>
+                <Button type="primary" onClick={openVoiceGuide}>
+                  重新录制
+                </Button>
+                <Button onClick={cancelVoiceGuide}>返回表单</Button>
+              </div>
+            ) : (
+              <>
+                <div className="voice-guide-heading">
+                  <span>正在记录{person.name}的故事</span>
+                  <h2>可以松开手，照着四步慢慢讲</h2>
+                </div>
+                <ol className="voice-guide-steps">
+                  {voiceGuideSteps.map((step, index) => {
+                    const activeIndex =
+                      seconds < 10
+                        ? 0
+                        : seconds < 25
+                          ? 1
+                          : seconds < 45
+                            ? 2
+                            : 3;
+                    const completed = index < activeIndex;
+                    return (
+                      <li
+                        key={step.key}
+                        className={
+                          index === activeIndex
+                            ? "active"
+                            : completed
+                              ? "completed"
+                              : ""
+                        }
+                      >
+                        <span className="voice-step-number">
+                          {completed ? <CheckCircleFilled /> : index + 1}
+                        </span>
+                        <div>
+                          <strong>{step.title}</strong>
+                          <p>{step.prompt}</p>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ol>
+                <div className={`voice-guide-orb ${paused ? "paused" : ""}`}>
+                  <SoundOutlined />
+                  <span>{paused ? "已暂停" : "正在聆听"}</span>
+                </div>
+                <div className="voice-guide-actions">
+                  <Button
+                    shape="circle"
+                    size="large"
+                    icon={paused ? <PlayCircleOutlined /> : <PauseOutlined />}
+                    aria-label={paused ? "继续录音" : "暂停录音"}
+                    onClick={togglePause}
+                  />
+                  <Button
+                    type="primary"
+                    size="large"
+                    onClick={finishVoiceGuide}
+                  >
+                    完成讲述
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
         </Modal>
       </main>
     </AppLayout>

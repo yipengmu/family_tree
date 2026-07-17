@@ -12,12 +12,14 @@ datasource db {
 model User {
   id                 Int                @id @default(autoincrement())
   username           String
-  email              String             @unique
-  password_hash      String
+  email              String?            @unique
+  password_hash      String?
   is_active          Boolean            @default(true)
   created_at         DateTime           @default(now())
   last_login_at      DateTime?
   wechat_openid      String?            @unique // 根据项目规范，添加微信openid字段
+  identities         AuthIdentity[]
+  sessions           AuthSession[]
   memberships        TenantMembership[]
   sentInvitations    Invitation[]       @relation("InvitationSender")
   createdMemories    Memory[]           @relation("MemoryCreator")
@@ -201,6 +203,7 @@ model Event {
   sort_year      Int?
   date_precision String    @default("UNKNOWN")
   location       String?
+  tags           String?
   is_highlight   Boolean   @default(false)
   visibility     String    @default("FAMILY")
   status         String    @default("PUBLISHED")
@@ -353,4 +356,53 @@ model VerificationCode {
 
   @@index([email])
   @@map("verification_codes")
+}
+
+model AuthIdentity {
+  id               String   @id @default(cuid())
+  user_id          Int
+  provider         String
+  identifier_hash  String
+  masked_value     String?
+  verified_at      DateTime?
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([provider, identifier_hash])
+  @@index([user_id, provider])
+  @@map("auth_identities")
+}
+
+model AuthSession {
+  id          String   @id @default(cuid())
+  user_id     Int
+  token_hash  String   @unique
+  expires_at  DateTime
+  revoked_at  DateTime?
+  created_at  DateTime @default(now())
+  last_seen_at DateTime?
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id, revoked_at, expires_at])
+  @@map("auth_sessions")
+}
+
+model VerificationAttempt {
+  id              String   @id @default(cuid())
+  target_hash     String
+  purpose         String
+  provider        String
+  provider_out_id String?
+  status          String   @default("SENT")
+  failed_attempts Int      @default(0)
+  expires_at      DateTime
+  consumed_at     DateTime?
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  @@index([target_hash, purpose, status, expires_at])
+  @@map("verification_attempts")
 }

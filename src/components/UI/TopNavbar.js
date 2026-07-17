@@ -4,6 +4,7 @@ import { UserOutlined, LoginOutlined, LogoutOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 import AuthService from "../../services/authService.js";
 import BRAND from "../../constants/brand.js";
+import BrandLogo from "./BrandLogo.js";
 import "./TopNavbar.css";
 
 const { Header } = Layout;
@@ -73,6 +74,9 @@ const TopNavbar = ({ currentPage, onMenuClick }) => {
         }}
         onClick={() => navigate("/app")}
       >
+        <span className="top-navbar-logo" aria-hidden="true">
+          <BrandLogo alt="" />
+        </span>
         <span>{BRAND.name}</span>
       </div>
 

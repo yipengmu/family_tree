@@ -35,7 +35,7 @@
 - 已连接本人和父亲后，移动端按 `2/4 → 3/4 → 4/4` 逐代引导补充祖父、曾祖父；不知道姓名时可建立“姓名待考”关系节点，生存状态默认待确认，每次保存后立即回到家谱查看树的生长。
 - 用户与家谱空间的真实归属关系，Owner/Editor/Contributor/Viewer 角色基础。
 - 创建完成后可继续添加人物；已有人物的资料修改支持按人物增量保存，并继续使用版本冲突保护。
-- 移动端“续家谱”可按人物创建生平纪事：当前记录入口聚焦将一段手写经历直接发布，原始文字、录音和照片作为家庭档案依据保留。
+- 移动端“续家谱”可按人物创建生平纪事：保留传统填写表单，并可从表单底部进入“谁、何时何地、发生什么、后来怎样”四步语音引导；识别结果先回填为可编辑草稿，原始文字、录音和照片作为家庭档案依据保留，人工确认后才发布。
 - “续家谱”按两个核心故事组织：人员基础信息维护负责家谱树节点与关系框架，生平事迹负责人物 profile 的可持续展示；纸谱拍照识别是前者的待确认加速入口。
 - 服务端按家谱隐私设置裁剪在世人物的出生日期、居住地、证件、住址和照片字段；Owner 可在设置页调整成员可见范围。
 - Prisma + PostgreSQL/Neon 数据持久化。
@@ -139,6 +139,23 @@ TENCENT_SES_SUBJECT=家谱创作工具验证码
 
 邮件模板中配置 `{{code}}` 和 `{{purpose}}` 两个变量。腾讯云 SES 的验证码邮件使用 `SendEmail` API 和触发类邮件类型，服务端通过 Node.js SDK 调用，密钥不会进入前端。配置完成后重新部署，再调用 `/api/auth/send-code` 验证邮件链路。详细配置见 [腾讯云 SES 发送邮件文档](https://cloud.tencent.com/document/api/1288/51034) 和 [发信域名验证文档](https://cloud.tencent.com/document/product/1288/60652)。
 
+### 阿里云手机号验证码配置
+
+手机号登录使用阿里云号码认证服务的短信认证 API。请为服务端创建最小权限 RAM 用户，并在 Vercel Production/Preview 环境配置：
+
+```bash
+ALIBABA_CLOUD_ACCESS_KEY_ID=阿里云RAM用户AccessKeyId
+ALIBABA_CLOUD_ACCESS_KEY_SECRET=阿里云RAM用户AccessKeySecret
+ALIBABA_CLOUD_REGION_ID=cn-hangzhou
+ALIBABA_CLOUD_ENDPOINT=dypnsapi.aliyuncs.com
+ALIBABA_PNVS_SCHEME_NAME=默认方案
+ALIBABA_PNVS_SIGN_NAME=控制台当前可用的系统签名
+ALIBABA_PNVS_TEMPLATE_CODE=控制台当前可用的登录注册模板Code
+PHONE_IDENTITY_SECRET=独立的手机号身份HMAC密钥
+```
+
+未配置阿里云凭据、系统签名或模板时，手机号验证码接口会返回服务未配置，不会回退为本地生成验证码。签名和模板必须来自阿里云号码认证控制台当前可用的系统资源；长期密钥只能保存在服务端，不能放入 `REACT_APP_*` 环境变量或浏览器构建产物。
+
 ### 纸质家谱照片上传与大模型解析配置
 
 手机和 PC 端可一次选择 1 至 10 张照片；原图会立即上传到当前家谱的 COS 私有目录，再由腾讯 TokenHub `HY-Vision-2.0-Instruct` 在同一次多图请求中统一理解文字、版面、代际和跨页世系关系。该入口只支持空白家谱的首次初始化：服务端会拒绝已有正式数据的家谱；模型结果须先通过单棵、无循环、连续关系检查，再作为待确认预览，用户手动保存后才写入数据源。生产与预览环境必须同时配置以下服务端变量；缺少 `TENCENT_COS_BUCKET` 会导致照片无法保留和解析。
@@ -181,6 +198,8 @@ family_tree/
 | POST             | `/api/auth/login`                 | 登录并返回 JWT               |
 | POST             | `/api/auth/send-code`             | 发送邮箱验证码               |
 | POST             | `/api/auth/verify-code`           | 校验验证码                   |
+| POST             | `/api/auth?type=phone-send-code` | 发送手机号验证码             |
+| POST             | `/api/auth?type=phone-verify`    | 校验手机号验证码并登录/注册   |
 | POST             | `/api/auth/reset-password`        | 使用邮箱验证码重置密码       |
 | GET              | `/api/user/profile`               | 获取当前用户资料             |
 | GET              | `/api/family-data`                | 读取默认或租户家谱数据       |

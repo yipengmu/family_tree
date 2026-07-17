@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@alicloud/dypnsapi20170525": "^2.0.0",
+    "@alicloud/openapi-client": "^0.4.15",
     "@ant-design/icons": "^5.2.6",
     "@prisma/client": "^5.0.0",
     "ajv": "^8.17.1",
@@ -32,7 +34,7 @@
     "xlsx": "^0.18.5"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "PORT=3000 DANGEROUSLY_DISABLE_HOST_CHECK=true WATCHPACK_POLLING=true react-scripts start",
     "server": "node server/app.js",
     "deploy-check": "node scripts/deploy-check.js",
     "dev": "concurrently \"SERVER_PORT=3003 npm run server\" \"PORT=3000 npm start\"",

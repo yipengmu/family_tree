@@ -173,12 +173,16 @@
 }
 
 .site-brand-seal {
-  width: 38px;
-  height: 38px;
+  width: 42px;
+  height: 42px;
   display: grid;
   place-items: center;
   border-radius: 6px;
   overflow: hidden;
+}
+
+.site-brand-seal .brand-logo {
+  transform: scale(1.48);
 }
 
 .site-brand > span:last-child {
@@ -263,8 +267,7 @@
     transform 160ms ease;
 }
 
-.site-header-register,
-.site-header-login {
+.site-header-register {
   min-width: 72px;
   padding: 0 17px;
   border: 1px solid rgba(23, 63, 56, 0.2);
@@ -272,10 +275,25 @@
   background: rgba(255, 253, 247, 0.62);
 }
 
-.site-header-register:hover,
-.site-header-login:hover {
+.site-header-register:hover {
   border-color: rgba(23, 63, 56, 0.42);
   background: var(--site-paper-light);
+}
+
+.site-header-login {
+  min-width: 72px;
+  padding: 0 17px;
+  border: 1px solid var(--site-pine);
+  color: #fffdf7 !important;
+  background: var(--site-pine);
+  box-shadow: 0 8px 18px rgba(23, 63, 56, 0.16);
+}
+
+.site-header-login:hover {
+  border-color: var(--site-pine-light);
+  background: var(--site-pine-light);
+  box-shadow: 0 10px 22px rgba(23, 63, 56, 0.22);
+  transform: translateY(-1px);
 }
 
 .site-header-create {
@@ -1547,8 +1565,8 @@
   }
 
   .site-brand-seal {
-    width: 34px;
-    height: 34px;
+    width: 40px;
+    height: 40px;
   }
 
   .site-menu-button {

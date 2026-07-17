@@ -3,8 +3,8 @@ import { ArrowLeftOutlined } from "@ant-design/icons";
 import { Card, Typography } from "antd";
 import { Link } from "react-router-dom";
 import BRAND from "../../constants/brand.js";
+import BrandLogo from "../UI/BrandLogo.js";
 import "./AuthPageLayout.css";
-import "../UI/BrandSeal.css";
 
 const { Title, Text } = Typography;
 
@@ -19,8 +19,8 @@ const AuthPageLayout = ({
   <div className="auth-page">
     <header className="auth-topbar">
       <Link className="auth-brand" to="/" aria-label="谱里官网首页">
-        <span className="brand-seal auth-brand-seal" aria-hidden="true">
-          {BRAND.seal}
+        <span className="auth-brand-seal" aria-hidden="true">
+          <BrandLogo alt="" />
         </span>
         <span className="auth-brand-copy">
           <strong>{BRAND.name}</strong>

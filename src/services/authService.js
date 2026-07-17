@@ -3,6 +3,48 @@ import { identifyUser, resetAnalyticsUser } from "../utils/analytics.js";
 
 // 认证服务
 class AuthService {
+  static getApiBaseUrl() {
+    return (
+      process.env.REACT_APP_API_BASE_URL ||
+      (process.env.NODE_ENV === "development" ? "http://localhost:3003" : "")
+    );
+  }
+
+  static async sendPhoneCode(phone) {
+    const response = await fetch(`${this.getApiBaseUrl()}/api/auth?type=phone-send-code`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "omit",
+      cache: "no-store",
+      body: JSON.stringify({ phone }),
+    });
+    const data = await response.json().catch(() => ({}));
+    return response.ok ? data : { success: false, error: data.error || `HTTP ${response.status}` };
+  }
+
+  static async phoneLogin(phone, code) {
+    const response = await fetch(`${this.getApiBaseUrl()}/api/auth?type=phone-verify`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "omit",
+      cache: "no-store",
+      body: JSON.stringify({ phone, code }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !data.success) {
+      return { success: false, error: data.error || `HTTP ${response.status}` };
+    }
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("user", JSON.stringify(data.user));
+    if (data.tenant) {
+      localStorage.setItem("current_tenant", JSON.stringify(data.tenant));
+      cacheManager.set("current_tenant", data.tenant, 3600);
+    }
+    localStorage.removeItem("guest_mode");
+    identifyUser(data.user);
+    return data;
+  }
+
   // 登录
   static async login(email, password) {
     try {

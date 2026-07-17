@@ -7,6 +7,7 @@ import {
   useLocation,
 } from "react-router-dom";
 import BRAND from "./constants/brand.js";
+import BrandLogo from "./components/UI/BrandLogo.js";
 import { shouldRedirectMobileHome } from "./utils/mobileEntry.js";
 import "./RouterApp.css";
 
@@ -22,7 +23,9 @@ const ResetPasswordPage = lazy(
 
 const RouteLoading = () => (
   <div className="route-loading" role="status" aria-live="polite">
-    <span aria-hidden="true">{BRAND.seal}</span>
+    <span aria-hidden="true">
+      <BrandLogo alt="" />
+    </span>
     <p>正在打开谱里…</p>
   </div>
 );
