@@ -457,8 +457,9 @@
 /* 示范谱使用紧凑卡片，避免默认态或深代被固定卡片宽度撑成一条横带。
    点击节点仍可打开完整详情，浏览模式不受影响。 */
 .journey-flow-container .family-member-node {
-  min-width: 120px;
-  max-width: 120px;
+  width: 160px;
+  min-width: 160px;
+  max-width: 160px;
   font-size: 11px;
 }
 .journey-flow-container .member-card .ant-card-body {
@@ -654,8 +655,9 @@
 
 @media (max-width: 768px) {
   .journey-flow-container .family-member-node {
-    min-width: 100px;
-    max-width: 100px;
+    width: 152px;
+    min-width: 152px;
+    max-width: 152px;
   }
 
   .journey-panorama-summary {

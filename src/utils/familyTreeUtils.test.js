@@ -63,6 +63,23 @@ describe("family tree relationship edges", () => {
     expect(otherBranch.position.x).toBeGreaterThan(mainlineSibling.position.x);
   });
 
+  test("reserves the full compact card width between journey siblings", () => {
+    const familyData = [
+      { id: 1, name: "父", g_rank: 1, rank_index: 1, g_father_id: 0 },
+      { id: 2, name: "长子", g_rank: 2, rank_index: 1, g_father_id: 1 },
+      { id: 3, name: "次子", g_rank: 2, rank_index: 2, g_father_id: 1 },
+    ];
+    const { nodes } = convertToReactFlowData(familyData);
+    const layoutedNodes = getJourneyLayoutedNodes(nodes, [1, 2], {
+      nodeWidth: 152,
+      nodeGap: 12,
+    });
+    const firstChild = layoutedNodes.find((node) => node.id === "2");
+    const secondChild = layoutedNodes.find((node) => node.id === "3");
+
+    expect(secondChild.position.x - firstChild.position.x).toBe(164);
+  });
+
   test("uses rank_index to place children from left to right before layout", () => {
     const familyData = [
       { id: 1, name: "父", g_rank: 1, rank_index: 1, g_father_id: 0 },

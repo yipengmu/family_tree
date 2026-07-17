@@ -36,6 +36,7 @@ import {
 } from '../utils/familyTreeCollapse.js';
 import {
   getAdaptiveTreeFitOptions,
+  getCompactTreeNodeMetrics,
   getViewportXForNodeCenter,
   getViewportYForNodeCenter,
 } from '../utils/familyTreeViewport.js';
@@ -99,6 +100,10 @@ const FamilyTreeFlow = forwardRef(({
   const [expandedNodes, setExpandedNodes] = useState(new Set()); // 用户手动展开的节点
 
   const { fitView, setCenter, setViewport, getViewport, getNodes } = useReactFlow();
+  const compactNodeMetrics = useMemo(
+    () => getCompactTreeNodeMetrics(isMobile),
+    [isMobile],
+  );
 
   // 移动端检测
   useEffect(() => {
@@ -234,12 +239,12 @@ const FamilyTreeFlow = forwardRef(({
     );
     return {
       nodes: getJourneyLayoutedNodes(allNodes, presentationPathIds, {
-        nodeWidth: isMobile ? 100 : 120,
-        nodeGap: isMobile ? 8 : 12,
+        nodeWidth: compactNodeMetrics.width,
+        nodeGap: compactNodeMetrics.gap,
       }),
       edges: allEdges,
     };
-  }, [familyData, isMobile, isNameProtectionEnabled, onOpenPersonProfile, presentationMode, presentationPathIds, useFounderLabels]);
+  }, [compactNodeMetrics, familyData, isMobile, isNameProtectionEnabled, onOpenPersonProfile, presentationMode, presentationPathIds, useFounderLabels]);
 
   // 当nodes或statistics变化时，通知父组件
   useEffect(() => {
@@ -471,8 +476,8 @@ const FamilyTreeFlow = forwardRef(({
       ? flowData.nodes
       : compactDemoMode
         ? getJourneyLayoutedNodes(flowData.nodes, presentationPathIds, {
-          nodeWidth: isMobile ? 100 : 120,
-          nodeGap: isMobile ? 8 : 12,
+          nodeWidth: compactNodeMetrics.width,
+          nodeGap: compactNodeMetrics.gap,
         })
         : getLayoutedElements(flowData.nodes, newEdges, layoutDirection);
     const visibleNodeIds = presentationMode
@@ -523,7 +528,7 @@ const FamilyTreeFlow = forwardRef(({
 
     // 调试第20代成员显示
     debug20thGeneration();
-  }, [familyData, searchTerm, generationRange, layoutDirection, setNodes, setEdges, isMobile, isShowingAll, isSmartCollapseEnabled, currentUser, expandedNodes, debug20thGeneration, isNameProtectionEnabled, onOpenPersonProfile, searchTargetPerson, presentationMode, presentationStep, presentationFocusId, presentationLayout, presentationPathIds, compactDemoMode, useFounderLabels]);
+  }, [compactNodeMetrics, familyData, searchTerm, generationRange, layoutDirection, setNodes, setEdges, isMobile, isShowingAll, isSmartCollapseEnabled, currentUser, expandedNodes, debug20thGeneration, isNameProtectionEnabled, onOpenPersonProfile, searchTargetPerson, presentationMode, presentationStep, presentationFocusId, presentationLayout, presentationPathIds, compactDemoMode, useFounderLabels]);
 
   // 添加日志功能
   const logViewportInfo = useCallback(() => {
@@ -656,9 +661,9 @@ const FamilyTreeFlow = forwardRef(({
       );
       if (!focusNode) return;
       const flowContainer = flowContainerRef.current;
-      const nodeWidth = isMobile ? 100 : 120;
-      const nodeHeight = 80;
-      const zoom = isMobile ? 0.62 : 0.78;
+      const nodeWidth = compactNodeMetrics.width;
+      const nodeHeight = compactNodeMetrics.height;
+      const zoom = compactNodeMetrics.zoom;
 
       if (!flowContainer) {
         const viewportDuration = Number(presentationStep) >= 16 ? 360 : 820;
@@ -710,7 +715,7 @@ const FamilyTreeFlow = forwardRef(({
       );
     }, 80);
     return () => clearTimeout(timer);
-  }, [isMobile, nodes, presentationComplete, presentationFocusId, presentationMode, presentationStep, setCenter, setViewport]);
+  }, [compactNodeMetrics, isMobile, nodes, presentationComplete, presentationFocusId, presentationMode, presentationStep, setCenter, setViewport]);
 
   const visibleNodeSignature = useMemo(
     () => nodes.map((node) => node.id).sort().join('|'),
@@ -735,9 +740,9 @@ const FamilyTreeFlow = forwardRef(({
     }
 
     const viewport = getViewport();
-    const zoom = compactDemoMode ? (isMobile ? 0.62 : 0.78) : viewport.zoom;
+    const zoom = compactDemoMode ? compactNodeMetrics.zoom : viewport.zoom;
     const founderWidth = compactDemoMode
-      ? (isMobile ? 100 : 120)
+      ? compactNodeMetrics.width
       : founderNode.measured?.width || founderNode.width || (isMobile ? 180 : 240);
     const founderHeight = founderNode.measured?.height
       || founderNode.height
@@ -771,7 +776,7 @@ const FamilyTreeFlow = forwardRef(({
       },
       { duration },
     );
-  }, [compactDemoMode, getNodes, getViewport, isMobile, presentationMode, setViewport, useFounderLabels]);
+  }, [compactDemoMode, compactNodeMetrics, getNodes, getViewport, isMobile, presentationMode, setViewport, useFounderLabels]);
 
   // 未登录示范谱首次渲染时只把根节点穆茂移到中心，避免扫描和移动整棵树。
   useEffect(() => {

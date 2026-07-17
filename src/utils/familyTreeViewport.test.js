@@ -1,5 +1,6 @@
 import {
   getAdaptiveTreeFitOptions,
+  getCompactTreeNodeMetrics,
   getViewportXForNodeCenter,
   getViewportYForNodeCenter,
 } from "./familyTreeViewport.js";
@@ -26,6 +27,16 @@ describe("family tree adaptive viewport", () => {
     expect(getAdaptiveTreeFitOptions(3, false).maxZoom).toBeGreaterThan(
       getAdaptiveTreeFitOptions(3, true).maxZoom,
     );
+  });
+
+  test("keeps compact card width and layout spacing on one shared metric", () => {
+    expect(getCompactTreeNodeMetrics(true)).toEqual({
+      width: 152,
+      gap: 12,
+      height: 80,
+      zoom: 0.62,
+    });
+    expect(getCompactTreeNodeMetrics(false).width).toBe(160);
   });
 
   test("centers a node whose layout starts at a positive x coordinate", () => {

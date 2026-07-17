@@ -13,7 +13,18 @@ import {
   isPersonAlive,
   normalizePersonLifeStatus,
 } from "../../utils/personLifeStatus.js";
+import { getSurnameLabel } from "../../utils/personName.js";
 import "./PersonEditPage.css";
+
+function LivingTreeMark() {
+  return (
+    <svg className="person-edit-life-tree" viewBox="0 0 76 88" aria-hidden="true">
+      <path className="person-edit-tree-wash" d="M10 70C22 64 29 48 31 20c8 17 17 24 34 30-12 4-19 12-22 27Z" />
+      <path className="person-edit-tree-branch" d="M38 79V25m0 19-14-9m14 22 18-13m-18 25-16-8" />
+      <path className="person-edit-tree-needle" d="m38 18-8 17h16Zm-10 13-11 20h19Zm20 4-9 19h20ZM25 47 12 68h24Zm27 4L39 72h25Z" />
+    </svg>
+  );
+}
 
 function PersonEditPage({
   person,
@@ -24,6 +35,12 @@ function PersonEditPage({
   const [form] = Form.useForm();
   const [busy, setBusy] = useState(false);
   const tenant = tenantService.getCurrentTenant();
+  const selectedLifeStatus = Form.useWatch("lifeStatus", form);
+  const selectedName = Form.useWatch("name", form);
+  const living = selectedLifeStatus
+    ? selectedLifeStatus === "living"
+    : isPersonAlive(person);
+  const surname = getSurnameLabel(selectedName || person?.name);
 
   const fatherOptions = useMemo(
     () =>
@@ -113,7 +130,10 @@ function PersonEditPage({
         </div>
         <section className="person-edit-shell">
           <header className="person-edit-heading">
-            <div className="person-edit-avatar">{person.name?.slice(-1)}</div>
+            <div className={`person-edit-avatar${living ? " is-living" : ""}`} role="img" aria-label={`${living ? "在世人物" : "家谱人物"}，姓${surname}`}>
+              {living && <LivingTreeMark />}
+              <span>{surname}</span>
+            </div>
             <div><span>第 {person.g_rank || 1} 代 · 资料维护</span><h1>修改 {person.name} 的资料</h1><p>保存后会直接同步到当前私密家谱。</p></div>
           </header>
           <Form form={form} layout="vertical" onFinish={save} className="person-edit-form">

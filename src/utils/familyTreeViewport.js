@@ -24,6 +24,13 @@ export const getAdaptiveTreeFitOptions = (nodeCount, isMobile) => {
   };
 };
 
+export const getCompactTreeNodeMetrics = (isMobile) => ({
+  width: isMobile ? 152 : 160,
+  gap: isMobile ? 12 : 16,
+  height: 80,
+  zoom: isMobile ? 0.62 : 0.78,
+});
+
 export const getViewportXForNodeCenter = ({
   nodeX,
   nodeWidth,

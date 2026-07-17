@@ -3,7 +3,13 @@
 .person-edit-back { border: 0; background: transparent; color: #766554; cursor: pointer; padding: 6px 0; font-size: 15px; }
 .person-edit-shell { max-width: 920px; margin: 0 auto; padding: 32px 40px; border: 1px solid #d9cbb6; border-radius: 20px; background: rgba(255,253,247,.9); box-shadow: 0 16px 42px rgba(87,62,36,.08); }
 .person-edit-heading { display: flex; align-items: center; gap: 18px; padding-bottom: 26px; border-bottom: 1px solid #e4d9ca; }
-.person-edit-avatar { width: 76px; height: 88px; display: grid; place-items: center; flex: 0 0 auto; border: 5px solid #fff; outline: 1px solid #cbb89e; border-radius: 38px 38px 12px 12px; background: #e8ddcc; color: #7f402f; font: 36px/1 "Songti SC", serif; }
+.person-edit-avatar { position: relative; width: 76px; height: 88px; display: grid; place-items: center; flex: 0 0 auto; border: 5px solid #fff; outline: 1px solid #cbb89e; border-radius: 38px 38px 12px 12px; background: #e8ddcc; color: #7f402f; font: 36px/1 "Songti SC", serif; overflow: hidden; isolation: isolate; }
+.person-edit-avatar > span { position: relative; z-index: 2; text-shadow: 0 1px 0 rgba(255,253,247,.8); }
+.person-edit-avatar.is-living { outline-color: #9caf8f; border-radius: 34px 34px 20px 20px; background: linear-gradient(155deg, #edf0df 0%, #dbe4cf 100%); color: #486346; }
+.person-edit-life-tree { position: absolute; inset: 0; width: 100%; height: 100%; color: #557052; opacity: .38; z-index: 1; }
+.person-edit-tree-wash { fill: #aab99a; opacity: .45; }
+.person-edit-tree-branch { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.person-edit-tree-needle { fill: currentColor; opacity: .72; }
 .person-edit-heading span, .person-edit-section-title > span { color: #9a3f2f; letter-spacing: .14em; font-size: 12px; }
 .person-edit-heading h1 { margin: 5px 0; font: 600 30px/1.25 "Songti SC", "STSong", serif; }
 .person-edit-heading p, .person-edit-section-title p { margin: 0; color: #877766; }
