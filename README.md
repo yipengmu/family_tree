@@ -149,12 +149,11 @@ ALIBABA_CLOUD_ACCESS_KEY_SECRET=阿里云RAM用户AccessKeySecret
 ALIBABA_CLOUD_REGION_ID=cn-hangzhou
 ALIBABA_CLOUD_ENDPOINT=dypnsapi.aliyuncs.com
 ALIBABA_PNVS_SCHEME_NAME=默认方案
-ALIBABA_PNVS_SIGN_NAME=控制台当前可用的系统签名
-ALIBABA_PNVS_TEMPLATE_CODE=控制台当前可用的登录注册模板Code
-PHONE_IDENTITY_SECRET=独立的手机号身份HMAC密钥
+ALIBABA_PNVS_SIGN_NAME=恒创联众
+ALIBABA_PNVS_TEMPLATE_CODE=100001
 ```
 
-未配置阿里云凭据、系统签名或模板时，手机号验证码接口会返回服务未配置，不会回退为本地生成验证码。签名和模板必须来自阿里云号码认证控制台当前可用的系统资源；长期密钥只能保存在服务端，不能放入 `REACT_APP_*` 环境变量或浏览器构建产物。
+当前审核资源为“恒创联众”签名、“登录/注册模板”（Code `100001`），模板参数 `code` 和 `min` 与服务端实现一致。未配置阿里云凭据、系统签名或模板时，手机号验证码接口会返回服务未配置，不会回退为本地生成验证码。签名和模板必须来自阿里云号码认证控制台当前可用的系统资源；长期密钥只能保存在服务端，不能放入 `REACT_APP_*` 环境变量或浏览器构建产物。
 
 ### 纸质家谱照片上传与大模型解析配置
 

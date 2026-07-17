@@ -203,6 +203,41 @@
   letter-spacing: 0.08em;
 }
 
+@media (min-width: 861px) {
+  .site-header-inner {
+    min-height: 78px;
+    gap: 30px;
+  }
+
+  .site-brand {
+    gap: 12px;
+  }
+
+  .site-brand-seal {
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+    box-shadow: 0 8px 20px rgba(87, 38, 28, 0.08);
+  }
+
+  .site-brand-seal .brand-logo {
+    transform: scale(1.42);
+  }
+
+  .site-brand strong {
+    font-size: 24px;
+    line-height: 1.08;
+    letter-spacing: 0.11em;
+  }
+
+  .site-brand small {
+    margin-top: 4px;
+    font-size: 12px;
+    line-height: 1.2;
+    letter-spacing: 0.06em;
+  }
+}
+
 .site-nav {
   display: flex;
   align-items: center;
