@@ -583,6 +583,14 @@
     overflow: hidden;
     background: var(--paper);
   }
+
+  /* 分享页是长图预览，必须把滚动交给页面本身。 */
+  .mobile-layout.share-app-shell {
+    height: auto;
+    min-height: 100dvh;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
   .mobile-layout .sidebar-wrapper,
   .mobile-layout .sidebar-overlay,
   .mobile-layout .mobile-menu-btn {

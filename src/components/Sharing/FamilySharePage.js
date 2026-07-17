@@ -47,22 +47,33 @@ function FamilySharePage({ familyName = "我的家谱", familyData = [], onBack 
 
   const filename = `${safeFilename(familyName)}.png`;
 
-  const downloadPoster = () => {
+  const downloadPoster = async () => {
     if (!posterUrl) return;
-    const link = document.createElement("a");
-    link.href = posterUrl;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    trackEvent("share_poster_saved", { type: "family", method: "download" });
+    try {
+      const file = await dataUrlToFile(posterUrl, filename);
+      const objectUrl = URL.createObjectURL(file);
+      const link = document.createElement("a");
+      link.href = objectUrl;
+      link.download = filename;
+      link.rel = "noopener";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+      trackEvent("share_poster_saved", { type: "family", method: "download" });
+    } catch (error) {
+      console.error("保存分享图片失败", error);
+      // iOS Safari 不支持带 download 属性的链接，打开原图后仍可长按保存。
+      window.open(posterUrl, "_blank", "noopener,noreferrer");
+      message.info("已打开图片，请长按图片保存到相册");
+    }
   };
 
   const sharePoster = async () => {
     if (!posterUrl) return;
     try {
       if (!navigator.share) {
-        downloadPoster();
+        await downloadPoster();
         message.info("图片已生成，也可以长按预览图保存到相册");
         return;
       }
@@ -102,17 +113,16 @@ function FamilySharePage({ familyName = "我的家谱", familyData = [], onBack 
 
   return (
     <main className="family-share-page">
-      <button
-        type="button"
-        onClick={onBack}
-        className="family-share-back-top"
-        aria-label="返回"
-      >
-        <ArrowLeftOutlined />
-        返回
-      </button>
-
       <section className="family-share-preview" aria-live="polite">
+        <button
+          type="button"
+          onClick={onBack}
+          className="family-share-back-top"
+          aria-label="返回"
+        >
+          <ArrowLeftOutlined />
+          返回
+        </button>
         {!posterUrl ? (
           <div className="family-share-loading">
             <Spin size="large" />

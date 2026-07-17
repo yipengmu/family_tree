@@ -612,21 +612,33 @@ export const renderFamilyPoster = async (options) => {
   const context = canvas.getContext("2d");
   drawPaperBackground(context, height);
 
+  // 把标题、说明和人数卡收进同一块轻纸张面板，减少头部割裂感。
+  roundRect(
+    context,
+    48,
+    104,
+    984,
+    486,
+    30,
+    "rgba(255,253,248,0.58)",
+    "rgba(216,205,187,0.72)",
+  );
+
   context.fillStyle = COLORS.cinnabar;
   context.font = `600 24px ${FONT_SANS}`;
-  context.fillText("我的家庭世系", 72, 244);
+  context.fillText("我的家庭世系", 72, 178);
   context.fillStyle = COLORS.ink;
   context.font = `600 66px ${FONT_SERIF}`;
-  drawWrappedText(context, model.familyName, 72, 324, 936, 78, 2);
+  drawWrappedText(context, model.familyName, 72, 258, 936, 78, 2);
 
   context.fillStyle = COLORS.inkSoft;
   context.font = `24px ${FONT_SANS}`;
-  context.fillText("从你的名字开始，看见家人如何连成一棵树", 72, 390);
+  context.fillText("从你的名字开始，看见家人如何连成一棵树", 72, 326);
 
-  roundRect(context, 72, 446, 836, 160, 28, COLORS.pine);
+  roundRect(context, 72, 370, 936, 160, 28, COLORS.pine);
   context.fillStyle = "#fffdf8";
   context.font = `600 46px ${FONT_SERIF}`;
-  context.fillText(`${model.memberCount} 位家人`, 116, 524);
+  context.fillText(`${model.memberCount} 位家人`, 116, 448);
   context.fillStyle = "rgba(255,253,248,0.72)";
   context.font = `26px ${FONT_SANS}`;
   context.fillText(
@@ -634,7 +646,7 @@ export const renderFamilyPoster = async (options) => {
       ? `${model.generationCount} 代相承 · 我们仍在持续补充`
       : "每一个名字，都值得被记住",
     116,
-    570,
+    494,
   );
 
   context.fillStyle = COLORS.inkSoft;
@@ -642,12 +654,12 @@ export const renderFamilyPoster = async (options) => {
 
   context.fillStyle = COLORS.cinnabar;
   context.font = `600 24px ${FONT_SANS}`;
-  context.fillText("关系预览", 72, 746);
+  context.fillText("关系预览", 72, 662);
   context.fillStyle = COLORS.ink;
   context.font = `600 44px ${FONT_SERIF}`;
-  context.fillText("家人的名字，正在连成一棵树", 72, 810);
+  context.fillText("家人的名字，正在连成一棵树", 72, 726);
 
-  drawFamilyTreePreview(context, model, 906);
+  drawFamilyTreePreview(context, model, 820);
   await drawQrFooter(context, height, "也为你的家人，留下一份家谱");
   return canvas.toDataURL("image/png");
 };

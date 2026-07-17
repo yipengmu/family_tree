@@ -1,5 +1,5 @@
 .family-share-page {
-  min-height: 100%;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   background: #f4efe4;
@@ -11,24 +11,27 @@
 /* 参考人物档案页：无边框、低干扰，并随分享页内容一起滚动。 */
 .family-share-back-top {
   position: absolute;
-  top: calc(18px + env(safe-area-inset-top));
-  right: 24px;
+  top: calc(14px + env(safe-area-inset-top));
+  right: 20px;
   z-index: 10;
   display: inline-flex;
   align-items: center;
   gap: 4px;
   border: 0;
-  background: transparent;
+  min-height: 40px;
+  padding: 0 13px;
+  border: 1px solid rgba(216, 205, 187, 0.8);
+  background: rgba(255, 253, 248, 0.78);
   cursor: pointer;
   font-size: 15px;
   color: #766554;
-  padding: 6px 0;
+  backdrop-filter: blur(8px);
   border-radius: 8px;
   transition: all 0.2s ease;
 }
 
 .family-share-back-top:hover {
-  background: rgba(232, 221, 204, 0.6);
+  background: rgba(255, 253, 248, 0.96);
   color: #3d352c;
   padding-inline: 8px;
 }
@@ -37,7 +40,7 @@
   position: relative;
   flex: 0 0 auto;
   overflow: visible;
-  padding: calc(70px + env(safe-area-inset-top)) 20px 32px;
+  padding: calc(10px + env(safe-area-inset-top)) 20px 32px;
   background: linear-gradient(180deg, #f5f0e8 0%, #ede6da 100%);
 }
 
@@ -46,7 +49,7 @@
   width: min(100%, 520px);
   height: auto;
   margin: 0 auto;
-  border-radius: 16px;
+  border-radius: 20px;
   box-shadow:
     0 4px 20px rgba(58, 45, 31, 0.12),
     0 16px 40px rgba(58, 45, 31, 0.15);
@@ -168,14 +171,15 @@
 
 @media (max-width: 768px) {
   .family-share-back-top {
-    top: calc(12px + env(safe-area-inset-top));
-    right: 18px;
+    top: calc(10px + env(safe-area-inset-top));
+    right: 14px;
     font-size: 13px;
-    padding: 5px 0;
+    min-height: 38px;
+    padding-inline: 11px;
   }
 
   .family-share-preview {
-    padding: calc(58px + env(safe-area-inset-top)) 10px 20px;
+    padding: calc(6px + env(safe-area-inset-top)) 10px 20px;
   }
 
   .family-share-preview img {
