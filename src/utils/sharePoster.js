@@ -370,22 +370,6 @@ const drawPaperBackground = (context, height) => {
   }
 };
 
-const drawBrand = (context, y = 72) => {
-  roundRect(context, 72, y, 78, 78, 20, COLORS.cinnabar);
-  context.fillStyle = "#fffaf1";
-  context.font = `600 44px ${FONT_SERIF}`;
-  context.textAlign = "center";
-  context.fillText(BRAND.seal, 111, y + 55);
-
-  context.textAlign = "left";
-  context.fillStyle = COLORS.ink;
-  context.font = `600 34px ${FONT_SERIF}`;
-  context.fillText(BRAND.name, 172, y + 32);
-  context.fillStyle = COLORS.inkSoft;
-  context.font = `24px ${FONT_SANS}`;
-  context.fillText(BRAND.tagline, 172, y + 68);
-};
-
 const loadImage = (src) =>
   new Promise((resolve, reject) => {
     if (!src) {
@@ -420,13 +404,24 @@ const drawQrFooter = async (context, height, label) => {
   context.fillText(label, 72, footerTop + 76);
   context.fillStyle = COLORS.inkSoft;
   context.font = `24px ${FONT_SANS}`;
-  context.fillText("长按识别二维码，来「谱里」记录你的家人", 72, footerTop + 126);
+  context.fillText(
+    "长按识别二维码，来「谱里」记录你的家人",
+    72,
+    footerTop + 126,
+  );
   context.fillText("tree.tatababa.top", 72, footerTop + 172);
+  context.fillStyle = COLORS.cinnabar;
+  context.font = `600 24px ${FONT_SERIF}`;
+  context.fillText(`${BRAND.name}：${BRAND.tagline}`, 72, footerTop + 236);
   context.drawImage(qrImage, 776, footerTop + 42, 232, 232);
 
   context.fillStyle = "rgba(47,43,37,0.46)";
   context.font = `20px ${FONT_SANS}`;
-  context.fillText("图片由「谱里」在本机生成，不代表家谱已公开", 72, height - 52);
+  context.fillText(
+    "图片由「谱里」在本机生成，不代表家谱已公开",
+    72,
+    height - 52,
+  );
 };
 
 const measurePersonPosterHeight = (model) => {
@@ -580,12 +575,7 @@ const drawFamilyTreePreview = (context, model, startY) => {
       context.font = `20px ${FONT_SANS}`;
       context.fillText("家谱成员", position.x + 24, position.y + 74);
       if (rowIndex === 0) {
-        drawCrown(
-          context,
-          position.x + position.width / 2,
-          position.y - 8,
-          15,
-        );
+        drawCrown(context, position.x + position.width / 2, position.y - 8, 15);
       }
     });
   });
@@ -621,7 +611,6 @@ export const renderFamilyPoster = async (options) => {
   const canvas = createCanvas(height);
   const context = canvas.getContext("2d");
   drawPaperBackground(context, height);
-  drawBrand(context);
 
   context.fillStyle = COLORS.cinnabar;
   context.font = `600 24px ${FONT_SANS}`;
@@ -630,10 +619,14 @@ export const renderFamilyPoster = async (options) => {
   context.font = `600 66px ${FONT_SERIF}`;
   drawWrappedText(context, model.familyName, 72, 324, 936, 78, 2);
 
-  roundRect(context, 72, 430, 836, 160, 28, COLORS.pine);
+  context.fillStyle = COLORS.inkSoft;
+  context.font = `24px ${FONT_SANS}`;
+  context.fillText("从你的名字开始，看见家人如何连成一棵树", 72, 390);
+
+  roundRect(context, 72, 446, 836, 160, 28, COLORS.pine);
   context.fillStyle = "#fffdf8";
   context.font = `600 46px ${FONT_SERIF}`;
-  context.fillText(`${model.memberCount} 位家人`, 116, 508);
+  context.fillText(`${model.memberCount} 位家人`, 116, 524);
   context.fillStyle = "rgba(255,253,248,0.72)";
   context.font = `26px ${FONT_SANS}`;
   context.fillText(
@@ -641,7 +634,7 @@ export const renderFamilyPoster = async (options) => {
       ? `${model.generationCount} 代相承 · 我们仍在持续补充`
       : "每一个名字，都值得被记住",
     116,
-    554,
+    570,
   );
 
   context.fillStyle = COLORS.inkSoft;
@@ -649,12 +642,12 @@ export const renderFamilyPoster = async (options) => {
 
   context.fillStyle = COLORS.cinnabar;
   context.font = `600 24px ${FONT_SANS}`;
-  context.fillText("关系预览", 72, 730);
+  context.fillText("关系预览", 72, 746);
   context.fillStyle = COLORS.ink;
   context.font = `600 44px ${FONT_SERIF}`;
-  context.fillText("家人的名字，正在连成一棵树", 72, 794);
+  context.fillText("家人的名字，正在连成一棵树", 72, 810);
 
-  drawFamilyTreePreview(context, model, 890);
+  drawFamilyTreePreview(context, model, 906);
   await drawQrFooter(context, height, "也为你的家人，留下一份家谱");
   return canvas.toDataURL("image/png");
 };

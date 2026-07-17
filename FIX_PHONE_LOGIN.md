@@ -7,7 +7,7 @@
 
 ## 修复方案
 
-已创建临时修复接口：`POST /api/admin?action=fix-phone-identity`
+已创建临时修复接口：`POST /api/admin?type=fix-phone-identity`
 
 ### 方式一：通过 curl 调用（推荐）
 
@@ -53,7 +53,7 @@ curl -X POST https://your-app.vercel.app/api/admin \
 4. 执行以下 JavaScript：
 
 ```javascript
-fetch('/api/admin?action=fix-phone-identity', {
+fetch('/api/admin?type=fix-phone-identity', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({

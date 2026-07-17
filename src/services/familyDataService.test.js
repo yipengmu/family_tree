@@ -87,23 +87,23 @@ describe("private family data loading", () => {
     expect(localStorage.getItem("tenant_list")).toBeNull();
   });
 
-  test("persists the guest demo snapshot for the next browser visit", () => {
+  test("persists the guest demo snapshot for the next browser visit", async () => {
     localStorage.removeItem("token");
     const snapshot = [{ id: 1, name: "示例人物", g_rank: 1, g_father_id: 0 }];
     jest.spyOn(familyDataService, "loadOriginalFamilyData").mockReturnValue(snapshot);
 
-    expect(familyDataService.getGuestDemoSnapshot("default")).toEqual(snapshot);
+    await expect(familyDataService.getGuestDemoSnapshot("default")).resolves.toEqual(snapshot);
 
     familyDataService.clearAllCache();
     expect(familyDataService.getCachedFamilyData("default")).toEqual(snapshot);
   });
 
-  test("never reads or writes the guest cache for an authenticated tenant", () => {
+  test("never reads or writes the guest cache for an authenticated tenant", async () => {
     localStorage.setItem("token", "user-token");
     const snapshot = [{ id: 1, name: "用户人物", g_rank: 1, g_father_id: 0 }];
     jest.spyOn(familyDataService, "loadOriginalFamilyData").mockReturnValue(snapshot);
 
-    expect(familyDataService.getGuestDemoSnapshot("default")).toBeNull();
+    await expect(familyDataService.getGuestDemoSnapshot("default")).resolves.toBeNull();
     expect(familyDataService.getCachedFamilyData("default")).toBeNull();
     expect(localStorage.getItem("familyTree_guest_demo_family_data")).toBeNull();
   });

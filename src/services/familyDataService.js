@@ -5,7 +5,6 @@
  */
 
 import tenantService from './tenantService.js';
-import dbJson from '../data/familyData.js';
 import cacheManager from '../utils/cacheManager.js';
 
 const CACHE_KEYS = {
@@ -202,13 +201,13 @@ class FamilyDataService {
   }
 
   /** 返回游客首屏可立即使用的数据，不发网络请求。 */
-  getGuestDemoSnapshot(tenantId = 'default') {
+  async getGuestDemoSnapshot(tenantId = 'default') {
     if (!this.isGuestDemoContext(tenantId)) return null;
 
     const cachedData = this.getCachedFamilyData(tenantId);
     if (cachedData) return cachedData;
 
-    const snapshot = this.loadOriginalFamilyData(tenantId);
+    const snapshot = await this.loadOriginalFamilyData(tenantId);
     if (snapshot.length > 0) this.cacheGuestDemoData(snapshot, tenantId);
     return snapshot;
   }
@@ -260,7 +259,7 @@ class FamilyDataService {
     if (!isAuthenticated || tenantId === 'default' || tenantService.isGuestMode()) {
       console.log(`📁 [第3层] 未登录/游客模式/默认租户，优先加载本地familyData.js`);
       try {
-        const originalData = this.loadOriginalFamilyData(tenantId);
+        const originalData = await this.loadOriginalFamilyData(tenantId);
         if (originalData && originalData.length > 0) {
           console.log(`✅ [第3层] 成功加载本地数据: ${originalData.length} 条记录`);
           return originalData;
@@ -398,7 +397,7 @@ class FamilyDataService {
    * @param {string} tenantId - 租户ID
    * @returns {Array} - 家谱数据
    */
-  loadOriginalFamilyData(tenantId = null) {
+  async loadOriginalFamilyData(tenantId = null) {
     const currentTenantId = tenantId || tenantService.getCurrentTenant().id;
     const isAuthenticated = !!localStorage.getItem('token');
     
@@ -412,8 +411,8 @@ class FamilyDataService {
     console.log(`📁 [第3层] 加载原始familyData.js文件 (租户: ${currentTenantId})`);
     
     try {
-      // 使用顶部静态导入的数据
-      const data = dbJson;
+      // 仅在游客/示范租户路径按需加载，私有租户不会下载或解析整份示范谱。
+      const { default: data } = await import('../data/familyData.js');
       console.log(`📋 静态导入数据文件类型: ${typeof data}, 是否数组: ${Array.isArray(data)}`);
       
       // 验证数据格式

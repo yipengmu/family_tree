@@ -109,23 +109,37 @@ function SharePosterModal({
   const sharePoster = async () => {
     if (!posterUrl) return;
     try {
-      if (!navigator.share || typeof File === "undefined") {
+      if (!navigator.share) {
         downloadPoster();
         message.info("图片已生成，也可以长按预览图保存到相册");
         return;
       }
-      const file = await dataUrlToFile(posterUrl, filename);
-      if (!navigator.canShare?.({ files: [file] })) {
-        downloadPoster();
-        message.info("图片已生成，也可以长按预览图保存到相册");
-        return;
+
+      if (typeof File !== "undefined") {
+        const file = await dataUrlToFile(posterUrl, filename);
+        if (navigator.canShare?.({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: kind === "family" ? familyName : `${person?.name}人物志`,
+            text: "我在谱里记录了家人的名字与故事。",
+          });
+          trackEvent("share_poster_saved", {
+            type: kind,
+            method: "system_share",
+          });
+          return;
+        }
       }
+
       await navigator.share({
-        files: [file],
         title: kind === "family" ? familyName : `${person?.name}人物志`,
         text: "我在谱里记录了家人的名字与故事。",
+        url: window.location.href,
       });
-      trackEvent("share_poster_saved", { type: kind, method: "system_share" });
+      trackEvent("share_poster_saved", {
+        type: kind,
+        method: "system_share_link",
+      });
     } catch (error) {
       if (error?.name !== "AbortError") {
         message.error("暂时无法调起系统分享，请长按图片保存");
@@ -225,7 +239,7 @@ function SharePosterModal({
           disabled={!posterUrl || generating}
           onClick={downloadPoster}
         >
-          保存图片 
+          保存图片
         </Button>
         <Button
           type="primary"

@@ -114,6 +114,10 @@
       "destination": "/api/user?type=profile"
     },
     {
+      "source": "/api/admin/:type",
+      "destination": "/api/admin?type=:type"
+    },
+    {
       "source": "/((?!api/).*)",
       "destination": "/index.html"
     }

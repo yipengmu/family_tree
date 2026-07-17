@@ -61,25 +61,37 @@ function FamilySharePage({ familyName = "我的家谱", familyData = [], onBack 
   const sharePoster = async () => {
     if (!posterUrl) return;
     try {
-      if (!navigator.share || typeof File === "undefined") {
+      if (!navigator.share) {
         downloadPoster();
         message.info("图片已生成，也可以长按预览图保存到相册");
         return;
       }
-      const file = await dataUrlToFile(posterUrl, filename);
-      if (!navigator.canShare?.({ files: [file] })) {
-        downloadPoster();
-        message.info("图片已生成，也可以长按预览图保存到相册");
-        return;
+
+      if (typeof File !== "undefined") {
+        const file = await dataUrlToFile(posterUrl, filename);
+        if (navigator.canShare?.({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: familyName,
+            text: "我在谱里记录了家人的名字与故事。",
+          });
+          trackEvent("share_poster_saved", {
+            type: "family",
+            method: "system_share",
+          });
+          return;
+        }
       }
+
+      // 部分移动浏览器只能分享链接，仍然优先尝试唤起系统分享面板。
       await navigator.share({
-        files: [file],
         title: familyName,
         text: "我在谱里记录了家人的名字与故事。",
+        url: window.location.href,
       });
       trackEvent("share_poster_saved", {
         type: "family",
-        method: "system_share",
+        method: "system_share_link",
       });
     } catch (error) {
       if (error?.name !== "AbortError") {
@@ -90,15 +102,15 @@ function FamilySharePage({ familyName = "我的家谱", familyData = [], onBack 
 
   return (
     <main className="family-share-page">
-      <Button
-        type="text"
-        icon={<ArrowLeftOutlined />}
+      <button
+        type="button"
         onClick={onBack}
         className="family-share-back-top"
         aria-label="返回"
       >
+        <ArrowLeftOutlined />
         返回
-      </Button>
+      </button>
 
       <section className="family-share-preview" aria-live="polite">
         {!posterUrl ? (

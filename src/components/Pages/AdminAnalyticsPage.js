@@ -61,7 +61,7 @@ function AdminAnalyticsPage() {
   const loadReport = useCallback(async () => {
     const token = localStorage.getItem("token");
     if (!token) {
-      navigate("/login", { replace: true, state: { returnTo: "/admin/analytics" } });
+      navigate("/login", { replace: true, state: { returnTo: "/bi" } });
       return;
     }
 
@@ -78,7 +78,7 @@ function AdminAnalyticsPage() {
       if (!response.ok) {
         if (response.status === 401) {
           localStorage.removeItem("token");
-          navigate("/login", { replace: true, state: { returnTo: "/admin/analytics" } });
+          navigate("/login", { replace: true, state: { returnTo: "/bi" } });
           return;
         }
         throw new Error(payload.error || "无法读取管理员报表");

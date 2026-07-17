@@ -185,6 +185,12 @@
     padding: 8px 10px 0;
     overflow: hidden;
   }
+
+  .share-app-shell .content-container {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
 }
 
 @media (max-width: 360px) {

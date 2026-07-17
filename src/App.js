@@ -163,7 +163,7 @@ function MainApp({ demoMode = false }) {
           familyDataService.isGuestDemoContext(currentTenantId)
         ) {
           const snapshot =
-            familyDataService.getGuestDemoSnapshot(currentTenantId);
+            await familyDataService.getGuestDemoSnapshot(currentTenantId);
           if (snapshot?.length) {
             setFamilyData(snapshot);
             setValidationResult(validateFamilyData(snapshot));
@@ -271,6 +271,14 @@ function MainApp({ demoMode = false }) {
       }
 
       // 游客读取示范家谱；登录用户直接读取自己上次使用的家谱，避免短暂泄露示范数据或错租户编辑。
+      if (isAuthenticated()) {
+        // 私有租户的数据库读取不应阻塞工作区骨架；FamilyTreePage 会显示局部加载层，
+        // 数据返回后再填充内容，避免冷启动/数据库连接延迟把整个过渡页卡住。
+        setLoading(false);
+        void loadFamilyData(initialTenantId);
+        return;
+      }
+
       await loadFamilyData(initialTenantId);
     };
 
@@ -661,11 +669,23 @@ function MainApp({ demoMode = false }) {
 
   // 移动端也使用AppLayout组件，但简化菜单
   if (mobile) {
-    return <div className="App mobile-layout">{renderCurrentPage()}</div>;
+    return (
+      <div
+        className={`App mobile-layout ${currentPage === "share" ? "share-app-shell" : ""}`}
+      >
+        {renderCurrentPage()}
+      </div>
+    );
   }
 
   // PC端使用新的布局系统
-  return <div className="App desktop-layout">{renderCurrentPage()}</div>;
+  return (
+    <div
+      className={`App desktop-layout ${currentPage === "share" ? "share-app-shell" : ""}`}
+    >
+      {renderCurrentPage()}
+    </div>
+  );
 }
 
 export default MainApp;
