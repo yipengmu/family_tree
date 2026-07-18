@@ -170,7 +170,7 @@ export default function PublicSharePage() {
             <span>世系总览</span>
             <h2>家谱树状图</h2>
           </div>
-          <p>拖动查看分支，使用右下角按钮缩放。</p>
+          <p>拖动查看分支，使用图谱侧边按钮缩放或全屏。</p>
         </div>
         <PublicFamilyTree familyData={snapshot.people} />
       </section>

@@ -30,7 +30,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  padding: 14px max(22px, calc((100vw - 1180px) / 2));
+  padding: 10px max(22px, calc((100vw - 1180px) / 2));
   border-bottom: 1px solid rgba(33, 69, 59, 0.12);
   background: rgba(250, 247, 238, 0.94);
   backdrop-filter: blur(14px);
@@ -76,7 +76,7 @@
 }
 
 .public-share-hero {
-  padding: 72px 24px 54px;
+  padding: 42px 24px 30px;
   text-align: center;
   background:
     radial-gradient(
@@ -95,7 +95,7 @@
   letter-spacing: 0.16em;
 }
 .public-share-hero h1 {
-  margin: 12px 0;
+  margin: 8px 0;
   color: #173f38;
   font: 700 clamp(34px, 6vw, 58px) / 1.15 var(--serif);
 }
@@ -110,7 +110,7 @@
   justify-content: center;
   gap: 1px;
   width: min(640px, 100%);
-  margin: 36px auto 0;
+  margin: 24px auto 0;
   overflow: hidden;
   border: 1px solid rgba(33, 69, 59, 0.12);
   border-radius: 18px;
@@ -120,7 +120,7 @@
   flex: 1;
   display: grid;
   gap: 3px;
-  padding: 20px 10px;
+  padding: 14px 10px;
   border-right: 1px solid rgba(33, 69, 59, 0.1);
 }
 .public-share-stats span:last-child {
@@ -137,14 +137,14 @@
 .public-share-tree-section {
   width: min(1180px, calc(100% - 32px));
   margin: 0 auto;
-  padding: 28px 0 48px;
+  padding: 20px 0 48px;
 }
 .public-share-section-heading {
   display: flex;
   justify-content: space-between;
   align-items: end;
   gap: 24px;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 .public-share-section-heading h2 {
   margin: 5px 0 0;
@@ -166,6 +166,11 @@
   box-shadow: 0 18px 52px rgba(47, 68, 59, 0.08);
 }
 .public-family-tree-canvas .react-flow__controls {
+  top: 50%;
+  right: 12px;
+  bottom: auto;
+  left: auto;
+  transform: translateY(-50%);
   box-shadow: 0 4px 18px rgba(31, 61, 51, 0.12);
 }
 
@@ -243,56 +248,78 @@
 
 @media (max-width: 768px) {
   .public-share-header {
-    position: static;
-    align-items: flex-start;
-    padding: 12px 14px;
+    position: sticky;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 14px;
+  }
+  .public-share-brand {
+    gap: 8px;
+  }
+  .public-share-brand img {
+    width: 30px;
+    height: 30px;
+  }
+  .public-share-brand span {
+    display: block;
+  }
+  .public-share-brand strong {
+    font-size: 15px;
   }
   .public-share-brand small {
-    display: inline;
-    font-size: 10px;
+    display: none;
   }
   .public-share-expiry strong {
     font-size: 12px;
   }
   .public-share-hero {
-    padding: 42px 18px 34px;
+    padding: 26px 18px 22px;
+  }
+  .public-share-eyebrow {
+    font-size: 12px;
+  }
+  .public-share-hero h1 {
+    margin: 5px 0 7px;
+    font-size: clamp(30px, 9vw, 42px);
   }
   .public-share-hero > p {
     font-size: 15px;
   }
   .public-share-stats {
-    margin-top: 26px;
+    margin-top: 18px;
+    border-radius: 14px;
   }
   .public-share-stats span {
-    padding: 14px 5px;
+    padding: 10px 4px;
   }
   .public-share-stats strong {
-    font-size: 22px;
+    font-size: 20px;
   }
   .public-share-tree-section {
     width: calc(100% - 20px);
-    padding-top: 20px;
+    padding-top: 14px;
   }
   .public-share-section-heading {
     display: block;
     padding: 0 6px;
   }
   .public-share-section-heading p {
-    margin-top: 8px;
+    margin-top: 5px;
+    font-size: 12px;
+  }
+  .public-share-section-heading h2 {
+    font-size: 25px;
   }
   .public-family-tree-canvas {
-    height: clamp(520px, 70dvh, 680px);
-    min-height: 520px;
+    height: clamp(500px, 68dvh, 660px);
+    min-height: 500px;
     border-radius: 14px;
   }
   .public-family-tree-canvas .react-flow {
     height: 100% !important;
   }
   .public-family-tree-canvas .react-flow__controls {
-    top: auto;
-    right: 10px;
-    bottom: 10px;
-    left: auto;
+    right: 8px;
   }
   .public-share-values {
     grid-template-columns: 1fr;
