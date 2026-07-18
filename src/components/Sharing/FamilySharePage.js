@@ -1,29 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  ArrowLeftOutlined,
-  ClockCircleOutlined,
-  CopyOutlined,
-  LinkOutlined,
-  ReloadOutlined,
-  ShareAltOutlined,
-  StopOutlined,
-} from "@ant-design/icons";
-import {
-  Alert,
-  Button,
-  Checkbox,
-  Modal,
-  Popconfirm,
-  Spin,
-  Tag,
-  message,
-} from "antd";
+import { ArrowLeftOutlined, ShareAltOutlined } from "@ant-design/icons";
+import { Alert, Button, Checkbox, Modal, Spin, Tag, message } from "antd";
 import shareService from "../../services/shareService.js";
 import { trackEvent } from "../../utils/analytics.js";
-import {
-  formatShareExpiry,
-  getShareTimeRemaining,
-} from "../../utils/shareExpiry.js";
+import { formatShareExpiry } from "../../utils/shareExpiry.js";
 import { renderFamilyPoster } from "../../utils/sharePoster.js";
 import "./FamilySharePage.css";
 
@@ -150,15 +130,12 @@ function FamilySharePage({
     }
   };
 
-  const revokeShare = async () => {
-    try {
-      const result = await shareService.revoke(tenantId, share.id);
-      setShare(result.share);
-      message.success("分享链接已撤销");
-      trackEvent("share_link_revoked", { result: "success" });
-    } catch (error) {
-      message.error(error.message || "撤销失败");
+  const handleShareClick = () => {
+    if (activeShare) {
+      shareOnlineUrl();
+      return;
     }
+    openPublishConfirm(false);
   };
 
   return (
@@ -172,23 +149,7 @@ function FamilySharePage({
         <ArrowLeftOutlined /> 返回
       </button>
 
-      <section
-        className="online-share-panel"
-        aria-labelledby="online-share-title"
-      >
-        <div className="online-share-heading">
-          <div>
-            <span className="online-share-kicker">网页分享</span>
-            <h1 id="online-share-title">让家人直接打开这份家谱</h1>
-            <p>
-              公开姓名、代际与树状关系，并展示家谱摘要和家风文化内容；人物志与敏感资料不会公开。
-            </p>
-          </div>
-          <Tag color="volcano" icon={<ClockCircleOutlined />}>
-            固定有效 7 天
-          </Tag>
-        </div>
-
+      <section className="online-share-panel" aria-label="网页分享">
         {!canPublishOnline ? (
           <Alert
             showIcon
@@ -203,80 +164,24 @@ function FamilySharePage({
           </div>
         ) : activeShare ? (
           <div className="online-share-active">
-            <Alert
-              showIcon
-              type="success"
-              message={`链接正在生效 · ${getShareTimeRemaining(share.expiresAt, now)}`}
-              description={`查看者会看到明确提示：有效至 ${formatShareExpiry(share.expiresAt)}。更新公开内容会立即废止当前链接。`}
-            />
-            <button
-              className="online-share-url"
-              type="button"
-              onClick={copyShareUrl}
-              title="复制分享链接"
-            >
-              <LinkOutlined />
-              <span>{share.shareUrl}</span>
-              <CopyOutlined />
-            </button>
-            <div className="online-share-meta">
-              <span>浏览 {share.viewCount || 0} 次</span>
-              <span>
-                {share.lastViewedAt
-                  ? `最近查看 ${formatShareExpiry(share.lastViewedAt)}`
-                  : "尚未有人查看"}
-              </span>
-            </div>
-            <div className="online-share-actions">
-              <Button
-                type="primary"
-                icon={<ShareAltOutlined />}
-                onClick={shareOnlineUrl}
-              >
-                分享网页
-              </Button>
-              <Button icon={<CopyOutlined />} onClick={copyShareUrl}>
-                复制链接
-              </Button>
-              <Button
-                icon={<ReloadOutlined />}
-                onClick={() => openPublishConfirm(true)}
-              >
-                更新内容并重置 7 天
-              </Button>
-              <Popconfirm
-                title="撤销后，收到链接的人将立即无法查看。"
-                okText="确认撤销"
-                cancelText="取消"
-                onConfirm={revokeShare}
-              >
-                <Button danger icon={<StopOutlined />}>
-                  立即撤销
-                </Button>
-              </Popconfirm>
-            </div>
-          </div>
-        ) : (
-          <div className="online-share-empty">
-            <Alert
-              showIcon
-              type="info"
-              message={
-                share?.status === "EXPIRED"
-                  ? "上一条分享已到期"
-                  : share?.status === "REVOKED"
-                    ? "上一条分享已撤销"
-                    : "尚未生成网页分享"
-              }
-              description="发布后，分享人和查看人都会看到精确到期时间与剩余时长。"
-            />
             <Button
               type="primary"
               size="large"
-              icon={<LinkOutlined />}
-              onClick={() => openPublishConfirm(false)}
+              icon={<ShareAltOutlined />}
+              onClick={handleShareClick}
             >
-              生成 7 天网页分享
+              分享并复制网页
+            </Button>
+          </div>
+        ) : (
+          <div className="online-share-empty">
+            <Button
+              type="primary"
+              size="large"
+              icon={<ShareAltOutlined />}
+              onClick={handleShareClick}
+            >
+              分享并复制网页
             </Button>
           </div>
         )}

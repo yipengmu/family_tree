@@ -15,13 +15,13 @@ describe("public share product boundary", () => {
     "utf8",
   );
 
-  test("shows the seven-day limit to both publisher and viewer", () => {
+  test("shows the seven-day limit to viewers without cluttering the share entry", () => {
     expect(pageSource).toContain("7 天后过期");
     expect(pageSource).not.toContain("formatShareExpiry(share.expiresAt)");
-    expect(sharePageSource).toContain("固定有效 7 天");
-    expect(sharePageSource).toContain(
-      "有效至 ${formatShareExpiry(share.expiresAt)}",
-    );
+    expect(sharePageSource).toContain("分享并复制网页");
+    expect(sharePageSource).not.toContain("让家人直接打开这份家谱");
+    expect(sharePageSource).not.toContain("固定有效 7 天");
+    expect(sharePageSource).not.toContain("浏览 {share.viewCount || 0} 次");
   });
 
   test("keeps the public page focused on tree value and new-user activation", () => {
