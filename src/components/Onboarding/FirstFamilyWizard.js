@@ -71,7 +71,7 @@ function FirstFamilyWizard({ busy, familyName, onComplete, onExit }) {
           <div hidden={step !== 0}>
             <Form.Item
               name="selfName"
-              label="你的姓名"
+              label="你的姓名（家谱中的发起人）"
               rules={[{ required: true, message: "请填写你的姓名" }]}
             >
               <Input
@@ -82,6 +82,9 @@ function FirstFamilyWizard({ busy, familyName, onComplete, onExit }) {
                 autoFocus
               />
             </Form.Item>
+            <p className="first-family-note">
+              已使用注册时的姓名作为默认值；这里可以按家谱记录需要调整。
+            </p>
             <Form.Item
               name="selfSex"
               label="性别"

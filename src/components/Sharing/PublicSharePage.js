@@ -140,12 +140,11 @@ export default function PublicSharePage() {
         </Link>
         <div className="public-share-expiry">
           <ClockCircleOutlined />
-          <strong>7 天后过期</strong>
+          <strong>7天内有效</strong>
         </div>
       </header>
 
       <section className="public-share-hero">
-        <span className="public-share-eyebrow">家人主动发布的只读家谱</span>
         <h1>{snapshot.familyName}</h1>
         <p>沿着姓名与关系，看见家庭代代延续。</p>
         <div className="public-share-stats" aria-label="家谱摘要">
@@ -168,7 +167,6 @@ export default function PublicSharePage() {
         <div className="public-share-section-heading">
           <div>
             <span>世系总览</span>
-            <h2>家谱树状图</h2>
           </div>
           <p>拖动查看分支，使用图谱侧边按钮缩放或全屏。</p>
         </div>

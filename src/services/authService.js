@@ -210,7 +210,7 @@ class AuthService {
     }
   }
 
-  static async registerPhone(phone, code, password, email = "") {
+  static async registerPhone(phone, code, password, email = "", name = "") {
     try {
       const response = await fetch(
         `${this.getApiBaseUrl()}/api/auth/register`,
@@ -224,6 +224,7 @@ class AuthService {
             code,
             password,
             email: email.trim().toLowerCase(),
+            name: name.trim(),
           }),
         },
       );

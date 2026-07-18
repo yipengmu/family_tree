@@ -8,6 +8,8 @@ describe("phone registration", () => {
   );
 
   test("keeps verification code and password setup inside registration", () => {
+    expect(registerPageSource).toContain('name="name"');
+    expect(registerPageSource).toContain("将作为家谱中的发起人");
     expect(registerPageSource).toContain('name="phone"');
     expect(registerPageSource).toContain('name="code"');
     expect(registerPageSource).toContain('name="password"');
@@ -16,6 +18,7 @@ describe("phone registration", () => {
       'AuthService.sendPhoneCode(phone, "register")',
     );
     expect(registerPageSource).toContain("AuthService.registerPhone(");
+    expect(registerPageSource).toContain("values.name");
   });
 
   test("offers email as an optional pending identity", () => {

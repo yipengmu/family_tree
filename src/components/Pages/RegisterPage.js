@@ -12,6 +12,7 @@ import {
   MailOutlined,
   PhoneOutlined,
   SafetyCertificateOutlined,
+  UserOutlined,
 } from "@ant-design/icons";
 import { useLocation, useNavigate } from "react-router-dom";
 import AuthService from "../../services/authService.js";
@@ -70,6 +71,7 @@ const RegisterPage = () => {
         values.code,
         values.password,
         values.email,
+        values.name,
       );
 
       if (result.success) {
@@ -118,6 +120,21 @@ const RegisterPage = () => {
         onFinish={handleRegister}
         autoComplete="off"
       >
+        <Form.Item
+          name="name"
+          rules={[
+            { required: true, message: "请填写你的姓名" },
+            { max: 50, message: "姓名不能超过50个字符" },
+          ]}
+        >
+          <Input
+            prefix={<UserOutlined />}
+            placeholder="你的姓名（将作为家谱中的发起人）"
+            size="large"
+            maxLength={50}
+          />
+        </Form.Item>
+
         <Form.Item
           name="phone"
           rules={[
