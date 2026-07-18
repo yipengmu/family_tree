@@ -434,6 +434,7 @@ function MainApp({ demoMode = false }) {
                 : currentTenant?.name || "我的家谱"
             }
             familyData={familyData}
+            currentTenant={currentTenant}
             onBack={() => navigate("/app")}
           />
         );

@@ -23,6 +23,9 @@ const ResetPasswordPage = lazy(
 const AdminAnalyticsPage = lazy(
   () => import("./components/Pages/AdminAnalyticsPage.js"),
 );
+const PublicSharePage = lazy(
+  () => import("./components/Sharing/PublicSharePage.js"),
+);
 
 const RouteLoading = () => (
   <div className="route-loading" role="status" aria-live="polite">
@@ -52,6 +55,7 @@ const RouterApp = () => (
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/bi" element={<AdminAnalyticsPage />} />
+        <Route path="/s/:token" element={<PublicSharePage />} />
         <Route path="/app/demo" element={<AppWorkspace demoMode />} />
         <Route path="/app/*" element={<AppWorkspace />} />
         <Route path="/tree" element={<Navigate to="/app" replace />} />

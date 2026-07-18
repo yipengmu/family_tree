@@ -42,7 +42,7 @@ import {
   isPersonAlive,
   normalizePersonLifeStatus,
 } from "../../utils/personLifeStatus.js";
-import { trackEvent } from "../../utils/analytics.js";
+import { classifyAnalyticsError, trackEvent } from "../../utils/analytics.js";
 import {
   addPaternalAncestor,
   getLifeStatusFields,
@@ -892,6 +892,10 @@ function CreatorPage({
         );
       }
     } catch (error) {
+      trackEvent("family_save_failed", {
+        stage: rows.length ? "editing" : "activation",
+        reason: classifyAnalyticsError(error),
+      });
       message.destroy();
       setUploadProgress(0);
       setAnalysisProgress(0);
@@ -1216,6 +1220,10 @@ function CreatorPage({
       setPaternalNameUnknown(false);
       onMenuClick?.("tree");
     } catch (error) {
+      trackEvent("ancestor_save_failed", {
+        stage: "paternal_guide",
+        reason: classifyAnalyticsError(error),
+      });
       message.error(error.message || "添加祖辈失败，请重试");
     }
   };
@@ -1263,7 +1271,9 @@ function CreatorPage({
       );
       if (saved) {
         trackEvent("first_person_saved", { memberCount: firstFamily.length });
-        trackEvent("family_created_success", { memberCount: firstFamily.length });
+        trackEvent("family_created_success", {
+          memberCount: firstFamily.length,
+        });
         if (firstFamily.length > 1) {
           trackEvent("first_relationship_created", {
             memberCount: firstFamily.length,

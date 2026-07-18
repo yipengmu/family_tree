@@ -44,6 +44,12 @@ function resolveModernRoute(requestPath) {
       return route("api/tenant.js", { type: "accept-invitation" });
     if (!id) return route("api/tenant.js", { type: "invite" });
   }
+  if (resource === "shares") {
+    return route("api/share.js", { type: "manage" }, id ? { shareId: id } : {});
+  }
+  if (resource === "public-shares" && id) {
+    return route("api/share.js", { type: "public" }, { token: id });
+  }
   if (resource === "events" && id)
     return route("api/story.js", { type: "event" }, { eventId: id });
   if (resource === "memories" && id) {

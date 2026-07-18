@@ -20,8 +20,22 @@ const sanitizeProperties = (properties = {}) =>
     ),
   );
 
+export const classifyAnalyticsError = (error) => {
+  const message = String(error?.message || error || "").toLowerCase();
+  if (/401|403|登录|令牌|权限|unauthor|forbidden/.test(message))
+    return "unauthorized";
+  if (/409|版本|冲突|conflict/.test(message)) return "conflict";
+  if (/校验|填写|必填|格式|validation|invalid/.test(message))
+    return "validation";
+  if (/network|fetch|timeout|超时|网络|服务/.test(message)) return "network";
+  return "unknown";
+};
+
 export const initAnalytics = () => {
   if (typeof window === "undefined" || !POSTHOG_KEY || posthogReady) return;
+  // 公开分享链接携带 bearer token。该路由不初始化第三方分析，避免自动属性
+  // 把完整 URL（包括 token）发送到 PostHog。
+  if (/^\/s\/[^/]+/.test(window.location.pathname)) return;
 
   posthog.init(POSTHOG_KEY, {
     api_host: POSTHOG_HOST,

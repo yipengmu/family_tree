@@ -149,6 +149,25 @@ test("maps story routes and preserves route parameters", () => {
   );
 });
 
+test("maps authenticated and anonymous public share routes", () => {
+  assert.deepEqual(
+    createModernApiBridge.resolveModernRoute("/api/shares/share-1"),
+    {
+      modulePath: "api/share.js",
+      query: { type: "manage" },
+      params: { shareId: "share-1" },
+    },
+  );
+  assert.deepEqual(
+    createModernApiBridge.resolveModernRoute("/api/public-shares/secret-token"),
+    {
+      modulePath: "api/share.js",
+      query: { type: "public" },
+      params: { token: "secret-token" },
+    },
+  );
+});
+
 test("maps legacy tenant-specific family data paths", () => {
   assert.deepEqual(
     createModernApiBridge.resolveModernRoute("/api/family-data/tenant-1"),

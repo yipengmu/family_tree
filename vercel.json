@@ -8,6 +8,16 @@
       "maxDuration": 60
     }
   },
+  "headers": [
+    {
+      "source": "/s/:token",
+      "headers": [
+        { "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" },
+        { "key": "Referrer-Policy", "value": "no-referrer" },
+        { "key": "Cache-Control", "value": "no-store" }
+      ]
+    }
+  ],
   "rewrites": [
     {
       "source": "/api/auth/:type",
@@ -48,6 +58,18 @@
     {
       "source": "/api/invitations",
       "destination": "/api/tenant?type=invite"
+    },
+    {
+      "source": "/api/shares/:shareId",
+      "destination": "/api/share?type=manage&shareId=:shareId"
+    },
+    {
+      "source": "/api/shares",
+      "destination": "/api/share?type=manage"
+    },
+    {
+      "source": "/api/public-shares/:token",
+      "destination": "/api/share?type=public&token=:token"
     },
     {
       "source": "/api/events/:eventId",

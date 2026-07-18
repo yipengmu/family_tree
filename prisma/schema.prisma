@@ -28,6 +28,7 @@ model User {
   updatedEvents      Event[]            @relation("EventUpdater")
   eventRevisions     EventRevision[]    @relation("RevisionActor")
   auditLogs          AuditLog[]         @relation("AuditActor")
+  publicShares       PublicShare[]      @relation("PublicShareCreator")
 
   @@map("users")
 }
@@ -53,6 +54,7 @@ model Tenant {
   aiJobs       AiProcessingJob[]
   auditLogs    AuditLog[]
   cloudUsage   CloudUsage[]
+  publicShares PublicShare[]
 
   @@map("tenants")
 }
@@ -129,6 +131,30 @@ model Invitation {
   @@index([tenant_id, status])
   @@index([email, status])
   @@map("invitations")
+}
+
+model PublicShare {
+  id              String    @id @default(cuid())
+  tenant_id       String
+  created_by      Int
+  token_hash      String    @unique
+  token_encrypted String
+  status          String    @default("ACTIVE")
+  snapshot        String
+  source_version  Int       @default(0)
+  expires_at      DateTime
+  revoked_at      DateTime?
+  view_count      Int       @default(0)
+  last_viewed_at  DateTime?
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+
+  tenant  Tenant @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  creator User   @relation("PublicShareCreator", fields: [created_by], references: [id], onDelete: Restrict)
+
+  @@index([tenant_id, status, expires_at])
+  @@index([created_by, created_at])
+  @@map("public_shares")
 }
 
 model Memory {
@@ -298,16 +324,16 @@ model AuditLog {
 }
 
 model CloudUsage {
-  id              String   @id @default(cuid())
-  tenant_id       String?
-  provider        String
-  metric          String
-  quantity        Float
-  unit            String
-  estimated_cost  Float?
-  period_start    DateTime
-  metadata        String?
-  created_at      DateTime @default(now())
+  id             String   @id @default(cuid())
+  tenant_id      String?
+  provider       String
+  metric         String
+  quantity       Float
+  unit           String
+  estimated_cost Float?
+  period_start   DateTime
+  metadata       String?
+  created_at     DateTime @default(now())
 
   tenant Tenant? @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
 
@@ -359,14 +385,14 @@ model VerificationCode {
 }
 
 model AuthIdentity {
-  id               String   @id @default(cuid())
-  user_id          Int
-  provider         String
-  identifier_hash  String
-  masked_value     String?
-  verified_at      DateTime?
-  created_at       DateTime @default(now())
-  updated_at       DateTime @updatedAt
+  id              String    @id @default(cuid())
+  user_id         Int
+  provider        String
+  identifier_hash String
+  masked_value    String?
+  verified_at     DateTime?
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
 
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
@@ -376,12 +402,12 @@ model AuthIdentity {
 }
 
 model AuthSession {
-  id          String   @id @default(cuid())
-  user_id     Int
-  token_hash  String   @unique
-  expires_at  DateTime
-  revoked_at  DateTime?
-  created_at  DateTime @default(now())
+  id           String    @id @default(cuid())
+  user_id      Int
+  token_hash   String    @unique
+  expires_at   DateTime
+  revoked_at   DateTime?
+  created_at   DateTime  @default(now())
   last_seen_at DateTime?
 
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
@@ -391,17 +417,17 @@ model AuthSession {
 }
 
 model VerificationAttempt {
-  id              String   @id @default(cuid())
+  id              String    @id @default(cuid())
   target_hash     String
   purpose         String
   provider        String
   provider_out_id String?
-  status          String   @default("SENT")
-  failed_attempts Int      @default(0)
+  status          String    @default("SENT")
+  failed_attempts Int       @default(0)
   expires_at      DateTime
   consumed_at     DateTime?
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
 
   @@index([target_hash, purpose, status, expires_at])
   @@map("verification_attempts")

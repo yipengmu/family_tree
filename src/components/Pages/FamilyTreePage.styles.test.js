@@ -173,9 +173,8 @@ describe("family journey animation styles", () => {
   });
 
   test("offers family sharing without replacing the existing create action", () => {
-    expect(pageSource).toContain("SharePosterModal");
-    expect(pageSource).toContain("分享家谱");
-    expect(pageSource).toContain('kind="family"');
-    expect(stylesheet).toContain(".family-share-btn");
+    expect(pageSource).toContain("canShare={canShareFamily}");
+    expect(pageSource).toContain('onShare={() => onMenuClick?.("share")}');
+    expect(pageSource).toContain('onClick={() => onMenuClick?.("create")}');
   });
 });

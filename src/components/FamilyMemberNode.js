@@ -1,8 +1,8 @@
-import { memo } from 'react';
-import { Handle, Position } from 'reactflow';
-import { Card, Tag, Avatar, Tooltip } from 'antd';
-import { UserOutlined, CrownOutlined, PlusOutlined } from '@ant-design/icons';
-import './FamilyMemberNode.css';
+import { memo } from "react";
+import { Handle, Position } from "reactflow";
+import { Card, Tag, Avatar, Tooltip } from "antd";
+import { UserOutlined, CrownOutlined, PlusOutlined } from "@ant-design/icons";
+import "./FamilyMemberNode.css";
 
 const FamilyMemberNode = ({ data, selected }) => {
   const {
@@ -35,34 +35,36 @@ const FamilyMemberNode = ({ data, selected }) => {
   // 根据代数生成颜色 - 使用现代化配色
   const getGenerationColor = (generation) => {
     const colors = [
-      'hsl(221.2 83.2% 53.3%)', // blue
-      'hsl(142.1 76.2% 36.3%)', // green
-      'hsl(262.1 83.3% 57.8%)', // purple
-      'hsl(346.8 77.2% 49.8%)', // red
-      'hsl(24.6 95% 53.1%)', // orange
-      'hsl(47.9 95.8% 53.1%)', // yellow
-      'hsl(173.4 58.9% 39.1%)', // teal
-      'hsl(270.7 91% 65.1%)', // violet
-      'hsl(0 84.2% 60.2%)', // rose
-      'hsl(20.5 90.2% 48.2%)', // amber
-      'hsl(142.1 70.6% 45.3%)', // emerald
-      'hsl(217.2 91.2% 59.8%)', // sky
-      'hsl(316.7 77.4% 59.8%)', // pink
-      'hsl(12.2 84.7% 60.8%)', // red-orange
-      'hsl(159.6 84.1% 39.4%)', // cyan
-      'hsl(280.4 89.1% 67.1%)', // fuchsia
-      'hsl(43.3 96.4% 56.3%)', // lime
-      'hsl(198.4 93.2% 59.6%)', // light-blue
-      'hsl(339.6 82.2% 51.6%)', // crimson
-      'hsl(35.5 91.7% 32.9%)'  // brown
+      "hsl(221.2 83.2% 53.3%)", // blue
+      "hsl(142.1 76.2% 36.3%)", // green
+      "hsl(262.1 83.3% 57.8%)", // purple
+      "hsl(346.8 77.2% 49.8%)", // red
+      "hsl(24.6 95% 53.1%)", // orange
+      "hsl(47.9 95.8% 53.1%)", // yellow
+      "hsl(173.4 58.9% 39.1%)", // teal
+      "hsl(270.7 91% 65.1%)", // violet
+      "hsl(0 84.2% 60.2%)", // rose
+      "hsl(20.5 90.2% 48.2%)", // amber
+      "hsl(142.1 70.6% 45.3%)", // emerald
+      "hsl(217.2 91.2% 59.8%)", // sky
+      "hsl(316.7 77.4% 59.8%)", // pink
+      "hsl(12.2 84.7% 60.8%)", // red-orange
+      "hsl(159.6 84.1% 39.4%)", // cyan
+      "hsl(280.4 89.1% 67.1%)", // fuchsia
+      "hsl(43.3 96.4% 56.3%)", // lime
+      "hsl(198.4 93.2% 59.6%)", // light-blue
+      "hsl(339.6 82.2% 51.6%)", // crimson
+      "hsl(35.5 91.7% 32.9%)", // brown
     ];
     return colors[(generation - 1) % colors.length];
   };
 
   // 格式化显示文本
   const formatDisplayText = (text, maxLength = 20) => {
-    if (!text) return '';
-    return text.length > maxLength ? `${text.substring(0, maxLength)}...` : text;
+    if (!text) return "";
+    return text.length > maxLength
+      ? `${text.substring(0, maxLength)}...`
+      : text;
   };
 
   // 判断是否为前3代祖先
@@ -76,13 +78,15 @@ const FamilyMemberNode = ({ data, selected }) => {
 
     const styles = {
       1: {
-        background: 'linear-gradient(135deg, #ffd700 0%, #ffed4e 50%, #ffd700 100%)',
-        borderColor: '#d4af37',
+        background:
+          "linear-gradient(135deg, #ffd700 0%, #ffed4e 50%, #ffd700 100%)",
+        borderColor: "#d4af37",
         // borderWidth: '3px',
-        boxShadow: '0 4px 10px rgba(212, 175, 55, 0.4), 0 0 10px rgba(255, 215, 0, 0.3)',
-        transform: 'scale(1.1)',
-        zIndex: 100
-      }
+        boxShadow:
+          "0 4px 10px rgba(212, 175, 55, 0.4), 0 0 10px rgba(255, 215, 0, 0.3)",
+        transform: "scale(1.1)",
+        zIndex: 100,
+      },
     };
 
     return styles[rank] || {};
@@ -93,18 +97,18 @@ const FamilyMemberNode = ({ data, selected }) => {
     if (!isFoundingGeneration()) return {};
 
     return {
-      color: rank === 1 ? '#8b4513' : rank === 2 ? '#2c2c2c' : '#654321',
-      fontWeight: 'bold',
-      textShadow: rank === 1 ? '1px 1px 2px rgba(139, 69, 19, 0.3)' : 'none'
+      color: rank === 1 ? "#8b4513" : rank === 2 ? "#2c2c2c" : "#654321",
+      fontWeight: "bold",
+      textShadow: rank === 1 ? "1px 1px 2px rgba(139, 69, 19, 0.3)" : "none",
     };
   };
 
   // 保护在世人员姓名（最后一个字用*号替代）
   const getProtectedName = (originalName) => {
-    if (!originalName) return '';
+    if (!originalName) return "";
 
     // 检查是否为在世人员（只有"alive"才代表在世，null代表已故）
-    const isAlive = death === 'alive';
+    const isAlive = death === "alive";
 
     // 如果姓名保护开关关闭，直接返回原名
     if (!isNameProtectionEnabled) {
@@ -116,19 +120,21 @@ const FamilyMemberNode = ({ data, selected }) => {
       // 先提取注音部分
       const annotationMatch = originalName.match(/（[^）]*）/);
       let baseName = originalName;
-      let annotation = '';
+      let annotation = "";
 
       if (annotationMatch) {
         annotation = annotationMatch[0];
-        baseName = originalName.replace(annotation, '');
+        baseName = originalName.replace(annotation, "");
       }
 
       // 对基础姓名进行保护（最后一个字用*替代）
       if (baseName.length > 1) {
-        const protectedBase = baseName.slice(0, -1) + '*';
+        const protectedBase = baseName.slice(0, -1) + "*";
         // 如果有注音，将注音加在倒数第二个字后面
         if (annotation && protectedBase.length > 1) {
-          return protectedBase.slice(0, -1) + annotation + protectedBase.slice(-1);
+          return (
+            protectedBase.slice(0, -1) + annotation + protectedBase.slice(-1)
+          );
         }
         return protectedBase;
       }
@@ -139,12 +145,12 @@ const FamilyMemberNode = ({ data, selected }) => {
 
   // 获取生存状态显示
   const getLifeStatus = () => {
-    if (death === 'alive') {
-      return { text: '在世', color: 'success' };
-    } else if (death === 'unknown') {
-      return { text: '待确认', color: 'warning' };
-    } else if (death === null || death === 'dealth') {
-      return { text: '已故', color: 'default' };
+    if (death === "alive") {
+      return { text: "在世", color: "success" };
+    } else if (death === "unknown") {
+      return { text: "待确认", color: "warning" };
+    } else if (death === null || death === "dealth") {
+      return { text: "已故", color: "default" };
     }
     return null;
   };
@@ -156,161 +162,217 @@ const FamilyMemberNode = ({ data, selected }) => {
 
     return (
       <div className="family-member-tooltip">
-        <div><strong>姓名:</strong> {displayName}</div>
-        <div><strong>第{rank}代</strong> {siblingTitle ? `· ${siblingTitle}` : ''} (排行第{rankIndex})</div>
+        <div>
+          <strong>姓名:</strong> {displayName}
+        </div>
+        <div>
+          <strong>第{rank}代</strong> {siblingTitle ? `· ${siblingTitle}` : ""}{" "}
+          (排行第{rankIndex})
+        </div>
         {lifeStatus && (
-          <div><strong>状态:</strong> {lifeStatus.text}</div>
+          <div>
+            <strong>状态:</strong> {lifeStatus.text}
+          </div>
         )}
         {officialPosition && (
-          <div><strong>职位:</strong> {officialPosition}</div>
+          <div>
+            <strong>职位:</strong> {officialPosition}
+          </div>
         )}
         {birthDate && (
-          <div><strong>生日:</strong> {birthDate}</div>
+          <div>
+            <strong>生日:</strong> {birthDate}
+          </div>
         )}
         {location && (
-          <div><strong>地点:</strong> {location}</div>
+          <div>
+            <strong>地点:</strong> {location}
+          </div>
         )}
-        <div
-          className="family-member-tooltip-hint"
-          role="button"
-          tabIndex={0}
-          onClick={() => onOpenPersonProfile?.(data.id)}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter' || event.key === ' ') {
-              event.preventDefault();
-              onOpenPersonProfile?.(data.id);
-            }
-          }}
-        >
-          点击节点查看人物资料
-        </div>
+        {onOpenPersonProfile && (
+          <div
+            className="family-member-tooltip-hint"
+            role="button"
+            tabIndex={0}
+            onClick={() => onOpenPersonProfile(data.id)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                onOpenPersonProfile(data.id);
+              }
+            }}
+          >
+            点击节点查看人物资料
+          </div>
+        )}
       </div>
     );
   };
 
   return (
-    <div className={`family-member-node ${selected ? 'selected' : ''}`}>
+    <div className={`family-member-node ${selected ? "selected" : ""}`}>
       <Handle
         type="target"
         position={Position.Top}
-        style={{ background: '#555' }}
+        style={{ background: "#555" }}
         isConnectable={false}
       />
-      
+
       <Tooltip
         title={getTooltipContent()}
         placement="right"
         open={isMobile ? false : undefined}
       >
-        <div style={{ position: 'relative' }}>
+        <div style={{ position: "relative" }}>
           <Card
             size="small"
-            className={`member-card ${hasCollapsedChildren ? 'has-collapsed-children' : ''} ${isFoundingGeneration() ? 'founding-generation' : ''}`}
+            className={`member-card ${hasCollapsedChildren ? "has-collapsed-children" : ""} ${isFoundingGeneration() ? "founding-generation" : ""}`}
             style={{
-              borderColor: isFoundingGeneration() ? getFoundingGenerationStyle().borderColor : getGenerationColor(rank),
-              borderWidth: isFoundingGeneration() ? getFoundingGenerationStyle().borderWidth : (selected ? 3 : 1),
-              cursor: hasCollapsedChildren ? 'pointer' : 'default',
-              ...getFoundingGenerationStyle()
+              borderColor: isFoundingGeneration()
+                ? getFoundingGenerationStyle().borderColor
+                : getGenerationColor(rank),
+              borderWidth: isFoundingGeneration()
+                ? getFoundingGenerationStyle().borderWidth
+                : selected
+                  ? 3
+                  : 1,
+              cursor: hasCollapsedChildren ? "pointer" : "default",
+              ...getFoundingGenerationStyle(),
             }}
             styles={{
               body: {
-                padding: '10px 8px',
-                background: isFoundingGeneration() ? 'transparent' : undefined
-              }
+                padding: "10px 8px",
+                background: isFoundingGeneration() ? "transparent" : undefined,
+              },
             }}
           >
             {/* 折叠提示图标 - 移到Card外部 */}
-          <div className="member-header">
-            <Avatar
-              size="small"
-              icon={isFoundingGeneration() && rank === 1 ? <CrownOutlined /> : getGenderIcon()}
-              style={{
-                backgroundColor: isFoundingGeneration() ?
-                  (rank === 1 ? '#ffd700' : rank === 2 ? '#cd7f32' : '#cd7f32') :
-                  (sex === 'MAN' ? '#1890ff' : '#eb2f96'),
-                marginRight: 8,
-                border: isFoundingGeneration() ? '2px solid #d4af37' : 'none',
-                ...(isFoundingGeneration() && rank === 1 ? {
-                  boxShadow: '0 0 10px rgba(255, 215, 0, 0.5)'
-                } : {})
-              }}
-            />
-            <div className="member-name">
-              <div
-                className="name-text"
-                title={getProtectedName(name)}
-                style={getFoundingTextColor()}
-              >
-                {formatDisplayText(getProtectedName(name), 8)}
-              </div>
-              <div className="generation-info">
-                {siblingTitle && (
-                  <span className={`sibling-title ${siblingTitle?.endsWith('女') ? 'daughter-title' : ''}`}>
-                    {siblingTitle}
-                  </span>
-                )}
-                <Tag
-                  color={isFoundingGeneration() ? (rank === 1 ? 'gold' : rank === 2 ? 'orange' : 'orange') : getGenerationColor(rank)}
-                  size="small"
-                  style={{
-                    margin: 0,
-                    fontSize: '10px',
-                    fontWeight: isFoundingGeneration() ? 'bold' : 'normal',
-                    ...(isFoundingGeneration() && rank === 1 ? {
-                      background: 'linear-gradient(45deg, #ffd700, #ffed4e)',
-                      border: '1px solid #d4af37',
-                      color: '#8b4513'
-                    } : {})
-                  }}
+            <div className="member-header">
+              <Avatar
+                size="small"
+                icon={
+                  isFoundingGeneration() && rank === 1 ? (
+                    <CrownOutlined />
+                  ) : (
+                    getGenderIcon()
+                  )
+                }
+                style={{
+                  backgroundColor: isFoundingGeneration()
+                    ? rank === 1
+                      ? "#ffd700"
+                      : rank === 2
+                        ? "#cd7f32"
+                        : "#cd7f32"
+                    : sex === "MAN"
+                      ? "#1890ff"
+                      : "#eb2f96",
+                  marginRight: 8,
+                  border: isFoundingGeneration() ? "2px solid #d4af37" : "none",
+                  ...(isFoundingGeneration() && rank === 1
+                    ? {
+                        boxShadow: "0 0 10px rgba(255, 215, 0, 0.5)",
+                      }
+                    : {}),
+                }}
+              />
+              <div className="member-name">
+                <div
+                  className="name-text"
+                  title={getProtectedName(name)}
+                  style={getFoundingTextColor()}
                 >
-                  {isFoundingGeneration() ? `始祖第${rank}代` : `第${rank}代`}
-                </Tag>
+                  {formatDisplayText(getProtectedName(name), 8)}
+                </div>
+                <div className="generation-info">
+                  {siblingTitle && (
+                    <span
+                      className={`sibling-title ${siblingTitle?.endsWith("女") ? "daughter-title" : ""}`}
+                    >
+                      {siblingTitle}
+                    </span>
+                  )}
+                  <Tag
+                    color={
+                      isFoundingGeneration()
+                        ? rank === 1
+                          ? "gold"
+                          : rank === 2
+                            ? "orange"
+                            : "orange"
+                        : getGenerationColor(rank)
+                    }
+                    size="small"
+                    style={{
+                      margin: 0,
+                      fontSize: "10px",
+                      fontWeight: isFoundingGeneration() ? "bold" : "normal",
+                      ...(isFoundingGeneration() && rank === 1
+                        ? {
+                            background:
+                              "linear-gradient(45deg, #ffd700, #ffed4e)",
+                            border: "1px solid #d4af37",
+                            color: "#8b4513",
+                          }
+                        : {}),
+                    }}
+                  >
+                    {isFoundingGeneration() ? `始祖第${rank}代` : `第${rank}代`}
+                  </Tag>
+                </div>
               </div>
             </div>
-          </div>
-          
-          {officialPosition && (
-            <div className="member-position">
-              <CrownOutlined style={{ marginRight: 4, color: '#faad14' }} />
-              <span className="position-text">
-                {formatDisplayText(officialPosition, 15)}
-              </span>
+
+            {officialPosition && (
+              <div className="member-position">
+                <CrownOutlined style={{ marginRight: 4, color: "#faad14" }} />
+                <span className="position-text">
+                  {formatDisplayText(officialPosition, 15)}
+                </span>
+              </div>
+            )}
+
+            <div className="member-meta">
+              {(() => {
+                const lifeStatus = getLifeStatus();
+                return (
+                  lifeStatus && (
+                    <Tag
+                      className="life-status"
+                      color={lifeStatus.color}
+                      size="small"
+                    >
+                      {lifeStatus.text}
+                    </Tag>
+                  )
+                );
+              })()}
+              {location && (
+                <Tag color="blue" size="small">
+                  {formatDisplayText(location, 6)}
+                </Tag>
+              )}
+            </div>
+          </Card>
+
+          {/* 折叠提示图标 - 底部中间 */}
+          {hasCollapsedChildren && (
+            <div className="collapse-indicator-bottom">
+              <PlusOutlined
+                style={{
+                  color: "#1890ff",
+                  fontSize: "12px",
+                }}
+              />
             </div>
           )}
-          
-          <div className="member-meta">
-            {(() => {
-              const lifeStatus = getLifeStatus();
-              return lifeStatus && (
-                <Tag className="life-status" color={lifeStatus.color} size="small">
-                  {lifeStatus.text}
-                </Tag>
-              );
-            })()}
-            {location && (
-              <Tag color="blue" size="small">
-                {formatDisplayText(location, 6)}
-              </Tag>
-            )}
-          </div>
-        </Card>
-
-        {/* 折叠提示图标 - 底部中间 */}
-        {hasCollapsedChildren && (
-          <div className="collapse-indicator-bottom">
-            <PlusOutlined style={{
-              color: '#1890ff',
-              fontSize: '12px'
-            }} />
-          </div>
-        )}
         </div>
       </Tooltip>
-      
+
       <Handle
         type="source"
         position={Position.Bottom}
-        style={{ background: '#555' }}
+        style={{ background: "#555" }}
         isConnectable={false}
       />
     </div>
