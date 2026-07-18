@@ -69,19 +69,6 @@ function FamilySharePage({ familyName = "我的家谱", familyData = [], onBack 
         )}
       </section>
 
-      <footer className="family-share-actions">
-        <div className="family-share-action-hints">
-          <div className="action-hint-item">
-            <DownloadOutlined />
-            <span>保存到相册</span>
-          </div>
-          <div className="action-hint-divider">或</div>
-          <div className="action-hint-item">
-            <ShareAltOutlined />
-            <span>分享给亲友</span>
-          </div>
-        </div>
-      </footer>
     </main>
   );
 }

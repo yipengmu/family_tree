@@ -1,6 +1,10 @@
 import QRCode from "qrcode";
 import BRAND from "../constants/brand.js";
 import { isPersonAlive } from "./personLifeStatus.js";
+import {
+  convertToReactFlowData,
+  getLayoutedElements,
+} from "./familyTreeUtils.js";
 
 export const SHARE_POSTER_WIDTH = 1080;
 export const SHARE_ENTRY_URL =
@@ -134,26 +138,45 @@ const buildPosterTree = (people, hideProtectedNames) => {
       .forEach((child) => queue.push(child.id));
   }
 
-  const nodes = selectedIds.map((id) => {
+  const selectedPeople = selectedIds.map((id) => {
     const person = byId.get(id);
     return {
-      id,
+      ...person.raw,
+      id: person.id,
       name: getPosterPersonName(person.raw, hideProtectedNames),
-      generation: person.generation,
-      rankIndex: person.rankIndex,
-      gender: person.raw?.sex || person.raw?.gender || "",
     };
   });
-  const nodeIds = new Set(nodes.map((node) => node.id));
-  const edges = [];
-  selectedIds.forEach((id) => {
-    const person = byId.get(id);
-    [person.fatherId, person.motherId].forEach((parentId) => {
-      if (parentId && nodeIds.has(parentId)) {
-        edges.push({ from: parentId, to: id });
-      }
-    });
-  });
+
+  // 分享图必须沿用主家谱的节点转换和布局规则，避免分享页重新发明一套
+  // “看起来像家谱”的关系算法。隐私裁剪只改显示名，不改关系与坐标。
+  const flowData = convertToReactFlowData(
+    selectedPeople,
+    selectedPeople,
+    false,
+    {
+      isMobile: true,
+      isNameProtectionEnabled: false,
+      useFounderLabels: false,
+    },
+  );
+  const layoutedNodes = getLayoutedElements(
+    flowData.nodes,
+    flowData.edges,
+    "TB",
+  );
+  const nodes = layoutedNodes.map((node) => ({
+    id: String(node.id),
+    name: node.data.name,
+    generation: Number(node.data.rank) || null,
+    rankIndex: Number(node.data.rankIndex) || 999,
+    gender: node.data.sex || "",
+    x: node.position.x,
+    y: node.position.y,
+  }));
+  const edges = flowData.edges.map((edge) => ({
+    from: String(edge.source),
+    to: String(edge.target),
+  }));
 
   return {
     nodes,
@@ -506,12 +529,18 @@ const drawFamilyTreePreview = (context, model, startY) => {
   const cardWidth = 238;
   const cardHeight = 94;
 
+  const visibleNodes = groups.flatMap(([, groupNodes]) =>
+    groupNodes.slice(0, 3),
+  );
+  const layoutXs = visibleNodes.map((node) => Number(node.x) || 0);
+  const minLayoutX = Math.min(...layoutXs, 0);
+  const maxLayoutX = Math.max(...layoutXs, 0);
+  const layoutWidth = Math.max(1, maxLayoutX - minLayoutX);
+
   groups.forEach(([, nodes], rowIndex) => {
-    const visibleNodes = nodes.slice(0, 3);
-    const gap =
-      (treeWidth - visibleNodes.length * cardWidth) / (visibleNodes.length + 1);
-    visibleNodes.forEach((node, nodeIndex) => {
-      const x = treeLeft + gap + nodeIndex * (cardWidth + gap);
+    nodes.slice(0, 3).forEach((node) => {
+      const normalizedX = ((Number(node.x) || 0) - minLayoutX) / layoutWidth;
+      const x = treeLeft + normalizedX * (treeWidth - cardWidth);
       const y = startY + rowIndex * rowGap;
       positions.set(node.id, { x, y, width: cardWidth, height: cardHeight });
     });
@@ -636,6 +665,19 @@ export const renderFamilyPoster = async (options) => {
   context.font = `24px ${FONT_SANS}`;
   context.fillText("从你的名字开始，看见家人如何连成一棵树", 72, 326);
 
+  // 印章式品牌标记，让分享图在社交场景里仍然保留“家谱册页”的识别感。
+  context.save();
+  context.strokeStyle = "rgba(154,63,47,0.7)";
+  context.lineWidth = 3;
+  traceRoundRect(context, 884, 152, 92, 92, 18);
+  context.stroke();
+  context.fillStyle = "rgba(154,63,47,0.88)";
+  context.font = `600 46px ${FONT_SERIF}`;
+  context.textAlign = "center";
+  context.fillText("谱", 930, 214);
+  context.textAlign = "left";
+  context.restore();
+
   // 国风人数卡片：淡青绿渐变底纹 + 微妙纹理
   const cardX = 72;
   const cardY = 360;
@@ -646,7 +688,12 @@ export const renderFamilyPoster = async (options) => {
   traceRoundRect(context, cardX, cardY, cardW, cardH, 28);
 
   // 淡青绿渐变背景（国风色调）
-  const bgGrad = context.createLinearGradient(cardX, cardY, cardX + cardW, cardY + cardH);
+  const bgGrad = context.createLinearGradient(
+    cardX,
+    cardY,
+    cardX + cardW,
+    cardY + cardH,
+  );
   bgGrad.addColorStop(0, "#e8f0ec");
   bgGrad.addColorStop(0.5, "#dce8e2");
   bgGrad.addColorStop(1, "#d0e0d8");
@@ -700,6 +747,26 @@ export const renderFamilyPoster = async (options) => {
     cardX + 40,
     cardY + 124,
   );
+
+  const valueItems = [
+    [
+      "世系",
+      model.generationCount
+        ? `${model.generationCount} 代相承`
+        : "从一位家人开始",
+    ],
+    ["记录", "名字与关系清晰可见"],
+    ["传承", "随时补充，留给后代"],
+  ];
+  valueItems.forEach(([label, value], index) => {
+    const itemX = 72 + index * 312;
+    context.fillStyle = COLORS.cinnabar;
+    context.font = `600 20px ${FONT_SANS}`;
+    context.fillText(label, itemX, 572);
+    context.fillStyle = COLORS.inkSoft;
+    context.font = `20px ${FONT_SANS}`;
+    context.fillText(value, itemX, 604);
+  });
 
   context.fillStyle = COLORS.inkSoft;
   context.font = `24px ${FONT_SANS}`;
