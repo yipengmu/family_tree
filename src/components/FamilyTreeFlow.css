@@ -378,7 +378,9 @@
   position: relative;
   flex: 1;
   border-radius: 12px;
-  overflow: hidden;
+  /* 改用 clip 而非 hidden，避免裁剪 ReactFlow 的绝对定位控件 */
+  overflow: clip;
+  overflow-clip-margin: content-box;
   border: 1px solid hsl(214.3 31.8% 91.4%);
   box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   background: hsl(0 0% 100%);
@@ -524,6 +526,9 @@
   border: 1px solid hsl(214.3 31.8% 91.4%);
   border-radius: 8px;
   box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  z-index: 1000;
+  /* 确保控制按钮不被父容器的 overflow: hidden 裁剪 */
+  position: absolute;
 }
 
 .react-flow__controls-button {

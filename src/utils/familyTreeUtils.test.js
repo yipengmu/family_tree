@@ -105,6 +105,67 @@ describe("family tree relationship edges", () => {
     expect(getSiblingTitle(1, "MAN", 0)).toBe("");
   });
 
+  test("prefers the birth position over rank_index when supplied", () => {
+    expect(getSiblingTitle(2, "MAN", 10, 1)).toBe("长子");
+    expect(getSiblingTitle(5, "WOMAN", 10, 2)).toBe("次女");
+  });
+
+  test("treats an only child as 长子 even when rank_index is not 1", () => {
+    const familyData = [
+      { id: 1, name: "父", g_rank: 1, rank_index: 1, g_father_id: 0 },
+      {
+        id: 2,
+        name: "木洞",
+        g_rank: 2,
+        rank_index: 2,
+        g_father_id: 1,
+        sex: "MAN",
+      },
+    ];
+
+    const { nodes } = convertToReactFlowData(familyData);
+    const onlyChild = nodes.find((node) => node.id === "2");
+
+    expect(onlyChild.data.siblingTitle).toBe("长子");
+  });
+
+  test("renumbers 长次/三/四 by sibling group, not by raw rank_index", () => {
+    const familyData = [
+      { id: 1, name: "父", g_rank: 1, rank_index: 1, g_father_id: 0 },
+      {
+        id: 2,
+        name: "次子",
+        g_rank: 2,
+        rank_index: 2,
+        g_father_id: 1,
+        sex: "MAN",
+      },
+      {
+        id: 3,
+        name: "木洞",
+        g_rank: 2,
+        rank_index: 5,
+        g_father_id: 1,
+        sex: "MAN",
+      },
+      {
+        id: 4,
+        name: "三子",
+        g_rank: 2,
+        rank_index: 7,
+        g_father_id: 1,
+        sex: "MAN",
+      },
+    ];
+
+    const { nodes } = convertToReactFlowData(familyData);
+    const titles = [2, 3, 4].map(
+      (id) => nodes.find((node) => node.id === String(id)).data.siblingTitle,
+    );
+
+    expect(titles).toEqual(["长子", "次子", "三子"]);
+  });
+
   test("does not create duplicate or invisible relationship edges", () => {
     const familyData = [
       { id: 1, name: "父", g_rank: 1, rank_index: 1, g_father_id: 0 },

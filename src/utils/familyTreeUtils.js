@@ -75,11 +75,16 @@ const compareFamilyOrder = (left, right, nodeMap) => {
 /**
  * 返回家谱中的子女称谓，例如“长子”“次女”“三子”。
  * rank_index 是事实字段；称谓只是展示层派生值，不会写回家谱数据。
+ *
+ * 长次顺序以“同一父亲节点”分组后按 rank_index 排序的相对位置为准。
+ * 如果调用方已计算好 birthPosition（如在 convertToReactFlowData 中按
+ * 父组派生），会优先采用；否则回退到 rank_index 数值。
  */
-export const getSiblingTitle = (rankIndex, sex, fatherId) => {
+export const getSiblingTitle = (rankIndex, sex, fatherId, birthPosition) => {
   if (!fatherId || String(fatherId) === "0") return "";
 
-  const index = Number(rankIndex);
+  const sourceIndex = birthPosition != null ? birthPosition : rankIndex;
+  const index = Number(sourceIndex);
   if (!Number.isInteger(index) || index < 1) return "";
 
   const chineseDigits = ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九"];
@@ -130,6 +135,30 @@ export const convertToReactFlowData = (
   // 创建节点映射，便于查找
   const nodeMap = new Map();
 
+  // 按父亲分组、按 rank_index 排序后给每个成员派生出“父组内相对位置”。
+  // 长次称谓以这个相对位置为准，而不是直接读 rank_index 数值——这样即使
+  // 某个父亲只有一个孩子，rank_index 字段值偏大时仍然会显示为“长子”。
+  // rank_index 仍作为稳定排序关键字保留，数据缺失时退回到 id 兜底。
+  const siblingBirthOrder = new Map();
+  const siblingsByFather = new Map();
+  familyData.forEach((person) => {
+    const fatherId = person.g_father_id ? String(person.g_father_id) : "0";
+    if (fatherId === "0") return;
+    if (!siblingsByFather.has(fatherId)) siblingsByFather.set(fatherId, []);
+    siblingsByFather.get(fatherId).push(person);
+  });
+  siblingsByFather.forEach((siblings, fatherId) => {
+    const ordered = [...siblings].sort((left, right) => {
+      const leftRank = Number(left.rank_index) || 0;
+      const rightRank = Number(right.rank_index) || 0;
+      if (leftRank !== rightRank) return leftRank - rightRank;
+      return Number(left.id) - Number(right.id);
+    });
+    ordered.forEach((person, index) => {
+      siblingBirthOrder.set(String(person.id), index + 1);
+    });
+  });
+
   // 首先创建所有节点
   familyData.forEach((person) => {
     // 检查是否有被折叠的子节点
@@ -159,6 +188,7 @@ export const convertToReactFlowData = (
           person.rank_index,
           person.sex,
           person.g_father_id,
+          siblingBirthOrder.get(String(person.id)),
         ),
         officialPosition: person.official_position,
         summary: person.summary,

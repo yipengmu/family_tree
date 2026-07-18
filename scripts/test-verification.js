@@ -32,7 +32,7 @@ async function testVerificationCode() {
         email: email,
         code: testCode,
         purpose: 'register',
-        expires_at: new Date(Date.now() + 5 * 60 * 1000), // 5分钟后过期
+        expires_at: new Date(Date.now() + 10 * 60 * 1000), // 10分钟后过期
       }
     });
     

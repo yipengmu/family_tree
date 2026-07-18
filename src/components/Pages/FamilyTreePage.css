@@ -434,13 +434,20 @@
   position: relative;
   background: white;
   border-radius: 16px;
-  overflow: hidden;
+  /* 使用 clip 替代 hidden，避免裁剪 ReactFlow 的 Controls 等绝对定位控件 */
+  overflow: clip;
+  overflow-clip-margin: content-box;
   box-shadow:
     0 4px 6px -1px rgba(0, 0, 0, 0.1),
     0 2px 4px -1px rgba(0, 0, 0, 0.06);
   border: 1px solid #e2e8f0;
   min-height: 500px; /* 确保最小高度 */
   box-sizing: border-box;
+}
+
+/* 确保 ReactFlow 控制按钮始终可见，不被容器裁剪 */
+.family-tree-wrapper .react-flow__controls {
+  z-index: 1000;
 }
 
 /* 覆盖FamilyTreeFlow的容器样式 */
