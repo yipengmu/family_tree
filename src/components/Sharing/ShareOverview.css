@@ -1,0 +1,138 @@
+.share-overview-hero {
+  padding: 42px 24px 30px;
+  text-align: center;
+  background:
+    radial-gradient(
+      circle at 50% -20%,
+      rgba(60, 109, 91, 0.18),
+      transparent 46%
+    ),
+    #f7f3e8;
+}
+
+.share-overview-eyebrow,
+.share-overview-section-heading > div > span {
+  color: #9a4937;
+  font-size: 13px;
+  letter-spacing: 0.16em;
+}
+
+.share-overview-hero h1 {
+  margin: 8px 0;
+  color: #173f38;
+  font: 700 clamp(34px, 6vw, 58px) / 1.15 var(--serif);
+}
+
+.share-overview-hero > p {
+  margin: 0 auto;
+  color: #69716c;
+  font-size: 17px;
+}
+
+.share-overview-stats {
+  display: flex;
+  justify-content: center;
+  gap: 1px;
+  width: min(640px, 100%);
+  margin: 24px auto 0;
+  overflow: hidden;
+  border: 1px solid rgba(33, 69, 59, 0.12);
+  border-radius: 18px;
+  background: rgba(255, 253, 247, 0.7);
+}
+
+.share-overview-stats span {
+  flex: 1;
+  display: grid;
+  gap: 3px;
+  padding: 14px 10px;
+  border-right: 1px solid rgba(33, 69, 59, 0.1);
+}
+
+.share-overview-stats span:last-child {
+  border: 0;
+}
+.share-overview-stats strong {
+  color: #173f38;
+  font-size: 26px;
+}
+.share-overview-stats small {
+  color: #788079;
+}
+
+.share-overview-tree-section {
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 20px 0 48px;
+}
+
+.share-overview-section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 24px;
+  margin-bottom: 12px;
+}
+
+.share-overview-section-heading h2 {
+  margin: 5px 0 0;
+  color: #173f38;
+  font: 700 28px/1.2 var(--serif);
+}
+
+.share-overview-section-heading p {
+  margin: 0;
+  color: #727b75;
+  font-size: 13px;
+}
+
+.share-overview-tree-empty {
+  display: grid;
+  min-height: 300px;
+  place-items: center;
+  border: 1px solid rgba(33, 69, 59, 0.14);
+  border-radius: 22px;
+  color: #727b75;
+  background: rgba(255, 253, 247, 0.82);
+}
+
+@media (max-width: 768px) {
+  .share-overview-hero {
+    padding: 26px 18px 22px;
+  }
+  .share-overview-eyebrow {
+    font-size: 12px;
+  }
+  .share-overview-hero h1 {
+    margin: 5px 0 7px;
+    font-size: clamp(30px, 9vw, 42px);
+  }
+  .share-overview-hero > p {
+    font-size: 15px;
+  }
+  .share-overview-stats {
+    margin-top: 18px;
+    border-radius: 14px;
+  }
+  .share-overview-stats span {
+    padding: 10px 4px;
+  }
+  .share-overview-stats strong {
+    font-size: 20px;
+  }
+  .share-overview-tree-section {
+    width: calc(100% - 20px);
+    padding-top: 14px;
+  }
+  .share-overview-section-heading {
+    display: block;
+    padding: 0 6px;
+  }
+  .share-overview-section-heading p {
+    margin-top: 5px;
+    font-size: 12px;
+  }
+  .share-overview-section-heading h2 {
+    font-size: 25px;
+  }
+}

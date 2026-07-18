@@ -11,7 +11,23 @@
 .online-share-panel {
   width: min(960px, calc(100% - 40px));
   margin: 0 auto;
-  padding: calc(56px + env(safe-area-inset-top)) 0 28px;
+  padding: calc(56px + env(safe-area-inset-top)) 0 0;
+}
+
+.family-share-online-heading {
+  margin-bottom: 12px;
+}
+
+.family-share-online-heading span {
+  color: #9a4937;
+  font-size: 13px;
+  letter-spacing: 0.16em;
+}
+
+.family-share-online-heading p {
+  margin: 7px 0 0;
+  color: #727b75;
+  font-size: 13px;
 }
 
 .family-share-poster-heading > span {
@@ -116,6 +132,7 @@
   flex: 0 0 auto;
   overflow: visible;
   padding: 36px 20px 48px;
+  border-top: 1px solid rgba(33, 69, 59, 0.08);
   background: linear-gradient(180deg, #f5f0e8 0%, #ede6da 100%);
 }
 
@@ -128,6 +145,14 @@
   box-shadow:
     0 4px 20px rgba(58, 45, 31, 0.12),
     0 16px 40px rgba(58, 45, 31, 0.15);
+}
+
+.family-share-page .share-overview-hero {
+  padding-top: 34px;
+}
+
+.family-share-page .share-overview-tree-section {
+  padding-bottom: 36px;
 }
 
 .family-share-loading {
@@ -211,6 +236,10 @@
 
   .family-share-preview {
     padding: 28px 10px 32px;
+  }
+
+  .family-share-page .share-overview-hero {
+    padding-top: 26px;
   }
 
   .family-share-preview img {

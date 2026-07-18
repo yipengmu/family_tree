@@ -5,6 +5,7 @@ import shareService from "../../services/shareService.js";
 import { trackEvent } from "../../utils/analytics.js";
 import { formatShareExpiry } from "../../utils/shareExpiry.js";
 import { renderFamilyPoster } from "../../utils/sharePoster.js";
+import ShareOverview from "./ShareOverview.js";
 import "./FamilySharePage.css";
 
 function FamilySharePage({
@@ -150,6 +151,10 @@ function FamilySharePage({
       </button>
 
       <section className="online-share-panel" aria-label="网页分享">
+        <div className="family-share-online-heading">
+          <span>网页分享</span>
+          <p>发布一份 7 天有效的家谱快照，家人打开即可查看。</p>
+        </div>
         {!canPublishOnline ? (
           <Alert
             showIcon
@@ -186,6 +191,13 @@ function FamilySharePage({
           </div>
         )}
       </section>
+
+      <ShareOverview
+        familyName={familyName}
+        familyData={familyData}
+        eyebrow="我的家谱"
+        treeTitle="家谱树状图"
+      />
 
       <section className="family-share-preview" aria-live="polite">
         <div className="family-share-poster-heading">

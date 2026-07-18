@@ -5,7 +5,7 @@ import { Button, Result, Spin } from "antd";
 import BrandLogo from "../UI/BrandLogo.js";
 import shareService from "../../services/shareService.js";
 import { trackEvent } from "../../utils/analytics.js";
-import PublicFamilyTree from "./PublicFamilyTree.js";
+import ShareOverview from "./ShareOverview.js";
 import "./PublicSharePage.css";
 
 const updateMeta = (selector, attribute, value) => {
@@ -140,38 +140,16 @@ export default function PublicSharePage() {
         </Link>
         <div className="public-share-expiry">
           <ClockCircleOutlined />
-          <strong>7天内有效</strong>
+          <strong aria-label="分享链接将在 7 天后过期">7天内有效</strong>
         </div>
       </header>
 
-      <section className="public-share-hero">
-        <h1>{snapshot.familyName}</h1>
-        <p>沿着姓名与关系，看见家庭代代延续。</p>
-        <div className="public-share-stats" aria-label="家谱摘要">
-          <span>
-            <strong>{stats.memberCount || 0}</strong>
-            <small>谱中人物</small>
-          </span>
-          <span>
-            <strong>{stats.generationCount || 0}</strong>
-            <small>记录代数</small>
-          </span>
-          <span>
-            <strong>{stats.relationshipCount || 0}</strong>
-            <small>家庭关系</small>
-          </span>
-        </div>
-      </section>
-
-      <section className="public-share-tree-section">
-        <div className="public-share-section-heading">
-          <div>
-            <span>世系总览</span>
-          </div>
-          <p>拖动查看分支，使用图谱侧边按钮缩放或全屏。</p>
-        </div>
-        <PublicFamilyTree familyData={snapshot.people} />
-      </section>
+      <ShareOverview
+        familyName={snapshot.familyName}
+        familyData={snapshot.people}
+        stats={stats}
+        treeTitle="家谱树状图"
+      />
 
       <section
         className="public-share-values"
@@ -185,23 +163,22 @@ export default function PublicSharePage() {
         <div className="public-share-value-cards">
           <article>
             <b>看见关系</b>
-            <p>理解代际与亲缘。</p>
+            <p>理解代际与亲缘</p>
           </article>
           <article>
             <b>留住记忆</b>
-            <p>先记录知道的姓名。</p>
+            <p>先记录知道的姓名</p>
           </article>
           <article>
             <b>传给家人</b>
-            <p>让家人以后看得懂。</p>
+            <p>让家人以后看得懂</p>
           </article>
         </div>
       </section>
 
       <section className="public-share-cta">
         <span>从自己开始就能建立第一份家谱</span>
-        <h2>也为你的家人，留下一棵看得见的家谱</h2>
-        <p>第一版不需要完整。先记录自己，再连接一位父母或长辈。</p>
+        <p>很简单，先记录自己，再连接一位父母或长辈</p>
         <div>
           <Link
             to="/register"
@@ -211,17 +188,17 @@ export default function PublicSharePage() {
             }
           >
             <Button type="primary" size="large">
-              免费创建我的家谱
+              免费创建我家的家谱
             </Button>
           </Link>
           <Link to="/?from=share">
-            <Button size="large">了解谱里</Button>
+            <Button size="large">了解「谱里」</Button>
           </Link>
         </div>
       </section>
 
       <footer className="public-share-footer">
-        谱里 · 看家谱，续家谱，管家谱
+        「谱里」 ： 看家谱，续家谱，管家谱
       </footer>
     </main>
   );
