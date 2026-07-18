@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { getPublicShareDestination } from "../../utils/shareNavigation.js";
 
 describe("public share product boundary", () => {
   const pageSource = fs.readFileSync(
@@ -15,13 +16,42 @@ describe("public share product boundary", () => {
     "utf8",
   );
 
-  test("shows the seven-day limit to viewers without cluttering the share entry", () => {
+  test("opens the same public route for the owner and recipient", () => {
     expect(pageSource).toContain("7 天后过期");
     expect(pageSource).not.toContain("formatShareExpiry(share.expiresAt)");
-    expect(sharePageSource).toContain("分享并复制网页");
-    expect(sharePageSource).not.toContain("让家人直接打开这份家谱");
-    expect(sharePageSource).not.toContain("固定有效 7 天");
-    expect(sharePageSource).not.toContain("浏览 {share.viewCount || 0} 次");
+    expect(sharePageSource).toContain("getPublicShareDestination");
+    expect(sharePageSource).toContain(
+      "navigate(destination, { replace: true })",
+    );
+    expect(sharePageSource).not.toContain("ShareOverview");
+    expect(sharePageSource).not.toContain("renderFamilyPoster");
+    expect(sharePageSource).not.toContain("图片分享");
+  });
+
+  test("resolves managed share URLs to the public route on the current host", () => {
+    expect(
+      getPublicShareDestination(
+        "https://tree.tatababa.top/s/public-token",
+        "https://tree.tatababa.top",
+      ),
+    ).toBe("/s/public-token");
+    expect(
+      getPublicShareDestination(
+        "https://preview.tatababa.top/s/public-token",
+        "https://tree.tatababa.top",
+      ),
+    ).toBe("https://preview.tatababa.top/s/public-token");
+    expect(getPublicShareDestination("", "https://tree.tatababa.top")).toBe(
+      null,
+    );
+  });
+
+  test("keeps the privacy confirmation before publishing a new snapshot", () => {
+    expect(sharePageSource).toContain("确认发布并查看");
+    expect(sharePageSource).toContain(
+      "我已确认上述人物姓名和关系适合通过限时链接分享",
+    );
+    expect(sharePageSource).toContain('currentTenant.role === "OWNER"');
   });
 
   test("keeps the public page focused on tree value and new-user activation", () => {

@@ -1,77 +1,27 @@
-.family-share-page {
+.family-share-gateway {
   min-height: 100dvh;
-  display: flex;
-  flex-direction: column;
-  background: #f4efe4;
-  color: #2f2b25;
-  position: relative;
-  overflow: visible;
-}
-
-.online-share-panel {
-  width: min(960px, calc(100% - 40px));
-  margin: 0 auto;
-  padding: calc(56px + env(safe-area-inset-top)) 0 0;
-}
-
-.family-share-online-heading {
-  margin-bottom: 12px;
-}
-
-.family-share-online-heading span {
-  color: #9a4937;
-  font-size: 13px;
-  letter-spacing: 0.16em;
-}
-
-.family-share-online-heading p {
-  margin: 7px 0 0;
-  color: #727b75;
-  font-size: 13px;
-}
-
-.family-share-poster-heading > span {
-  color: #a64a38;
-  font-size: 12px;
-  letter-spacing: 0.16em;
-}
-
-.online-share-loading,
-.online-share-empty {
   display: grid;
-  justify-items: start;
-  gap: 18px;
+  place-items: center;
   padding: 28px;
-  border: 1px solid rgba(33, 69, 59, 0.13);
-  border-radius: 18px;
-  background: rgba(255, 253, 248, 0.82);
+  color: #29332f;
+  background: #f7f3e8;
 }
 
-.online-share-loading {
-  grid-auto-flow: column;
-  justify-content: center;
-  justify-items: center;
-  color: #6f756f;
+.family-share-gateway-loading {
+  display: grid;
+  place-items: center;
+  gap: 18px;
+  text-align: center;
 }
 
-.online-share-active {
-  display: flex;
-  justify-content: center;
-  padding: 18px;
-  border: 1px solid rgba(50, 112, 84, 0.2);
-  border-radius: 18px;
-  background: rgba(252, 255, 250, 0.88);
+.family-share-gateway-loading > img {
+  width: 56px;
+  height: 56px;
 }
 
-.family-share-poster-heading {
-  width: min(960px, 100%);
-  margin: 0 auto 20px;
-}
-
-.family-share-poster-heading h2 {
-  margin: 7px 0 0;
-  color: #413a32;
-  font: 700 22px/1.4 var(--serif);
+.family-share-gateway-loading > p {
+  margin: 0;
+  color: #6d756f;
 }
 
 .online-share-preview-summary {
@@ -100,168 +50,4 @@
 
 .online-share-name-preview .ant-tag {
   margin: 3px;
-}
-
-/* 返回按钮：无边界、低干扰，融合在页面背景中 */
-.family-share-back-top {
-  position: absolute;
-  top: calc(14px + env(safe-area-inset-top));
-  right: 20px;
-  z-index: 10;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  border: none;
-  min-height: 40px;
-  padding: 0 13px;
-  background: transparent;
-  cursor: pointer;
-  font-size: 15px;
-  color: #766554;
-  transition: all 0.2s ease;
-}
-
-.family-share-back-top:hover {
-  background: rgba(255, 253, 248, 0.96);
-  color: #3d352c;
-  padding-inline: 8px;
-}
-
-.family-share-preview {
-  position: relative;
-  flex: 0 0 auto;
-  overflow: visible;
-  padding: 36px 20px 48px;
-  border-top: 1px solid rgba(33, 69, 59, 0.08);
-  background: linear-gradient(180deg, #f5f0e8 0%, #ede6da 100%);
-}
-
-.family-share-preview img {
-  display: block;
-  width: min(100%, 520px);
-  height: auto;
-  margin: 0 auto;
-  border-radius: 20px;
-  box-shadow:
-    0 4px 20px rgba(58, 45, 31, 0.12),
-    0 16px 40px rgba(58, 45, 31, 0.15);
-}
-
-.family-share-page .share-overview-hero {
-  padding-top: 34px;
-}
-
-.family-share-page .share-overview-tree-section {
-  padding-bottom: 36px;
-}
-
-.family-share-loading {
-  min-height: 58dvh;
-  display: grid;
-  place-items: center;
-  align-content: center;
-  gap: 14px;
-  color: #756b5d;
-}
-
-.family-share-refreshing {
-  position: absolute;
-  inset: 22px 20px 26px;
-  display: grid;
-  place-items: center;
-  background: rgba(255, 253, 248, 0.48);
-}
-
-.family-share-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  padding: 18px 28px calc(18px + env(safe-area-inset-bottom));
-  border-top: 1px solid #ded3c1;
-  background: rgba(255, 253, 248, 0.97);
-  flex-shrink: 0;
-}
-
-/* 操作引导提示区 */
-.family-share-action-hints {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 24px;
-  padding: 10px 0;
-}
-
-.action-hint-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: #5a5044;
-  font-size: 13px;
-  font-weight: 500;
-}
-
-.action-hint-item .anticon {
-  font-size: 15px;
-  color: #7a6855;
-}
-
-.action-hint-divider {
-  color: #c4b8a5;
-  font-size: 12px;
-}
-
-.family-share-actions span {
-  color: #756b5d;
-  font-size: 13px;
-}
-
-@media (max-width: 768px) {
-  .online-share-panel {
-    width: calc(100% - 24px);
-    padding-top: calc(52px + env(safe-area-inset-top));
-  }
-
-  .online-share-empty,
-  .online-share-active {
-    padding: 16px;
-  }
-
-  .family-share-back-top {
-    top: calc(10px + env(safe-area-inset-top));
-    right: 14px;
-    font-size: 13px;
-    min-height: 38px;
-    padding-inline: 11px;
-  }
-
-  .family-share-preview {
-    padding: 28px 10px 32px;
-  }
-
-  .family-share-page .share-overview-hero {
-    padding-top: 26px;
-  }
-
-  .family-share-preview img {
-    width: min(100%, 430px);
-    border-radius: 12px;
-  }
-
-  .family-share-actions {
-    padding: 14px 12px calc(14px + env(safe-area-inset-bottom));
-    gap: 12px;
-  }
-
-  .family-share-action-hints {
-    gap: 18px;
-    padding: 8px 0;
-  }
-
-  .action-hint-item {
-    font-size: 12px;
-  }
-
-  .action-hint-divider {
-    font-size: 11px;
-  }
 }

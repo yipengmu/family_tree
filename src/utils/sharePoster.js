@@ -776,7 +776,7 @@ export const renderFamilyPoster = async (options) => {
   context.fillText("关系预览", 72, 662);
   context.fillStyle = COLORS.ink;
   context.font = `600 44px ${FONT_SERIF}`;
-  context.fillText("家人的名字，正在连成一棵树", 72, 726);
+  // context.fillText("家人的名字，正在连成一棵树", 72, 726);
 
   drawFamilyTreePreview(context, model, 820);
   await drawQrFooter(context, height, "也为你的家人，留下一份家谱");

@@ -670,23 +670,11 @@ function MainApp({ demoMode = false }) {
 
   // 移动端也使用AppLayout组件，但简化菜单
   if (mobile) {
-    return (
-      <div
-        className={`App mobile-layout ${currentPage === "share" ? "share-app-shell" : ""}`}
-      >
-        {renderCurrentPage()}
-      </div>
-    );
+    return <div className="App mobile-layout">{renderCurrentPage()}</div>;
   }
 
   // PC端使用新的布局系统
-  return (
-    <div
-      className={`App desktop-layout ${currentPage === "share" ? "share-app-shell" : ""}`}
-    >
-      {renderCurrentPage()}
-    </div>
-  );
+  return <div className="App desktop-layout">{renderCurrentPage()}</div>;
 }
 
 export default MainApp;

@@ -60,7 +60,7 @@ export default function ShareOverview({
         <div className="share-overview-section-heading">
           <div>
             <span>{treeTitle}</span>
-            <h2>家人的名字，正在连成一棵树</h2>
+            {/* <h2>家人的名字，正在连成一棵树</h2> */}
           </div>
           <p>{treeHint}</p>
         </div>
