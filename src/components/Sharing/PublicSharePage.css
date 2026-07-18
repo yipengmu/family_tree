@@ -48,7 +48,9 @@
   height: 38px;
 }
 .public-share-brand span {
-  display: grid;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
 }
 .public-share-brand strong {
   font-size: 17px;
@@ -68,16 +70,9 @@
 .public-share-expiry > .anticon {
   font-size: 20px;
 }
-.public-share-expiry span {
-  display: grid;
-  text-align: right;
-}
 .public-share-expiry strong {
   font-size: 13px;
-}
-.public-share-expiry small {
-  color: #8b7468;
-  font-size: 12px;
+  white-space: nowrap;
 }
 
 .public-share-hero {
@@ -108,6 +103,7 @@
   margin: 0 auto;
   color: #69716c;
   font-size: 17px;
+  white-space: nowrap;
 }
 .public-share-stats {
   display: flex;
@@ -161,8 +157,8 @@
   font-size: 13px;
 }
 .public-family-tree-canvas {
-  height: min(680px, 68dvh);
-  min-height: 480px;
+  height: clamp(520px, 70dvh, 760px);
+  min-height: 520px;
   overflow: hidden;
   border: 1px solid rgba(33, 69, 59, 0.14);
   border-radius: 22px;
@@ -184,10 +180,12 @@
   margin: 10px 0 16px;
   color: #173f38;
   font: 700 34px/1.3 var(--serif);
+  white-space: nowrap;
 }
 .public-share-value-intro p {
   color: #5e6d65;
-  line-height: 1.8;
+  line-height: 1.5;
+  white-space: nowrap;
 }
 .public-share-value-cards {
   display: grid;
@@ -210,30 +208,6 @@
   line-height: 1.7;
 }
 
-.public-share-trust {
-  display: flex;
-  align-items: flex-start;
-  gap: 18px;
-  width: min(900px, calc(100% - 40px));
-  margin: 48px auto;
-  padding: 22px 26px;
-  border: 1px solid rgba(114, 75, 53, 0.16);
-  border-radius: 16px;
-  background: #fffaf0;
-}
-.public-share-trust .anticon {
-  color: #8e4d38;
-  font-size: 25px;
-}
-.public-share-trust p {
-  margin: 0;
-  color: #6f665d;
-  line-height: 1.7;
-}
-.public-share-trust strong {
-  color: #403a34;
-}
-
 .public-share-cta {
   padding: 70px 24px;
   text-align: center;
@@ -242,6 +216,7 @@
 }
 .public-share-cta > span {
   color: #e3b6a4;
+  white-space: nowrap;
 }
 .public-share-cta h2 {
   margin: 12px 0;
@@ -273,17 +248,11 @@
     padding: 12px 14px;
   }
   .public-share-brand small {
-    display: none;
-  }
-  .public-share-expiry span {
-    text-align: right;
+    display: inline;
+    font-size: 10px;
   }
   .public-share-expiry strong {
     font-size: 12px;
-  }
-  .public-share-expiry small {
-    max-width: 210px;
-    font-size: 10px;
   }
   .public-share-hero {
     padding: 42px 18px 34px;
@@ -312,20 +281,45 @@
     margin-top: 8px;
   }
   .public-family-tree-canvas {
-    height: 60dvh;
-    min-height: 440px;
+    height: clamp(520px, 70dvh, 680px);
+    min-height: 520px;
     border-radius: 14px;
+  }
+  .public-family-tree-canvas .react-flow {
+    height: 100% !important;
+  }
+  .public-family-tree-canvas .react-flow__controls {
+    top: auto;
+    right: 10px;
+    bottom: 10px;
+    left: auto;
   }
   .public-share-values {
     grid-template-columns: 1fr;
-    gap: 26px;
-    padding: 50px 20px;
+    gap: 18px;
+    padding: 42px 20px;
   }
   .public-share-value-cards {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
   }
-  .public-share-trust {
-    padding: 18px;
+  .public-share-value-intro h2 {
+    font-size: 27px;
+  }
+  .public-share-value-intro p {
+    font-size: 14px;
+  }
+  .public-share-value-cards article {
+    padding: 15px 10px;
+  }
+  .public-share-value-cards b {
+    font-size: 14px;
+    white-space: nowrap;
+  }
+  .public-share-value-cards p {
+    margin-top: 8px;
+    font-size: 12px;
+    line-height: 1.45;
   }
   .public-share-cta {
     padding: 54px 20px;

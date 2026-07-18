@@ -37,8 +37,8 @@ function PublicFamilyTreeCanvas({ familyData }) {
         nodesConnectable={false}
         elementsSelectable={false}
         fitView
-        fitViewOptions={{ padding: 0.18, minZoom: 0.12, maxZoom: 1.1 }}
-        minZoom={0.08}
+        fitViewOptions={{ padding: 0.08, minZoom: 0.08, maxZoom: 1.1 }}
+        minZoom={0.05}
         maxZoom={2}
         panOnDrag
         zoomOnPinch
@@ -48,7 +48,10 @@ function PublicFamilyTreeCanvas({ familyData }) {
         onlyRenderVisibleElements
         proOptions={{ hideAttribution: true }}
       >
-        <Controls showInteractive={false} />
+        <Controls
+          className="public-family-tree-controls"
+          showInteractive={false}
+        />
         <Background
           variant="dots"
           gap={16}

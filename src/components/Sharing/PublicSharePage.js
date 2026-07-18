@@ -1,17 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import {
-  ClockCircleOutlined,
-  SafetyCertificateOutlined,
-} from "@ant-design/icons";
+import { ClockCircleOutlined } from "@ant-design/icons";
 import { Button, Result, Spin } from "antd";
 import BrandLogo from "../UI/BrandLogo.js";
 import shareService from "../../services/shareService.js";
 import { trackEvent } from "../../utils/analytics.js";
-import {
-  formatShareExpiry,
-  getShareTimeRemaining,
-} from "../../utils/shareExpiry.js";
 import PublicFamilyTree from "./PublicFamilyTree.js";
 import "./PublicSharePage.css";
 
@@ -147,20 +140,14 @@ export default function PublicSharePage() {
         </Link>
         <div className="public-share-expiry">
           <ClockCircleOutlined />
-          <span>
-            <strong>这是一份 7 天限时分享</strong>
-            <small>
-              有效至 {formatShareExpiry(share.expiresAt)} ·{" "}
-              {getShareTimeRemaining(share.expiresAt, now)}
-            </small>
-          </span>
+          <strong>7 天后过期</strong>
         </div>
       </header>
 
       <section className="public-share-hero">
         <span className="public-share-eyebrow">家人主动发布的只读家谱</span>
         <h1>{snapshot.familyName}</h1>
-        <p>沿着姓名与关系，看见一个家庭如何一代代延续。</p>
+        <p>沿着姓名与关系，看见家庭代代延续。</p>
         <div className="public-share-stats" aria-label="家谱摘要">
           <span>
             <strong>{stats.memberCount || 0}</strong>
@@ -183,7 +170,7 @@ export default function PublicSharePage() {
             <span>世系总览</span>
             <h2>家谱树状图</h2>
           </div>
-          <p>拖动查看家族分支，使用右下角按钮放大或缩小。</p>
+          <p>拖动查看分支，使用右下角按钮缩放。</p>
         </div>
         <PublicFamilyTree familyData={snapshot.people} />
       </section>
@@ -195,37 +182,26 @@ export default function PublicSharePage() {
         <div className="public-share-value-intro">
           <span>为什么记录</span>
           <h2 id="family-value-title">家谱保存的不只是姓名</h2>
-          <p>
-            它把分散在记忆里的家人重新连接起来，让孩子知道父母与祖辈从哪里来，也让普通家庭的家风与故事有机会继续传下去。
-          </p>
+          <p>看见关系，留住记忆，传给家人。</p>
         </div>
         <div className="public-share-value-cards">
           <article>
             <b>看见关系</b>
-            <p>从一张树状图理解代际、亲缘与家族脉络。</p>
+            <p>理解代际与亲缘。</p>
           </article>
           <article>
             <b>留住记忆</b>
-            <p>先留下知道的姓名和关系，以后再慢慢补充。</p>
+            <p>先记录知道的姓名。</p>
           </article>
           <article>
             <b>传给家人</b>
-            <p>让今天记录的内容，成为下一代看得懂的家庭档案。</p>
+            <p>让家人以后看得懂。</p>
           </article>
         </div>
       </section>
 
-      <section className="public-share-trust">
-        <SafetyCertificateOutlined />
-        <p>
-          <strong>本页只展示分享人确认发布的家谱结构与摘要。</strong>
-          <br />
-          不包含人物志、照片、精确生日、地址、联系方式、证件或家庭原始材料；到期后链接自动失效。
-        </p>
-      </section>
-
       <section className="public-share-cta">
-        <span>从自己开始，就能建立第一份家谱</span>
+        <span>从自己开始就能建立第一份家谱</span>
         <h2>也为你的家人，留下一棵看得见的家谱</h2>
         <p>第一版不需要完整。先记录自己，再连接一位父母或长辈。</p>
         <div>
