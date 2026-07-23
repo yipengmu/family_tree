@@ -11,19 +11,22 @@ describe("public share product boundary", () => {
     path.join(__dirname, "FamilySharePage.js"),
     "utf8",
   );
+  const headerSource = fs.readFileSync(
+    path.join(__dirname, "SharePageHeader.js"),
+    "utf8",
+  );
   const analyticsSource = fs.readFileSync(
     path.join(__dirname, "../../utils/analytics.js"),
     "utf8",
   );
 
-  test("opens the same public route for the owner and recipient", () => {
-    expect(pageSource).toContain("7 天后过期");
+  test("uses the public share layout for both the recipient and the owner", () => {
+    expect(headerSource).toContain("7天内有效");
     expect(pageSource).not.toContain("formatShareExpiry(share.expiresAt)");
-    expect(sharePageSource).toContain("getPublicShareDestination");
-    expect(sharePageSource).toContain(
-      "navigate(destination, { replace: true })",
-    );
-    expect(sharePageSource).not.toContain("ShareOverview");
+    expect(pageSource).toContain("SharePageHeader");
+    expect(sharePageSource).toContain("SharePageHeader");
+    expect(sharePageSource).toContain("ShareOverview");
+    expect(sharePageSource).not.toContain("getPublicShareDestination");
     expect(sharePageSource).not.toContain("renderFamilyPoster");
     expect(sharePageSource).not.toContain("图片分享");
   });
@@ -47,11 +50,13 @@ describe("public share product boundary", () => {
   });
 
   test("keeps the privacy confirmation before publishing a new snapshot", () => {
-    expect(sharePageSource).toContain("确认发布并查看");
+    expect(sharePageSource).toContain("确认发布并复制链接");
     expect(sharePageSource).toContain(
       "我已确认上述人物姓名和关系适合通过限时链接分享",
     );
     expect(sharePageSource).toContain('currentTenant.role === "OWNER"');
+    expect(sharePageSource).toContain("生成分享链接");
+    expect(headerSource).toContain("分享链接");
   });
 
   test("keeps the public page focused on tree value and new-user activation", () => {

@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ClockCircleOutlined } from "@ant-design/icons";
-import { Button, Result, Spin } from "antd";
+import { Button, Result, Spin, message } from "antd";
 import BrandLogo from "../UI/BrandLogo.js";
 import shareService from "../../services/shareService.js";
 import { trackEvent } from "../../utils/analytics.js";
 import ShareOverview from "./ShareOverview.js";
+import SharePageHeader from "./SharePageHeader.js";
 import "./PublicSharePage.css";
 
 const updateMeta = (selector, attribute, value) => {
@@ -91,6 +91,20 @@ export default function PublicSharePage() {
 
   const createState = { from: `/s/${token}`, returnTo: "/app/create" };
 
+  const copyShareLink = async () => {
+    const shareUrl = share?.shareUrl || window.location.href;
+    try {
+      if (!navigator.clipboard?.writeText) {
+        throw new Error("clipboard-unavailable");
+      }
+      await navigator.clipboard.writeText(shareUrl);
+      trackEvent("share_link_copied", { method: "clipboard" });
+      message.success("分享链接已复制");
+    } catch {
+      message.warning("当前浏览器不支持自动复制，请从地址栏复制链接");
+    }
+  };
+
   if (loading) {
     return (
       <main className="public-share-state" role="status">
@@ -126,23 +140,7 @@ export default function PublicSharePage() {
   const stats = snapshot.stats || {};
   return (
     <main className="public-share-page">
-      <header className="public-share-header">
-        <Link
-          to="/?from=share"
-          className="public-share-brand"
-          aria-label="了解谱里"
-        >
-          <BrandLogo alt="" />
-          <span>
-            <strong>谱里</strong>
-            <small>年轻人的第一份家谱</small>
-          </span>
-        </Link>
-        <div className="public-share-expiry">
-          <ClockCircleOutlined />
-          <strong aria-label="分享链接将在 7 天后过期">7天内有效</strong>
-        </div>
-      </header>
+      <SharePageHeader onShare={copyShareLink} />
 
       <ShareOverview
         familyName={snapshot.familyName}

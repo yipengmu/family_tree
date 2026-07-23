@@ -7,21 +7,15 @@
   background: #f7f3e8;
 }
 
-.family-share-gateway-loading {
-  display: grid;
-  place-items: center;
-  gap: 18px;
-  text-align: center;
+.family-share-page {
+  min-height: 100dvh;
+  color: #29332f;
+  background: #f7f3e8;
 }
 
-.family-share-gateway-loading > img {
-  width: 56px;
-  height: 56px;
-}
-
-.family-share-gateway-loading > p {
-  margin: 0;
-  color: #6d756f;
+.family-share-alert {
+  width: min(960px, calc(100% - 32px));
+  margin: 20px auto 0;
 }
 
 .online-share-preview-summary {

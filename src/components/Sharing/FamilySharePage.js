@@ -1,19 +1,9 @@
 import React, { useCallback, useEffect, useState } from "react";
-import {
-  Alert,
-  Button,
-  Checkbox,
-  Modal,
-  Result,
-  Spin,
-  Tag,
-  message,
-} from "antd";
-import { useNavigate } from "react-router-dom";
-import BrandLogo from "../UI/BrandLogo.js";
+import { Alert, Button, Checkbox, Modal, Result, Tag, message } from "antd";
 import shareService from "../../services/shareService.js";
 import { trackEvent } from "../../utils/analytics.js";
-import { getPublicShareDestination } from "../../utils/shareNavigation.js";
+import ShareOverview from "./ShareOverview.js";
+import SharePageHeader from "./SharePageHeader.js";
 import "./FamilySharePage.css";
 
 function FamilySharePage({
@@ -22,37 +12,19 @@ function FamilySharePage({
   currentTenant,
   onBack,
 }) {
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [publishing, setPublishing] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [acknowledged, setAcknowledged] = useState(false);
   const [error, setError] = useState("");
+  const [share, setShare] = useState(null);
   const tenantId = currentTenant?.id;
   const canPublishOnline =
     !currentTenant?.role || currentTenant.role === "OWNER";
 
-  const openPublicShare = useCallback(
-    (nextShare) => {
-      const currentOrigin = window.location.origin;
-      const destination = getPublicShareDestination(
-        nextShare?.shareUrl,
-        currentOrigin,
-      );
-      if (!destination) {
-        setError("分享链接暂时无法打开");
-        setLoading(false);
-        return;
-      }
-
-      if (destination.startsWith("/")) {
-        navigate(destination, { replace: true });
-        return;
-      }
-      window.location.replace(destination);
-    },
-    [navigate],
-  );
+  const hasActiveShare =
+    share?.status === "ACTIVE" &&
+    new Date(share.expiresAt).getTime() > Date.now();
 
   useEffect(() => {
     if (!tenantId || !canPublishOnline) {
@@ -65,16 +37,12 @@ function FamilySharePage({
       .getCurrent(tenantId)
       .then((result) => {
         if (!active) return;
-        const share = result.share;
+        const currentShare = result.share;
         const isActive =
-          share?.status === "ACTIVE" &&
-          new Date(share.expiresAt).getTime() > Date.now();
-        if (isActive) {
-          openPublicShare(share);
-          return;
-        }
+          currentShare?.status === "ACTIVE" &&
+          new Date(currentShare.expiresAt).getTime() > Date.now();
+        setShare(isActive ? currentShare : null);
         setLoading(false);
-        setConfirmOpen(true);
       })
       .catch((requestError) => {
         if (!active) return;
@@ -85,32 +53,51 @@ function FamilySharePage({
     return () => {
       active = false;
     };
-  }, [canPublishOnline, openPublicShare, tenantId]);
+  }, [canPublishOnline, tenantId]);
+
+  const copyShareLink = useCallback(async (shareUrl, successMessage) => {
+    if (!shareUrl) return false;
+
+    try {
+      if (!navigator.clipboard?.writeText) {
+        throw new Error("clipboard-unavailable");
+      }
+      await navigator.clipboard.writeText(shareUrl);
+      trackEvent("share_link_copied", { method: "clipboard" });
+      message.success(successMessage || "分享链接已复制");
+      return true;
+    } catch {
+      message.warning("链接已生成，请从地址栏复制后分享");
+      return false;
+    }
+  }, []);
 
   const publishOnlineShare = async () => {
     setPublishing(true);
     try {
       const result = await shareService.publish(tenantId);
       trackEvent("share_link_created", { refreshed: false });
-
-      try {
-        await navigator.clipboard?.writeText(result.share.shareUrl);
-        trackEvent("share_link_copied", { method: "clipboard" });
-      } catch {
-        // 复制能力受浏览器权限影响；不阻止分享人进入真实访问页。
-      }
-
+      setShare(result.share);
       setConfirmOpen(false);
-      openPublicShare(result.share);
+      await copyShareLink(result.share.shareUrl, "分享链接已生成并复制");
     } catch (requestError) {
       message.error(requestError.message || "分享链接生成失败");
+    } finally {
       setPublishing(false);
     }
   };
 
   const handleCancel = () => {
     setConfirmOpen(false);
-    onBack?.();
+  };
+
+  const handleShareAction = () => {
+    if (hasActiveShare) {
+      copyShareLink(share.shareUrl);
+      return;
+    }
+    setAcknowledged(false);
+    setConfirmOpen(true);
   };
 
   if (!canPublishOnline) {
@@ -131,33 +118,37 @@ function FamilySharePage({
   }
 
   return (
-    <main className="family-share-gateway" aria-live="polite">
-      {error ? (
-        <Result
-          status="warning"
-          title={error}
-          extra={
-            <Button type="primary" onClick={onBack}>
-              返回家谱
-            </Button>
-          }
+    <main className="family-share-page" aria-live="polite">
+      <SharePageHeader
+        actionDisabled={loading || !tenantId}
+        actionLabel={hasActiveShare ? "分享链接" : "生成分享链接"}
+        actionLoading={loading}
+        expiryLabel={hasActiveShare ? "7天内有效" : "发布后7天有效"}
+        onShare={handleShareAction}
+      />
+
+      {error && (
+        <Alert
+          className="family-share-alert"
+          message={error}
+          showIcon
+          type="warning"
         />
-      ) : (
-        <div className="family-share-gateway-loading" role="status">
-          <BrandLogo alt="谱里" />
-          {loading && <Spin size="large" />}
-          <p>
-            {loading ? "正在打开实际分享页面…" : "确认后将打开实际分享页面"}
-          </p>
-        </div>
       )}
+
+      <ShareOverview
+        eyebrow="家谱分享"
+        familyData={familyData}
+        familyName={familyName}
+        treeTitle="家谱树状图"
+      />
 
       <Modal
         title="确认发布 7 天家谱分享"
         open={confirmOpen}
         onCancel={handleCancel}
         onOk={publishOnlineShare}
-        okText="确认发布并查看"
+        okText="确认发布并复制链接"
         cancelText="取消"
         confirmLoading={publishing}
         okButtonProps={{ disabled: !acknowledged }}
