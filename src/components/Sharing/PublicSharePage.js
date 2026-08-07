@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import {
+  EyeOutlined,
+  LockOutlined,
+  SafetyCertificateOutlined,
+} from "@ant-design/icons";
 import { Button, Result, Spin, message } from "antd";
 import BrandLogo from "../UI/BrandLogo.js";
 import shareService from "../../services/shareService.js";
@@ -138,15 +143,66 @@ export default function PublicSharePage() {
   }
 
   const stats = snapshot.stats || {};
+  const viewerBoundary = (
+    <section
+      className="public-share-viewer-boundary"
+      aria-labelledby="viewer-boundary-title"
+    >
+      <div className="public-share-boundary-heading">
+        <span>你的查看边界</span>
+        <h2 id="viewer-boundary-title">你正在以查看者身份浏览</h2>
+        <p>这是一份由家谱整理者主动发布、发布时固定的 7 天只读快照。</p>
+      </div>
+      <div className="public-share-boundary-grid">
+        <article>
+          <EyeOutlined />
+          <div>
+            <b>你可以看到</b>
+            <p>人物姓名、性别、代际、亲属关系和生存状态分类</p>
+          </div>
+        </article>
+        <article>
+          <LockOutlined />
+          <div>
+            <b>这里不会公开</b>
+            <p>照片、生日、住址、联系方式、人物故事和原始资料</p>
+          </div>
+        </article>
+        <article>
+          <SafetyCertificateOutlined />
+          <div>
+            <b>你不能操作</b>
+            <p>不能编辑家谱，也不会因为打开链接而成为家庭成员</p>
+          </div>
+        </article>
+      </div>
+      <div className="public-share-product-entry">
+        <span>这份家谱由一位家人在「谱里」整理完成</span>
+        <Link
+          to="/register"
+          state={createState}
+          onClick={() =>
+            trackEvent("public_share_create_clicked", { placement: "boundary" })
+          }
+        >
+          我也想从自己开始建一份
+        </Link>
+      </div>
+    </section>
+  );
+
   return (
     <main className="public-share-page">
       <SharePageHeader onShare={copyShareLink} />
 
       <ShareOverview
+        afterHero={viewerBoundary}
+        eyebrow="家人主动分享 · 7 天只读"
         familyName={snapshot.familyName}
         familyData={snapshot.people}
         stats={stats}
-        treeTitle="家谱树状图"
+        treeHint="拖动查看家族分支；这份页面只能查看，不能修改。"
+        treeTitle="这位家人整理的世系"
       />
 
       <section
@@ -154,29 +210,30 @@ export default function PublicSharePage() {
         aria-labelledby="family-value-title"
       >
         <div className="public-share-value-intro">
-          <span>为什么记录</span>
-          <h2 id="family-value-title">家谱保存的不只是姓名</h2>
-          <p>看见关系，留住记忆，传给家人。</p>
+          <span>这份成果如何开始</span>
+          <h2 id="family-value-title">一棵家谱，可以由一个人先开始</h2>
+          <p>不用等资料全部齐全，先把知道的人和关系连起来。</p>
         </div>
         <div className="public-share-value-cards">
           <article>
-            <b>看见关系</b>
-            <p>理解代际与亲缘</p>
+            <b>从两个人开始</b>
+            <p>先记录自己，再连接一位父母或长辈。</p>
           </article>
           <article>
-            <b>留住记忆</b>
-            <p>先记录知道的姓名</p>
+            <b>不知道也能留空</b>
+            <p>姓名和资料可以待考，之后再慢慢补充。</p>
           </article>
           <article>
-            <b>传给家人</b>
-            <p>让家人以后看得懂</p>
+            <b>始终由家庭掌控</b>
+            <p>默认私密，只有整理者主动发布才对外可见。</p>
           </article>
         </div>
       </section>
 
       <section className="public-share-cta">
-        <span>从自己开始就能建立第一份家谱</span>
-        <p>很简单，先记录自己，再连接一位父母或长辈</p>
+        <span>看完这份家谱，也可以为自己的家人留一份</span>
+        <h2>从自己开始，连起第一段家庭关系</h2>
+        <p>不需要懂修谱，也不需要一次填完；两个人就能看到第一棵树。</p>
         <div>
           <Link
             to="/register"

@@ -1,4 +1,5 @@
 import {
+  getPersonLifeStatus,
   isPersonAlive,
   normalizePersonLifeStatus,
   setPersonAlive,
@@ -17,6 +18,13 @@ describe("personLifeStatus", () => {
 
   test("uses an explicit alive choice over stale legacy fields", () => {
     expect(isPersonAlive({ alive: false, dealth: "alive" })).toBe(false);
+  });
+
+  test("keeps missing survival facts visibly unconfirmed", () => {
+    expect(getPersonLifeStatus({ dealth: null })).toBe("unknown");
+    expect(getPersonLifeStatus({ death_date: "unknown" })).toBe("unknown");
+    expect(getPersonLifeStatus({ dealth: "dealth" })).toBe("deceased");
+    expect(getPersonLifeStatus({ alive: true })).toBe("living");
   });
 
   test("creates new people as living and keeps all compatibility fields aligned", () => {

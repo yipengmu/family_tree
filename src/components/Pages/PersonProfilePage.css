@@ -1,18 +1,24 @@
 .person-profile-page {
   min-height: 100%;
-  padding: 28px 36px 80px;
+  padding: 28px 36px 96px;
   background: #f5f0e7;
   color: #342a22;
 }
 .person-profile-back {
+  display: block;
+  width: min(1040px, 100%);
+  margin: 0 auto 18px;
+  padding: 6px 0;
   border: 0;
   background: transparent;
   color: #766554;
   cursor: pointer;
-  margin-bottom: 18px;
+  text-align: left;
 }
 .person-profile-hero {
   position: relative;
+  width: min(1040px, 100%);
+  margin: 0 auto;
   display: flex;
   align-items: center;
   gap: 24px;
@@ -62,9 +68,11 @@
   z-index: 1;
 }
 .person-profile-title > span,
+.person-profile-intro > span,
+.person-profile-relations > span,
 .life-events-heading > span {
   color: #9a3f2f;
-  letter-spacing: 0.24em;
+  letter-spacing: 0.14em;
   font-size: 12px;
 }
 .person-profile-title h1 {
@@ -77,28 +85,131 @@
   margin: 0;
   color: #776858;
 }
+.person-profile-title .person-profile-role {
+  margin: 8px 0 5px;
+  color: #4f4034;
+  font-family: "Songti SC", "STSong", serif;
+  font-size: 16px;
+}
+.person-profile-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  margin: 0 0 9px;
+  color: #776858;
+  font-size: 13px;
+}
+.person-profile-meta .ant-tag {
+  margin: 0;
+}
 .person-profile-actions {
   display: flex;
-  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 9px;
   position: relative;
   z-index: 1;
 }
-.person-profile-facts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px 22px;
-  padding: 18px 12px;
-  color: #6d5e50;
+.person-profile-overview {
+  width: min(1040px, 100%);
+  margin: 18px auto 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+  gap: 14px;
 }
-.person-profile-summary {
-  max-width: 820px;
-  margin: 8px auto 36px;
-  padding: 22px 30px;
-  border-left: 3px solid #9a3f2f;
-  background: rgba(255, 255, 255, 0.55);
-  font-family: serif;
-  font-size: 17px;
-  line-height: 1.9;
+.person-profile-intro,
+.person-profile-relations {
+  min-width: 0;
+  padding: 24px 26px;
+  border: 1px solid rgba(205, 191, 171, 0.78);
+  border-radius: 16px;
+  background: rgba(255, 253, 248, 0.78);
+}
+.person-profile-intro h2,
+.person-profile-relations h2 {
+  margin: 5px 0 14px;
+  font:
+    600 21px/1.35 "Songti SC",
+    "STSong",
+    serif;
+}
+.person-profile-intro p {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  color: #514338;
+  font-family: "Songti SC", "STSong", serif;
+  font-size: 16px;
+  line-height: 1.85;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+}
+.person-profile-intro p.expanded,
+.person-profile-intro p.person-profile-intro-empty {
+  display: block;
+  overflow: visible;
+  -webkit-line-clamp: initial;
+}
+.person-profile-intro p.person-profile-intro-empty,
+.person-profile-relations > p {
+  color: #8b7a69;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.person-profile-summary-toggle {
+  margin-top: 12px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #7f402f;
+  cursor: pointer;
+  font-size: 13px;
+}
+.person-profile-relation-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.person-profile-relation-list > button,
+.person-profile-relation-list > div {
+  min-width: 0;
+  min-height: 58px;
+  padding: 9px 11px;
+  border: 1px solid #e1d5c5;
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.76);
+  color: #3f342b;
+  text-align: left;
+}
+.person-profile-relation-list > button {
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    transform 0.2s ease,
+    background 0.2s ease;
+}
+.person-profile-relation-list > button:hover {
+  transform: translateY(-1px);
+  border-color: #a9866f;
+  background: #fffdf8;
+}
+.person-profile-relation-list small,
+.person-profile-relation-list strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.person-profile-relation-list small {
+  margin-bottom: 2px;
+  color: #9a8775;
+  font-size: 11px;
+}
+.person-profile-relation-list strong {
+  font-size: 14px;
+  font-weight: 600;
 }
 .person-profile-missing {
   display: grid;
@@ -124,10 +235,10 @@
 }
 .life-events-section {
   max-width: 900px;
-  margin: 36px auto 0;
+  margin: 44px auto 0;
 }
 .life-events-heading {
-  text-align: center;
+  text-align: left;
   margin-bottom: 30px;
 }
 .life-events-heading h2 {
@@ -136,7 +247,50 @@
   font-size: 30px;
 }
 .life-events-heading p {
+  margin: 6px 0 0;
   color: #877766;
+}
+.life-events-empty {
+  display: grid;
+  justify-items: center;
+  padding: 44px 24px;
+  border: 1px dashed #cfbea8;
+  border-radius: 18px;
+  background: rgba(255, 253, 248, 0.62);
+  text-align: center;
+}
+.life-events-empty > span {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: #eee2d3;
+  color: #8b4437;
+  font:
+    600 25px "Songti SC",
+    "STSong",
+    serif;
+}
+.life-events-empty h3 {
+  margin: 16px 0 6px;
+  font:
+    600 21px "Songti SC",
+    "STSong",
+    serif;
+}
+.life-events-empty p {
+  max-width: 440px;
+  margin: 0 0 18px;
+  color: #7c6c5c;
+  line-height: 1.7;
+}
+.life-events-empty small {
+  margin-top: 12px;
+  color: #9a8b7c;
+}
+.person-profile-mobile-cta {
+  display: none;
 }
 .life-timeline {
   position: relative;
@@ -642,31 +796,57 @@
 @media (max-width: 768px) {
   .person-profile-page {
     height: 100%;
-    padding: 0 0 96px;
+    padding: 0 0 176px;
     overflow-y: auto;
     overscroll-behavior-y: contain;
     -webkit-overflow-scrolling: touch;
   }
   .person-profile-back {
     margin: 0;
-    padding: 8px 14px 10px;
+    width: 100%;
+    padding: 10px 16px 12px;
+    background: rgba(245, 240, 231, 0.94);
   }
   .person-profile-hero {
     align-items: flex-start;
     flex-wrap: wrap;
-    padding: 24px 18px;
-    gap: 16px;
+    padding: 22px 18px 20px;
+    gap: 14px;
     border-left: 0;
     border-right: 0;
     border-radius: 0;
   }
   .person-profile-portrait {
-    width: 72px;
-    height: 86px;
-    font-size: 32px;
+    width: 68px;
+    height: 80px;
+    border-width: 4px;
+    font-size: 30px;
+  }
+  .person-profile-title {
+    min-width: 0;
   }
   .person-profile-title h1 {
-    font-size: 30px;
+    margin-top: 3px;
+    font-size: 29px;
+  }
+  .person-profile-title > span {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .person-profile-meta {
+    gap: 5px 9px;
+    margin-bottom: 6px;
+    font-size: 12px;
+  }
+  .person-profile-title .person-profile-role {
+    font-size: 14px;
+  }
+  .person-profile-seal {
+    right: 12px;
+    top: -2px;
+    font-size: 96px;
   }
   .person-profile-hero > .ant-btn {
     width: 100%;
@@ -679,12 +859,57 @@
     flex: 1;
   }
   .person-profile-actions .ant-btn-primary {
-    flex-basis: 100%;
+    display: none;
   }
-  .person-profile-facts {
-    padding: 18px 14px;
+  .person-profile-overview {
+    width: auto;
+    margin: 12px 12px 0;
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .person-profile-intro,
+  .person-profile-relations {
+    padding: 19px 18px;
+    border-radius: 14px;
+  }
+  .person-profile-intro h2,
+  .person-profile-relations h2 {
+    margin-bottom: 10px;
+    font-size: 19px;
+  }
+  .person-profile-intro p {
+    font-size: 15px;
+    line-height: 1.75;
+    -webkit-line-clamp: 3;
+  }
+  .person-profile-relation-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .person-profile-relation-list > button,
+  .person-profile-relation-list > div {
+    min-height: 54px;
+  }
+  .person-profile-mobile-cta {
+    position: fixed;
+    right: 0;
+    bottom: calc(64px + env(safe-area-inset-bottom));
+    left: 0;
+    z-index: 30;
+    display: block;
+    padding: 9px 16px;
+    border-top: 1px solid rgba(218, 204, 185, 0.92);
+    background: rgba(255, 253, 248, 0.96);
+    box-shadow: 0 -10px 30px rgba(83, 61, 39, 0.1);
+    backdrop-filter: blur(14px);
+  }
+  .person-profile-mobile-cta .ant-btn {
+    width: 100%;
+    height: 48px;
+    border-radius: 24px;
+    background: #184f43;
   }
   .life-events-section {
+    margin-top: 34px;
     padding: 0 14px;
   }
   .life-events-heading {
@@ -693,6 +918,9 @@
   }
   .life-events-heading h2 {
     font-size: 25px;
+  }
+  .life-events-empty {
+    padding: 36px 18px;
   }
   .life-timeline {
     padding-left: 28px;

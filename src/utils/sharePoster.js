@@ -80,7 +80,18 @@ const selectGenerationGroups = (groups, limit = 6) => {
   ];
 };
 
-const buildPosterTree = (people, hideProtectedNames) => {
+const getFamilyPosterName = (
+  person,
+  { hideProtectedNames, anonymizeAllNames },
+) => {
+  if (anonymizeAllNames) {
+    const generation = numericGeneration(person);
+    return generation ? `第 ${generation} 代家人` : "一位家人";
+  }
+  return getPosterPersonName(person, hideProtectedNames);
+};
+
+const buildPosterTree = (people, { hideProtectedNames, anonymizeAllNames }) => {
   const sortedPeople = people
     .map((person) => ({
       raw: person,
@@ -143,7 +154,10 @@ const buildPosterTree = (people, hideProtectedNames) => {
     return {
       ...person.raw,
       id: person.id,
-      name: getPosterPersonName(person.raw, hideProtectedNames),
+      name: getFamilyPosterName(person.raw, {
+        hideProtectedNames,
+        anonymizeAllNames,
+      }),
     };
   });
 
@@ -189,6 +203,7 @@ export const buildFamilyPosterModel = ({
   familyName,
   familyData = [],
   hideProtectedNames = true,
+  anonymizeAllNames = false,
 }) => {
   const people = Array.isArray(familyData) ? familyData : [];
   const groupMap = new Map();
@@ -206,7 +221,10 @@ export const buildFamilyPosterModel = ({
     }
     groupMap.get(key).people.push({
       id: getPersonId(person),
-      name: getPosterPersonName(person, hideProtectedNames),
+      name: getFamilyPosterName(person, {
+        hideProtectedNames,
+        anonymizeAllNames,
+      }),
     });
   });
 
@@ -221,7 +239,9 @@ export const buildFamilyPosterModel = ({
 
   return {
     kind: "family",
-    familyName: normalizeText(familyName) || "我的家谱",
+    familyName: anonymizeAllNames
+      ? "我的家庭世系"
+      : normalizeText(familyName) || "我的家谱",
     memberCount: people.length,
     generationCount: knownGenerations.length,
     firstGeneration: knownGenerations[0]?.generation ?? null,
@@ -232,8 +252,12 @@ export const buildFamilyPosterModel = ({
       people: group.people.slice(0, 4),
       hiddenCount: Math.max(0, group.people.length - 4),
     })),
-    tree: buildPosterTree(people, hideProtectedNames),
+    tree: buildPosterTree(people, {
+      hideProtectedNames,
+      anonymizeAllNames,
+    }),
     hideProtectedNames,
+    anonymizeAllNames,
   };
 };
 
@@ -755,7 +779,10 @@ export const renderFamilyPoster = async (options) => {
         ? `${model.generationCount} 代相承`
         : "从一位家人开始",
     ],
-    ["记录", "名字与关系清晰可见"],
+    [
+      "记录",
+      model.anonymizeAllNames ? "只展示结构，不展示姓名" : "名字与关系清晰可见",
+    ],
     ["传承", "随时补充，留给后代"],
   ];
   valueItems.forEach(([label, value], index) => {

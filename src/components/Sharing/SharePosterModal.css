@@ -13,6 +13,12 @@
   background: #f8f3e9;
 }
 
+.share-poster-privacy-lock {
+  color: #285b4e;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
 .share-poster-preview {
   position: relative;
   min-height: 360px;

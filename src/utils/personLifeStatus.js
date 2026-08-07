@@ -5,6 +5,15 @@ export const isPersonAlive = (person = {}) => {
   return person.dealth === ALIVE_STATUS || person.death_date === ALIVE_STATUS;
 };
 
+export const getPersonLifeStatus = (person = {}) => {
+  if (isPersonAlive(person)) return "living";
+  if (person.alive === false) return "deceased";
+
+  const deathValue = person.death_date ?? person.dealth;
+  if (!deathValue || deathValue === "unknown") return "unknown";
+  return "deceased";
+};
+
 const getDeathValue = (person = {}) =>
   person.death_date ?? person.dealth ?? null;
 

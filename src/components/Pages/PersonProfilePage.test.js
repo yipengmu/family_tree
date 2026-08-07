@@ -62,4 +62,23 @@ describe("person life archive flow", () => {
     expect(source).toContain("分享人物志");
     expect(source).toContain('kind="person"');
   });
+
+  it("prioritizes family context, a human introduction, and one mobile action", () => {
+    expect(source).toContain("getPersonFamilyContext");
+    expect(source).toContain("先认识这个人");
+    expect(source).toContain("名字之间的连接");
+    expect(source).toContain("一生片段");
+    expect(source).toContain('className="person-profile-mobile-cta"');
+    expect(stylesheet).toContain(".person-profile-overview");
+  });
+
+  it("shows reviewed demo stories instead of making every demo profile empty", () => {
+    expect(source).toContain("getDemoPersonStories");
+    expect(source).toContain("看看一份已有故事的人物志");
+  });
+
+  it("does not present an unknown survival status as deceased", () => {
+    expect(source).toContain("getPersonLifeStatus");
+    expect(source).toContain("状态待确认");
+  });
 });

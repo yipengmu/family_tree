@@ -451,6 +451,7 @@ function MainApp({ demoMode = false }) {
               familyData={familyData}
               onMenuClick={handleMenuClick}
               onBack={() => navigate("/app")}
+              onOpenPersonProfile={openPersonProfile}
             />
           );
         }
@@ -462,6 +463,7 @@ function MainApp({ demoMode = false }) {
             onMenuClick={handleMenuClick}
             onBack={() => navigate("/app")}
             onEdit={() => navigate(getPersonEditPath(personId))}
+            onOpenPersonProfile={openPersonProfile}
             initialStoryOpen={
               new URLSearchParams(location.search).get("capture") === "1"
             }

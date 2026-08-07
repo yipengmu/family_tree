@@ -28,6 +28,7 @@ export default function ShareOverview({
   eyebrow = "家谱分享",
   treeTitle = "世系总览",
   treeHint = "拖动查看分支，使用图谱侧边按钮缩放或全屏。",
+  afterHero,
 }) {
   const summary = useMemo(
     () => getStats(familyData, stats),
@@ -55,6 +56,8 @@ export default function ShareOverview({
           </span>
         </div>
       </section>
+
+      {afterHero}
 
       <section className="share-overview-tree-section">
         <div className="share-overview-section-heading">

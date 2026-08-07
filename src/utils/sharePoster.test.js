@@ -47,6 +47,26 @@ describe("share poster privacy model", () => {
     ]);
   });
 
+  test("can anonymize the whole family achievement poster", () => {
+    const model = buildFamilyPosterModel({
+      familyName: "不应公开的家谱名",
+      anonymizeAllNames: true,
+      familyData: [
+        { id: 1, name: "张一", g_rank: 1, alive: false },
+        { id: 2, name: "张二", g_rank: 2, g_father_id: 1, alive: true },
+      ],
+    });
+
+    expect(model.familyName).toBe("我的家庭世系");
+    expect(model.tree.nodes.map((person) => person.name)).toEqual([
+      "第 1 代家人",
+      "第 2 代家人",
+    ]);
+    expect(JSON.stringify(model)).not.toContain("张一");
+    expect(JSON.stringify(model)).not.toContain("张二");
+    expect(JSON.stringify(model)).not.toContain("不应公开的家谱名");
+  });
+
   test("never includes private or draft stories in a person poster", () => {
     const model = buildPersonPosterModel({
       person: { id: 2, name: "穆二", alive: true, location: "北京" },

@@ -27,27 +27,35 @@ function SharePosterModal({
   familyData = [],
   person,
   events = [],
+  familyAnonymized = false,
 }) {
   const sensitivePerson = isShareProtectedPerson(person || {});
   const [hideProtectedNames, setHideProtectedNames] = useState(false);
+  const [anonymizeAllNames, setAnonymizeAllNames] = useState(familyAnonymized);
   const [includeLifeFacts, setIncludeLifeFacts] = useState(!sensitivePerson);
   const [includePortrait, setIncludePortrait] = useState(!sensitivePerson);
-  const [includeStories, setIncludeStories] = useState(true);
+  const [includeStories, setIncludeStories] = useState(!sensitivePerson);
   const [posterUrl, setPosterUrl] = useState("");
   const [generating, setGenerating] = useState(false);
 
   useEffect(() => {
     if (!open) return;
     setHideProtectedNames(false);
+    setAnonymizeAllNames(familyAnonymized);
     setIncludeLifeFacts(!sensitivePerson);
     setIncludePortrait(!sensitivePerson);
-    setIncludeStories(true);
-  }, [open, sensitivePerson]);
+    setIncludeStories(!sensitivePerson);
+  }, [familyAnonymized, open, sensitivePerson]);
 
   const posterOptions = useMemo(
     () =>
       kind === "family"
-        ? { familyName, familyData, hideProtectedNames }
+        ? {
+            familyName,
+            familyData,
+            hideProtectedNames,
+            anonymizeAllNames,
+          }
         : {
             person,
             events,
@@ -59,6 +67,7 @@ function SharePosterModal({
       events,
       familyData,
       familyName,
+      anonymizeAllNames,
       hideProtectedNames,
       includeLifeFacts,
       includePortrait,
@@ -92,7 +101,11 @@ function SharePosterModal({
   }, [generatePoster, open]);
 
   const filename = `${safeFilename(
-    kind === "family" ? familyName : `${person?.name || "家人"}人物志`,
+    kind === "family"
+      ? familyAnonymized
+        ? "我的建谱成果"
+        : familyName
+      : `${person?.name || "家人"}人物志`,
   )}.png`;
 
   const downloadPoster = () => {
@@ -120,8 +133,16 @@ function SharePosterModal({
         if (navigator.canShare?.({ files: [file] })) {
           await navigator.share({
             files: [file],
-            title: kind === "family" ? familyName : `${person?.name}人物志`,
-            text: "我在谱里记录了家人的名字与故事。",
+            title:
+              kind === "family"
+                ? familyAnonymized
+                  ? "我的建谱成果"
+                  : familyName
+                : `${person?.name}人物志`,
+            text:
+              kind === "family" && familyAnonymized
+                ? `我在谱里整理了 ${familyData.length} 位家人的世系。`
+                : "我在谱里记录了家人的名字与故事。",
           });
           trackEvent("share_poster_saved", {
             type: kind,
@@ -132,8 +153,16 @@ function SharePosterModal({
       }
 
       await navigator.share({
-        title: kind === "family" ? familyName : `${person?.name}人物志`,
-        text: "我在谱里记录了家人的名字与故事。",
+        title:
+          kind === "family"
+            ? familyAnonymized
+              ? "我的建谱成果"
+              : familyName
+            : `${person?.name}人物志`,
+        text:
+          kind === "family" && familyAnonymized
+            ? `我在谱里整理了 ${familyData.length} 位家人的世系。`
+            : "我在谱里记录了家人的名字与故事。",
         url: window.location.href,
       });
       trackEvent("share_poster_saved", {
@@ -149,22 +178,34 @@ function SharePosterModal({
 
   return (
     <Modal
-      title={kind === "family" ? "分享我的家谱" : "分享人物志"}
+      title={
+        kind === "family"
+          ? familyAnonymized
+            ? "分享我的建谱成果"
+            : "分享我的家谱"
+          : "分享人物志"
+      }
       open={open}
       onCancel={onClose}
       footer={null}
       width={680}
-      destroyOnClose
+      destroyOnHidden
       className="share-poster-modal"
     >
       <div className="share-poster-options" aria-label="分享图片内容设置">
         {kind === "family" ? (
-          <Checkbox
-            checked={hideProtectedNames}
-            onChange={(event) => setHideProtectedNames(event.target.checked)}
-          >
-            隐藏在世及状态待确认人物姓名
-          </Checkbox>
+          familyAnonymized ? (
+            <span className="share-poster-privacy-lock">
+              已隐藏全部人物姓名与家谱名称，只展示代际结构和整理进度
+            </span>
+          ) : (
+            <Checkbox
+              checked={hideProtectedNames}
+              onChange={(event) => setHideProtectedNames(event.target.checked)}
+            >
+              隐藏在世及状态待确认人物姓名
+            </Checkbox>
+          )
         ) : (
           <>
             <Checkbox
@@ -192,11 +233,17 @@ function SharePosterModal({
       <Alert
         type={sensitivePerson && kind === "person" ? "warning" : "info"}
         showIcon
-        message="图片保存后将脱离家谱权限保护"
+        message={
+          kind === "family" && familyAnonymized
+            ? "适合公开展示的匿名成果图"
+            : "图片保存后将脱离家谱权限保护"
+        }
         description={
-          sensitivePerson && kind === "person"
-            ? "这位人物在世或生存状态待确认。请先确认本人、监护人及故事中相关家人的公开意愿。"
-            : "二维码只会打开谱里产品，不会公开你的在线家谱；请仍然确认图片中的姓名和故事适合对外分享。"
+          kind === "family" && familyAnonymized
+            ? "图片不会包含人物姓名、家谱名称或在线家谱链接；二维码只会打开谱里产品入口。"
+            : sensitivePerson && kind === "person"
+              ? "这位人物在世或生存状态待确认。请先确认本人、监护人及故事中相关家人的公开意愿。"
+              : "二维码只会打开谱里产品，不会公开你的在线家谱；请仍然确认图片中的姓名和故事适合对外分享。"
         }
       />
 

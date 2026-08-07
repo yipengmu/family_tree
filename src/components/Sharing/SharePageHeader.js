@@ -25,10 +25,12 @@ export default function SharePageHeader({
         </span>
       </Link>
       <div className="share-page-actions">
-        <div className="share-page-expiry">
-          <ClockCircleOutlined />
-          <strong>{expiryLabel}</strong>
-        </div>
+        {expiryLabel && (
+          <div className="share-page-expiry">
+            <ClockCircleOutlined />
+            <strong>{expiryLabel}</strong>
+          </div>
+        )}
         {onShare && (
           <Button
             className="share-page-link-button"

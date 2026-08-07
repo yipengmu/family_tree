@@ -22,7 +22,6 @@ import {
 import {
   Button,
   Card,
-  Empty,
   Input,
   message,
   Modal,
@@ -39,8 +38,14 @@ import storyService, {
   savePendingRecording,
 } from "../../services/storyService.js";
 import tenantService from "../../services/tenantService.js";
+import {
+  DEMO_STORY_PERSON_ID,
+  getDemoPersonStories,
+} from "../../data/demoPersonStories.js";
 import { buildDirectLifeEvent } from "../../utils/lifeStory.js";
-import { isPersonAlive } from "../../utils/personLifeStatus.js";
+import { getPersonLifeStatus } from "../../utils/personLifeStatus.js";
+import { getPersonFamilyContext } from "../../utils/personProfile.js";
+import { classifyAnalyticsError, trackEvent } from "../../utils/analytics.js";
 import "./PersonProfilePage.css";
 
 const visibilityOptions = [
@@ -92,11 +97,13 @@ function PersonProfilePage({
   onBack,
   initialStoryOpen = false,
   onEdit,
+  onOpenPersonProfile,
 }) {
   const tenant = tenantService.getCurrentTenant();
   const personId = person?.person_id ?? person?.id;
-  const alive = isPersonAlive(person || {});
+  const lifeStatus = getPersonLifeStatus(person || {});
   const [events, setEvents] = useState([]);
+  const [eventsPersonId, setEventsPersonId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [storyOpen, setStoryOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
@@ -119,6 +126,7 @@ function PersonProfilePage({
   const [voiceGuideOpen, setVoiceGuideOpen] = useState(false);
   const [voiceStage, setVoiceStage] = useState("idle");
   const [autoFilled, setAutoFilled] = useState(false);
+  const [summaryExpanded, setSummaryExpanded] = useState(false);
   const recorderRef = useRef(null);
   const streamRef = useRef(null);
   const chunksRef = useRef([]);
@@ -129,20 +137,30 @@ function PersonProfilePage({
   const longPressTimerRef = useRef(null);
   const voiceOpeningRef = useRef(false);
   const voiceCaptureRef = useRef(false);
+  const profileTrackedRef = useRef(false);
   const tagMetadataRef = useRef({});
   const pendingKey = `person-${tenant?.id}-${personId}`;
 
   const loadEvents = useCallback(async () => {
-    if (!tenant?.id || !personId || tenant.id === "default") {
+    setLoading(true);
+    if (!tenant?.id || !personId) {
       setEvents([]);
+      setEventsPersonId(null);
+      setLoading(false);
+      return;
+    }
+    if (tenant.id === "default") {
+      setEvents(getDemoPersonStories(personId));
+      setEventsPersonId(String(personId));
       setLoading(false);
       return;
     }
     try {
-      setLoading(true);
       const result = await storyService.getEvents(tenant.id, personId);
       setEvents(result.data || []);
+      setEventsPersonId(String(personId));
     } catch (error) {
+      setEventsPersonId(null);
       message.error(error.message);
     } finally {
       setLoading(false);
@@ -152,6 +170,34 @@ function PersonProfilePage({
   useEffect(() => {
     loadEvents();
   }, [loadEvents]);
+
+  useEffect(() => {
+    profileTrackedRef.current = false;
+    setSummaryExpanded(false);
+  }, [personId]);
+
+  useEffect(() => {
+    if (
+      loading ||
+      profileTrackedRef.current ||
+      !personId ||
+      eventsPersonId !== String(personId)
+    )
+      return;
+    profileTrackedRef.current = true;
+    trackEvent("person_profile_view", {
+      demo: tenant?.id === "default",
+      entryCount: events.length,
+      hasPortrait: Boolean(person?.face_img),
+    });
+  }, [
+    events.length,
+    eventsPersonId,
+    loading,
+    person?.face_img,
+    personId,
+    tenant?.id,
+  ]);
 
   useEffect(() => {
     if (initialStoryOpen && personId && tenant?.id && tenant.id !== "default") {
@@ -473,10 +519,17 @@ function PersonProfilePage({
       setStage("processing");
       const memoryId = await saveSourceMaterial();
       await storyService.publishMemory(memoryId, [event]);
+      trackEvent("person_story_publish_success", {
+        method: audioFile ? "voice" : "text",
+        hasMedia: Boolean(audioFile || photos.length),
+      });
       message.success("这段经历已写入人物志");
       closeStory();
       await loadEvents();
     } catch (error) {
+      trackEvent("person_story_publish_failed", {
+        reason: classifyAnalyticsError(error),
+      });
       message.error(
         latestMemoryIdRef.current
           ? `原始材料已保存，但发布失败：${error.message}`
@@ -514,6 +567,34 @@ function PersonProfilePage({
     () => (person?.g_rank ? `第 ${person.g_rank} 代` : "家谱成员"),
     [person?.g_rank],
   );
+  const familyContext = useMemo(
+    () => getPersonFamilyContext(person, familyData),
+    [familyData, person],
+  );
+  const profileSummary = String(person?.summary || "").trim();
+  const isDemo = tenant?.id === "default";
+  const lifeStatusLabel =
+    lifeStatus === "living"
+      ? "在世"
+      : lifeStatus === "deceased"
+        ? "已故"
+        : "状态待确认";
+  const storyPrompt =
+    lifeStatus === "living"
+      ? `可以从最近一次和${person?.name || "TA"}相处的小事开始。`
+      : `可以先记下家里最常提起${person?.name || "TA"}的那件事。`;
+
+  const openStoryCapture = (source) => {
+    trackEvent("person_story_start", { source });
+    setStoryOpen(true);
+  };
+
+  const openShare = () => {
+    trackEvent("person_profile_share_open", {
+      protectedPerson: lifeStatus !== "deceased",
+    });
+    setShareOpen(true);
+  };
 
   if (!person) {
     return (
@@ -558,67 +639,151 @@ function PersonProfilePage({
             )}
           </div>
           <div className="person-profile-title">
-            <span>{generationLabel}</span>
+            <span>{familyContext.headline}</span>
             <h1>{person.name}</h1>
+            <div className="person-profile-meta">
+              <span>{generationLabel}</span>
+              <Tag
+                color={
+                  lifeStatus === "living"
+                    ? "green"
+                    : lifeStatus === "unknown"
+                      ? "orange"
+                      : "default"
+                }
+              >
+                {lifeStatusLabel}
+              </Tag>
+              {person.birth_date && <span>生于 {person.birth_date}</span>}
+              {person.location && (
+                <span>
+                  <EnvironmentOutlined /> {person.location}
+                </span>
+              )}
+            </div>
+            {person.official_position && (
+              <p className="person-profile-role">{person.official_position}</p>
+            )}
             <p>
-              {alive ? "与家人共同记录这一生" : "家人的讲述，让往事继续被记得"}
+              {lifeStatus === "deceased"
+                ? "家人的讲述，让往事继续被记得"
+                : "和家人一起，把这一生慢慢记录下来"}
             </p>
           </div>
           {tenant?.id !== "default" && (
             <div className="person-profile-actions">
-              <Button
-                icon={<ShareAltOutlined />}
-                onClick={() => setShareOpen(true)}
-              >
+              <Button icon={<ShareAltOutlined />} onClick={openShare}>
                 分享人物志
               </Button>
               <Button onClick={onEdit}>编辑资料</Button>
               <Button
                 type="primary"
                 icon={<AudioOutlined />}
-                onClick={() => setStoryOpen(true)}
+                onClick={() => openStoryCapture("hero")}
               >
-                记录一段经历
+                记录一个故事
               </Button>
             </div>
           )}
         </header>
 
-        <section className="person-profile-facts">
-          {person.birth_date && <span>生于 {person.birth_date}</span>}
-          {person.location && (
-            <span>
-              <EnvironmentOutlined /> {person.location}
-            </span>
-          )}
-          {person.official_position && <span>{person.official_position}</span>}
-          <Tag color={alive ? "green" : "default"}>
-            {alive ? "在世" : "已故"}
-          </Tag>
-        </section>
+        <section className="person-profile-overview" aria-label="人物概览">
+          <article className="person-profile-intro">
+            <span>关于 TA</span>
+            <h2>先认识这个人</h2>
+            {profileSummary ? (
+              <>
+                <p className={summaryExpanded ? "expanded" : ""}>
+                  {profileSummary}
+                </p>
+                {profileSummary.length > 120 && (
+                  <button
+                    type="button"
+                    className="person-profile-summary-toggle"
+                    onClick={() => setSummaryExpanded((value) => !value)}
+                  >
+                    {summaryExpanded ? "收起谱中资料" : "展开谱中资料"}
+                  </button>
+                )}
+              </>
+            ) : (
+              <p className="person-profile-intro-empty">
+                {isDemo
+                  ? "谱中还没有留下人物小传，等待后人继续考证和补充。"
+                  : "还没有人物小传。可以先写下 TA 做过什么、会什么，或在家中扮演怎样的角色。"}
+              </p>
+            )}
+          </article>
 
-        {person.summary && (
-          <blockquote className="person-profile-summary">
-            {person.summary}
-          </blockquote>
-        )}
+          <aside className="person-profile-relations">
+            <span>家庭关系</span>
+            <h2>名字之间的连接</h2>
+            {familyContext.relations.length ? (
+              <div className="person-profile-relation-list">
+                {familyContext.relations.map((relation) => {
+                  const relationName = relation.person?.name || relation.text;
+                  const relationPersonId =
+                    relation.person?.person_id ?? relation.person?.id;
+                  return relation.person && onOpenPersonProfile ? (
+                    <button
+                      type="button"
+                      key={relation.key}
+                      onClick={() => onOpenPersonProfile(relationPersonId)}
+                    >
+                      <small>{relation.label}</small>
+                      <strong>{relationName}</strong>
+                    </button>
+                  ) : (
+                    <div key={relation.key}>
+                      <small>{relation.label}</small>
+                      <strong>{relationName}</strong>
+                    </div>
+                  );
+                })}
+                {familyContext.hiddenRelationCount > 0 && (
+                  <div>
+                    <small>更多</small>
+                    <strong>
+                      另有 {familyContext.hiddenRelationCount} 位家人
+                    </strong>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p>现有资料中还没有连接到可展示的父母、配偶或子女。</p>
+            )}
+          </aside>
+        </section>
 
         <section className="life-events-section">
           <div className="life-events-heading">
             <span>人物志</span>
-            <h2>生平纪事</h2>
-            <p>每一段都保留讲述者和原始依据</p>
+            <h2>一生片段</h2>
+            <p>一件小事，也能让后人更具体地认识 TA</p>
           </div>
           {loading ? (
             <Spin />
           ) : events.length === 0 ? (
-            <Empty description="还没有家人留下生平纪事">
-              {tenant?.id !== "default" && (
-                <Button onClick={() => setStoryOpen(true)}>
-                  记录第一段经历
+            <div className="life-events-empty">
+              <span aria-hidden="true">记</span>
+              <h3>故事还在等待家人讲起</h3>
+              <p>{storyPrompt}</p>
+              {!isDemo ? (
+                <Button
+                  type="primary"
+                  onClick={() => openStoryCapture("empty_state")}
+                >
+                  记录第一个故事
                 </Button>
-              )}
-            </Empty>
+              ) : String(personId) !== DEMO_STORY_PERSON_ID ? (
+                <Button
+                  onClick={() => onOpenPersonProfile?.(DEMO_STORY_PERSON_ID)}
+                >
+                  看看一份已有故事的人物志
+                </Button>
+              ) : null}
+              <small>一句话也可以，时间和地点不确定时可以留作待考。</small>
+            </div>
           ) : (
             <div className="life-timeline">
               {events.map((event) => (
@@ -630,7 +795,7 @@ function PersonProfilePage({
                   <div className="life-event-time">
                     {event.timeText || "时间待考"}
                   </div>
-                  <Card bordered={false}>
+                  <Card variant="borderless">
                     <div className="life-event-title-row">
                       <h3>{event.title}</h3>
                       {event.isHighlight && (
@@ -696,8 +861,14 @@ function PersonProfilePage({
                         />
                       ))}
                     <footer>
-                      由 {event.creatorName || "家人"} 讲述 ·{" "}
-                      {new Date(event.publishedAt).toLocaleDateString("zh-CN")}
+                      {event.sourceLabel || (
+                        <>
+                          由 {event.creatorName || "家人"} 讲述 ·{" "}
+                          {new Date(event.publishedAt).toLocaleDateString(
+                            "zh-CN",
+                          )}
+                        </>
+                      )}
                     </footer>
                   </Card>
                 </article>
@@ -714,13 +885,26 @@ function PersonProfilePage({
           events={events}
         />
 
+        {!isDemo && (
+          <div className="person-profile-mobile-cta">
+            <Button
+              type="primary"
+              size="large"
+              icon={<AudioOutlined />}
+              onClick={() => openStoryCapture("mobile_sticky")}
+            >
+              记录一个故事
+            </Button>
+          </div>
+        )}
+
         <Modal
           title={`记录${person.name}的一段经历`}
           open={storyOpen}
           onCancel={closeStory}
           footer={null}
           width={720}
-          destroyOnClose
+          destroyOnHidden
           className="story-capture-modal"
           closable={!busy}
           maskClosable={!busy}
@@ -873,7 +1057,7 @@ function PersonProfilePage({
           maskClosable={false}
           width="100%"
           className="voice-guide-modal"
-          destroyOnClose
+          destroyOnHidden
         >
           <div className="voice-guide-shell">
             <header>
