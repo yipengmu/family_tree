@@ -149,3 +149,65 @@ test("ordinary phone registration still creates a unique identity", async () => 
   assert.equal(createArgs.data.user_id, 42);
   assert.equal(createArgs.data.provider, "PHONE");
 });
+
+test("repeatable registration only reuses the email owned by the old test account", async () => {
+  const { prepareRepeatableRegistrationEmail } =
+    await loadRegistrationHelpers();
+  const existingEmailIdentity = { id: "email-identity", user_id: 42 };
+  const updates = [];
+  const tx = {
+    user: {
+      findUnique: async () => ({ id: 42, email: "test@example.com" }),
+      update: async (args) => updates.push(args),
+    },
+    authIdentity: {
+      findUnique: async () => existingEmailIdentity,
+    },
+  };
+
+  const result = await prepareRepeatableRegistrationEmail(tx, {
+    email: "test@example.com",
+    repeatablePhone: true,
+    previousPhoneUserId: 42,
+  });
+
+  assert.equal(result.existingEmailIdentity, existingEmailIdentity);
+  assert.deepEqual(updates, [{ where: { id: 42 }, data: { email: null } }]);
+
+  await assert.rejects(
+    prepareRepeatableRegistrationEmail(tx, {
+      email: "test@example.com",
+      repeatablePhone: true,
+      previousPhoneUserId: 99,
+    }),
+    { message: "该邮箱已被使用" },
+  );
+});
+
+test("reused email identity moves to the new test account without becoming verified", async () => {
+  const { bindEmailIdentity } = await loadRegistrationHelpers();
+  let updateArgs;
+  const tx = {
+    authIdentity: {
+      update: async (args) => {
+        updateArgs = args;
+        return { id: "email-identity" };
+      },
+    },
+  };
+
+  await bindEmailIdentity(tx, {
+    userId: 99,
+    email: "test@example.com",
+    existingIdentity: { id: "email-identity" },
+  });
+
+  assert.deepEqual(updateArgs, {
+    where: { id: "email-identity" },
+    data: {
+      user_id: 99,
+      masked_value: "t***@example.com",
+      verified_at: null,
+    },
+  });
+});
