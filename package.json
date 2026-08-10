@@ -7,17 +7,14 @@
     "@alicloud/openapi-client": "^0.4.15",
     "@ant-design/icons": "^5.2.6",
     "@prisma/client": "^5.0.0",
-    "ajv": "^8.17.1",
     "antd": "^5.12.8",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "cos-nodejs-sdk-v5": "^3.0.0",
     "dagre": "^0.8.5",
     "dotenv": "^17.2.2",
-    "express": "^5.1.0",
-    "http-proxy-middleware": "^3.0.5",
+    "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
-    "lodash": "^4.17.21",
     "moment": "^2.30.1",
     "node-fetch": "^2.7.0",
     "pg": "^8.11.0",
@@ -26,13 +23,12 @@
     "qrcode": "^1.5.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^7.11.0",
+    "react-router-dom": "^7.18.2",
     "react-scripts": "5.0.1",
     "reactflow": "^11.10.1",
     "redis": "^5.10.0",
     "tencentcloud-sdk-nodejs-asr": "^4.1.266",
-    "tencentcloud-sdk-nodejs-ses": "^4.1.266",
-    "xlsx": "^0.18.5"
+    "tencentcloud-sdk-nodejs-ses": "^4.1.266"
   },
   "scripts": {
     "start": "PORT=3000 DANGEROUSLY_DISABLE_HOST_CHECK=true WATCHPACK_POLLING=true react-scripts start",
@@ -90,5 +86,9 @@
     "eslint-plugin-prettier": "^5.5.4",
     "prettier": "^3.6.2",
     "typescript": "4.9.5"
+  },
+  "overrides": {
+    "shell-quote": "1.9.0",
+    "websocket-driver": "0.7.5"
   }
 }
