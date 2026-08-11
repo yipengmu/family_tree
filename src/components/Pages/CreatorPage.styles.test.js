@@ -41,4 +41,14 @@ describe("creator page mobile directory", () => {
     );
     expect(source).toContain("修改后会直接保存到当前私密家谱");
   });
+
+  test("saves from the desktop action button without opening a modal", () => {
+    expect(source).toContain("onClick={() => saveToCurrentTenant()}");
+    expect(source).toContain(
+      ">\n                      保存\n                    </Button>",
+    );
+    expect(source).not.toContain("managementModalVisible");
+    expect(source).toContain('message.success(successText || "保存成功")');
+    expect(source).toContain('message.error("保存失败，请重试")');
+  });
 });

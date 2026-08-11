@@ -239,60 +239,6 @@
   border: 1px solid #e5e7eb;
 }
 
-.management-sheet {
-  display: grid;
-  gap: 14px;
-}
-
-.management-section {
-  padding: 16px;
-  border: 1px solid var(--hairline);
-  border-radius: 12px;
-  background: rgba(247, 243, 232, 0.45);
-}
-
-.management-section h4 {
-  margin: 0;
-  color: var(--ink);
-  font: 600 16px var(--serif);
-}
-
-.management-section p {
-  margin: 4px 0 13px;
-  color: var(--ink-soft);
-  font-size: 12px;
-}
-
-.management-stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  margin: 0;
-  padding: 12px 4px;
-  border-block: 1px solid rgba(35, 53, 47, 0.09);
-}
-
-.management-stats div {
-  display: flex;
-  flex-direction: column-reverse;
-  align-items: center;
-  gap: 3px;
-}
-
-.management-stats div + div {
-  border-left: 1px solid rgba(35, 53, 47, 0.09);
-}
-
-.management-stats dt {
-  color: var(--ink-soft);
-  font-size: 10px;
-}
-
-.management-stats dd {
-  margin: 0;
-  color: var(--pine);
-  font: 600 19px var(--serif);
-}
-
 /* 响应式调整 */
 @media (max-width: 768px) {
   .data-management-page {
@@ -1000,36 +946,4 @@
   color: var(--ink-soft);
   font-size: 11px;
   text-align: center;
-}
-
-@media (max-width: 768px) {
-  .management-modal-wrap {
-    display: flex;
-    align-items: flex-end;
-    padding: 10px;
-  }
-
-  .management-modal-wrap .management-modal {
-    width: 100% !important;
-    max-width: none;
-    margin: 0;
-    top: 0;
-    padding-bottom: max(0px, env(safe-area-inset-bottom));
-  }
-
-  .management-modal .ant-modal-content {
-    border-radius: 16px 16px 12px 12px;
-  }
-
-  .management-modal .ant-modal-body {
-    padding: 16px;
-  }
-
-  .management-section {
-    padding: 14px;
-  }
-
-  .management-save-section .ant-btn {
-    min-height: 44px;
-  }
 }

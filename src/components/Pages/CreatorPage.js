@@ -1,4 +1,10 @@
-import React, { useCallback, useMemo, useState, useEffect, useRef } from "react";
+import React, {
+  useCallback,
+  useMemo,
+  useState,
+  useEffect,
+  useRef,
+} from "react";
 import {
   message,
   Progress,
@@ -21,7 +27,6 @@ import {
   PlusOutlined,
   SaveOutlined,
   CameraOutlined,
-  SettingOutlined,
   ExclamationCircleOutlined,
   DeleteOutlined,
   SearchOutlined,
@@ -128,7 +133,6 @@ function CreatorPage({
 
   // 弹框状态管理
   const [imageParseModalVisible, setImageParseModalVisible] = useState(false);
-  const [managementModalVisible, setManagementModalVisible] = useState(false);
   const [mobilePersonModalVisible, setMobilePersonModalVisible] =
     useState(false);
   const [archivePersonModalVisible, setArchivePersonModalVisible] =
@@ -1176,7 +1180,6 @@ function CreatorPage({
         }
 
         setBusy(true);
-        message.loading("正在保存家谱数据...", 0);
 
         // 过滤掉空行
         const validRows = dataToSave
@@ -1184,14 +1187,12 @@ function CreatorPage({
           .map((row) => normalizePersonLifeStatus(row));
 
         await familyDataService.saveFamilyData(validRows, currentTenant.id);
-        message.destroy();
         setRows(validRows);
-        message.success(successText || `已保存到 ${currentTenant.name}`);
+        message.success(successText || "保存成功");
         convertToJSON(validRows);
         return true;
       } catch (error) {
-        message.destroy();
-        message.error(`保存失败: ${error.message}`);
+        message.error("保存失败，请重试");
         console.error("保存家谱数据失败:", error);
         return false;
       } finally {
@@ -1697,11 +1698,13 @@ function CreatorPage({
                   <Tooltip title="保存家谱资料">
                     <Button
                       type="primary"
-                      icon={<SettingOutlined />}
-                      onClick={() => setManagementModalVisible(true)}
+                      icon={<SaveOutlined />}
+                      onClick={() => saveToCurrentTenant()}
+                      loading={busy}
+                      disabled={!rows.length || rows.every((row) => !row.name)}
                       size="small"
                     >
-                      保存家谱
+                      保存
                     </Button>
                   </Tooltip>
                 </Space>
@@ -2220,64 +2223,6 @@ function CreatorPage({
                 仅空白家谱可使用。大模型只生成待确认预览；请在表格中核对后手动保存，绝不会自动覆盖已保存家谱。
               </small>
             </Space>
-          </div>
-        </Modal>
-
-        {/* 数据管理功能弹框 */}
-        <Modal
-          title="保存家谱"
-          open={managementModalVisible}
-          onCancel={() => setManagementModalVisible(false)}
-          footer={null}
-          width={500}
-          destroyOnClose
-          className="management-modal"
-          wrapClassName="management-modal-wrap"
-        >
-          <div className="management-sheet">
-            <section className="management-section management-save-section">
-              <div>
-                <h4>保存家谱</h4>
-                <p>
-                  同步{" "}
-                  {rows.filter((row) => row.name && row.name.trim()).length}{" "}
-                  位家人的最新资料
-                </p>
-              </div>
-              <Button
-                type="primary"
-                icon={<SaveOutlined />}
-                loading={busy}
-                onClick={() => saveToCurrentTenant()}
-                disabled={!rows.length || rows.every((row) => !row.name)}
-                block
-                size="large"
-              >
-                保存修改
-              </Button>
-            </section>
-
-            {rows.length > 0 && (
-              <dl className="management-stats" aria-label="家谱数据概览">
-                <div>
-                  <dt>有效家人</dt>
-                  <dd>
-                    {rows.filter((row) => row.name && row.name.trim()).length}
-                  </dd>
-                </div>
-                <div>
-                  <dt>世代范围</dt>
-                  <dd>
-                    {Math.min(...rows.map((item) => item.g_rank || 1))}–
-                    {Math.max(...rows.map((item) => item.g_rank || 1))}
-                  </dd>
-                </div>
-                <div>
-                  <dt>总记录</dt>
-                  <dd>{rows.length}</dd>
-                </div>
-              </dl>
-            )}
           </div>
         </Modal>
 
