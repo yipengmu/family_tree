@@ -9,6 +9,9 @@ describe("private family data loading", () => {
     jest.restoreAllMocks();
     jest.useRealTimers();
     familyDataService.clearAllCache();
+    familyDataService.versions.clear();
+    familyDataService.writeQueues.clear();
+    familyDataService.inFlightSaves.clear();
     localStorage.clear();
     global.fetch = originalFetch;
   });
@@ -106,5 +109,77 @@ describe("private family data loading", () => {
     await expect(familyDataService.getGuestDemoSnapshot("default")).resolves.toBeNull();
     expect(familyDataService.getCachedFamilyData("default")).toBeNull();
     expect(localStorage.getItem("familyTree_guest_demo_family_data")).toBeNull();
+  });
+
+  test("does not let an older read response roll back the known version", async () => {
+    localStorage.setItem("token", "test-token");
+    familyDataService.versions.set("tenant-private", 1);
+    global.fetch = jest
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        headers: { get: () => "application/json" },
+        json: async () => ({ version: 0, data: [{ id: 1, name: "旧数据" }] }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        headers: { get: () => "application/json" },
+        json: async () => ({ version: 1, data: [{ id: 1, name: "最新数据" }] }),
+      });
+
+    await expect(
+      familyDataService.loadFamilyDataFromServer("tenant-private"),
+    ).resolves.toEqual([{ id: 1, name: "最新数据" }]);
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+    expect(familyDataService.versions.get("tenant-private")).toBe(1);
+  });
+
+  test("serializes same-tenant writes and advances expectedVersion", async () => {
+    localStorage.setItem("token", "test-token");
+    const requests = [];
+    global.fetch = jest.fn(async (_url, options) => {
+      requests.push(JSON.parse(options.body));
+      return {
+        ok: true,
+        json: async () => ({ success: true, version: requests.length }),
+      };
+    });
+
+    const first = familyDataService.saveFamilyData(
+      [{ id: 1, name: "本人" }],
+      "tenant-private",
+    );
+    const second = familyDataService.saveFamilyData(
+      [{ id: 1, name: "本人" }, { id: 2, name: "父亲" }],
+      "tenant-private",
+    );
+
+    await expect(Promise.all([first, second])).resolves.toEqual([true, true]);
+    expect(requests.map(({ expectedVersion }) => expectedVersion)).toEqual([0, 1]);
+  });
+
+  test("coalesces duplicate in-flight full saves", async () => {
+    localStorage.setItem("token", "test-token");
+    let resolveResponse;
+    global.fetch = jest.fn(
+      () =>
+        new Promise((resolve) => {
+          resolveResponse = resolve;
+        }),
+    );
+    const data = [{ id: 1, name: "本人" }];
+
+    const first = familyDataService.saveFamilyData(data, "tenant-private");
+    const duplicate = familyDataService.saveFamilyData(data, "tenant-private");
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+
+    resolveResponse({
+      ok: true,
+      json: async () => ({ success: true, version: 1 }),
+    });
+    await expect(Promise.all([first, duplicate])).resolves.toEqual([true, true]);
   });
 });

@@ -112,6 +112,24 @@ class FamilyDataService {
     this.isLoading = false;
     this.loadingPromise = null;
     this.versions = new Map();
+    // 同一租户的增量保存和整谱保存必须按顺序执行，避免两个请求拿到同一个版本号。
+    this.writeQueues = new Map();
+    // 防止重复点击把完全相同的整谱保存提交两次。
+    this.inFlightSaves = new Map();
+  }
+
+  enqueueTenantWrite(tenantId, operation) {
+    const previous = this.writeQueues.get(tenantId) || Promise.resolve();
+    const queued = previous.catch(() => undefined).then(operation);
+    this.writeQueues.set(tenantId, queued);
+    queued
+      .finally(() => {
+        if (this.writeQueues.get(tenantId) === queued) {
+          this.writeQueues.delete(tenantId);
+        }
+      })
+      .catch(() => undefined);
+    return queued;
   }
 
   /**
@@ -299,7 +317,7 @@ class FamilyDataService {
    * @param {string} tenantId - 租户ID
    * @returns {Promise<Array>} - 家谱数据
    */
-  async loadFamilyDataFromServer(tenantId) {
+  async loadFamilyDataFromServer(tenantId, retryOnStaleVersion = true) {
     let timeoutId;
     try {
       console.log(`🌐 开始从服务器加载家谱数据... (租户: ${tenantId})`);
@@ -346,6 +364,7 @@ class FamilyDataService {
 
       const response = await fetch(url, {
         headers: headers,
+        cache: 'no-store',
         signal: controller.signal
       });
 
@@ -369,7 +388,24 @@ class FamilyDataService {
       }
 
       const result = await response.json();
-      if (typeof result.version === 'number') this.versions.set(tenantId, result.version);
+      const knownVersion = this.versions.get(tenantId);
+      if (
+        retryOnStaleVersion &&
+        typeof result.version === 'number' &&
+        typeof knownVersion === 'number' &&
+        result.version < knownVersion
+      ) {
+        console.warn(
+          `⚠️ 忽略租户 ${tenantId} 的旧版本响应 (${result.version} < ${knownVersion})，重新读取最新数据`,
+        );
+        return this.loadFamilyDataFromServer(tenantId, false);
+      }
+      if (
+        typeof result.version === 'number' &&
+        (knownVersion === undefined || result.version >= knownVersion)
+      ) {
+        this.versions.set(tenantId, result.version);
+      }
       const data = result.data || result;
       const loadTime = Date.now() - startTime;
 
@@ -704,59 +740,70 @@ class FamilyDataService {
       const currentTenantId = tenantId || tenantService.getCurrentTenant().id;
       console.log(`💾 保存家谱数据 (租户: ${currentTenantId}, 记录数: ${familyData.length})`);
 
-      // 添加租户信息到每条记录
-      const dataWithTenant = familyData.map(item => ({
-        ...item,
-        tenant_id: currentTenantId,
-        updated_at: new Date().toISOString(),
-      }));
-
       // 保存到数据库服务器 (第2层持久化)
       const token = localStorage.getItem('token');
       if (!token) {
         throw new Error('需要登录才能保存家谱数据');
       }
 
-      const response = await fetch(`/api/family-data/save`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-          'X-Tenant-ID': currentTenantId,
-          'X-Tenant-Name': encodeURIComponent(tenantService.getCurrentTenant().name || ''),
-        },
-        body: JSON.stringify({
-          tenantId: currentTenantId,
-          familyData: familyData, // 使用原始数据，不带tenant_id
-          expectedVersion: this.versions.get(currentTenantId) ?? 0,
-        }),
-      });
+      const saveKey = `${currentTenantId}:${JSON.stringify(familyData)}`;
+      const existingSave = this.inFlightSaves.get(saveKey);
+      if (existingSave) return existingSave;
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`数据库保存失败: ${response.status} - ${errorText}`);
-      }
-
-      const result = await response.json();
-      if (typeof result.version === 'number') this.versions.set(currentTenantId, result.version);
-      console.log('✅ [第2层] 数据已保存到数据库:', result.message);
-      
-      // 清除内存缓存，强制重新加载
-      this.clearAllCache();
-      
-      // 触发数据更新事件
-      if (window.dispatchEvent) {
-        window.dispatchEvent(new CustomEvent('familyDataUpdated', {
-          detail: {
+      const savePromise = this.enqueueTenantWrite(currentTenantId, async () => {
+        const response = await fetch(`/api/family-data/save`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+            'X-Tenant-ID': currentTenantId,
+            'X-Tenant-Name': encodeURIComponent(tenantService.getCurrentTenant().name || ''),
+          },
+          body: JSON.stringify({
             tenantId: currentTenantId,
-            dataCount: familyData.length,
-            timestamp: new Date().toISOString()
-          }
-        }));
-      }
+            familyData: familyData, // 使用原始数据，不带tenant_id
+            // 放在队列内部读取，确保前一个保存成功后使用新版本。
+            expectedVersion: this.versions.get(currentTenantId) ?? 0,
+          }),
+        });
 
-      console.log('✅ 家谱数据保存完成');
-      return true;
+        if (!response.ok) {
+          const errorText = await response.text();
+          const error = new Error(`数据库保存失败: ${response.status} - ${errorText}`);
+          error.status = response.status;
+          throw error;
+        }
+
+        const result = await response.json();
+        if (typeof result.version === 'number') this.versions.set(currentTenantId, result.version);
+        console.log('✅ [第2层] 数据已保存到数据库:', result.message);
+
+        // 清除内存缓存，强制重新加载
+        this.clearAllCache();
+
+        // 触发数据更新事件
+        if (window.dispatchEvent) {
+          window.dispatchEvent(new CustomEvent('familyDataUpdated', {
+            detail: {
+              tenantId: currentTenantId,
+              dataCount: familyData.length,
+              timestamp: new Date().toISOString()
+            }
+          }));
+        }
+
+        console.log('✅ 家谱数据保存完成');
+        return true;
+      });
+      this.inFlightSaves.set(saveKey, savePromise);
+      savePromise
+        .finally(() => {
+          if (this.inFlightSaves.get(saveKey) === savePromise) {
+            this.inFlightSaves.delete(saveKey);
+          }
+        })
+        .catch(() => undefined);
+      return savePromise;
     } catch (error) {
       console.error('❌ 保存家谱数据失败:', error);
       throw error;
@@ -768,28 +815,30 @@ class FamilyDataService {
     const token = localStorage.getItem('token');
     if (!token) throw new Error('需要登录才能添加家谱人物');
 
-    const response = await fetch('/api/people', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-        'X-Tenant-ID': currentTenantId,
-      },
-      body: JSON.stringify({
-        tenantId: currentTenantId,
-        person,
-        expectedVersion: this.versions.get(currentTenantId) ?? 0,
-      }),
-    });
-    const result = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(result.error || `新增人物失败: ${response.status}`);
+    return this.enqueueTenantWrite(currentTenantId, async () => {
+      const response = await fetch('/api/people', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+          'X-Tenant-ID': currentTenantId,
+        },
+        body: JSON.stringify({
+          tenantId: currentTenantId,
+          person,
+          expectedVersion: this.versions.get(currentTenantId) ?? 0,
+        }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || `新增人物失败: ${response.status}`);
 
-    if (typeof result.version === 'number') this.versions.set(currentTenantId, result.version);
-    this.clearAllCache();
-    window.dispatchEvent(new CustomEvent('familyDataUpdated', {
-      detail: { tenantId: currentTenantId, dataCount: 1, timestamp: new Date().toISOString() },
-    }));
-    return result.person;
+      if (typeof result.version === 'number') this.versions.set(currentTenantId, result.version);
+      this.clearAllCache();
+      window.dispatchEvent(new CustomEvent('familyDataUpdated', {
+        detail: { tenantId: currentTenantId, dataCount: 1, timestamp: new Date().toISOString() },
+      }));
+      return result.person;
+    });
   }
 
   async updatePerson(personId, patch, tenantId = null) {
@@ -797,28 +846,30 @@ class FamilyDataService {
     const token = localStorage.getItem('token');
     if (!token) throw new Error('需要登录才能修改家谱人物');
 
-    const response = await fetch(`/api/people/${encodeURIComponent(personId)}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-        'X-Tenant-ID': currentTenantId,
-      },
-      body: JSON.stringify({
-        tenantId: currentTenantId,
-        ...patch,
-        expectedVersion: patch.expectedVersion ?? this.versions.get(currentTenantId) ?? 0,
-      }),
-    });
-    const result = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(result.error || `更新人物失败: ${response.status}`);
+    return this.enqueueTenantWrite(currentTenantId, async () => {
+      const response = await fetch(`/api/people/${encodeURIComponent(personId)}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+          'X-Tenant-ID': currentTenantId,
+        },
+        body: JSON.stringify({
+          tenantId: currentTenantId,
+          ...patch,
+          expectedVersion: patch.expectedVersion ?? this.versions.get(currentTenantId) ?? 0,
+        }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || `更新人物失败: ${response.status}`);
 
-    if (typeof result.version === 'number') this.versions.set(currentTenantId, result.version);
-    this.clearAllCache();
-    window.dispatchEvent(new CustomEvent('familyDataUpdated', {
-      detail: { tenantId: currentTenantId, personId: String(personId), timestamp: new Date().toISOString() },
-    }));
-    return result.person;
+      if (typeof result.version === 'number') this.versions.set(currentTenantId, result.version);
+      this.clearAllCache();
+      window.dispatchEvent(new CustomEvent('familyDataUpdated', {
+        detail: { tenantId: currentTenantId, personId: String(personId), timestamp: new Date().toISOString() },
+      }));
+      return result.person;
+    });
   }
 
   /**
