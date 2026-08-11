@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState, useEffect } from "react";
+import React, { useCallback, useMemo, useState, useEffect, useRef } from "react";
 import {
   message,
   Progress,
@@ -120,6 +120,7 @@ function CreatorPage({
   const [rows, setRows] = useState([]);
   const [jsonOutput, setJsonOutput] = useState("");
   const [busy, setBusy] = useState(false);
+  const saveInFlightRef = useRef(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [currentTenant, setCurrentTenant] = useState(null);
@@ -1156,41 +1157,55 @@ function CreatorPage({
 
   // 保存家谱数据到当前租户
   const saveToCurrentTenant = async (tableData = null, successText = null) => {
+    // busy 是异步更新的 state，无法拦住同一事件循环内的连续提交；用 ref 做同步互斥。
+    if (saveInFlightRef.current) return saveInFlightRef.current;
+
+    const savePromise = (async () => {
+      try {
+        // 使用传入的tableData或当前的rows状态
+        const dataToSave = tableData || rows;
+
+        if (!dataToSave.length || dataToSave.every((row) => !row.name)) {
+          message.warning("请先添加家谱数据");
+          return;
+        }
+
+        if (!currentTenant?.id) {
+          message.error("请先选择族谱");
+          return;
+        }
+
+        setBusy(true);
+        message.loading("正在保存家谱数据...", 0);
+
+        // 过滤掉空行
+        const validRows = dataToSave
+          .filter((row) => row.name && row.name.trim())
+          .map((row) => normalizePersonLifeStatus(row));
+
+        await familyDataService.saveFamilyData(validRows, currentTenant.id);
+        message.destroy();
+        setRows(validRows);
+        message.success(successText || `已保存到 ${currentTenant.name}`);
+        convertToJSON(validRows);
+        return true;
+      } catch (error) {
+        message.destroy();
+        message.error(`保存失败: ${error.message}`);
+        console.error("保存家谱数据失败:", error);
+        return false;
+      } finally {
+        setBusy(false);
+      }
+    })();
+
+    saveInFlightRef.current = savePromise;
     try {
-      // 使用传入的tableData或当前的rows状态
-      const dataToSave = tableData || rows;
-
-      if (!dataToSave.length || dataToSave.every((row) => !row.name)) {
-        message.warning("请先添加家谱数据");
-        return;
-      }
-
-      if (!currentTenant?.id) {
-        message.error("请先选择族谱");
-        return;
-      }
-
-      setBusy(true);
-      message.loading("正在保存家谱数据...", 0);
-
-      // 过滤掉空行
-      const validRows = dataToSave
-        .filter((row) => row.name && row.name.trim())
-        .map((row) => normalizePersonLifeStatus(row));
-
-      await familyDataService.saveFamilyData(validRows, currentTenant.id);
-      message.destroy();
-      setRows(validRows);
-      message.success(successText || `已保存到 ${currentTenant.name}`);
-      convertToJSON(validRows);
-      return true;
-    } catch (error) {
-      message.destroy();
-      message.error(`保存失败: ${error.message}`);
-      console.error("保存家谱数据失败:", error);
-      return false;
+      return await savePromise;
     } finally {
-      setBusy(false);
+      if (saveInFlightRef.current === savePromise) {
+        saveInFlightRef.current = null;
+      }
     }
   };
 
