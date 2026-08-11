@@ -18,6 +18,12 @@ const getPositiveRankIndex = (value) => {
     : Number.MAX_SAFE_INTEGER;
 };
 
+const hasParentId = (value) =>
+  value !== null &&
+  value !== undefined &&
+  String(value) !== "" &&
+  String(value) !== "0";
+
 const compareIds = (left, right) => {
   const leftNumber = Number(left);
   const rightNumber = Number(right);
@@ -571,14 +577,18 @@ export const searchFamilyMembers = (familyData, searchTerm) => {
 export const getDescendants = (familyData, personId) => {
   const descendants = [];
   const queue = [personId];
+  const visited = new Set([String(personId)]);
 
   while (queue.length > 0) {
     const currentId = queue.shift();
     const children = familyData.filter(
-      (person) => person.g_father_id === currentId,
+      (person) => String(person.g_father_id) === String(currentId),
     );
 
     children.forEach((child) => {
+      const childId = String(child.id);
+      if (visited.has(childId)) return;
+      visited.add(childId);
       descendants.push(child);
       queue.push(child.id);
     });
@@ -595,17 +605,22 @@ export const getDescendants = (familyData, personId) => {
  */
 export const getAncestors = (familyData, personId) => {
   const ancestors = [];
-  const personMap = new Map(familyData.map((p) => [p.id, p]));
+  const personMap = new Map(familyData.map((p) => [String(p.id), p]));
+  const visited = new Set();
 
-  let currentPerson = personMap.get(personId);
+  let currentPerson = personMap.get(String(personId));
 
   while (
     currentPerson &&
-    currentPerson.g_father_id &&
-    currentPerson.g_father_id !== 0
+    hasParentId(currentPerson.g_father_id)
   ) {
-    const father = personMap.get(currentPerson.g_father_id);
+    const currentId = String(currentPerson.id);
+    if (visited.has(currentId)) break;
+    visited.add(currentId);
+
+    const father = personMap.get(String(currentPerson.g_father_id));
     if (father) {
+      if (visited.has(String(father.id))) break;
       ancestors.push(father);
       currentPerson = father;
     } else {
@@ -660,22 +675,24 @@ export const getFamilyStatistics = (familyData) => {
  * @returns {Array} - 路径上的所有人员数据
  */
 export const getPathToRoot = (familyData, targetPersonId) => {
-  const personMap = new Map(familyData.map((p) => [p.id, p]));
+  const personMap = new Map(familyData.map((p) => [String(p.id), p]));
   const pathPersons = [];
+  const visited = new Set();
 
-  let currentPerson = personMap.get(targetPersonId);
+  let currentPerson = personMap.get(String(targetPersonId));
 
   // 从目标人员开始，一直向上追溯到根节点
-  while (currentPerson) {
+  while (currentPerson && !visited.has(String(currentPerson.id))) {
+    visited.add(String(currentPerson.id));
     pathPersons.push(currentPerson);
 
     // 如果到达根节点（穆茂，通常g_father_id为0或不存在）
-    if (!currentPerson.g_father_id || currentPerson.g_father_id === 0) {
+    if (!hasParentId(currentPerson.g_father_id)) {
       break;
     }
 
     // 继续向上查找父节点
-    currentPerson = personMap.get(currentPerson.g_father_id);
+    currentPerson = personMap.get(String(currentPerson.g_father_id));
   }
 
   return pathPersons;
@@ -771,14 +788,16 @@ export const searchWithPathTree = (familyData, searchTerm) => {
  */
 export const validateFamilyData = (familyData) => {
   const issues = [];
-  const personIds = new Set(familyData.map((p) => p.id));
+  const personMap = new Map(
+    familyData.map((person) => [String(person.id), person]),
+  );
+  const personIds = new Set(personMap.keys());
 
   familyData.forEach((person) => {
     // 检查父亲ID是否存在
     if (
-      person.g_father_id &&
-      person.g_father_id !== 0 &&
-      !personIds.has(person.g_father_id)
+      hasParentId(person.g_father_id) &&
+      !personIds.has(String(person.g_father_id))
     ) {
       issues.push(
         `${person.name} (ID: ${person.id}) 的父亲ID ${person.g_father_id} 不存在`,
@@ -792,6 +811,19 @@ export const validateFamilyData = (familyData) => {
 
     if (!person.g_rank || person.g_rank < 1) {
       issues.push(`${person.name} (ID: ${person.id}) 的代数信息异常`);
+    }
+
+    const ancestry = new Set();
+    let current = person;
+    while (current && hasParentId(current.g_father_id)) {
+      const currentId = String(current.id);
+      if (ancestry.has(currentId)) {
+        issues.push(`${person.name} (ID: ${person.id}) 的父系关系存在循环`);
+        break;
+      }
+      ancestry.add(currentId);
+      current = personMap.get(String(current.g_father_id));
+      if (!current) break;
     }
   });
 

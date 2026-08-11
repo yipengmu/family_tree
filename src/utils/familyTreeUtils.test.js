@@ -1,14 +1,39 @@
 import {
   convertToReactFlowData,
+  getAncestors,
+  getDescendants,
   getFamilyBusEdges,
   getLayoutedElements,
   getJourneyLayoutedNodes,
   getNextSiblingRank,
+  getPathToRoot,
   getSiblingTitle,
+  validateFamilyData,
 } from "./familyTreeUtils.js";
 import demoFamilyData from "../data/familyData.js";
 
 describe("family tree relationship edges", () => {
+  test("stops ancestor and descendant traversal when relationships form a cycle", () => {
+    const familyData = [
+      { id: 1, name: "甲", g_rank: 1, g_father_id: 2 },
+      { id: 2, name: "乙", g_rank: 2, g_father_id: 1 },
+    ];
+
+    expect(getPathToRoot(familyData, 1).map((person) => person.id)).toEqual([
+      1,
+      2,
+    ]);
+    expect(getAncestors(familyData, 1).map((person) => person.id)).toEqual([
+      2,
+    ]);
+    expect(getDescendants(familyData, 1).map((person) => person.id)).toEqual([
+      2,
+    ]);
+    expect(validateFamilyData(familyData).issues).toContain(
+      "甲 (ID: 1) 的父系关系存在循环",
+    );
+  });
+
   test("renders both father and mother links", () => {
     const familyData = [
       { id: 1, name: "父亲", g_rank: 1, rank_index: 1, g_father_id: 0 },
