@@ -484,7 +484,14 @@ const getSinglePassTreeLayout = (nodes, direction = "TB") => {
     const childCenters = children
       .map((child) => nodeMap.get(String(child.id)))
       .filter((child) => child && placed.has(String(child.id)))
-      .map((child) => child.position.__treeCenter);
+      // A malformed family tree can contain a parent cycle. In that case a
+      // child may already be marked as placed while its temporary position
+      // has not received a tree center yet. Do not let that undefined value
+      // enter Math.min/Math.max and turn every downstream SVG coordinate into
+      // NaN; the current node's fallback center safely breaks the cycle for
+      // layout purposes while the data validator can still report it.
+      .map((child) => child.position?.__treeCenter)
+      .filter(Number.isFinite);
     const center = childCenters.length
       ? (Math.min(...childCenters) + Math.max(...childCenters)) / 2
       : left + width / 2;

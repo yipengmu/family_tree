@@ -34,6 +34,23 @@ describe("family tree relationship edges", () => {
     );
   });
 
+  test("keeps layout coordinates finite when relationships form a cycle", () => {
+    const familyData = [
+      { id: 1, name: "甲", g_rank: 1, rank_index: 1, g_father_id: 2 },
+      { id: 2, name: "乙", g_rank: 2, rank_index: 1, g_father_id: 1 },
+    ];
+    const { nodes, edges } = convertToReactFlowData(familyData);
+    const layoutedNodes = getLayoutedElements(nodes, edges);
+
+    expect(
+      layoutedNodes.every(
+        (node) =>
+          Number.isFinite(node.position.x) &&
+          Number.isFinite(node.position.y),
+      ),
+    ).toBe(true);
+  });
+
   test("renders both father and mother links", () => {
     const familyData = [
       { id: 1, name: "父亲", g_rank: 1, rank_index: 1, g_father_id: 0 },
