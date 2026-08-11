@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Button, Space, Tooltip, message, Input, InputNumber, Select, Modal } from 'antd';
 import { PlusOutlined, SaveOutlined, InfoCircleOutlined, EditOutlined } from '@ant-design/icons';
-import { isPersonAlive, normalizePersonLifeStatus, setPersonAlive } from '../utils/personLifeStatus.js';
+import { isPersonAlive, setPersonAlive } from '../utils/personLifeStatus.js';
+import { mergeAndDeduplicateFamilyData } from '../utils/familyTableData.js';
 
 const { Option } = Select;
 
@@ -27,70 +28,10 @@ const AntdFamilyTable = ({
   const setSelectedRowKeys = onSelectedRowKeysChange || setInternalSelectedRowKeys;
   const setSelectedRows = onSelectedRowsChange || setInternalSelectedRows;
 
-  // 合并和去重家谱数据
-  const mergeAndDeduplicateData = (newData) => {
-    if (!newData || newData.length === 0) return [];
-
-    // 获取当前表格中的最大ID，确保新数据的ID连续
-    const currentMaxId = tableData.length > 0
-      ? Math.max(...tableData.map(item => parseInt(item.id) || 0))
-      : 0;
-
-    console.log(`📊 当前最大ID: ${currentMaxId}, 新增数据: ${newData.length} 条`);
-
-    // 处理新数据
-    const processedNewData = newData.map((item, index) => normalizePersonLifeStatus({
-      key: item.id || `temp_${Date.now()}_${index}`,
-      id: item.id || (currentMaxId + index + 1),
-      name: item.name ?? '',
-      g_rank: item.g_rank || 1,
-      rank_index: item.rank_index || (index + 1),
-      sex: item.sex || 'MAN',
-      adoption: item.adoption || 'none',
-      g_father_id: item.g_father_id || 0,
-      official_position: item.official_position || '',
-      summary: item.summary || '',
-      birth_date: item.birth_date || '',
-      spouse: item.spouse || '',
-      location: item.location || '',
-      // 保留所有原始字段
-      ...item
-    }));
-
-    // 合并现有数据和新数据
-    const allData = [...tableData, ...processedNewData];
-
-    // 基于姓名和世代进行去重
-    const deduplicatedData = [];
-    const seenPersons = new Set();
-
-    allData.forEach(person => {
-      // 创建唯一标识：姓名 + 世代 + 父亲ID
-      const personKey = `${person.name}_${person.g_rank}_${person.g_father_id}`;
-
-      if (!seenPersons.has(personKey)) {
-        seenPersons.add(personKey);
-        deduplicatedData.push(person);
-      } else {
-        console.log(`🔄 发现重复人员，已跳过: ${person.name} (世代${person.g_rank})`);
-      }
-    });
-
-    // 重新分配连续的ID
-    const finalData = deduplicatedData.map((person, index) => ({
-      ...person,
-      id: index + 1,
-      key: `person_${index + 1}`
-    }));
-
-    console.log(`📊 数据处理完成: 原始${allData.length}条 → 去重后${finalData.length}条`);
-    return finalData;
-  };
-
   // 同步外部数据变化 - 优化数据排序
   useEffect(() => {
     if (data && data.length > 0) {
-      const mergedData = mergeAndDeduplicateData(data);
+      const mergedData = mergeAndDeduplicateFamilyData(tableData, data);
       
       // 按世代和排行排序，确保穆茂在第一行
       const sortedData = mergedData.sort((a, b) => {
