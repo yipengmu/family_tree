@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import Sidebar from "./Sidebar.js";
 import MainContent from "./MainContent.js";
 import MobileBottomNav from "./MobileBottomNav.js";
+import DesktopMobileAccess from "../MobileAccess/DesktopMobileAccess.js";
+import HomeShortcutPrompt from "../MobileAccess/HomeShortcutPrompt.js";
 import "./AppLayout.css";
 
 const AppLayout = ({
@@ -97,6 +99,8 @@ const AppLayout = ({
         activeItem={navigationActiveItem}
         onMenuClick={handleMenuClick}
       />
+      <DesktopMobileAccess source="pc-app" />
+      <HomeShortcutPrompt />
     </div>
   );
 };

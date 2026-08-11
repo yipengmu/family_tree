@@ -1,0 +1,115 @@
+.desktop-mobile-access-trigger {
+  min-width: 132px;
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 950;
+  padding: 9px 13px;
+  border: 1px solid rgba(23, 63, 56, 0.2);
+  border-radius: 14px;
+  color: #173f38;
+  background: rgba(255, 253, 247, 0.96);
+  box-shadow: 0 12px 30px rgba(32, 48, 42, 0.16);
+  cursor: pointer;
+  text-align: left;
+  backdrop-filter: blur(12px);
+}
+
+.desktop-mobile-access-trigger > .anticon {
+  font-size: 24px;
+}
+
+.desktop-mobile-access-trigger span {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.desktop-mobile-access-trigger strong {
+  font-size: 13px;
+}
+
+.desktop-mobile-access-trigger small {
+  margin-top: 3px;
+  color: #68766f;
+  font-size: 10px;
+}
+
+.desktop-mobile-access-trigger:hover {
+  border-color: #173f38;
+  transform: translateY(-2px);
+}
+
+.desktop-mobile-access-trigger:focus-visible {
+  outline: 3px solid rgba(166, 70, 50, 0.35);
+  outline-offset: 3px;
+}
+
+.desktop-mobile-access-modal .ant-modal-content {
+  border-radius: 18px;
+  background: #fffdf7;
+}
+
+.desktop-mobile-access-modal .ant-modal-title {
+  color: #173f38;
+  font-family: "Songti SC", "STSong", serif;
+  font-size: 22px;
+  text-align: center;
+}
+
+.desktop-mobile-access-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 8px 2px;
+  text-align: center;
+}
+
+.desktop-mobile-access-qr {
+  width: 244px;
+  height: 244px;
+  display: grid;
+  place-items: center;
+  margin: 4px 0 14px;
+  border: 1px solid #e1ded2;
+  border-radius: 16px;
+  color: #68766f;
+  background: #fff;
+}
+
+.desktop-mobile-access-qr img {
+  display: block;
+}
+
+.desktop-mobile-access-content > strong {
+  color: #173f38;
+  font-size: 16px;
+}
+
+.desktop-mobile-access-content p {
+  max-width: 300px;
+  margin: 9px 0 6px;
+  color: #4f5f58;
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.desktop-mobile-access-content > small {
+  color: #7b847f;
+  font-size: 11px;
+}
+
+.desktop-mobile-access-content .ant-btn {
+  margin-top: 10px;
+  color: #52645c;
+}
+
+@media (max-width: 768px) {
+  .desktop-mobile-access-trigger {
+    display: none;
+  }
+}

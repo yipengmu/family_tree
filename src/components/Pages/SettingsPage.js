@@ -11,6 +11,7 @@ import {
 } from "antd";
 import {
   CloudDownloadOutlined,
+  MobileOutlined,
   InfoCircleOutlined,
   ReloadOutlined,
   SafetyCertificateOutlined,
@@ -19,6 +20,10 @@ import {
 import AppLayout from "../Layout/AppLayout.js";
 import tenantService from "../../services/tenantService.js";
 import BRAND from "../../constants/brand.js";
+import {
+  HOME_SHORTCUT_OPEN_EVENT,
+  shouldOfferHomeShortcut,
+} from "../../utils/deviceAccess.js";
 import "./SettingsPage.css";
 
 const { Title, Text, Paragraph } = Typography;
@@ -99,6 +104,10 @@ const SettingsPage = ({
     link.download = `${tenant?.name || "我的家谱"}-${new Date().toISOString().slice(0, 10)}.json`;
     link.click();
     URL.revokeObjectURL(url);
+  };
+
+  const openHomeShortcutGuide = () => {
+    window.dispatchEvent(new CustomEvent(HOME_SHORTCUT_OPEN_EVENT));
   };
 
   const privacyItems = [
@@ -250,6 +259,25 @@ const SettingsPage = ({
                   </Button>
                 </div>
               </Card>
+
+              {shouldOfferHomeShortcut() && (
+                <Card
+                  title="手机快捷访问"
+                  className="settings-card settings-home-shortcut-card"
+                >
+                  <Button
+                    block
+                    icon={<MobileOutlined />}
+                    onClick={openHomeShortcutGuide}
+                    className="settings-action-button settings-action-primary"
+                  >
+                    <span>
+                      <strong>添加谱里到手机桌面</strong>
+                      <small>以后像打开常用应用一样快速进入</small>
+                    </span>
+                  </Button>
+                </Card>
+              )}
 
               <Button
                 type="text"

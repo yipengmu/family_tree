@@ -13,6 +13,7 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import BRAND from "../../constants/brand.js";
 import BrandLogo from "../UI/BrandLogo.js";
+import DesktopMobileAccess from "../MobileAccess/DesktopMobileAccess.js";
 import { getAppPath, getCreatePath } from "../../utils/appRoutes.js";
 import { trackEvent } from "../../utils/analytics.js";
 import "./MarketingHomePage.css";
@@ -608,6 +609,7 @@ const MarketingHomePage = () => {
       >
         {authenticated ? "进入我的家谱" : "免费创建我的家谱"}
       </button>
+      <DesktopMobileAccess source="website" />
     </div>
   );
 };

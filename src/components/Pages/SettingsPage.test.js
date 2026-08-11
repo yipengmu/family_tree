@@ -15,9 +15,20 @@ describe("family settings page", () => {
     expect(source).toContain("字段隐私");
     expect(source).toContain("导出家谱数据");
     expect(source).toContain("本机缓存");
+    expect(source).toContain("添加谱里到手机桌面");
+    expect(source).toContain("HOME_SHORTCUT_OPEN_EVENT");
     expect(source).not.toContain("视图控制");
     expect(source).not.toContain("显示设置");
     expect(source).not.toContain("puli_settings_");
+  });
+
+  test("shows the home-screen shortcut entry only on mobile", () => {
+    expect(stylesheet).toMatch(
+      /\.settings-home-shortcut-card\s*\{[^}]*display:\s*none;/s,
+    );
+    expect(stylesheet).toMatch(
+      /@media\s*\(max-width:\s*768px\)[\s\S]*?\.settings-home-shortcut-card\s*\{[^}]*display:\s*block;/s,
+    );
   });
 
   test("uses a dense desktop grid and preserves mobile cards", () => {

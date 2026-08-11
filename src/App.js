@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Layout, Alert, Button, message } from "antd";
 import { validateFamilyData } from "./utils/familyTreeUtils.js";
 import FamilyTreePage from "./components/Pages/FamilyTreePage.js";
@@ -53,6 +53,7 @@ function MainApp({ demoMode = false }) {
   const pageFromPath = () => getAppPageFromPath(location.pathname);
   const [currentPage, setCurrentPage] = useState(pageFromPath);
   const [currentTenant, setCurrentTenant] = useState(null);
+  const qrLandingTracked = useRef(false);
 
   // 检查用户是否已登录
   const isAuthenticated = () => {
@@ -117,6 +118,17 @@ function MainApp({ demoMode = false }) {
       device: mobile ? "mobile" : "desktop",
     });
   }, [currentPage, demoMode, mobile]);
+
+  useEffect(() => {
+    const source = new URLSearchParams(location.search).get("from");
+    if (source === "desktop-qr" && !qrLandingTracked.current) {
+      qrLandingTracked.current = true;
+      trackEvent("mobile_qr_landed", {
+        source,
+        device: mobile ? "mobile" : "desktop",
+      });
+    }
+  }, [location.search, mobile]);
 
   useEffect(() => {
     if (!isAuthenticated() && currentPage === "create") {

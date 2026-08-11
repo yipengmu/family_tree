@@ -28,10 +28,11 @@ describe("marketing homepage creation entry", () => {
     );
   });
 
-  test("does not render the cross-device QR creation dialog", () => {
+  test("keeps current-device creation primary and adds a separate mobile handoff", () => {
     expect(pageSource).not.toContain("createPanelOpen");
     expect(pageSource).not.toContain("<QRCode");
     expect(stylesheet).not.toContain(".create-panel-backdrop");
+    expect(pageSource).toContain('<DesktopMobileAccess source="website" />');
   });
 
   test("shows register and login only for visitors", () => {

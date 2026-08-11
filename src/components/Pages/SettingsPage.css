@@ -267,6 +267,10 @@
   background: transparent !important;
 }
 
+.settings-home-shortcut-card {
+  display: none;
+}
+
 .settings-about-modal .ant-modal-content {
   border-radius: 16px;
 }
@@ -316,6 +320,10 @@
   .settings-side-column {
     width: 100%;
     gap: 10px;
+  }
+
+  .settings-home-shortcut-card {
+    display: block;
   }
 
   .settings-card {

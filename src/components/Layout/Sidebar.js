@@ -92,7 +92,7 @@ const Sidebar = ({
     {
       key: "settings",
       icon: <SettingOutlined />,
-      label: "家谱设置",
+      label: "管家谱",
       path: "/app/settings",
     },
   ];

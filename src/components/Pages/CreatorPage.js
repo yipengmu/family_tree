@@ -1681,19 +1681,9 @@ function CreatorPage({
                     disabled={busy}
                     size="small"
                   >
-                    添加家人
+                    添加
                   </Button>
 
-                  <Tooltip title="从旧家谱照片识别人物资料">
-                    <Button
-                      type="primary"
-                      icon={<CameraOutlined />}
-                      onClick={openImageImport}
-                      size="small"
-                    >
-                      照片识别
-                    </Button>
-                  </Tooltip>
 
                   <Tooltip title="保存家谱资料">
                     <Button
@@ -1707,6 +1697,19 @@ function CreatorPage({
                       保存
                     </Button>
                   </Tooltip>
+
+
+                  {/* <Tooltip title="从旧家谱照片识别人物资料">
+                    <Button
+                      type="primary"
+                      icon={<CameraOutlined />}
+                      onClick={openImageImport}
+                      size="small"
+                    >
+                      拍家谱
+                    </Button>
+                  </Tooltip> */}
+
                 </Space>
               </div>
             </div>
