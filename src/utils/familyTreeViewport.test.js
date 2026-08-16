@@ -1,5 +1,6 @@
 import {
   getAdaptiveTreeFitOptions,
+  getFounderFocusFitOptions,
   getCompactTreeNodeMetrics,
   getViewportXForNodeCenter,
   getViewportYForNodeCenter,
@@ -29,12 +30,21 @@ describe("family tree adaptive viewport", () => {
     );
   });
 
+  test("prioritizes readable first two generations for the Mu founder view", () => {
+    expect(getFounderFocusFitOptions(false)).toEqual({
+      padding: 0.14,
+      minZoom: 0.82,
+      maxZoom: 1.35,
+    });
+    expect(getFounderFocusFitOptions(true).maxZoom).toBeLessThan(1.35);
+  });
+
   test("keeps compact card width and layout spacing on one shared metric", () => {
     expect(getCompactTreeNodeMetrics(true)).toEqual({
       width: 152,
       gap: 12,
       height: 80,
-      zoom: 0.62,
+      zoom: 0.72,
     });
     expect(getCompactTreeNodeMetrics(false).width).toBe(160);
   });

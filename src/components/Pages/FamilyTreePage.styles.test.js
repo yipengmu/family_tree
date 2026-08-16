@@ -177,4 +177,9 @@ describe("family journey animation styles", () => {
     expect(pageSource).toContain('onShare={() => onMenuClick?.("share")}');
     expect(pageSource).toContain('onClick={() => onMenuClick?.("create")}');
   });
+
+  test("keeps Mu founder treatment enabled for its signed-in maintainer", () => {
+    expect(pageSource).toContain('person?.name === "穆茂"');
+    expect(pageSource).toContain("useFounderLabels={isMuSystemFamily}");
+  });
 });

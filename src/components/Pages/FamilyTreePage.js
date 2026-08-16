@@ -47,6 +47,12 @@ const FamilyTreePage = ({
     : currentTenant?.name || "我的家谱";
   const isDemoFamily =
     currentTenant?.isDefault && (demoMode || !localStorage.getItem("token"));
+  // The logged-in maintainer sees the same Mu tree, but it is not in anonymous
+  // demo mode. Keep its founder framing and visual identity independent from
+  // the guest-only journey player.
+  const isMuSystemFamily =
+    currentTenant?.isDefault &&
+    familyData.some((person) => person?.name === "穆茂");
   const paternalOnboarding = useMemo(
     () => getPaternalOnboardingState(familyData),
     [familyData],
@@ -456,7 +462,7 @@ const FamilyTreePage = ({
                 paternalOnboarding.anchorPerson?.person_id ??
                 paternalOnboarding.anchorPerson?.id
               }
-              useFounderLabels={isDemoFamily}
+              useFounderLabels={isMuSystemFamily}
             />
           </ReactFlowProvider>
         </div>

@@ -92,3 +92,20 @@ test("Aliyun SMS auth uses the package default export as the client class", asyn
     assert.equal(calls[1].request.verifyCode, "123456");
   });
 });
+
+test("Aliyun rejects incorrect, expired, or superseded verification codes", async () => {
+  const smsAuth = await import("../../lib/aliyunSmsAuth.js");
+
+  assert.equal(
+    smsAuth.isAliyunSmsVerificationRejected({ code: "isv.ValidateFail" }),
+    true,
+  );
+  assert.equal(
+    smsAuth.isAliyunSmsVerificationRejected({ data: { Code: "isv.ValidateFail" } }),
+    true,
+  );
+  assert.equal(
+    smsAuth.isAliyunSmsVerificationRejected({ code: "InternalError" }),
+    false,
+  );
+});

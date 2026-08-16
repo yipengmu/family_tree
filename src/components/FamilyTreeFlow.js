@@ -36,6 +36,7 @@ import {
 } from '../utils/familyTreeCollapse.js';
 import {
   getAdaptiveTreeFitOptions,
+  getFounderFocusFitOptions,
   getCompactTreeNodeMetrics,
   getViewportXForNodeCenter,
   getViewportYForNodeCenter,
@@ -778,15 +779,34 @@ const FamilyTreeFlow = forwardRef(({
     );
   }, [compactDemoMode, compactNodeMetrics, getNodes, getViewport, isMobile, presentationMode, setViewport, useFounderLabels]);
 
-  // 未登录示范谱首次渲染时只把根节点穆茂移到中心，避免扫描和移动整棵树。
+  const fitFounderAndSecondGeneration = useCallback((duration = 0) => {
+    const reactFlow = reactFlowInstanceRef.current;
+    const founderNodes = getNodes().filter(
+      (node) => !node.hidden && Number(node.data.rank) <= 2,
+    );
+
+    if (!reactFlow || !founderNodes.length) return;
+
+    reactFlow.fitView({
+      nodes: founderNodes,
+      duration,
+      ...getFounderFocusFitOptions(isMobile),
+    });
+  }, [getNodes, isMobile]);
+
+  // The Mu system tree opens on its origin and second generation. This applies
+  // to its logged-in maintainer too; the journey player remains guest-only.
   useEffect(() => {
     if (!useFounderLabels || presentationMode || !visibleNodeSignature) {
       return undefined;
     }
 
-    const timer = setTimeout(() => centerDemoFounderHorizontally(), 160);
+    const timer = setTimeout(() => {
+      fitFounderAndSecondGeneration();
+      centerDemoFounderHorizontally();
+    }, 160);
     return () => clearTimeout(timer);
-  }, [centerDemoFounderHorizontally, presentationMode, useFounderLabels, visibleNodeSignature]);
+  }, [centerDemoFounderHorizontally, fitFounderAndSecondGeneration, presentationMode, useFounderLabels, visibleNodeSignature]);
 
   useEffect(() => {
     const flowContainer = flowContainerRef.current;
@@ -807,7 +827,10 @@ const FamilyTreeFlow = forwardRef(({
 
       previousWidth = width;
       clearTimeout(timer);
-      timer = setTimeout(() => centerDemoFounderHorizontally(240), 120);
+      timer = setTimeout(() => {
+        fitFounderAndSecondGeneration(240);
+        centerDemoFounderHorizontally(240);
+      }, 120);
     });
 
     observer.observe(flowContainer);
@@ -815,7 +838,7 @@ const FamilyTreeFlow = forwardRef(({
       clearTimeout(timer);
       observer.disconnect();
     };
-  }, [centerDemoFounderHorizontally, presentationMode, useFounderLabels]);
+  }, [centerDemoFounderHorizontally, fitFounderAndSecondGeneration, presentationMode, useFounderLabels]);
 
   const fitPersonalTreeToCanvas = useCallback((duration = 600) => {
     const reactFlow = reactFlowInstanceRef.current;

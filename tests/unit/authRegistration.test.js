@@ -73,6 +73,19 @@ test("expected registration validation errors remain actionable", async () => {
   });
 });
 
+test("invalid phone verification codes remain actionable registration errors", async () => {
+  const { getPublicAuthError } = await loadRegistrationHelpers();
+  const response = getPublicAuthError(
+    "register",
+    new Error("验证码错误或已过期"),
+  );
+
+  assert.deepEqual(response, {
+    statusCode: 400,
+    message: "验证码错误或已过期",
+  });
+});
+
 test("repeatable phone registration requires an allowlist and a future expiry", async () => {
   const { isRepeatableRegistrationPhone } = await loadRegistrationHelpers();
   const now = Date.parse("2026-08-10T00:00:00.000Z");

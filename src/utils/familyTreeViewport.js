@@ -24,6 +24,15 @@ export const getAdaptiveTreeFitOptions = (nodeCount, isMobile) => {
   };
 };
 
+// The default Mu family tree is deliberately framed around its origin rather
+// than fitted to every visible descendant.  Fitting a large, long-running tree
+// to the whole canvas makes the first two generations illegible on login.
+export const getFounderFocusFitOptions = (isMobile) => ({
+  padding: isMobile ? 0.1 : 0.14,
+  minZoom: isMobile ? 0.62 : 0.82,
+  maxZoom: isMobile ? 1.05 : 1.35,
+});
+
 export const getCompactTreeNodeMetrics = (isMobile) => ({
   width: isMobile ? 152 : 160,
   gap: isMobile ? 12 : 16,

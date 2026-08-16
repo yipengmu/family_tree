@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>谱里 — 20s Product Promo</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      :root { --paper:#F7F3E8; --parchment:#EEE7D6; --forest:#173F38; --forest-soft:#2D5C52; --red:#A64632; --slate:#65736D; --ink:#23352F; }
+      * { box-sizing: border-box; }
+      html, body { margin:0; width:100%; height:100%; overflow:hidden; background:var(--paper); }
+      body { font-family:"PingFang SC","Microsoft YaHei","Noto Sans CJK SC",sans-serif; color:var(--forest); }
+      [data-composition-id="puli-promo"] { position:relative; width:1920px; height:1080px; overflow:hidden; background:var(--paper); }
+      .scene { position:absolute; inset:0; width:100%; height:100%; padding:120px 150px; display:flex; flex-direction:column; justify-content:center; }
+      .paper-noise { position:absolute; inset:0; opacity:.22; background-image:radial-gradient(var(--forest) .7px, transparent .7px); background-size:13px 13px; pointer-events:none; }
+      .eyebrow { font-size:24px; letter-spacing:.18em; font-weight:700; color:var(--red); }
+      .headline { margin:0; font-family:"Songti SC","STSong","Noto Serif CJK SC",serif; font-size:88px; line-height:1.1; letter-spacing:.02em; font-weight:700; color:var(--forest); }
+      .subline { margin:20px 0 0; font-size:32px; line-height:1.45; color:var(--slate); }
+      .mark { width:128px; height:128px; border-radius:32px; object-fit:cover; box-shadow:0 20px 36px rgba(23,63,56,.15); }
+      .memory-card, .archive-card, .node { background:var(--parchment); border:2px solid rgba(23,63,56,.16); box-shadow:0 22px 50px rgba(23,63,56,.1); }
+      .memory-card { position:absolute; right:230px; top:250px; width:410px; padding:34px; border-radius:28px; transform:rotate(4deg); }
+      .memory-card .tiny { font-size:20px; color:var(--slate); letter-spacing:.12em; }
+      .memory-card .name { margin-top:16px; font-family:"Songti SC","STSong",serif; font-size:56px; color:var(--ink); }
+      .memory-card .rule { margin-top:24px; height:2px; background:var(--red); width:74px; }
+      .tree { position:absolute; right:170px; top:130px; width:920px; height:820px; }
+      .branch { position:absolute; height:4px; background:var(--forest-soft); transform-origin:left center; border-radius:4px; opacity:.8; }
+      .b1 { left:130px; top:420px; width:360px; transform:rotate(-24deg); }
+      .b2 { left:130px; top:420px; width:360px; transform:rotate(24deg); }
+      .b3 { left:480px; top:270px; width:240px; transform:rotate(-18deg); }
+      .b4 { left:480px; top:570px; width:240px; transform:rotate(18deg); }
+      .node { position:absolute; width:184px; min-height:120px; padding:20px; border-radius:22px; }
+      .node strong { display:block; font-size:30px; color:var(--ink); }
+      .node span { display:block; margin-top:8px; font-size:18px; color:var(--slate); }
+      .n0 { left:30px; top:360px; border-color:var(--red); }
+      .n1 { left:390px; top:170px; }
+      .n2 { left:390px; top:550px; }
+      .n3 { left:700px; top:80px; }
+      .n4 { left:700px; top:650px; }
+      .archive-stack { position:absolute; right:190px; top:180px; width:760px; height:700px; }
+      .archive-card { position:absolute; width:520px; padding:30px 34px; border-radius:26px; }
+      .archive-card h3 { margin:0; font-family:"Songti SC","STSong",serif; font-size:40px; color:var(--ink); }
+      .archive-card p { margin:14px 0 0; font-size:22px; color:var(--slate); }
+      .c1 { left:40px; top:90px; transform:rotate(-7deg); }
+      .c2 { left:160px; top:250px; transform:rotate(5deg); }
+      .c3 { left:10px; top:420px; transform:rotate(-3deg); }
+      .accent-dot { position:absolute; width:18px; height:18px; border-radius:50%; background:var(--red); box-shadow:0 0 0 10px rgba(166,70,50,.12); }
+      .d1 { right:620px; top:300px; } .d2 { right:360px; top:610px; } .d3 { right:820px; top:730px; }
+      .close { align-items:center; text-align:center; }
+      .close .mark { width:150px; height:150px; margin-bottom:28px; }
+      .close .headline { font-size:112px; }
+      .close .subline { margin-top:12px; font-size:36px; }
+      .cta { margin-top:44px; padding:22px 42px; background:var(--red); color:#fff; border-radius:999px; font-size:26px; letter-spacing:.08em; box-shadow:0 18px 34px rgba(166,70,50,.25); }
+    </style>
+  </head>
+  <body>
+    <div data-composition-id="puli-promo" data-width="1920" data-height="1080" data-start="0" data-duration="20">
+      <div class="paper-noise"></div>
+      <section class="scene s1" data-start="0" data-duration="4" data-track-index="1">
+        <div class="eyebrow">谱里 / FAMILY ARCHIVE</div><h1 class="headline">有些故事，<br/>值得被留下。</h1><p class="subline">从一个名字，开始记住一家人。</p>
+        <div class="memory-card"><div class="tiny">家族记忆 · 1958</div><div class="name">外婆</div><div class="rule"></div></div>
+        <img class="mark opener-mark" src="capture/assets/puli-favicon-32.png" alt="谱里" />
+      </section>
+      <section class="scene s2" data-start="4" data-duration="5" data-track-index="1">
+        <div class="eyebrow">看家谱</div><h2 class="headline">名字不再只是名字。</h2><p class="subline">让每一次相遇，都有来处。</p>
+        <div class="tree"><div class="branch b1"></div><div class="branch b2"></div><div class="branch b3"></div><div class="branch b4"></div><div class="node n0"><strong>外婆</strong><span>1958 · 湖南</span></div><div class="node n1"><strong>妈妈</strong><span>1979 · 长沙</span></div><div class="node n2"><strong>舅舅</strong><span>1982 · 长沙</span></div><div class="node n3"><strong>我</strong><span>2001 · 上海</span></div><div class="node n4"><strong>表妹</strong><span>2010 · 长沙</span></div></div>
+        <div class="accent-dot d1"></div><div class="accent-dot d2"></div>
+      </section>
+      <section class="scene s3" data-start="9" data-duration="6" data-track-index="1">
+        <div class="eyebrow">续家谱</div><h2 class="headline">把记忆一代代接上。</h2><p class="subline">照片、故事，还有那些没说完的话。</p>
+        <div class="archive-stack"><div class="archive-card c1"><h3>一张老照片</h3><p>“那年春节，大家都还在。”</p></div><div class="archive-card c2"><h3>一段家常话</h3><p>“记得把桂花糕留给妹妹。”</p></div><div class="archive-card c3"><h3>一个还没写完的故事</h3><p>轮到你，把它继续写下去。</p></div></div>
+        <div class="accent-dot d3"></div>
+      </section>
+      <section class="scene close s4" data-start="15" data-duration="5" data-track-index="1">
+        <img class="mark close-mark" src="capture/assets/puli-logo-share.png" alt="谱里" /><h2 class="headline">谱里</h2><p class="subline">年轻人的第一份家谱</p><div class="cta">看家谱 · 续家谱 · 管家谱</div>
+      </section>
+      <script>
+        window.__timelines = window.__timelines || {};
+        const tl = gsap.timeline({ paused:true });
+        tl.set('.s1',{opacity:1}).fromTo('.s1 .eyebrow',{opacity:0,y:30},{opacity:1,y:0,duration:.45,ease:'power3.out'},0).fromTo('.s1 .headline',{opacity:0,y:50},{opacity:1,y:0,duration:.7,ease:'power3.out'},.22).fromTo('.s1 .subline',{opacity:0,y:30},{opacity:1,y:0,duration:.55,ease:'power3.out'},.52).fromTo('.memory-card',{opacity:0,x:70,rotation:12},{opacity:1,x:0,rotation:4,duration:.8,ease:'back.out(1.4)'},.45).to('.memory-card',{y:-12,duration:1.2,ease:'sine.inOut',repeat:2,yoyo:true},1.3).to('.s1',{opacity:0,duration:.35},3.65);
+        tl.fromTo('.s2',{opacity:0},{opacity:1,duration:.01},4).fromTo('.s2 .eyebrow',{opacity:0,x:-40},{opacity:1,x:0,duration:.45,ease:'power3.out'},4).fromTo('.s2 .headline',{opacity:0,y:40},{opacity:1,y:0,duration:.65,ease:'power3.out'},4.2).fromTo('.s2 .subline',{opacity:0,y:25},{opacity:1,y:0,duration:.5,ease:'power3.out'},4.5).fromTo('.tree',{opacity:0,scale:.86,x:55},{opacity:1,scale:1,x:0,duration:1,ease:'power3.out'},4.15).fromTo('.branch',{scaleX:0},{scaleX:1,duration:.8,ease:'power2.out'},4.7,.1).fromTo('.node',{opacity:0,scale:.7},{opacity:1,scale:1,duration:.5,stagger:.12,ease:'back.out(1.5)'},4.95).to('.tree',{y:-10,duration:1.2,ease:'sine.inOut',repeat:2,yoyo:true},6).to('.s2',{opacity:0,duration:.35},8.65);
+        tl.fromTo('.s3',{opacity:0},{opacity:1,duration:.01},9).fromTo('.s3 .eyebrow',{opacity:0,y:30},{opacity:1,y:0,duration:.4,ease:'power3.out'},9).fromTo('.s3 .headline',{opacity:0,y:45},{opacity:1,y:0,duration:.65,ease:'power3.out'},9.15).fromTo('.s3 .subline',{opacity:0,y:25},{opacity:1,y:0,duration:.5,ease:'power3.out'},9.5).fromTo('.archive-card',{opacity:0,x:100,rotation:0},{opacity:1,x:0,duration:.65,stagger:.22,ease:'back.out(1.3)'},9.4).to('.archive-stack',{y:-9,duration:1.2,ease:'sine.inOut',repeat:4,yoyo:true},11).to('.s3',{opacity:0,duration:.35},14.65);
+        tl.fromTo('.s4',{opacity:0},{opacity:1,duration:.01},15).fromTo('.close-mark',{opacity:0,scale:.65,rotation:-12},{opacity:1,scale:1,rotation:0,duration:.8,ease:'back.out(1.5)'},15.1).fromTo('.s4 .headline',{opacity:0,y:35},{opacity:1,y:0,duration:.6,ease:'power3.out'},15.55).fromTo('.s4 .subline',{opacity:0,y:25},{opacity:1,y:0,duration:.5,ease:'power3.out'},15.8).fromTo('.cta',{opacity:0,y:25,scale:.9},{opacity:1,y:0,scale:1,duration:.6,ease:'back.out(1.4)'},16.15).to('.cta',{scale:1.04,duration:.8,ease:'sine.inOut',repeat:3,yoyo:true},17.1);
+        window.__timelines['puli-promo'] = tl;
+      </script>
+    </div>
+  </body>
+</html>
